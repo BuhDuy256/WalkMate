@@ -33,8 +33,14 @@ public class IntentViewModel extends ViewModel {
     intent.setUserId(userId);
     LiveData<WalkingRepository.Result<Intent>> source = repository.createIntent(intent);
     intentResult.addSource(source, result -> {
+      android.util.Log.d("IntentViewModel", "createIntent source emitted: " +
+          (result != null ? result.getStatus() : "NULL"));
       intentResult.setValue(result);
-      intentResult.removeSource(source);
+      // Only remove source when we get final result (SUCCESS or ERROR), not LOADING
+      if (result != null && result.getStatus() != WalkingRepository.Result.Status.LOADING) {
+        android.util.Log.d("IntentViewModel", "Removing source after final result");
+        intentResult.removeSource(source);
+      }
     });
   }
 
@@ -45,7 +51,11 @@ public class IntentViewModel extends ViewModel {
       android.util.Log.d("IntentViewModel", "findMatch source emitted result: " +
           (result != null ? result.getStatus() : "NULL"));
       matchResult.setValue(result);
-      matchResult.removeSource(source);
+      // Only remove source when we get final result (SUCCESS or ERROR), not LOADING
+      if (result != null && result.getStatus() != WalkingRepository.Result.Status.LOADING) {
+        android.util.Log.d("IntentViewModel", "Removing source after final result");
+        matchResult.removeSource(source);
+      }
     });
   }
 

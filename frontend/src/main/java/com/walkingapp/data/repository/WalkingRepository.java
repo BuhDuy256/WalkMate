@@ -35,7 +35,8 @@ public class WalkingRepository {
             ", body=" + (response.body() != null ? "not null" : "NULL"));
 
         if (response.isSuccessful() && response.body() != null) {
-          android.util.Log.d("WalkingRepository", "Intent created successfully, setting success");
+          android.util.Log.d("WalkingRepository",
+              "Intent created successfully, setting success (already on main thread)");
           result.setValue(Result.success(response.body()));
         } else if (response.isSuccessful() && response.body() == null) {
           android.util.Log.e("WalkingRepository", "Response successful but body is NULL - Gson parsing failed!");
@@ -102,6 +103,7 @@ public class WalkingRepository {
             ", successful=" + response.isSuccessful() +
             ", body=" + (response.body() != null ? "not null" : "NULL"));
         if (response.isSuccessful() && response.body() != null) {
+          android.util.Log.d("WalkingRepository", "Match found! Setting success (already on main thread)");
           result.setValue(Result.success(response.body()));
         } else {
           String error = "No match found. Code: " + response.code();
