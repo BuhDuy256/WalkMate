@@ -25,17 +25,15 @@ import java.util.Calendar;
 import java.util.Locale;
 
 public class IntentActivity extends AppCompatActivity {
-  private static final int USER_ID = 1;
-
   private IntentViewModel viewModel;
 
+  private EditText etUserId;
   private EditText etWalkType;
   private TextView tvStartAt;
   private Spinner spinnerFlexibility;
   private EditText etLat;
   private EditText etLng;
   private EditText etRadius;
-  private Button btnCreateIntent;
   private Button btnFindMatch;
   private ProgressBar progressBar;
   private TextView tvStatus;
@@ -51,7 +49,7 @@ public class IntentActivity extends AppCompatActivity {
     viewModel = new ViewModelProvider(this).get(IntentViewModel.class);
 
     selectedDateTime = Calendar.getInstance();
-    dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
 
     initViews();
     setupFlexibilitySpinner();
@@ -60,13 +58,13 @@ public class IntentActivity extends AppCompatActivity {
   }
 
   private void initViews() {
+    etUserId = findViewById(R.id.etUserId);
     etWalkType = findViewById(R.id.etWalkType);
     tvStartAt = findViewById(R.id.tvStartAt);
     spinnerFlexibility = findViewById(R.id.spinnerFlexibility);
     etLat = findViewById(R.id.etLat);
     etLng = findViewById(R.id.etLng);
     etRadius = findViewById(R.id.etRadius);
-    btnCreateIntent = findViewById(R.id.btnCreateIntent);
     btnFindMatch = findViewById(R.id.btnFindMatch);
     progressBar = findViewById(R.id.progressBar);
     tvStatus = findViewById(R.id.tvStatus);
@@ -93,10 +91,27 @@ public class IntentActivity extends AppCompatActivity {
           break;
 
         case SUCCESS:
-          showLoading(false);
-          tvStatus.setText("Intent created successfully. Status: " + result.getData().getStatus());
-          btnFindMatch.setEnabled(true);
-          Toast.makeText(this, "Intent created", Toast.LENGTH_SHORT).show();
+          android.util.Log.d("IntentActivity", "Intent creation SUCCESS callback triggered");
+          if (result.getData() != null) {
+            android.util.Log.d("IntentActivity", "Intent data is not null, preparing to find match");
+            tvStatus.setText("Intent created. Finding match...");
+            // Automatically find match after intent created
+            int userId = getUserId();
+            android.util.Log.d("IntentActivity", "Got userId: " + userId);
+            if (userId > 0) {
+              android.util.Log.d("IntentActivity", "Calling viewModel.findMatch with userId: " + userId);
+              viewModel.findMatch(userId);
+            } else {
+              android.util.Log.e("IntentActivity", "userId is <= 0, not calling findMatch");
+              showLoading(false);
+              Toast.makeText(this, "Invalid user ID", Toast.LENGTH_SHORT).show();
+            }
+          } else {
+            android.util.Log.e("IntentActivity", "Intent data is NULL");
+            showLoading(false);
+            tvStatus.setText("Intent created but data is null");
+            Toast.makeText(this, "Warning: Response data is null", Toast.LENGTH_LONG).show();
+          }
           break;
 
         case ERROR:
@@ -114,24 +129,40 @@ public class IntentActivity extends AppCompatActivity {
       switch (result.getStatus()) {
         case LOADING:
           showLoading(true);
+          btnFindMatch.setEnabled(false);
           tvStatus.setText("Finding match...");
           break;
 
         case SUCCESS:
           showLoading(false);
-          tvStatus.setText("Match found! Proposal ID: " + result.getData().getId());
-          Toast.makeText(this, "Match found!", Toast.LENGTH_SHORT).show();
+          btnFindMatch.setEnabled(true);
+          tvStatus.setText("GHÉP THÀNH CÔNG! Proposal ID: " + result.getData().getId());
 
-          Intent intent = new Intent(this, ProposalActivity.class);
-          intent.putExtra("proposal_id", result.getData().getId());
-          intent.putExtra("user_id", USER_ID);
-          startActivity(intent);
+          // Show success dialog
+          new android.app.AlertDialog.Builder(this)
+              .setTitle("🎉 GHÉP THÀNH CÔNG!")
+              .setMessage("Đã tìm thấy partner phù hợp!\nProposal ID: " + result.getData().getId())
+              .setPositiveButton("Xem Chi Tiết", (dialog, which) -> {
+                Intent intent = new Intent(this, ProposalActivity.class);
+                intent.putExtra("proposal_id", result.getData().getId());
+                intent.putExtra("user_id", getUserId());
+                startActivity(intent);
+              })
+              .setNegativeButton("OK", null)
+              .show();
           break;
 
         case ERROR:
           showLoading(false);
-          tvStatus.setText("Error: " + result.getError());
-          Toast.makeText(this, result.getError(), Toast.LENGTH_LONG).show();
+          btnFindMatch.setEnabled(true);
+          String errorMsg = result.getError();
+          if (errorMsg != null && errorMsg.contains("No match found")) {
+            tvStatus.setText("Chưa tìm thấy partner phù hợp");
+            Toast.makeText(this, "Chưa có ai phù hợp. Thử lại sau!", Toast.LENGTH_LONG).show();
+          } else {
+            tvStatus.setText("Lỗi: " + errorMsg);
+            Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+          }
           break;
       }
     });
@@ -140,14 +171,10 @@ public class IntentActivity extends AppCompatActivity {
   private void setupListeners() {
     tvStartAt.setOnClickListener(v -> showDateTimePicker());
 
-    btnCreateIntent.setOnClickListener(v -> {
+    btnFindMatch.setOnClickListener(v -> {
       if (validateInputs()) {
         createIntent();
       }
-    });
-
-    btnFindMatch.setOnClickListener(v -> {
-      viewModel.findMatch(USER_ID);
     });
   }
 
@@ -178,7 +205,25 @@ public class IntentActivity extends AppCompatActivity {
     datePickerDialog.show();
   }
 
+  private int getUserId() {
+    try {
+      String userIdText = etUserId.getText().toString().trim();
+      if (userIdText.isEmpty()) {
+        Toast.makeText(this, "Please enter user ID", Toast.LENGTH_SHORT).show();
+        return -1;
+      }
+      return Integer.parseInt(userIdText);
+    } catch (NumberFormatException e) {
+      Toast.makeText(this, "Invalid user ID", Toast.LENGTH_SHORT).show();
+      return -1;
+    }
+  }
+
   private boolean validateInputs() {
+    if (getUserId() <= 0) {
+      return false;
+    }
+
     if (etWalkType.getText().toString().trim().isEmpty()) {
       Toast.makeText(this, "Please enter walk type", Toast.LENGTH_SHORT).show();
       return false;
@@ -203,6 +248,7 @@ public class IntentActivity extends AppCompatActivity {
   }
 
   private void createIntent() {
+    int userId = getUserId();
     String walkType = etWalkType.getText().toString().trim();
     String startAt = dateTimeFormat.format(selectedDateTime.getTime());
     int flexMinutes = spinnerFlexibility.getSelectedItemPosition() == 0 ? 30 : 60;
@@ -210,12 +256,11 @@ public class IntentActivity extends AppCompatActivity {
     double lng = Double.parseDouble(etLng.getText().toString().trim());
     int radius = Integer.parseInt(etRadius.getText().toString().trim());
 
-    viewModel.createIntent(walkType, startAt, flexMinutes, lat, lng, radius);
+    viewModel.createIntent(userId, walkType, startAt, flexMinutes, lat, lng, radius);
   }
 
   private void showLoading(boolean show) {
     progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-    btnCreateIntent.setEnabled(!show);
     btnFindMatch.setEnabled(!show);
   }
 }

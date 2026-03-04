@@ -21,6 +21,22 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="User ID (1 or 2 for testing)"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/etUserId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter 1 or 2"
+            android:inputType="number"
+            android:text="1"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:text="Walk Type"
             android:textSize="14sp"
             android:layout_marginBottom="8dp"/>
@@ -113,18 +129,10 @@
             android:layout_marginBottom="24dp"/>
 
         <Button
-            android:id="@+id/btnCreateIntent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Create Intent"
-            android:layout_marginBottom="16dp"/>
-
-        <Button
             android:id="@+id/btnFindMatch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Find Match"
-            android:enabled="false"
+            android:text="Create Intent &amp; Find Match"
             android:layout_marginBottom="16dp"/>
 
         <ProgressBar

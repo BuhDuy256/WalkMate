@@ -1,3 +1,12 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.offline.enabled": false,
+  "java.project.sourcePaths": [
+    "frontend/src/main/java"
+  ],
+  "java.project.referencedLibraries": [
+    "frontend/build/intermediates/**/*.jar"
+  ]
 }

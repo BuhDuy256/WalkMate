@@ -30,16 +30,33 @@ public class WalkingRepository {
     apiService.createIntent(intent).enqueue(new Callback<Intent>() {
       @Override
       public void onResponse(Call<Intent> call, Response<Intent> response) {
+        android.util.Log.d("WalkingRepository", "createIntent response: code=" + response.code() +
+            ", successful=" + response.isSuccessful() +
+            ", body=" + (response.body() != null ? "not null" : "NULL"));
+
         if (response.isSuccessful() && response.body() != null) {
+          android.util.Log.d("WalkingRepository", "Intent created successfully, setting success");
           result.setValue(Result.success(response.body()));
+        } else if (response.isSuccessful() && response.body() == null) {
+          android.util.Log.e("WalkingRepository", "Response successful but body is NULL - Gson parsing failed!");
+          result.setValue(Result.error("Response body is null (parsing error)"));
         } else {
-          result.setValue(Result.error("Failed to create intent"));
+          String error = "Failed to create intent. Code: " + response.code();
+          try {
+            if (response.errorBody() != null) {
+              error += ", Error: " + response.errorBody().string();
+            }
+          } catch (Exception e) {
+            error += ", Parse error: " + e.getMessage();
+          }
+          android.util.Log.e("WalkingRepository", error);
+          result.setValue(Result.error(error));
         }
       }
 
       @Override
       public void onFailure(Call<Intent> call, Throwable t) {
-        result.setValue(Result.error(t.getMessage()));
+        result.setValue(Result.error("Network error: " + t.getMessage()));
       }
     });
 
@@ -70,25 +87,40 @@ public class WalkingRepository {
   }
 
   public LiveData<Result<Proposal>> findMatch(int userId) {
+    android.util.Log.d("WalkingRepository", "findMatch called with userId: " + userId);
     MutableLiveData<Result<Proposal>> result = new MutableLiveData<>();
     result.setValue(Result.loading());
 
     Map<String, Integer> body = new HashMap<>();
     body.put("user_id", userId);
 
+    android.util.Log.d("WalkingRepository", "Enqueuing findMatch API call");
     apiService.findMatch(body).enqueue(new Callback<Proposal>() {
       @Override
       public void onResponse(Call<Proposal> call, Response<Proposal> response) {
+        android.util.Log.d("WalkingRepository", "findMatch response: code=" + response.code() +
+            ", successful=" + response.isSuccessful() +
+            ", body=" + (response.body() != null ? "not null" : "NULL"));
         if (response.isSuccessful() && response.body() != null) {
           result.setValue(Result.success(response.body()));
         } else {
-          result.setValue(Result.error("No match found"));
+          String error = "No match found. Code: " + response.code();
+          try {
+            if (response.errorBody() != null) {
+              error = response.errorBody().string();
+            }
+          } catch (Exception e) {
+            error += ", Parse error: " + e.getMessage();
+          }
+          android.util.Log.e("WalkingRepository", "findMatch error: " + error);
+          result.setValue(Result.error(error));
         }
       }
 
       @Override
       public void onFailure(Call<Proposal> call, Throwable t) {
-        result.setValue(Result.error(t.getMessage()));
+        android.util.Log.e("WalkingRepository", "findMatch network failure: " + t.getMessage());
+        result.setValue(Result.error("Network error: " + t.getMessage()));
       }
     });
 

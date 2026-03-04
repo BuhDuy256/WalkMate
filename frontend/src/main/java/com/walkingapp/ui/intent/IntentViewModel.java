@@ -27,8 +27,10 @@ public class IntentViewModel extends ViewModel {
     return matchResult;
   }
 
-  public void createIntent(String walkType, String startAt, int flexMinutes, double lat, double lng, int radiusM) {
+  public void createIntent(int userId, String walkType, String startAt, int flexMinutes, double lat, double lng,
+      int radiusM) {
     Intent intent = new Intent(walkType, startAt, flexMinutes, lat, lng, radiusM);
+    intent.setUserId(userId);
     LiveData<WalkingRepository.Result<Intent>> source = repository.createIntent(intent);
     intentResult.addSource(source, result -> {
       intentResult.setValue(result);
@@ -37,8 +39,11 @@ public class IntentViewModel extends ViewModel {
   }
 
   public void findMatch(int userId) {
+    android.util.Log.d("IntentViewModel", "findMatch called with userId: " + userId);
     LiveData<WalkingRepository.Result<Proposal>> source = repository.findMatch(userId);
     matchResult.addSource(source, result -> {
+      android.util.Log.d("IntentViewModel", "findMatch source emitted result: " +
+          (result != null ? result.getStatus() : "NULL"));
       matchResult.setValue(result);
       matchResult.removeSource(source);
     });
