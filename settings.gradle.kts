@@ -20,4 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "WalkMate"
-include(":frontend")
+include("frontend")
+include("backend")
