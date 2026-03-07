@@ -70,7 +70,16 @@
 
 ### 23127438 – Đặng Trường Nguyên
 
-No AI tools were used for this task.
+| #   | Tool & Version       | Access Time | Prompt Used                                                                                                                        | Purpose                                                                                     | Content Generated                                                                                         | Student Validation                                                                                                 |
+| --- | -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Gemini Pro           | 2026-03-02  | "Vẽ bảng transition của các state này dùng mermaid" | Visualize the state transition flow using mermaid code. | AI generated mermaid code to use with mermaid.ai | Reviewed the code, used it with mermaid.ai and check the logic with the designed state table.                        |
+| 2   | ChatGPT           | 2026-03-02  | "Dựa vào bảng này viết chi tiết các TH gồm purpose, action, logic" | Detail section for the designed table. | AI generated purpose, action and logic section for each case of given table in each rule section (Including Timeout rules, Cancellation rule, NO_SHOW logic and Reliability Scoring logic). | Reviewed the suggestions and selected the relevant specification that match the requirements                        |
+| 3   | ChatGPT           | 2026-03-02  | "Check đoạn code mermaid." | Check the mermaid code syntax | AI fixed and generated the new mermaid code to match the requirements. (The old code contained the state that are not proposed in the state transition table) | Reviewed the new code and replace it with the current code.                        |
+
+**Chat History:** 
+  - [ChatGPT Conversation Log](https://chatgpt.com/share/69abe2f9-2c24-800b-a46d-75eb3c31aea6)
+  - [Gemini Conversation Log](https://gemini.google.com/share/7359766f7d53)
+
 
 ### 23127539 – Nguyễn Thanh Tiến
 
