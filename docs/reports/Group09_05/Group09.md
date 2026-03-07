@@ -8,7 +8,7 @@
 | ---------------- | ----------------------- |
 | **Group ID**     | Group 09                |
 | **Project Name** | WalkMate                |
-| **Date Range**   | 2026-02-23 – 2026-03-04 |
+| **Date Range**   | 2026-02-23 – 2026-03-07 |
 
 ---
 
@@ -16,8 +16,10 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Task 1 description: Develop a Core Workflow Sample Application to validate matching algorithms and improve system maintainability.
+- **Evidence:**
+  - [Jira screenshot](https://drive.google.com/file/d/1IBj2NPaG2DviUc6C4UBoDbGo-rhXIIxt/view?usp=sharing)
+  - [Source code](https://github.com/BuhDuy256/WalkMate/tree/prototype/validate-core-workflow)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -27,15 +29,18 @@
 ### 23127438 – Đặng Trường Nguyên
 
 - Task 1 description: Design System Rules and Behavior Specification (Logic Contract)
-- - **Evidence:**
-  - Jira screenshot link: https://drive.google.com/drive/folders/1fxn3zlH_QT3QwKYGaum2qj_aLx95YlMJ?usp=sharing
-  - Documents link: https://docs.google.com/document/d/1_iCMY4vKG-FHLPeiTKaozYYVD3y7g-AWRaEaY86Ifpw/edit?usp=sharing
+- **Evidence:**
+  - [Jira screenshot](https://drive.google.com/drive/folders/1fxn3zlH_QT3QwKYGaum2qj_aLx95YlMJ?usp=sharing)
+  - [Documents](https://docs.google.com/document/d/1_iCMY4vKG-FHLPeiTKaozYYVD3y7g-AWRaEaY86Ifpw/edit?usp=sharing)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
 - **Tasks:**
   - Task 1: Database Design Documentation – Analyzed the WalkMate ERD diagrams and created a comprehensive database design report covering conceptual data model (ER model, entities, relationships), business rules, logical data model (3NF normalization), foreign keys, indexing strategy, and constraints
-- **Evidence:** [Conceptual Schema](https://app.diagrams.net/#G1-SD-eaywOR6Y8V6BCY40wYd37AzwIbvo#%7B%22pageId%22%3A%22yB81tSgXabls4k2ftjdi%22%7D), [Logic Schema](https://app.diagrams.net/#G1cAhyszSCWaz_nH2MtlfBGmB0kE6wtgyb#%7B%22pageId%22%3A%227CWx2EnKrPZ8Q6bgTWRD%22%7D), [Link to Jira](https://drive.google.com/file/d/1fmN8FkQmd7j14J2YTOVRWqexC9F81Sgy/view?usp=sharing)
+- **Evidence:**
+  - [Conceptual Schema](https://app.diagrams.net/#G1-SD-eaywOR6Y8V6BCY40wYd37AzwIbvo#%7B%22pageId%22%3A%22yB81tSgXabls4k2ftjdi%22%7D)
+  - [Logic Schema](https://app.diagrams.net/#G1cAhyszSCWaz_nH2MtlfBGmB0kE6wtgyb#%7B%22pageId%22%3A%227CWx2EnKrPZ8Q6bgTWRD%22%7D)
+  - [Jira screenshot](https://drive.google.com/file/d/1fmN8FkQmd7j14J2YTOVRWqexC9F81Sgy/view?usp=sharing)
 
 ---
 
@@ -43,11 +48,11 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
+| #   | Tool & Version | Access Time | Prompt Used                                           | Purpose                                                                       | Content Generated                                                                  | Student Validation                                                                                                 |
+| --- | -------------- | ----------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | ChatGPT 5.2    | 04/03/2026  | Cho tôi biết ý nghĩa của State Machine bên trong DDD? | Understand the purpose of State Machine when developing aggregate root in DDD | How can State Machine protect business rules and consistency in the aggregate root | Ask for more clearly explanation about the purpose of understanding the state machine and help the code more SOLID |
 
-**Screenshots / Chat History:** _(attach files or paste links)_
+**Screenshots / Chat History:** [ChatGPT Conversation](https://chatgpt.com/share/e/69abd1ff-d588-800a-ab3a-e2d0ce2ebb85)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -58,12 +63,6 @@
 **Screenshots / Chat History:** _(attach files or paste links)_
 
 ### 23127438 – Đặng Trường Nguyên
-
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
-
-**Screenshots / Chat History:** _(attach files or paste links)_
 
 ### 23127539 – Nguyễn Thanh Tiến
 
@@ -79,6 +78,7 @@
 
 ## Tasks Planned for Next Week
 
-- [ ] Task A – _(assignee)_
-- [ ] Task B – _(assignee)_
-- [ ] Task C – _(assignee)_
+- **Sprint Goal:** Develop MVP application with authentication and rating features.
+- **Current Status:** Conducting in-depth research and technical analysis to finalize implementation approach.
+- **Planning:**
+  - Detailed task breakdown will be finalized by Sunday (08/03/2026).
