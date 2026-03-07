@@ -4,13 +4,13 @@
 
 ## Executive Summary
 
-This part presents a comprehensive database design for the **WalkMate Walking Companion Matching System**, a platform that connects users seeking walking partners. The system facilitates user matching, walking session coordination, real-time communication, and post-activity feedback through ratings and reviews. The design supports both instant and scheduled walking sessions, incorporates AI-driven matching algorithms, and maintains a reputation system through badges and reliability scoring.
+This section describes the database design for the WalkMate Walking Companion Matching System, a platform that connects users with walking partners. It supports instant and scheduled sessions, AI-based matching, real-time communication, and post-walk feedback through ratings, reviews, badges, and reliability scores.
 
 ---
 
-## 7.1. Conceptual Data Model
+## 1.1. Conceptual Data Model
 
-### 7.1.1 ER Model
+### 1.1.1 ER Model
 
 The Entity-Relationship (ER) model represents the logical structure and relationships within the WalkMate system. The model is visualized through two complementary diagrams:
 
@@ -30,14 +30,14 @@ _[View interactive diagram](https://app.diagrams.net/#G1-SD-eaywOR6Y8V6BCY40wYd3
 
 **Key Observations:**
 
-- The system uses a **specialization hierarchy** where walks are categorized into instant_walk and scheduled_walk, both inheriting from a base walk concept
-- **walking_sessions** serves as the central entity connecting users, walk types, chat rooms, and reviews
-- The design supports **bidirectional relationships** (e.g., friendships, user embeddings for AI matching)
-- **Temporal constraints** are embedded through status fields and timestamp attributes
+- The system applies a **specialization structure** in which walks are divided into **instant_walk** and **scheduled_walk**, both derived from a **general walk concept**.  
+- **walking_sessions** acts as the **main entity** that links **users**, **walk types**, **chat rooms**, and **reviews**.  
+- The database supports **two-way relationships**, such as **friendships** and **user embeddings** used for **AI-based matching**.  
+- **time-related constraints** are handled using **status fields** together with **timestamp attributes**.
 
 ---
 
-### 7.1.2 Entities
+### 1.1.2 Entities
 
 The system comprises 16 primary entities organized into functional domains:
 
@@ -217,57 +217,11 @@ reports(report_id, reason, evidence_url, admin_note, reporter_id, reported_id)
 - **Foreign Keys:** `reporter_id` → users, `reported_id` → users
 - **Description:** Supports moderation and safety. Evidence can include screenshots or session logs. Admin notes track resolution actions.
 
----
-
-### 7.1.3 Relationships Between Entities
-
-The following table describes all significant relationships in the system:
-
-| No  | Entity 1         | Entity 2             | Cardinality | Description                                                           | Attributes                         |
-| --- | ---------------- | -------------------- | ----------- | --------------------------------------------------------------------- | ---------------------------------- |
-| 1   | users            | instant_walk         | 1..N        | A user can create multiple instant walk requests                      | Created walks belong to one user   |
-| 2   | users            | instant_walk         | 1..N        | A user can be invited to multiple instant walks                       | Foreign key: invitee_id            |
-| 3   | users            | scheduled_walk       | 1..N        | A user can initiate multiple scheduled walks                          | Foreign key: inviter_id            |
-| 4   | users            | scheduled_walk       | 1..N        | A user can be invited to multiple scheduled walks                     | Foreign key: invitee_id            |
-| 5   | walk_type        | instant_walk         | 1..N        | Each walk type can be associated with many instant walks              | Categorizes walk purpose           |
-| 6   | walk_type        | scheduled_walk       | 1..N        | Each walk type can be associated with many scheduled walks            | Categorizes walk purpose           |
-| 7   | instant_walk     | walking_sessions     | 0..1        | An instant walk may result in one walking session                     | Only if status reaches IN_PROGRESS |
-| 8   | scheduled_walk   | walking_sessions     | 0..1        | A scheduled walk may result in one walking session                    | Only if status reaches IN_PROGRESS |
-| 9   | walking_sessions | session_participants | 1..2        | Each session has exactly 2 participants                               | Junction table for M:N             |
-| 10  | users            | session_participants | 1..N        | A user can participate in multiple sessions                           | Junction table for M:N             |
-| 11  | walking_sessions | chat_rooms           | 1..1        | Each session has exactly one chat room                                | One-to-one relationship            |
-| 12  | walking_sessions | reviews              | 1..2        | Each completed session can have 2 reviews (one from each participant) | Bidirectional rating               |
-| 13  | users            | reviews              | 1..N        | A user can write multiple reviews                                     | Foreign key: reviewer_id           |
-| 14  | users            | reviews              | 1..N        | A user can receive multiple reviews                                   | Foreign key: reviewee_id           |
-| 15  | users            | friendships          | M..N        | Users can have multiple friendships                                   | Self-referencing many-to-many      |
-| 16  | badges           | badge_user           | 1..N        | Each badge can be earned by multiple users                            | Junction table                     |
-| 17  | users            | badge_user           | 1..N        | Each user can earn multiple badges                                    | Junction table                     |
-| 18  | users            | user_embeddings      | 1..1        | Each user has one embedding vector                                    | One-to-one for AI matching         |
-| 19  | users            | AI_weights           | 1..1        | Each user has personalized matching weights                           | One-to-one configuration           |
-| 20  | users            | reports              | 1..N        | A user can file multiple reports                                      | Foreign key: reporter_id           |
-| 21  | users            | reports              | 1..N        | A user can be reported multiple times                                 | Foreign key: reported_id           |
-
-**Cardinality Constraints:**
-
-- **(1..N):** One-to-many relationship
-- **(M..N):** Many-to-many relationship (requires junction table)
-- **(1..1):** One-to-one relationship
-- **(0..1):** Optional one-to-one relationship
-
-**Special Relationship Notes:**
-
-- The **walks → walking_sessions** relationship is conditional: sessions are only created when walks reach IN_PROGRESS status
-- **friendships** uses a symmetric design where `user_id_1 < user_id_2` to avoid duplicate records
-- **session_participants** enforces exactly 2 participants through application logic and CHECK constraints
-- **reviews** connects three entities (reviewer, reviewee, session) forming a ternary relationship
-
----
-
-## 7.2. Business Rules
+## 1.2. Business Rules
 
 The system enforces critical business rules to maintain data integrity and ensure proper workflow:
 
-### 7.2.1 Session Participation Rules
+### 1.2.1 Session Participation Rules
 
 **Rule BR-01: Exclusive Session Participation**
 
@@ -288,7 +242,7 @@ The system enforces critical business rules to maintain data integrity and ensur
   - Application validates participant count before session creation
 - **Enforcement Level:** Database constraint + application logic
 
-### 7.2.2 State Transition Rules
+### 1.2.2 State Transition Rules
 
 **Rule BR-03: Review Eligibility**
 
@@ -331,7 +285,7 @@ The system enforces critical business rules to maintain data integrity and ensur
   - If `COUNT(start_button_pressed) = 0`, transition to CANCELLED (no penalties)
 - **Enforcement Level:** Scheduled system job + real-time validation
 
-### 7.2.3 Communication Rules
+### 1.2.3 Communication Rules
 
 **Rule BR-07: Chat Room Lifecycle**
 
@@ -354,7 +308,7 @@ The system enforces critical business rules to maintain data integrity and ensur
   - "Add Friend" prompt shown at session completion
 - **Enforcement Level:** Application logic
 
-### 7.2.4 Social Relationship Rules
+### 1.2.4 Social Relationship Rules
 
 **Rule BR-09: Symmetric Friendships**
 
@@ -376,7 +330,7 @@ The system enforces critical business rules to maintain data integrity and ensur
   - Trigger updates `friendship_level` based on walk count query
 - **Enforcement Level:** Database trigger
 
-### 7.2.5 Reliability & Reputation Rules
+### 1.2.5 Reliability & Reputation Rules
 
 **Rule BR-11: Reliability Score Immutability**
 
@@ -420,7 +374,7 @@ The system enforces critical business rules to maintain data integrity and ensur
   - Elite tier (150+): Priority matching
 - **Enforcement Level:** Matching algorithm logic
 
-### 7.2.6 Data Integrity Rules
+### 1.2.6 Data Integrity Rules
 
 **Rule BR-15: Temporal Consistency**
 
@@ -462,158 +416,7 @@ The system enforces critical business rules to maintain data integrity and ensur
 
 ---
 
-## 7.3. Logical Data Model
-
-The following relational schema represents the complete logical design, derived from the ER model:
-
-### Core Schema Definitions
-
-```sql
-users(
-    user_id [PK],
-    email [UNIQUE, NOT NULL],
-    phone,
-    provider,
-    password,
-    full_name,
-    username [UNIQUE, NOT NULL],
-    gender,
-    avatar_url,
-    is_online [DEFAULT FALSE],
-    status [DEFAULT 'active'],
-    bio,
-    date_of_birth,
-    created_at [DEFAULT CURRENT_TIMESTAMP]
-)
-
-otp_codes(
-    otp_code_id [PK],
-    otp_code [NOT NULL],
-    created_at [DEFAULT CURRENT_TIMESTAMP],
-    otp_expiry [NOT NULL]
-)
-
-walk_type(
-    walk_type_id [PK],
-    walk_type_name [NOT NULL],
-    deleted [DEFAULT FALSE],
-    status [DEFAULT 'active'],
-    created_at [DEFAULT CURRENT_TIMESTAMP]
-)
-
-instant_walk(
-    instant_walk_id [PK],
-    longitude [NOT NULL],
-    latitude [NOT NULL],
-    appointment_time,
-    instant_walk_status [NOT NULL],
-    walk_type_id [FK → walk_type.walk_type_id],
-    user_id [FK → users.user_id],
-    invitee_id [FK → users.user_id]
-)
-
-scheduled_walk(
-    scheduled_walk_id [PK],
-    longitude [NOT NULL],
-    latitude [NOT NULL],
-    appointment_time [NOT NULL],
-    scheduled_walk_status [NOT NULL],
-    walk_type_id [FK → walk_type.walk_type_id],
-    inviter_id [FK → users.user_id],
-    invitee_id [FK → users.user_id]
-)
-
-walking_sessions(
-    walking_session_id [PK],
-    walking_session_type [NOT NULL],
-    start_time [NOT NULL],
-    end_time,
-    walking_session_status [NOT NULL],
-    completed_distance
-)
-
-session_participants(
-    walking_session_id [PK, FK → walking_sessions.walking_session_id],
-    user_id [PK, FK → users.user_id]
-)
-
-chat_rooms(
-    chat_room_id [PK],
-    open_at [DEFAULT CURRENT_TIMESTAMP],
-    close_at,
-    chat_room_status [NOT NULL],
-    walking_session_id [FK → walking_sessions.walking_session_id, UNIQUE]
-)
-
-reviews(
-    review_id [PK],
-    rating_stars [NOT NULL],
-    tags [JSON],
-    reviewer_id [FK → users.user_id],
-    reviewee_id [FK → users.user_id],
-    walking_session_id [FK → walking_sessions.walking_session_id]
-)
-
-badges(
-    badge_id [PK],
-    description [NOT NULL],
-    condition_type [NOT NULL],
-    condition_value
-)
-
-badge_user(
-    badge_id [PK, FK → badges.badge_id],
-    user_id [PK, FK → users.user_id],
-    earned_at [DEFAULT CURRENT_TIMESTAMP]
-)
-
-friendships(
-    user_id_1 [PK, FK → users.user_id],
-    user_id_2 [PK, FK → users.user_id],
-    friendship_level,
-    created_at [DEFAULT CURRENT_TIMESTAMP],
-    updated_at [DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP]
-)
-
-reports(
-    report_id [PK],
-    reason [NOT NULL],
-    evidence_url,
-    admin_note,
-    reporter_id [FK → users.user_id],
-    reported_id [FK → users.user_id]
-)
-
-user_embeddings(
-    user_id [PK, FK → users.user_id],
-    vector_data [NOT NULL],
-    last_updated [DEFAULT CURRENT_TIMESTAMP]
-)
-
-AI_weights(
-    user_id [PK, FK → users.user_id],
-    w1 [DEFAULT 0.33],
-    w2 [DEFAULT 0.33],
-    w3 [DEFAULT 0.34]
-)
-```
-
-### Schema Normalization Analysis
-
-The schema achieves **Third Normal Form (3NF)** with the following characteristics:
-
-1. **1NF (First Normal Form):** All attributes contain atomic values; no repeating groups exist
-2. **2NF (Second Normal Form):** All non-key attributes are fully functionally dependent on the entire primary key
-3. **3NF (Third Normal Form):** No transitive dependencies exist; non-key attributes depend only on the primary key
-
-**Deliberate Denormalization:**
-
-- `walking_sessions.completed_distance` is stored rather than calculated to avoid repeated GPS point aggregations
-- `friendships.friendship_level` is maintained incrementally rather than calculated on-demand for query performance
-
----
-
-## 7.6. Constraint Rules
+## 1.6. Constraint Rules
 
 Constraints enforce data integrity at the database level:
 
