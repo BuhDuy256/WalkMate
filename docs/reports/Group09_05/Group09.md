@@ -27,14 +27,17 @@
 ### 23127438 – Đặng Trường Nguyên
 
 - Task 1 description: Design System Rules and Behavior Specification (Logic Contract)
-- - **Evidence:** 
+- - **Evidence:**
   - Jira screenshot link: https://drive.google.com/drive/folders/1fxn3zlH_QT3QwKYGaum2qj_aLx95YlMJ?usp=sharing
   - Documents link: https://docs.google.com/document/d/1_iCMY4vKG-FHLPeiTKaozYYVD3y7g-AWRaEaY86Ifpw/edit?usp=sharing
 
 ### 23127539 – Nguyễn Thanh Tiến
-@import "database_design_report.md"
 
+- **Tasks:**
+  - Task 1: Database Design Documentation – Analyzed the WalkMate ERD diagrams and created a comprehensive database design report covering conceptual data model (ER model, entities, relationships), business rules, logical data model (3NF normalization), foreign keys, indexing strategy, and constraints
+- **Evidence:** [Conceptual Schema](https://app.diagrams.net/#G1-SD-eaywOR6Y8V6BCY40wYd37AzwIbvo#%7B%22pageId%22%3A%22yB81tSgXabls4k2ftjdi%22%7D), [Logic Schema](https://app.diagrams.net/#G1cAhyszSCWaz_nH2MtlfBGmB0kE6wtgyb#%7B%22pageId%22%3A%227CWx2EnKrPZ8Q6bgTWRD%22%7D), [Link to Jira](https://drive.google.com/file/d/1fmN8FkQmd7j14J2YTOVRWqexC9F81Sgy/view?usp=sharing)
 
+---
 
 ## AI Usage Declaration
 
@@ -62,14 +65,13 @@
 
 **Screenshots / Chat History:** _(attach files or paste links)_
 
-
 ### 23127539 – Nguyễn Thanh Tiến
 
-| # | Tool & Version | Access Time | Prompt Used | Purpose | Content Generated | Student Validation |
-|---|---------------|-------------|-------------|---------|------------------|-------------------|
-| 1 | Gemini Pro | 2026-03-02 | "Suggest necessary database tables for a walking companion matching system with authentication, location, AI matching, chat, scheduling, and review features." | Identify required database tables for the system | AI suggested several groups of tables for user management, matching, walking sessions, chat, reviews, AI data, and achievements. | Reviewed the suggestions and adapted them to design the final WalkMate database schema. |
-| 2 | Gemini Pro | 2026-03-07 | "Suggest business rules for the walking companion matching system." | Identify possible business rules for the system | AI suggested rules such as: users must authenticate before matching, a walking session connects two users, chat rooms are created after a successful match, and reviews can only be submitted after a completed walk. | Selected relevant rules and refined them to fit the final system design. |
-| 3 | Chat GPT (temporary) | 2026-03-07 | "Check grammar and improve the wording of the database design and system description." | Improve English grammar and clarity in the report | AI suggested corrections for grammar, sentence structure, and wording in several sections of the documentation. | Reviewed all suggestions and manually edited the text to ensure the meaning and technical accuracy were preserved. |
+| #   | Tool & Version       | Access Time | Prompt Used                                                                                                                                                    | Purpose                                           | Content Generated                                                                                                                                                                                                     | Student Validation                                                                                                 |
+| --- | -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Gemini Pro           | 2026-03-02  | "Suggest necessary database tables for a walking companion matching system with authentication, location, AI matching, chat, scheduling, and review features." | Identify required database tables for the system  | AI suggested several groups of tables for user management, matching, walking sessions, chat, reviews, AI data, and achievements.                                                                                      | Reviewed the suggestions and adapted them to design the final WalkMate database schema.                            |
+| 2   | Gemini Pro           | 2026-03-07  | "Suggest business rules for the walking companion matching system."                                                                                            | Identify possible business rules for the system   | AI suggested rules such as: users must authenticate before matching, a walking session connects two users, chat rooms are created after a successful match, and reviews can only be submitted after a completed walk. | Selected relevant rules and refined them to fit the final system design.                                           |
+| 3   | Chat GPT (temporary) | 2026-03-07  | "Check grammar and improve the wording of the database design and system description."                                                                         | Improve English grammar and clarity in the report | AI suggested corrections for grammar, sentence structure, and wording in several sections of the documentation.                                                                                                       | Reviewed all suggestions and manually edited the text to ensure the meaning and technical accuracy were preserved. |
 
 **Chat History:** [Gemini Conversation Log](https://gemini.google.com/share/391c439b0261)
 
