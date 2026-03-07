@@ -23,7 +23,9 @@
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Task 1 description
+- Task 1 description: UX & User Flow Blueprint
+  - Jira screenshot link: [https://drive.google.com/drive/folders/1CxsdSZ5iYPjM9fj8jEWDWeDWrnvq1JZn?usp=sharing]
+  - Documents link: [https://drive.google.com/drive/folders/1HKWVBmYvnX1w2oqf_2OLrK18aoQ9hgiX?usp=sharing]
 - **Evidence:** _(Jira screenshot link / output document / artifact)_
 
 ### 23127438 – Đặng Trường Nguyên
@@ -56,11 +58,14 @@
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
+| #   | Tool & Version | Access Time  | Prompt Used                                                                                                                                                                                                                                                                                                                                 | Purpose                                                                                                                      | Content Generated                                                                             | Student Validation                                                                                 |
+| --- | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | _Gemini 3_     | _2026-03-04_ | _"[project prosal included] đây là kế hoạch về mobile app của tôi. Tôi đang trong quá trình design UI, giờ giúp tôi xác định được phong cách UI cho app", "bạn hãy giúp tôi code ra một trang web ví dụ đơn giản, có nút chuyển đổi giữa các theme để tôi có thể dễ dàng hình dung và quyết định"_                                          | _AI with generate some UI theme style for the app, then I will ask my teammates to choose the theme that they like the most_ | _A demo app which can change among themes_                                                    | _I can check the color theme from AI suggestion, then me and my teammates choosing the best theme_ |
+| 2   | _Gemini 3_     | _2026-03-04_ | _"tôi chọn phong cách friendly, giờ hãy tạo ra một file markdown theme.md: Nội dung: mô tả chi tiết về phong cách UI app (là phong cách friendly mà bạn đã đề xuất). Mục đích: Tôi sẽ đưa file này cho gemini, và tôi sẽ yêu cầu gemini tạo ra một prompt dành cho figma make để nó có thể giúp tôi tạo ra được UI cho cách scene cho app"_ | _note the context to generate prompt for figma make and ensure the consistency_                                              | _WalkMate Friendly UI Theme.md which describes about the theme color and rules for the theme_ | _review the generated file and started for figma prompts_                                          |
+| 3   | _Gemini 3_     | _2026-03-04_ | _"đây là file mô tả về theme mà tôi sẽ sử dụng trong app của tôi, UI nên đơn giản tối ưu hóa hiệu năng. Task: cho tôi prompt dành cho figma make để nó tạo ra bộ UI Kit để sử dụng trong app WalkMate"_                                                                                                                                     | _prepare the UI kit for the app_                                                                                             | _prompt for figma make_                                                                       | _copy the prompt and paste on figma, then it generated the corresponding components_               |
+| 1   | _Figma Make_   | _2026-03-04_ | _used all the prompts generated from Gemini _                                                                                                                                                                                                                                                                                               | _create UI screen_                                                                                                           | _UI screen generated_                                                                         | _review the generated UI and shared them to the teammates_                                         |
 
-**Screenshots / Chat History:** _(attach files or paste links)_
+**Screenshots / Chat History:** _[Screenshots about the completing task process](https://drive.google.com/drive/folders/1ULwT8VJT7zf9GjtrZtGJ-0knAxWuoeA8?usp=sharing)_
 
 ### 23127438 – Đặng Trường Nguyên
 
