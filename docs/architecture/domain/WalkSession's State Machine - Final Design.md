@@ -359,7 +359,7 @@ The coordination states (PENDING/MATCHED/CONFIRMED) in teammate's model belong t
 
 1. **Single Responsibility:** WalkSession protects lifecycle invariants, not matching logic.
 2. **Aggregate Independence:** WalkIntent can be cancelled/expired without affecting WalkSession history.
-3. **Concurrency:** User can have multiple active WalkIntents but only ONE active WalkSession.
+3. **Concurrency:** User can have multiple active WalkIntents AND multiple WalkSessions (PENDING/ACTIVE), as long as WalkSession time windows don't overlap (Invariant #1).
 4. **Event Sourcing:** Clear separation of coordination events vs lifecycle events.
 
 ---
@@ -663,7 +663,7 @@ public class WalkSession {
     *
     * Enforces:
     * - Both intents mutually confirmed
-    * - User doesn't have active session already (single active session invariant)
+    * - User doesn't have overlapping sessions (Invariant #1: No time window overlap)
     * - Time windows still valid
     */
    public WalkSession createSession(
@@ -677,15 +677,33 @@ public class WalkSession {
            throw new IllegalStateException("Both intents must be confirmed");
        }
 
-       // Invariant: Users cannot have active session already
+       // Invariant #1: No overlapping sessions (Core Invariant)
+       // Check time window overlap for sessions with status IN (PENDING, ACTIVE)
        UserId user1 = intent1.getUserId();
        UserId user2 = intent2.getUserId();
 
-       if (sessionRepository.hasActiveSession(user1)) {
-           throw new IllegalStateException("User1 already has active session");
+       if (sessionRepository.hasOverlappingSession(
+           user1,
+           confirmedStartTime,
+           confirmedEndTime,
+           List.of(PENDING, ACTIVE)
+       )) {
+           throw new IllegalStateException(
+               "User1 has overlapping session in time window ["
+               + confirmedStartTime + " - " + confirmedEndTime + "]"
+           );
        }
-       if (sessionRepository.hasActiveSession(user2)) {
-           throw new IllegalStateException("User2 already has active session");
+
+       if (sessionRepository.hasOverlappingSession(
+           user2,
+           confirmedStartTime,
+           confirmedEndTime,
+           List.of(PENDING, ACTIVE)
+       )) {
+           throw new IllegalStateException(
+               "User2 has overlapping session in time window ["
+               + confirmedStartTime + " - " + confirmedEndTime + "]"
+           );
        }
 
        // Create session in PENDING state
@@ -710,7 +728,7 @@ public class WalkSession {
    ```
 
 2. **Invariant Validation Across Aggregates**
-   - Check single active session constraint
+   - Check no overlapping sessions constraint (Invariant #1)
    - Verify user availability
    - Validate time window conflicts
 
@@ -790,18 +808,56 @@ public class AutoCompleteJob {
 
 ## 5.4 Invariant Enforcement Summary
 
-| Invariant                          | Where Enforced            | How                                                                |
-| ---------------------------------- | ------------------------- | ------------------------------------------------------------------ |
-| **Mutual confirmation required**   | Domain Service            | Check both WalkIntents confirmed before creating session           |
-| **Single active session per user** | Domain Service            | Query repository before session creation                           |
-| **Valid state transitions**        | WalkSession Aggregate     | Guard conditions in command methods (activate/complete/cancel/etc) |
-| **Terminal state immutability**    | WalkSession Aggregate     | No methods allow mutation of COMPLETED/NO_SHOW/CANCELLED           |
-| **Time window validity**           | WalkSession Aggregate     | Validate currentTime against scheduledStartTime ± grace periods    |
-| **Activation window constraint**   | WalkSession Aggregate     | activate() method guards (-15min to +30min)                        |
-| **Minimum walk duration**          | WalkSession Aggregate     | complete() method guards (≥5min)                                   |
-| **No-show report timing**          | WalkSession Aggregate     | reportNoShow() guards (≤15min after activation)                    |
-| **Auto no-show timing**            | Scheduled Job + Aggregate | Job finds expired sessions, calls autoNoShow() with guards         |
-| **Auto-complete timing**           | Scheduled Job + Aggregate | Job finds overdue sessions, calls autoComplete() with guards       |
+| Invariant                                  | Where Enforced            | How                                                                                     |
+| ------------------------------------------ | ------------------------- | --------------------------------------------------------------------------------------- |
+| **Mutual confirmation required**           | Domain Service            | Check both WalkIntents confirmed before creating session                                |
+| **No overlapping sessions (Invariant #1)** | Domain Service            | Check time window overlap for sessions with status IN (PENDING, ACTIVE) before creation |
+| **Valid state transitions**                | WalkSession Aggregate     | Guard conditions in command methods (activate/complete/cancel/etc)                      |
+| **Terminal state immutability**            | WalkSession Aggregate     | No methods allow mutation of COMPLETED/NO_SHOW/CANCELLED                                |
+| **Time window validity**                   | WalkSession Aggregate     | Validate currentTime against scheduledStartTime ± grace periods                         |
+| **Activation window constraint**           | WalkSession Aggregate     | activate() method guards (-15min to +30min)                                             |
+| **Minimum walk duration**                  | WalkSession Aggregate     | complete() method guards (≥5min)                                                        |
+| **No-show report timing**                  | WalkSession Aggregate     | reportNoShow() guards (≤15min after activation)                                         |
+| **Auto no-show timing**                    | Scheduled Job + Aggregate | Job finds expired sessions, calls autoNoShow() with guards                              |
+| **Auto-complete timing**                   | Scheduled Job + Aggregate | Job finds overdue sessions, calls autoComplete() with guards                            |
+
+### 🔴 Invariant #1 Clarification: No Overlapping vs Single Active Session
+
+**CRITICAL DISTINCTION:**
+
+This system uses **"No Overlapping Sessions"** constraint, NOT **"Single Active Session"** constraint.
+
+**Examples:**
+
+| Scenario                                                         | Time Windows | Status                    | Allowed?       | Reason                                                            |
+| ---------------------------------------------------------------- | ------------ | ------------------------- | -------------- | ----------------------------------------------------------------- |
+| User has session A: 10:00-11:00<br/>Wants session B: 14:00-15:00 | No overlap   | Both PENDING              | ✅ **ALLOWED** | Different time windows - user can schedule multiple walks per day |
+| User has session A: 10:00-11:00<br/>Wants session B: 10:30-11:30 | Overlap      | Both PENDING              | ❌ **BLOCKED** | Time window overlap detected - violates Invariant #1              |
+| User has session A: 10:00-11:00<br/>Wants session B: 11:00-12:00 | Edge-to-edge | Both PENDING              | ✅ **ALLOWED** | No overlap (10:00-11:00 ends exactly when 11:00-12:00 starts)     |
+| User has session A: 10:00-11:00<br/>Wants session B: 10:00-11:00 | Same time    | A=COMPLETED<br/>B=PENDING | ✅ **ALLOWED** | COMPLETED is terminal state, not checked in overlap detection     |
+| User has session A: 10:00-11:00<br/>Wants session B: 09:00-12:00 | B contains A | Both ACTIVE               | ❌ **BLOCKED** | Complete overlap - violates Invariant #1                          |
+
+**Why This Matters:**
+
+- ✅ Supports **Scheduled Discovery** - users can plan walks throughout their day/week
+- ✅ No artificial constraints - users free to schedule as long as no conflicts
+- ❌ "Single Active Session" would prevent multiple scheduled walks - wrong for this domain
+
+**Implementation Note:**
+
+```java
+// ❌ WRONG - overly restrictive
+if (sessionRepository.hasAnyActiveSession(userId)) {
+    throw new Exception("User already has a session");
+}
+
+// ✅ CORRECT - checks actual time overlap
+if (sessionRepository.hasOverlappingSession(
+    userId, startTime, endTime, List.of(PENDING, ACTIVE)
+)) {
+    throw new Exception("User has overlapping session in this time window");
+}
+```
 
 ---
 
@@ -925,6 +981,7 @@ This state machine is production-ready and DDD-compliant because:
 4. **Invariant protection:** Single responsibility per aggregate, cross-aggregate checks in Domain Service
 5. **Terminal immutability:** History is permanent; corrections via compensation events
 6. **Pragmatic adoption:** Best elements from teammate's model (timeouts, penalties) integrated without compromising DDD structure
+7. **🔴 CRITICAL - No Overlapping Sessions (Invariant #1):** Users CAN have multiple PENDING/ACTIVE sessions as long as time windows DON'T overlap. This supports Scheduled Discovery where users can plan multiple walks throughout the day/week. We DO NOT enforce "single active session" - that would be an artificial constraint incompatible with the scheduling feature.
 
 **Next Steps:**
 
