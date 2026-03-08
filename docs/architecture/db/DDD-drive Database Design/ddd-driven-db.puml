@@ -1,0 +1,350 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide methods
+hide stereotypes
+
+title Walking App - Scheduled Discovery (Intent–Intent Matching, DDD)
+
+' =====================================================
+' IDENTITY & ACCESS CONTEXT
+' =====================================================
+
+package "Identity & Access" {
+
+  class UserAccount {
+    +user_id : UUID
+    --
+    email : String
+    phone : String
+    password_hash : String
+    provider : AuthProvider
+    status : AccountStatus
+    created_at : DateTime
+    last_login_at : DateTime
+  }
+
+  enum AuthProvider {
+    GOOGLE
+    LOCAL
+    PHONE
+  }
+
+  enum AccountStatus {
+    ACTIVE
+    SUSPENDED
+    DELETED
+  }
+}
+
+' =====================================================
+' USER PROFILE CONTEXT
+' =====================================================
+
+package "User Profile" {
+
+  class UserProfile {
+    +user_id : UUID
+    --
+    full_name : String
+    gender : Gender
+    date_of_birth : Date
+    avatar_url : String
+    bio : String
+    search_radius : Integer
+  }
+
+  class ProfileTag {
+    +tag_id : UUID
+    --
+    tag_type : TagType
+    created_at : DateTime
+  }
+
+  enum Gender {
+    MALE
+    FEMALE
+    OTHER
+  }
+
+  enum TagType {
+    HAS_PET
+    QUIET
+    MUSIC
+    EXERCISE
+    RELAX
+  }
+
+  UserProfile "1" -- "0..*" ProfileTag
+}
+
+UserAccount "1" -- "1" UserProfile
+
+' =====================================================
+' SOCIAL GRAPH CONTEXT
+' =====================================================
+
+package "Social Graph" {
+
+  class Friendship {
+    +friendship_id : UUID
+    --
+    user1_id : UUID
+    user2_id : UUID
+    status : FriendshipStatus
+    favorite_user1 : Boolean
+    favorite_user2 : Boolean
+    created_at : DateTime
+  }
+
+  enum FriendshipStatus {
+    ACTIVE
+    BLOCKED
+  }
+}
+
+UserAccount "1" -- "0..*" Friendship
+
+' =====================================================
+' WALK COORDINATION CONTEXT
+' (Intent–Intent Matching)
+' =====================================================
+
+package "Walk Coordination" {
+
+  class WalkIntent {
+    +intent_id : UUID
+    --
+    user_id : UUID
+    latitude : Double
+    longitude : Double
+    time_window_start : DateTime
+    time_window_end : DateTime
+    purpose : WalkPurpose
+    status : IntentStatus
+    created_at : DateTime
+    expires_at : DateTime
+  }
+
+  enum IntentStatus {
+    OPEN
+    MATCHED
+    CONFIRMED
+    EXPIRED
+    CANCELLED
+  }
+
+  enum WalkPurpose {
+    EXERCISE
+    RELAX
+    PET
+    SIGHTSEEING
+  }
+
+  class MatchProposal {
+    +proposal_id : UUID
+    --
+    intent_id_A : UUID
+    intent_id_B : UUID
+    proposed_start_time : DateTime
+    proposed_end_time : DateTime
+    proposed_latitude : Double
+    proposed_longitude : Double
+    status : ProposalStatus
+    created_at : DateTime
+    expires_at : DateTime
+  }
+
+  enum ProposalStatus {
+    PENDING
+    ACCEPTED_BY_A
+    ACCEPTED_BY_B
+    CONFIRMED
+    REJECTED
+    EXPIRED
+  }
+}
+
+UserAccount "1" -- "0..*" WalkIntent
+WalkIntent "1" -- "0..*" MatchProposal : source
+
+' =====================================================
+' WALK LIFECYCLE CONTEXT
+' =====================================================
+
+package "Walk Lifecycle" {
+
+  class WalkSession {
+    +session_id : UUID
+    --
+    user1_id : UUID
+    user2_id : UUID
+    scheduled_start_time : DateTime
+    scheduled_end_time : DateTime
+    actual_start_time : DateTime
+    actual_end_time : DateTime
+    status : SessionStatus
+    created_at : DateTime
+    source_intent_id_A : UUID
+    source_intent_id_B : UUID
+  }
+
+  enum SessionStatus {
+    PENDING
+    ACTIVE
+    COMPLETED
+    NO_SHOW
+    CANCELLED
+  }
+
+  class ChatRoom {
+    +chat_room_id : UUID
+    --
+    session_id : UUID
+    open_at : DateTime
+    close_at : DateTime
+    status : ChatStatus
+  }
+
+  enum ChatStatus {
+    OPEN
+    CLOSED
+  }
+
+  class ChatMessage {
+    +message_id : UUID
+    --
+    chat_room_id : UUID
+    sender_id : UUID
+    content : String
+    created_at : DateTime
+  }
+
+  WalkSession "1" -- "1" ChatRoom
+  ChatRoom "1" -- "0..*" ChatMessage
+}
+
+UserAccount "1" -- "0..*" WalkSession
+
+' =====================================================
+' TRUST & REPUTATION CONTEXT
+' =====================================================
+
+package "Trust & Reputation" {
+
+  class WalkReview {
+    +review_id : UUID
+    --
+    session_id : UUID
+    reviewer_id : UUID
+    reviewee_id : UUID
+    rating_stars : Integer
+    created_at : DateTime
+  }
+
+  class ReviewTag {
+    +tag_id : UUID
+    --
+    tag_type : String
+  }
+
+  class TrustScore {
+    +user_id : UUID
+    --
+    score : Integer
+    last_updated : DateTime
+  }
+
+  class Badge {
+    +badge_id : UUID
+    --
+    name : String
+    condition_type : String
+    condition_value : Integer
+  }
+
+  class UserBadge {
+    +user_id : UUID
+    --
+    badge_id : UUID
+    earned_at : DateTime
+  }
+
+  WalkReview "1" -- "0..*" ReviewTag
+  WalkSession "1" -- "0..*" WalkReview
+  UserAccount "1" -- "1" TrustScore
+  UserAccount "1" -- "0..*" UserBadge
+  Badge "1" -- "0..*" UserBadge
+}
+
+' =====================================================
+' MODERATION CONTEXT
+' =====================================================
+
+package "Moderation" {
+
+  class Report {
+    +report_id : UUID
+    --
+    reporter_id : UUID
+    reported_user_id : UUID
+    session_id : UUID
+    reason : String
+    evidence_url : String
+    status : ReportStatus
+    admin_note : String
+  }
+
+  enum ReportStatus {
+    OPEN
+    RESOLVED
+    REJECTED
+  }
+}
+
+UserAccount "1" -- "0..*" Report
+
+' =====================================================
+' AI PERSONALIZATION CONTEXT
+' =====================================================
+
+package "AI Personalization" {
+
+  class UserEmbedding {
+    +user_id : UUID
+    --
+    vector_data : Vector
+    last_updated : DateTime
+  }
+
+  class MatchingPreferenceModel {
+    +user_id : UUID
+    --
+    w1_time_overlap : Double
+    w2_distance : Double
+    w3_interest_similarity : Double
+    w4_behavior_similarity : Double
+    last_trained_at : DateTime
+  }
+
+  class InteractionHistory {
+    +interaction_id : UUID
+    --
+    user_id : UUID
+    target_user_id : UUID
+    interaction_type : InteractionType
+    timestamp : DateTime
+  }
+
+  enum InteractionType {
+    ACCEPT
+    REJECT
+    FIVE_STAR
+    FAVORITE
+  }
+}
+
+UserAccount "1" -- "1" UserEmbedding
+UserAccount "1" -- "1" MatchingPreferenceModel
+UserAccount "1" -- "0..*" InteractionHistory
+
+@enduml
