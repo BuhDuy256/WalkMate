@@ -1,4 +1,4 @@
-# WalkSession State Machine — Final Version
+đ# WalkSession State Machine — Final Version
 
 **Domain Architect:** DDD-based Reconciliation  
 **Date:** March 6, 2026  
