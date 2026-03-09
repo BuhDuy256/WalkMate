@@ -1,4 +1,4 @@
-package com.walkmate.controller.dto;
+package com.walkmate.controller.dto.request;
 
 import com.walkmate.domain.intent.WalkPurpose;
 import lombok.Data;

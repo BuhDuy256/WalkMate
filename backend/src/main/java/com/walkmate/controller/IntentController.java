@@ -1,7 +1,8 @@
 package com.walkmate.controller;
 
 import com.walkmate.application.IntentService;
-import com.walkmate.controller.dto.CreateIntentRequest;
+import com.walkmate.controller.dto.request.CreateIntentRequest;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
