@@ -190,7 +190,7 @@ intent_id           UUID
 user_id             UUID
 time_window_start   TIMESTAMP
 time_window_end     TIMESTAMP
-status              ENUM  -- OPEN, MATCHED, CONFIRMED, EXPIRED, CANCELLED
+status              ENUM  -- OPEN, EXPIRED, CANCELLED, CONSUMED
 ```
 
 **Critical Indexes:**

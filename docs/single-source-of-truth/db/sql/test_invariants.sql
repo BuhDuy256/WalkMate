@@ -239,7 +239,7 @@ BEGIN
     INSERT INTO match_proposal (
         proposal_id, intent_id_a, intent_id_b,
         proposed_start_time, proposed_end_time,
-        proposed_location, proposed_lat, proposed_lng,
+        proposed_location, proposed_location_lat, proposed_location_lng,
         status, expires_at
     ) VALUES (
         'test-prop-1111-1111-1111-111111111111',
@@ -266,7 +266,7 @@ BEGIN
     INSERT INTO match_proposal (
         proposal_id, intent_id_a, intent_id_b,
         proposed_start_time, proposed_end_time,
-        proposed_location, proposed_lat, proposed_lng,
+        proposed_location, proposed_location_lat, proposed_location_lng,
         status, expires_at
     ) VALUES (
         'test-prop-2222-2222-2222-222222222222',
@@ -295,7 +295,7 @@ BEGIN
     INSERT INTO match_proposal (
         proposal_id, intent_id_a, intent_id_b,
         proposed_start_time, proposed_end_time,
-        proposed_location, proposed_lat, proposed_lng,
+        proposed_location, proposed_location_lat, proposed_location_lng,
         status, expires_at
     ) VALUES (
         'test-prop-3333-3333-3333-333333333333',

@@ -11,13 +11,18 @@ TRUNCATE TABLE
     review_tag,
     walk_review,
     user_badge,
-    report,
+    session_report,
+    dispute_case,
+    notification,
     match_proposal,
     walk_intent,
     walk_session,
     user_embedding,
+    matching_preference_model,
     profile_tag,
-    friendship,
+    block_relation,
+    follow_relation,
+    user_presence,
     user_profile,
     trust_score,
     user_account
@@ -59,13 +64,17 @@ INSERT INTO profile_tag (user_id, tag_type) VALUES
     ('55555555-5555-5555-5555-555555555555', 'RELAX');
 
 -- =====================================================
--- FRIENDSHIPS
+-- FOLLOW & BLOCK RELATIONS
 -- =====================================================
 
-INSERT INTO friendship (user1_id, user2_id, status, favorite_user1, favorite_user2) VALUES
-    ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'ACTIVE', TRUE, FALSE),
-    ('11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'ACTIVE', FALSE, TRUE),
-    ('22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', 'ACTIVE', FALSE, FALSE);
+INSERT INTO follow_relation (follower_id, followee_id) VALUES
+    ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222'),
+    ('11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333'),
+    ('22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444');
+    
+INSERT INTO user_presence (user_id, status, availability) VALUES 
+    ('11111111-1111-1111-1111-111111111111', 'ONLINE', 'AVAILABLE'),
+    ('22222222-2222-2222-2222-222222222222', 'ONLINE', 'AVAILABLE');
 
 -- =====================================================
 -- WALK INTENTS (Scheduled Discovery)
@@ -139,7 +148,7 @@ INSERT INTO walk_intent (
 INSERT INTO match_proposal (
     proposal_id, intent_id_a, intent_id_b,
     proposed_start_time, proposed_end_time,
-    proposed_location, proposed_lat, proposed_lng,
+    proposed_location, proposed_location_lat, proposed_location_lng,
     status, expires_at
 ) VALUES (
     'pppp1111-pppp-1111-pppp-111111111111',
@@ -347,17 +356,27 @@ AND b.name = 'First Steps';
 -- =====================================================
 
 -- Charlie reports Diana for no-show
-INSERT INTO report (
+INSERT INTO session_report (
     report_id, reporter_id, reported_user_id, session_id,
-    reason, description, status
+    reason, evidence_url, status
 ) VALUES (
     'rept1111-rept-1111-rept-111111111111',
     '33333333-3333-3333-3333-333333333333',
     '44444444-4444-4444-4444-444444444444',
     'ssss3333-ssss-3333-ssss-333333333333',
     'NO_SHOW',
-    'Diana confirmed the session but never showed up and did not respond to messages.',
+    NULL,
     'OPEN'
+);
+
+INSERT INTO dispute_case (
+    dispute_id, session_id, opened_by, status, expires_at
+) VALUES (
+    'disp1111-disp-1111-disp-111111111111',
+    'ssss3333-ssss-3333-ssss-333333333333',
+    '33333333-3333-3333-3333-333333333333',
+    'OPEN',
+    CURRENT_TIMESTAMP + INTERVAL '24 hours'
 );
 
 -- =====================================================

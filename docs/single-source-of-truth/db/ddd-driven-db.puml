@@ -50,12 +50,14 @@ package "User Profile" {
     date_of_birth : Date
     avatar_url : String
     bio : String
-    search_radius : Integer
+    public_mode : Boolean
+    created_at : DateTime
   }
 
   class ProfileTag {
     +tag_id : UUID
     --
+    user_id : UUID
     tag_type : TagType
     created_at : DateTime
   }
@@ -85,24 +87,55 @@ UserAccount "1" -- "1" UserProfile
 
 package "Social Graph" {
 
-  class Friendship {
-    +friendship_id : UUID
+  class FollowRelation {
+    +follow_id : UUID
     --
-    user1_id : UUID
-    user2_id : UUID
-    status : FriendshipStatus
-    favorite_user1 : Boolean
-    favorite_user2 : Boolean
+    follower_id : UUID
+    followee_id : UUID
     created_at : DateTime
   }
 
-  enum FriendshipStatus {
-    ACTIVE
-    BLOCKED
+  class BlockRelation {
+    +block_id : UUID
+    --
+    blocker_id : UUID
+    blocked_id : UUID
+    created_at : DateTime
+  }
+
+}
+
+UserAccount "1" -- "0..*" FollowRelation
+UserAccount "1" -- "0..*" BlockRelation
+
+' =====================================================
+' PRESENCE CONTEXT
+' =====================================================
+
+package "Presence" {
+  
+  class UserPresence {
+    +user_id : UUID
+    --
+    status : PresenceStatus
+    availability : PresenceAvailability
+    quick_mode : Boolean
+    last_active_at : DateTime
+    expires_at : DateTime
+  }
+  
+  enum PresenceStatus {
+    ONLINE
+    OFFLINE
+  }
+  
+  enum PresenceAvailability {
+    AVAILABLE
+    UNAVAILABLE
   }
 }
 
-UserAccount "1" -- "0..*" Friendship
+UserAccount "1" -- "1" UserPresence
 
 ' =====================================================
 ' WALK COORDINATION CONTEXT
@@ -115,11 +148,12 @@ package "Walk Coordination" {
     +intent_id : UUID
     --
     user_id : UUID
-    latitude : Double
-    longitude : Double
+    location_lat : Double
+    location_lng : Double
     time_window_start : DateTime
     time_window_end : DateTime
     purpose : WalkPurpose
+    matching_constraints : JSON
     status : IntentStatus
     created_at : DateTime
     expires_at : DateTime
@@ -127,10 +161,9 @@ package "Walk Coordination" {
 
   enum IntentStatus {
     OPEN
-    MATCHED
-    CONFIRMED
     EXPIRED
     CANCELLED
+    CONSUMED
   }
 
   enum WalkPurpose {
@@ -145,10 +178,10 @@ package "Walk Coordination" {
     --
     intent_id_A : UUID
     intent_id_B : UUID
-    proposed_start_time : DateTime
-    proposed_end_time : DateTime
-    proposed_latitude : Double
-    proposed_longitude : Double
+    proposed_time_start : DateTime
+    proposed_time_end : DateTime
+    proposed_location_lat : Double
+    proposed_location_lng : Double
     status : ProposalStatus
     created_at : DateTime
     expires_at : DateTime
@@ -195,14 +228,23 @@ package "Walk Lifecycle" {
     NO_SHOW
     CANCELLED
   }
+}
+
+UserAccount "1" -- "0..*" WalkSession
+
+' =====================================================
+' COMMUNICATION CONTEXT
+' =====================================================
+
+package "Communication" {
 
   class ChatRoom {
     +chat_room_id : UUID
     --
     session_id : UUID
+    status : ChatStatus
     open_at : DateTime
     close_at : DateTime
-    status : ChatStatus
   }
 
   enum ChatStatus {
@@ -223,7 +265,6 @@ package "Walk Lifecycle" {
   ChatRoom "1" -- "0..*" ChatMessage
 }
 
-UserAccount "1" -- "0..*" WalkSession
 
 ' =====================================================
 ' TRUST & REPUTATION CONTEXT
@@ -238,13 +279,8 @@ package "Trust & Reputation" {
     reviewer_id : UUID
     reviewee_id : UUID
     rating_stars : Integer
+    tags : JSON
     created_at : DateTime
-  }
-
-  class ReviewTag {
-    +tag_id : UUID
-    --
-    tag_type : String
   }
 
   class TrustScore {
@@ -253,6 +289,61 @@ package "Trust & Reputation" {
     score : Integer
     last_updated : DateTime
   }
+  
+  WalkSession "1" -- "0..*" WalkReview
+  UserAccount "1" -- "1" TrustScore
+}
+
+' =====================================================
+' REPORTING & DISPUTE CONTEXT
+' =====================================================
+
+package "Reporting & Dispute" {
+
+  class SessionReport {
+    +report_id : UUID
+    --
+    session_id : UUID
+    reporter_id : UUID
+    reported_user_id : UUID
+    reason : String
+    evidence_url : String
+    status : ReportStatus
+    created_at : DateTime
+  }
+  
+  class DisputeCase {
+    +dispute_id : UUID
+    --
+    session_id : UUID
+    opened_by : UUID
+    status : DisputeStatus
+    resolution_action : String
+    created_at : DateTime
+    expires_at : DateTime
+  }
+
+  enum ReportStatus {
+    OPEN
+    RESOLVED
+    REJECTED
+  }
+  
+  enum DisputeStatus {
+    OPEN
+    RESOLVED
+    CLOSED
+  }
+}
+
+WalkSession "1" -- "0..*" SessionReport
+WalkSession "1" -- "0..*" DisputeCase
+
+' =====================================================
+' GAMIFICATION CONTEXT
+' =====================================================
+
+package "Gamification" {
 
   class Badge {
     +badge_id : UUID
@@ -268,40 +359,32 @@ package "Trust & Reputation" {
     badge_id : UUID
     earned_at : DateTime
   }
-
-  WalkReview "1" -- "0..*" ReviewTag
-  WalkSession "1" -- "0..*" WalkReview
-  UserAccount "1" -- "1" TrustScore
   UserAccount "1" -- "0..*" UserBadge
   Badge "1" -- "0..*" UserBadge
 }
 
 ' =====================================================
-' MODERATION CONTEXT
+' NOTIFICATION CONTEXT
 ' =====================================================
-
-package "Moderation" {
-
-  class Report {
-    +report_id : UUID
+package "Notification" {
+  
+  class Notification {
+    +notification_id : UUID
     --
-    reporter_id : UUID
-    reported_user_id : UUID
-    session_id : UUID
-    reason : String
-    evidence_url : String
-    status : ReportStatus
-    admin_note : String
+    user_id : UUID
+    type : String
+    payload : JSON
+    status : NotificationStatus
+    created_at : DateTime
   }
-
-  enum ReportStatus {
-    OPEN
-    RESOLVED
-    REJECTED
+  
+  enum NotificationStatus {
+    PENDING
+    SENT
+    FAILED
   }
 }
-
-UserAccount "1" -- "0..*" Report
+UserAccount "1" -- "0..*" Notification
 
 ' =====================================================
 ' AI PERSONALIZATION CONTEXT
@@ -319,32 +402,14 @@ package "AI Personalization" {
   class MatchingPreferenceModel {
     +user_id : UUID
     --
-    w1_time_overlap : Double
-    w2_distance : Double
-    w3_interest_similarity : Double
-    w4_behavior_similarity : Double
-    last_trained_at : DateTime
-  }
-
-  class InteractionHistory {
-    +interaction_id : UUID
-    --
-    user_id : UUID
-    target_user_id : UUID
-    interaction_type : InteractionType
-    timestamp : DateTime
-  }
-
-  enum InteractionType {
-    ACCEPT
-    REJECT
-    FIVE_STAR
-    FAVORITE
+    weight_time_overlap : Double
+    weight_distance : Double
+    weight_interest : Double
+    weight_behavior : Double
   }
 }
 
 UserAccount "1" -- "1" UserEmbedding
 UserAccount "1" -- "1" MatchingPreferenceModel
-UserAccount "1" -- "0..*" InteractionHistory
 
 @enduml

@@ -73,32 +73,53 @@ CREATE INDEX idx_profile_tag_user ON profile_tag(user_id);
 -- SOCIAL GRAPH CONTEXT
 -- =====================================================
 
-CREATE TYPE friendship_status AS ENUM ('ACTIVE', 'BLOCKED');
-
-CREATE TABLE friendship (
-    friendship_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user1_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    user2_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    status friendship_status NOT NULL DEFAULT 'ACTIVE',
-    favorite_user1 BOOLEAN DEFAULT FALSE,
-    favorite_user2 BOOLEAN DEFAULT FALSE,
+CREATE TABLE follow_relation (
+    follow_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    follower_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
+    followee_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT different_users CHECK (user1_id != user2_id),
-    CONSTRAINT ordered_users CHECK (user1_id < user2_id),
-    CONSTRAINT unique_friendship UNIQUE (user1_id, user2_id)
+    CONSTRAINT different_users_follow CHECK (follower_id != followee_id),
+    CONSTRAINT unique_follow UNIQUE (follower_id, followee_id)
 );
 
-CREATE INDEX idx_friendship_user1 ON friendship(user1_id);
-CREATE INDEX idx_friendship_user2 ON friendship(user2_id);
-CREATE INDEX idx_friendship_status ON friendship(status);
+CREATE INDEX idx_follow_follower ON follow_relation(follower_id);
+CREATE INDEX idx_follow_followee ON follow_relation(followee_id);
+
+CREATE TABLE block_relation (
+    block_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    blocker_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
+    blocked_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT different_users_block CHECK (blocker_id != blocked_id),
+    CONSTRAINT unique_block UNIQUE (blocker_id, blocked_id)
+);
+
+CREATE INDEX idx_block_blocker ON block_relation(blocker_id);
+CREATE INDEX idx_block_blocked ON block_relation(blocked_id);
+
+-- =====================================================
+-- PRESENCE CONTEXT
+-- =====================================================
+
+CREATE TYPE presence_status AS ENUM ('ONLINE', 'OFFLINE');
+CREATE TYPE presence_availability AS ENUM ('AVAILABLE', 'UNAVAILABLE');
+
+CREATE TABLE user_presence (
+    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
+    status presence_status NOT NULL DEFAULT 'OFFLINE',
+    availability presence_availability NOT NULL DEFAULT 'UNAVAILABLE',
+    quick_mode BOOLEAN NOT NULL DEFAULT FALSE,
+    last_active_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP
+);
 
 -- =====================================================
 -- WALK COORDINATION CONTEXT (Intent-Intent Matching)
 -- =====================================================
 
-CREATE TYPE intent_status AS ENUM ('OPEN', 'MATCHED', 'CONFIRMED', 'EXPIRED', 'CANCELLED');
+CREATE TYPE intent_status AS ENUM ('OPEN', 'EXPIRED', 'CANCELLED', 'CONSUMED');
 CREATE TYPE walk_purpose AS ENUM ('EXERCISE', 'RELAX', 'PET', 'SIGHTSEEING', 'CHAT', 'OTHER');
 
 CREATE TABLE walk_intent (
@@ -110,7 +131,7 @@ CREATE TABLE walk_intent (
     time_window_start TIMESTAMP NOT NULL,
     time_window_end TIMESTAMP NOT NULL,
     purpose walk_purpose NOT NULL,
-    match_filter JSONB, -- {min_age, max_age, gender_preference, tags_preference}
+    matching_constraints JSONB, -- {min_age, max_age, gender_preference, tags_preference}
     status intent_status NOT NULL DEFAULT 'OPEN',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL,
@@ -155,8 +176,8 @@ CREATE TABLE match_proposal (
     proposed_start_time TIMESTAMP NOT NULL,
     proposed_end_time TIMESTAMP NOT NULL,
     proposed_location GEOGRAPHY(POINT, 4326) NOT NULL,
-    proposed_lat DOUBLE PRECISION NOT NULL,
-    proposed_lng DOUBLE PRECISION NOT NULL,
+    proposed_location_lat DOUBLE PRECISION NOT NULL,
+    proposed_location_lng DOUBLE PRECISION NOT NULL,
     status proposal_status NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL,
@@ -165,8 +186,8 @@ CREATE TABLE match_proposal (
     CONSTRAINT different_intents CHECK (intent_id_a != intent_id_b),
     CONSTRAINT valid_proposed_time CHECK (proposed_end_time > proposed_start_time),
     CONSTRAINT valid_proposed_coords CHECK (
-        proposed_lat >= -90 AND proposed_lat <= 90 AND
-        proposed_lng >= -180 AND proposed_lng <= 180
+        proposed_location_lat >= -90 AND proposed_location_lat <= 90 AND
+        proposed_location_lng >= -180 AND proposed_location_lng <= 180
     )
 );
 
@@ -212,6 +233,9 @@ CREATE TABLE walk_session (
     ),
     CONSTRAINT terminal_immutable CHECK (
         -- Terminal states cannot be modified (application enforced)
+        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED')
+    ),
+    CONSTRAINT no_overlap_in_status CHECK (
         status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED')
     )
 );
@@ -389,40 +413,63 @@ CREATE INDEX idx_user_badge_earned ON user_badge(earned_at DESC);
 -- =====================================================
 
 CREATE TYPE report_status AS ENUM ('OPEN', 'RESOLVED', 'REJECTED');
-CREATE TYPE report_reason AS ENUM (
-    'HARASSMENT',
-    'INAPPROPRIATE_BEHAVIOR',
-    'NO_SHOW',
-    'SAFETY_CONCERN',
-    'SPAM',
-    'OTHER'
-);
+CREATE TYPE dispute_status AS ENUM ('OPEN', 'RESOLVED', 'CLOSED');
 
-CREATE TABLE report (
+CREATE TABLE session_report (
     report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id UUID REFERENCES walk_session(session_id) ON DELETE SET NULL,
     reporter_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
     reported_user_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    session_id UUID REFERENCES walk_session(session_id) ON DELETE SET NULL,
-    reason report_reason NOT NULL,
-    description TEXT NOT NULL,
+    reason VARCHAR(255) NOT NULL,
     evidence_url TEXT,
     status report_status NOT NULL DEFAULT 'OPEN',
-    admin_note TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP,
     
-    CONSTRAINT different_reporter_reported CHECK (reporter_id != reported_user_id),
-    CONSTRAINT non_empty_description CHECK (length(trim(description)) > 0)
+    CONSTRAINT different_reporter_reported CHECK (reporter_id != reported_user_id)
 );
 
-CREATE INDEX idx_report_reporter ON report(reporter_id);
-CREATE INDEX idx_report_reported ON report(reported_user_id);
-CREATE INDEX idx_report_session ON report(session_id);
-CREATE INDEX idx_report_status ON report(status);
+CREATE INDEX idx_report_reporter ON session_report(reporter_id);
+CREATE INDEX idx_report_reported ON session_report(reported_user_id);
+CREATE INDEX idx_report_session ON session_report(session_id);
+CREATE INDEX idx_report_status ON session_report(status);
+
+CREATE TABLE dispute_case (
+    dispute_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id UUID NOT NULL REFERENCES walk_session(session_id) ON DELETE CASCADE,
+    opened_by UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
+    status dispute_status NOT NULL DEFAULT 'OPEN',
+    resolution_action TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_dispute_session ON dispute_case(session_id);
+
+CREATE TYPE notification_status AS ENUM ('PENDING', 'SENT', 'FAILED');
+
+CREATE TABLE notification (
+    notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
+    type VARCHAR(100) NOT NULL,
+    payload JSONB,
+    status notification_status NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_noti_user ON notification(user_id, status);
 
 -- =====================================================
 -- AI PERSONALIZATION CONTEXT
 -- =====================================================
+
+CREATE TABLE matching_preference_model (
+    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
+    weight_time_overlap DOUBLE PRECISION DEFAULT 1.0,
+    weight_interest DOUBLE PRECISION DEFAULT 1.0,
+    weight_behavior DOUBLE PRECISION DEFAULT 1.0,
+    weight_distance DOUBLE PRECISION DEFAULT 1.0,
+    last_trained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE user_embedding (
     user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
@@ -527,10 +574,6 @@ BEFORE UPDATE ON user_profile
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at();
 
-CREATE TRIGGER trg_friendship_updated_at
-BEFORE UPDATE ON friendship
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
 
 -- Log session state changes
 CREATE OR REPLACE FUNCTION log_session_state_change()

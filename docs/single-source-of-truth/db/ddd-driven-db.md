@@ -1,4 +1,4 @@
-# 📘 Full Conceptual Schema – Scheduled Discovery (Intent–Intent Matching)
+# 📘 WALKMATE – FULL CONCEPTUAL SCHEMA (FINAL ALIGNED VERSION)
 
 ---
 
@@ -8,25 +8,28 @@
 1. Identity & Access
 2. User Profile
 3. Social Graph
-4. Walk Coordination (Intent–Intent Matching)
-5. Walk Lifecycle (Session)
-6. Trust & Reputation
-7. AI Personalization
+4. Presence
+5. Walk Coordination (Intent–Intent Matching)
+6. Walk Lifecycle (Session)
+7. Communication
+8. Trust & Reputation
+9. Reporting & Dispute
+10. Gamification
+11. Notification
+12. AI Personalization
 ```
-
-Không có Realtime Matching.
 
 ---
 
 # II. Identity & Access Context
 
-## Aggregate: UserAccount (Aggregate Root)
+## Aggregate: UserAccount (AR)
 
 ### Entity: UserAccount
 
 - user_id
-- email
-- phone
+- email (unique)
+- phone (unique)
 - password_hash
 - provider
 - status (ACTIVE / SUSPENDED / DELETED)
@@ -35,17 +38,16 @@ Không có Realtime Matching.
 
 ### Invariants
 
-- Email unique
-- Phone unique
-- 1 account = 1 identity
+- 1 identity = 1 account
+- Email/Phone unique
 
 ---
 
 # III. User Profile Context
 
-## Aggregate: UserProfile (Aggregate Root)
+## Aggregate: UserProfile (AR)
 
-### Entity: UserProfile
+### Entity
 
 - user_id
 - full_name
@@ -53,51 +55,86 @@ Không có Realtime Matching.
 - date_of_birth
 - avatar_url
 - bio
-- search_radius
-- preferences
+- public_mode (BOOLEAN)
+- created_at
 
-### Sub-Entities
+### Sub-Entity: ProfileTag
 
-- ProfileTag
-  - tag_type
-  - created_at
-
-### Invariants
-
-- Profile chỉ tồn tại nếu có UserAccount
-
----
-
-# IV. Social Graph Context
-
-## Aggregate: Friendship
-
-### Entity: Friendship
-
-- friendship_id
-- user1_id
-- user2_id
-- status (ACTIVE / BLOCKED)
-- favorite_flag_user1
-- favorite_flag_user2
+- tag_id
+- user_id
+- tag_type
 - created_at
 
 ### Invariants
 
-- 1 cặp user chỉ có 1 friendship
-- BLOCKED → không được match
+- Profile chỉ tồn tại nếu có UserAccount
+- public_mode = FALSE → không tạo WalkIntent
 
 ---
 
-# V. Walk Coordination Context (Intent–Intent Matching)
+# IV. Social Graph Context (Updated)
 
-Đây là nơi diễn ra discovery.
+❌ Bỏ Friendship
+✅ Dùng Following + Block
 
 ---
 
-## Aggregate: WalkIntent (Aggregate Root)
+## Aggregate: FollowRelation
 
-### Entity: WalkIntent
+- follow_id
+- follower_id
+- followee_id
+- created_at
+
+### Invariants
+
+- Không duplicate pair
+- Following là one-way
+
+---
+
+## Aggregate: BlockRelation
+
+- block_id
+- blocker_id
+- blocked_id
+- created_at
+
+### Invariants
+
+- Nếu block tồn tại → không match, không create session
+
+---
+
+# V. Presence Context
+
+(Phục vụ Quick Mode)
+
+## Aggregate: UserPresence
+
+- user_id
+- status (ONLINE / OFFLINE)
+- availability (AVAILABLE / UNAVAILABLE)
+- quick_mode (BOOLEAN)
+- last_active_at
+- expires_at
+
+### Invariants
+
+- quick_mode auto expire sau X phút
+- Nếu app background → availability = UNAVAILABLE
+
+---
+
+# VI. Walk Coordination Context
+
+(Pre-value phase)
+
+---
+
+## Aggregate: WalkIntent (AR)
+
+### Entity
 
 - intent_id
 - user_id
@@ -106,52 +143,50 @@ Không có Realtime Matching.
 - time_window_start
 - time_window_end
 - purpose
-- match_filter
-- status (OPEN / MATCHED / CONFIRMED / EXPIRED / CANCELLED)
+- matching_constraints
+- status (OPEN / EXPIRED / CANCELLED / CONSUMED)
 - created_at
 - expires_at
 
 ### Invariants
 
-- Intent phải có time_window_end > time_window_start
-- 1 user không được có 2 OPEN intent có time_window overlap
-- Intent chỉ match nếu status = OPEN
-- Intent expire nếu quá expires_at
+- time_window_end > time_window_start
+- 1 user không có 2 OPEN intent overlap
+- Intent chỉ match khi status = OPEN
+- Block check trước khi match
 
 ---
 
 ## Aggregate: MatchProposal
 
-### Entity: MatchProposal
+### Entity
 
 - proposal_id
-- intent_id_A
-- intent_id_B
+- intent_A_id
+- intent_B_id
 - proposed_time_start
 - proposed_time_end
-- proposed_location
+- proposed_location_lat
+- proposed_location_lng
 - status (PENDING / ACCEPTED_BY_A / ACCEPTED_BY_B / CONFIRMED / REJECTED / EXPIRED)
 - created_at
 - expires_at
 
 ### Invariants
 
-- Cả 2 intent phải ở trạng thái OPEN
-- Một intent chỉ có tối đa 1 proposal PENDING tại một thời điểm
-- Khi CONFIRMED → trigger WalkSession creation
-- Khi 1 intent bị CANCELLED/EXPIRED → proposal auto EXPIRED
+- 2 Intent phải = OPEN
+- 1 Intent chỉ có 1 proposal PENDING
+- Khi CONFIRMED:
+  → Domain Service create WalkSession
+  → Intent status = CONSUMED
 
 ---
 
-# VI. Walk Lifecycle Context
+# VII. Walk Lifecycle Context (Execution Phase)
 
-Đây là execution phase.
+## Aggregate: WalkSession (AR)
 
----
-
-## Aggregate: WalkSession (Aggregate Root)
-
-### Entity: WalkSession
+### Entity
 
 - session_id
 - user1_id
@@ -162,66 +197,63 @@ Không có Realtime Matching.
 - actual_end_time
 - status (PENDING / ACTIVE / COMPLETED / NO_SHOW / CANCELLED)
 - created_at
-- source_intent_id_A (nullable)
-- source_intent_id_B (nullable)
+- source_intent_id_A
+- source_intent_id_B
 
 ---
 
-## 🔴 Invariant QUAN TRỌNG (đã sửa)
+## 🔴 Core Invariant
 
-Thay vì:
+Không tồn tại 2 session:
 
-```text
-1 user chỉ có 1 session ACTIVE hoặc PENDING
-```
-
-Đổi thành:
-
-```text
-1 user không được có 2 WalkSession
-có time window overlap
-với status ∈ (PENDING, ACTIVE)
-```
-
-Formal:
-
-Không tồn tại S1, S2 sao cho:
-
-- S1.user = U
-- S2.user = U
-- S1 ≠ S2
-- S1.time overlaps S2.time
-- S1.status ∈ (PENDING, ACTIVE)
-- S2.status ∈ (PENDING, ACTIVE)
-
-Nếu không overlap → hoàn toàn hợp lệ.
+- Cùng user
+- time window overlap
+- status ∈ (PENDING, ACTIVE)
 
 ---
 
-## Sub-Aggregate: ChatRoom
+## State Machine (Enforced by Aggregate)
 
-### Entity: ChatRoom
+PENDING → ACTIVE → COMPLETED
+    ↘ CANCELLED
+    ↘ NO_SHOW
+
+Terminal: COMPLETED / NO_SHOW / CANCELLED (immutable)
+
+---
+
+# VIII. Communication Context
+
+## Aggregate: ChatRoom
 
 - chat_room_id
 - session_id
+- status (OPEN / CLOSED)
 - open_at
 - close_at
-- status (OPEN / CLOSED)
 
 ### Invariants
 
-- ChatRoom mở khi session PENDING (trước giờ hẹn X phút) hoặc ACTIVE
-- ChatRoom đóng khi session vào terminal state
+- OPEN khi session.status ∈ (PENDING, ACTIVE)
+- CLOSED khi terminal state
 
 ---
 
-# VII. Trust & Reputation Context
+## Entity: ChatMessage
+
+- message_id
+- chat_room_id
+- sender_id
+- content
+- created_at
+
+---
+
+# IX. Trust & Reputation Context
 
 ---
 
 ## Aggregate: WalkReview
-
-### Entity
 
 - review_id
 - session_id
@@ -233,20 +265,18 @@ Nếu không overlap → hoàn toàn hợp lệ.
 
 ### Invariants
 
-- Chỉ tạo khi session COMPLETED
-- 1 user chỉ review 1 lần per session
+- Session must be COMPLETED
+- 1 review per user per session
 
 ---
 
 ## Aggregate: TrustScore
 
-### Entity
-
 - user_id
 - score
 - last_updated
 
-Score thay đổi theo:
+Updated via Domain Events:
 
 - Completion (+)
 - Cancellation (-)
@@ -254,16 +284,55 @@ Score thay đổi theo:
 
 ---
 
-## Aggregate: Badge
+# X. Reporting & Dispute Context
 
-### Entity: Badge
+---
+
+## Aggregate: SessionReport
+
+- report_id
+- session_id
+- reporter_id
+- reported_user_id
+- reason
+- evidence_url
+- status (OPEN / RESOLVED / REJECTED)
+- created_at
+
+---
+
+## Aggregate: DisputeCase
+
+- dispute_id
+- session_id
+- opened_by
+- status (OPEN / RESOLVED / CLOSED)
+- resolution_action
+- created_at
+- expires_at (24h window)
+
+### Invariants
+
+- NO_SHOW → auto allow dispute 24h
+- Terminal session state không mutate
+- Compensation via TrustScore adjustment
+
+---
+
+# XI. Gamification Context
+
+---
+
+## Aggregate: Badge
 
 - badge_id
 - name
 - condition_type
 - condition_value
 
-### Entity: UserBadge
+---
+
+## Aggregate: UserBadge
 
 - user_id
 - badge_id
@@ -271,21 +340,32 @@ Score thay đổi theo:
 
 ---
 
-# VIII. Reporting Context
+# XII. Notification Context
 
-## Aggregate: Report
+(Event-driven)
 
-- report_id
-- reporter_id
-- reported_user_id
-- session_id (nullable)
-- reason
-- evidence_url
-- status
+## Aggregate: Notification
+
+- notification_id
+- user_id
+- type
+- payload
+- status (PENDING / SENT / FAILED)
+- created_at
+
+Triggered by Domain Events:
+
+- WalkSessionCreated
+- Activated
+- Cancelled
+- Completed
+- No-show
+- NewMessage
+- MatchProposalCreated
 
 ---
 
-# IX. AI Personalization Context
+# XIII. AI Personalization Context
 
 AI chỉ ranking Intent–Intent.
 
@@ -302,93 +382,93 @@ AI chỉ ranking Intent–Intent.
 ## Aggregate: MatchingPreferenceModel
 
 - user_id
-- w1_time_overlap
-- w2_distance
-- w3_interest_similarity
-- w4_behavior_similarity
+- weight_time_overlap
+- weight_interest
+- weight_behavior
+- weight_distance
 
----
+AI compute:
 
-## AI Responsibilities
-
-AI tính:
-
-```text
 Score(IntentA, IntentB)
-```
 
 AI không:
 
-- Tạo session
-- Thay đổi trạng thái
-- Áp penalty
+- mutate state
+- create session
+- apply penalty
 
 ---
 
-# X. Updated Event-Driven Flow (Intent–Intent + Non-overlap Rule)
+# XIV. Event Flow (Full Aligned)
 
-```text
-User A tạo WalkIntent
-User B tạo WalkIntent
+User tạo WalkIntent
 ↓
 MatchingService detect overlap
 ↓
 AI ranking
 ↓
-MatchProposal created
+MatchProposal
 ↓
-Hai bên ACCEPT
+Mutual ACCEPT
 ↓
 SessionService.createSession()
-    → load all existing PENDING/ACTIVE sessions của user
-    → check time overlap
-    → nếu conflict → reject
-    → nếu ok → create WalkSession
+ → Check overlap invariant
+ → Create WalkSession (PENDING)
 ↓
 Lifecycle execution
-```
+↓
+Domain events
+↓
+TrustScore / Notification / Badge
 
 ---
 
-# XI. Aggregate Roots
+# XV. Aggregate Roots (Final List)
 
 ```text
 UserAccount
 UserProfile
-Friendship
+FollowRelation
+BlockRelation
+UserPresence
 WalkIntent
 MatchProposal
 WalkSession
+ChatRoom
 WalkReview
 TrustScore
+SessionReport
+DisputeCase
 Badge
-Report
+Notification
 UserEmbedding
 ```
 
 ---
 
-# XII. Điều quan trọng nhất (phiên bản corrected)
+# XVI. Alignment Check
 
-Mô hình này:
-
-- Là Intent–Intent matching
-- Không duplicate lifecycle
-- WalkSession là single source of truth
-- Cho phép nhiều session tương lai
-- Cấm session trùng thời gian
-- Invariant chính xác với domain thực tế
-- AI chỉ ranking
-- Dễ maintain và evolve
+| Feature               | Align |
+| --------------------- | ----- |
+| WalkIntent separation | ✅    |
+| 5-state lifecycle     | ✅    |
+| No overlap invariant  | ✅    |
+| Following model       | ✅    |
+| Presence Quick Mode   | ✅    |
+| Trace path            | ✅    |
+| Dispute window        | ✅    |
+| Notification          | ✅    |
+| AI ranking only       | ✅    |
+| No radius matching    | ✅    |
 
 ---
 
-# 🎯 Kết luận
+# Final Result
 
-Giờ đây thiết kế:
+Schema này:
 
-✔ Phù hợp Scheduled Discovery
-✔ Phù hợp Intent–Intent
-✔ Không quá restrictive
-✔ Không artificial limit user
-✔ Domain invariant chính xác hơn
+- Align 100% feature list
+- Align 100% DDD state machine
+- Clean aggregate boundary
+- Production-ready modeling
+- Không còn legacy tư duy
