@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/login"
+    android:id="@+id/register"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFF9F1"
@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingHorizontal="24dp">
 
         <!-- Logo Section -->
         <com.google.android.material.card.MaterialCardView
@@ -47,7 +47,7 @@
             android:textColor="#A8927B"
             android:textSize="15sp" />
 
-        <!-- Main Login Card -->
+        <!-- Main Register Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -71,33 +71,33 @@
                     android:orientation="horizontal"
                     android:padding="4dp">
                     <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btn_tab_signin"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_active_tab"
-                        android:text="Sign In"
-                        android:textAllCaps="false"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btn_tab_signup"
+                        android:id="@+id/btn_tab_signin_reg"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="@android:color/transparent"
-                        android:text="Sign Up"
+                        android:text="Sign In"
                         android:textAllCaps="false"
                         android:textColor="#C09B7A"
                         android:textSize="15sp" />
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btn_tab_signup_reg"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_active_tab"
+                        android:text="Sign Up"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="Welcome back! 👋"
+                    android:text="Create account 🎉"
                     android:textColor="#332218"
                     android:textSize="26sp"
                     android:textStyle="bold" />
@@ -106,7 +106,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Sign in to continue your journey."
+                    android:text="Join the community today."
                     android:textColor="#9E8D7F"
                     android:textSize="14sp" />
 
@@ -115,6 +115,28 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
+                    android:text="Full Name"
+                    android:textColor="#7A6657"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_field"
+                    android:drawableStart="@drawable/ic_user"
+                    android:drawablePadding="12dp"
+                    android:hint="Your name"
+                    android:inputType="textPersonName"
+                    android:paddingHorizontal="20dp"
+                    android:textSize="14sp"
+                    android:textColorHint="#C6B5A6" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:text="Email Address"
                     android:textColor="#7A6657"
                     android:textSize="13sp"
@@ -151,16 +173,16 @@
                     <EditText
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_toStartOf="@+id/iv_toggle_password"
+                        android:layout_toStartOf="@+id/iv_toggle_password_reg"
                         android:background="@android:color/transparent"
                         android:drawableStart="@drawable/ic_lock"
                         android:drawablePadding="12dp"
-                        android:hint="Enter your password"
+                        android:hint="Create a password"
                         android:inputType="textPassword"
                         android:textSize="14sp"
                         android:textColorHint="#C6B5A6" />
                     <ImageView
-                        android:id="@+id/iv_toggle_password"
+                        android:id="@+id/iv_toggle_password_reg"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_alignParentEnd="true"
@@ -169,24 +191,14 @@
                         app:tint="#C6B5A6" />
                 </RelativeLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginTop="12dp"
-                    android:text="Forgot password?"
-                    android:textColor="#FF8E4E"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
                 <!-- Action Buttons -->
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/btn_signin_action"
+                    android:id="@+id/btn_register_action"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="28dp"
                     android:background="@drawable/bg_gradient_button"
-                    android:text="Sign In ✦"
+                    android:text="Create Account ✦"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
                     android:textSize="16sp"
@@ -227,13 +239,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Don't have an account? "
+                        android:text="Already have an account? "
                         android:textColor="#8F7A6A" />
                     <TextView
-                        android:id="@+id/tv_footer_signup"
+                        android:id="@+id/tv_footer_signin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Sign Up"
+                        android:text="Sign In"
                         android:textColor="#FF8E4E"
                         android:textStyle="bold" />
                 </LinearLayout>

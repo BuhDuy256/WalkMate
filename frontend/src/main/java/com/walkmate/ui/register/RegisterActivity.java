@@ -1,4 +1,4 @@
-package com.walkmate.ui.login;
+package com.walkmate.ui.register;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -15,22 +15,22 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.walkmate.frontend.R;
-import com.walkmate.ui.register.RegisterActivity;
+import com.walkmate.ui.login.LoginActivity;
 
-public class LoginActivity extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_register);
 
         Window window = getWindow();
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         window.setStatusBarColor(Color.TRANSPARENT);
 
-        View mainView = findViewById(R.id.login);
+        View mainView = findViewById(R.id.register);
         if (mainView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -43,26 +43,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void initClickListeners() {
-        AppCompatButton btnTabSignUp = findViewById(R.id.btn_tab_signup);
-        TextView tvFooterSignUp = findViewById(R.id.tv_footer_signup);
+        AppCompatButton btnTabSignIn = findViewById(R.id.btn_tab_signin_reg);
+        TextView tvFooterSignIn = findViewById(R.id.tv_footer_signin);
 
-        View.OnClickListener goToRegister = v -> {
-            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+        View.OnClickListener goToLogin = v -> {
+            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
-            // Simple transition
+            // Add a simple transition
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         };
 
-        if (btnTabSignUp != null) btnTabSignUp.setOnClickListener(goToRegister);
-        if (tvFooterSignUp != null) tvFooterSignUp.setOnClickListener(goToRegister);
-        
-        // Setup Sign In action (for future implementation)
-        AppCompatButton btnSignInAction = findViewById(R.id.btn_signin_action);
-        if (btnSignInAction != null) {
-            btnSignInAction.setOnClickListener(v -> {
-                // Handle Login Logic
-            });
-        }
+        if (btnTabSignIn != null) btnTabSignIn.setOnClickListener(goToLogin);
+        if (tvFooterSignIn != null) tvFooterSignIn.setOnClickListener(goToLogin);
     }
 }

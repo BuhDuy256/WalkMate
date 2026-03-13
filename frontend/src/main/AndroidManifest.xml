@@ -22,6 +22,10 @@
         </activity>
 
         <activity
+            android:name="com.walkmate.ui.register.RegisterActivity"
+            android:exported="false" />
+
+        <activity
             android:name="com.walkmate.ui.main.MainActivity"
             android:exported="false" />
 
