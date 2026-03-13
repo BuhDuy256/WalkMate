@@ -91,41 +91,47 @@ WalkIntent là aggregate quản lý giai đoạn trước khi giá trị đượ
 ---
 
 ## 4.1 Tạo WalkIntent
-
-Người dùng xác định:
-
-- Time (Now hoặc Scheduled)
+Người dùng xác định lịch trình:
+- Scheduled Time (Dự kiến thời gian bắt đầu và kết thúc; có thể bắt đầu từ thời điểm hiện tại)
 - Walk Purpose
 - Snapshot Location
-- Matching constraints
+- Matching constraints (Khoảng cách, Giới tính, Tuổi)
 
-WalkIntent tồn tại độc lập với WalkSession.
+Lưu ý kiến trúc:
+- Không tồn tại cơ chế "Quick Match".
+- Nếu người dùng chọn thời điểm hiện tại (startTime = currentTime), đây vẫn là một Scheduled WalkIntent bình thường.
+- WalkIntent luôn đi qua lifecycle chuẩn và không được bypass MatchProposal.
+
+WalkIntent tồn tại độc lập với WalkSession và mang trạng thái OPEN.
 
 ---
 
 ## 4.2 Matching
-
 Hệ thống:
-
-- So khớp theo Time
-- So khớp Purpose
+- So khớp theo Scheduled Time window (bao gồm cả trường hợp startTime = currentTime)
+- So khớp Location và Purpose
 - Áp dụng constraints
 - Kiểm tra Block
-- Ghép ngẫu nhiên
 
-Matching chỉ tạo **MatchSuggestion**, chưa tạo Session.
+Matching luôn tạo ra **MatchProposal** ở trạng thái PENDING.
+
+Không có cơ chế auto-create WalkSession.
+Không có cơ chế bỏ qua bước xác nhận song phương.
 
 ---
 
 ## 4.3 Mutual Confirmation (Value Boundary)
 
-Khi:
+Khi cả hai bên xác nhận (acceptedByA == true và acceptedByB == true):
+→ MatchProposal chuyển sang CONFIRMED.
+→ Domain Service khóa WalkIntents liên quan.
+→ Kiểm tra lại Invariants (không trùng lặp lịch, intent vẫn OPEN).
+→ Tạo **WalkSession ở trạng thái PENDING**.
+→ Các WalkIntents liên quan chuyển sang CONSUMED.
 
-- Hai bên đồng ý thời gian và địa điểm
-
-→ Domain Service tạo **WalkSession ở trạng thái PENDING**
-
-Đây là **VALUE REALIZATION BOUNDARY**.
+Lưu ý:
+Không có trường hợp tạo WalkSession nếu chưa CONFIRMED.
+Không tồn tại đường đi trực tiếp từ WalkIntent sang WalkSession.
 
 ---
 
@@ -158,12 +164,16 @@ Terminal states là immutable.
 
 ## 5.3 ACTIVE
 
-- Ít nhất 1 người nhấn “Start Walk”
-- GPS tracking bật
-- Có thể:
-  - Complete → COMPLETED
-  - Report no-show → NO_SHOW
-  - Auto-complete (planned duration / safety limit)
+- Chỉ xảy ra khi CẢ HAI người đã nhấn “Start Walk” trong activation window.
+- GPS tracking bật.
+- Chat vẫn mở.
+
+Có thể:
+- Complete → COMPLETED (khi đạt minimum duration)
+- Auto-complete (khi đạt planned duration hoặc safety limit)
+
+Không tồn tại cơ chế report no-show trong ACTIVE.
+ACTIVE không thể chuyển sang NO_SHOW bằng hành động đơn phương.
 
 ---
 
@@ -178,10 +188,12 @@ Terminal states là immutable.
 
 ## 5.5 NO_SHOW
 
-- Auto sau grace period
-- Hoặc user report trong 15 phút đầu
-- Áp dụng penalty
-- Terminal & immutable
+- Xảy ra tự động khi activation window kết thúc mà:
+  - Không đủ hai người activate.
+- Áp dụng penalty theo policy.
+- Terminal & immutable.
+
+Không tồn tại NO_SHOW từ ACTIVE.
 
 ---
 
@@ -196,17 +208,17 @@ Terminal states là immutable.
 # 6. Activation & Completion Rules
 
 ## Activation Window
-
 - Từ Start_Time -15 phút
 - Đến Start_Time +30 phút
 
-## Minimum Duration
+Session chỉ được chuyển sang ACTIVE nếu cả hai activate trong khoảng này.
 
-- ≥ 5 phút để được COMPLETE
+## Minimum Duration
+- ≥ 5 phút để được COMPLETE.
+- Không được COMPLETE nếu chưa đạt minimum duration.
 
 ## Safety Limit
-
-- Auto complete sau 4 giờ
+- ACTIVE sẽ tự động COMPLETE khi đạt giới hạn an toàn (ví dụ 4 giờ).
 
 ---
 
@@ -237,9 +249,12 @@ Người dùng có thể thiết lập:
 
 Áp dụng trong Coordination Phase.
 
-Không áp dụng cho Direct Invite.
+Không áp dụng cho Direct Invite. Tuy nhiên, Direct Invite không bypass Invariant:
+- Vẫn phải thỏa mãn time overlap.
+- Vẫn phải thỏa mãn trạng thái OPEN của WalkIntent.
+- Vẫn phải đi qua MatchProposal → CONFIRMED → WalkSession.
 
-Server kiểm tra Block trước khi tạo MatchSuggestion.
+Server kiểm tra Block trước khi tạo MatchProposal.
 
 ---
 
@@ -257,7 +272,7 @@ Server kiểm tra Block trước khi tạo MatchSuggestion.
 
 Nếu Block:
 
-- Không tạo MatchSuggestion
+- Không tạo MatchProposal
 - Không tạo WalkSession
 - Không chat
 
@@ -282,21 +297,24 @@ Cả hai đều đi qua Coordination Phase trước khi vào Lifecycle Phase.
 
 # 11. Notification System
 
-Push được kích hoạt bởi Domain Events:
+Push được kích hoạt bởi Domain Events phản ánh chính xác Lifecycle:
 
 ## Coordination Phase
-
-- MatchSuggestion created
-- Mutual confirmation
+- MatchProposalCreated (PENDING)
+- MatchProposalConfirmed
+- MatchProposalRejected
+- MatchProposalExpired
 
 ## Lifecycle Phase
+- WalkSessionCreated (state = PENDING)
+- WalkSessionActivated (state = ACTIVE)
+- WalkSessionCancelled
+- WalkSessionNoShow (do thiếu activation trong activation window)
+- WalkSessionCompleted
+- New chat message
 
-- WalkSessionCreated
-- Activated
-- Cancelled
-- No-show
-- Completed
-- New message
+Không tồn tại event "Quick Match".
+Không tồn tại event auto-create session.
 
 Server là nguồn duy nhất phát sự kiện.
 
@@ -349,14 +367,12 @@ Chỉ tính COMPLETED.
 
 # 15. Reporting & Dispute
 
-Report gắn với:
+Report gắn với session_id.
 
-- session_id
+Dispute chỉ áp dụng cho COMPLETED hoặc NO_SHOW.
 
-NO_SHOW mở dispute window 24h.
-
-Terminal state không bị mutate.
-Correction thông qua compensation event.
+Dispute không làm thay đổi state của WalkSession.
+Correction được xử lý thông qua compensation event (ví dụ điều chỉnh TrustScore), không mutate state.
 
 ---
 
@@ -371,7 +387,7 @@ Theo dõi:
 Có thể:
 
 - Giảm ưu tiên matching
-- Hạn chế Quick Match
+- Hạn chế tạo WalkIntent mới trong cùng time window
 
 Thực hiện tự động qua Domain Events.
 
