@@ -162,8 +162,6 @@ CREATE INDEX idx_walk_intent_active ON walk_intent(user_id, status) WHERE status
 
 CREATE TYPE proposal_status AS ENUM (
     'PENDING', 
-    'ACCEPTED_BY_A', 
-    'ACCEPTED_BY_B', 
     'CONFIRMED', 
     'REJECTED', 
     'EXPIRED'
@@ -178,6 +176,8 @@ CREATE TABLE match_proposal (
     proposed_location GEOGRAPHY(POINT, 4326) NOT NULL,
     proposed_location_lat DOUBLE PRECISION NOT NULL,
     proposed_location_lng DOUBLE PRECISION NOT NULL,
+    accepted_by_a BOOLEAN NOT NULL DEFAULT FALSE,
+    accepted_by_b BOOLEAN NOT NULL DEFAULT FALSE,
     status proposal_status NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL,
@@ -217,12 +217,16 @@ CREATE TABLE walk_session (
     user2_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE RESTRICT,
     scheduled_start_time TIMESTAMP NOT NULL,
     scheduled_end_time TIMESTAMP NOT NULL,
+    user1_activated_at TIMESTAMP,
+    user2_activated_at TIMESTAMP,
     actual_start_time TIMESTAMP,
     actual_end_time TIMESTAMP,
     status session_status NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     source_intent_id_a UUID REFERENCES walk_intent(intent_id),
     source_intent_id_b UUID REFERENCES walk_intent(intent_id),
+    cancellation_reason VARCHAR(255),
+    cancelled_by UUID REFERENCES user_account(user_id) ON DELETE SET NULL,
     
     CONSTRAINT different_users CHECK (user1_id != user2_id),
     CONSTRAINT valid_scheduled_time CHECK (scheduled_end_time > scheduled_start_time),
