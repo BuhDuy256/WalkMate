@@ -38,6 +38,7 @@
 - **Evidence:**
 - [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-24?atlOrigin=eyJpIjoiN2VmYTBkOTU4MzE3NGQ3ZjlhNjQxYjFlMDdmYmE0OWEiLCJwIjoiaiJ9)
 - [Github branch](https://github.com/BuhDuy256/WalkMate/tree/auth_activity)
+- [UI Screenshot](https://drive.google.com/drive/folders/1tJM2Ivv9qVIPDVKnjX0R6FbRxBnJpGm4?usp=sharing)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
@@ -70,8 +71,11 @@
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: Tổ chức project Backend Spring Boot theo DDD như thế nào?
+- **Evidence:** [ChatGPT](https://chatgpt.com/share/69b558f6-38e0-800b-a781-34f1911d9ac7)
+
+- Prompt 2: Làm sao để chạy project với gradle?
+- **Evidence:** [ChatGPT](https://chatgpt.com/share/69b558b7-72f0-800b-9115-3979aff68317)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
