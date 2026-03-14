@@ -1,20 +1,54 @@
-1. Tầng Core Domain (Dành cho code của Bước 2):
+# Implementation Order
 
-Định nghĩa các Aggregate Roots, Entities, Value Objects.
-Định nghĩa Lifecycle Enum (VD: PENDING, ACTIVE...).
-Code các hàm State Transitions, ném lỗi (Domain Exceptions) ngay ở tầng Domain nếu cố tình thực hiện transition sai logic hoặc vi phạm Invariant. (Ở bước này, code hoàn toàn thuần túy, không dính dáng gì đến framework, database hay framework HTTP).
-2. Tầng Data / Persistence (Dành cho code của Bước 3):
+## 1. Tầng Core Domain
+> Nhìn vào: `2-domain-lifecycle-statemachine-invariants-stresstest.workflow.md`
 
-Chạy script Database Migration để tạo table (walk_session, walk_trace...).
-Cài đặt các DB Constraints (Unique Index, Check Constraints) mà bạn đã vạch ra để chặn Invariants tầng cuối.
-Code Repository Interfaces và Implementation xử lý lưu DB (kèm lock concurrency phòng Stress Test).
-3. Tầng Application / Use Cases (Dành cho code của Bước 1 & Stress Test Bước 2):
+- Định nghĩa các Aggregate Roots, Entities, Value Objects
+- Định nghĩa Lifecycle Enum (VD: `PENDING`, `ACTIVE`...)
+- Code các hàm State Transitions, ném `DomainException` ngay ở tầng Domain nếu:
+  - Transition sai logic
+  - Invariant bị vi phạm
+- ⚠️ Code hoàn toàn thuần túy — không import gì từ framework, database, hay HTTP
 
-Viết các Services (ví dụ: StartWalkSessionUseCase, EndWalkSessionUseCase...).
-Gọi Repository lưu Aggregate. Sử dụng Transaction để đảm bảo tính ACID, đảm bảo bắt lỗi fail/retry theo đúng kịch bản thiết kế Stress Test.
-4. Tầng Presentation (API/Controllers):
+---
 
-Expose các Use Case thành REST/GraphQL Endpoints...
-5. Viết Tests (Dành cho Invariants & Stress Test):
+## 2. Tầng Data / Persistence
+> Nhìn vào: `3-from-lifecycle-spec-to-data-model.md`
 
-Biến các kịch bản Stress Test và Invariants thành Integration Tests hoặc Unit Tests (Vd: Gọi hàm Pay đồng thời 2 lần xem Optimistic Locking đã ném lỗi chuẩn chưa).
+- Chạy script Database Migration để tạo table (`walk_session`, `walk_trace`...)
+- Cài đặt DB Constraints:
+  - `UNIQUE INDEX` cho invariants dạng uniqueness
+  - `CHECK` constraint cho invariants dạng điều kiện
+- Code Repository Interfaces (ở Domain Layer) và Implementation (ở Infrastructure Layer)
+- Xử lý concurrency theo kết quả Stress Test (Optimistic Locking / `SELECT FOR UPDATE`)
+
+---
+
+## 3. Tầng Application / Use Cases
+> Nhìn vào: `1-use-cases-detection.workflow.md` + Stress Test output
+
+- Viết các Use Cases (VD: `StartWalkSessionUseCase`, `EndWalkSessionUseCase`...)
+- Gọi Repository để load và save Aggregate
+- Wrap trong **Transaction** nếu có nhiều write
+- Xử lý fail/retry theo đúng kịch bản Stress Test
+
+---
+
+## 4. Tầng Presentation (API / Controllers)
+> Nhìn vào: Use Case interfaces từ Bước 3
+
+- Expose các Use Case thành REST Endpoints
+- Map Exceptions → HTTP Status Code:
+  - `DomainException` → 422
+  - `NotFoundError` → 404
+  - `ConflictError` → 409
+
+---
+
+## 5. Tests
+> Nhìn vào: Invariants list + Stress Test output từ Bước 2
+
+- **Unit Tests**: mỗi State Transition + mỗi Invariant violation → 1 test
+- **Integration Tests**: mỗi kịch bản Stress Test → 1 test
+  - VD: Gọi `payOrder()` đồng thời 2 lần → assert chỉ 1 thành công
+  - VD: Retry 3 lần → assert không duplicate side effect
