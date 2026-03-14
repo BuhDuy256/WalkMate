@@ -44,7 +44,7 @@
 
 ## AI Usage Declaration
 
-### 23127179 – Nguyễn Bảo Duy
+### 23127179 – Nguyễn Bảo Duy (Couldn't share link because errors from ChatGPT for Education Model)
 
 - Prompt 1: "Code GPS Route Tracking bằng Android Java làm như thế nào? Có dùng Rest ko? Payload của Frontend gửi tới Backend là gì? Service Logic phải xử lí như nào? DB lưu như nào?"
 - **Evidence:** ![alt text](./images/{F7312781-9B14-4B91-9811-B4FF19530259}.png)
