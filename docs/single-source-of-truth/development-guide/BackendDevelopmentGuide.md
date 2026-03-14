@@ -12,6 +12,12 @@ We strictly adhere to a **DDD-lite (Domain-Driven Design)** layered architecture
 
 ### 1.1 Folder Tree
 
+> ⚠️ **AI / LLM INSTRUCTION: STRICT FOLDER RULES** ⚠️
+> **Read this carefully:** The architecture is NOT "Package-by-Feature".
+> The `domain/` directory is the **ONLY** place where features (like `/session/` or `/intent/`) are actively given sub-folders.
+> The other layers (`application/`, `presentation/`, `infrastructure/`) MUST REMAIN FLAT. You must **NEVER** create paths like `application/session/` or `presentation/session/controller/`.
+> Put controllers directly in `presentation/controller/`, and UseCases directly in `application/`.
+
 ```text
 com.walkmate
 ├── application           # Usecase coordination & transaction boundaries (Services)
@@ -243,6 +249,9 @@ When adding a new feature (e.g., updating a user's location):
 
 ### 4.2 File Layout for New Feature (Example: "Session")
 This layout is strictly enforced. Do not group files randomly.
+
+> ⚠️ **AI / LLM INSTRUCTION: DO NOT NEST BY FEATURE** ⚠️
+> Look at the example below. Notice that `CreateSessionUseCase.java` goes *directly* into `application/`. It does NOT go into `application/session/`. Do NOT hallucinate extra feature folders outside of the `domain/` layer.
 
 ```text
 presentation/

@@ -7,6 +7,7 @@
 -- Enable Required Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
+CREATE EXTENSION IF NOT EXISTS "btree_gist";
 
 -- =====================================================
 -- IDENTITY & ACCESS CONTEXT
@@ -146,9 +147,13 @@ CREATE TABLE walk_intent (
 );
 
 -- 🔴 INVARIANT 2: No overlapping OPEN intents for same user
--- Note: This is enforced at application layer due to complexity of overlap detection
--- Application must check: EXISTS (SELECT 1 FROM walk_intent WHERE user_id = ? AND status = 'OPEN' 
---   AND time_window_start < ? AND time_window_end > ?)
+-- Enforced at the database level using a GiST exclusion constraint to guarantee domain invariants
+ALTER TABLE walk_intent ADD CONSTRAINT no_overlapping_open_intents 
+    EXCLUDE USING gist (
+        user_id WITH =, 
+        tsrange(time_window_start, time_window_end) WITH &&
+    ) 
+    WHERE (status = 'OPEN');
 
 CREATE INDEX idx_walk_intent_user ON walk_intent(user_id);
 CREATE INDEX idx_walk_intent_status ON walk_intent(status);
@@ -192,13 +197,27 @@ CREATE TABLE match_proposal (
 );
 
 -- 🔴 INVARIANT 3: One PENDING proposal per intent at a time
-CREATE UNIQUE INDEX idx_proposal_pending_intent_a 
-    ON match_proposal(intent_id_a) 
-    WHERE status = 'PENDING';
+-- Replaced flawed unique indexes with a strict database trigger to prevent cross-column exploits
+CREATE OR REPLACE FUNCTION check_pending_proposal_overlap()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM match_proposal
+        WHERE status = 'PENDING'
+        AND proposal_id != NEW.proposal_id
+        AND (intent_id_a IN (NEW.intent_id_a, NEW.intent_id_b) OR intent_id_b IN (NEW.intent_id_a, NEW.intent_id_b))
+    ) THEN
+        RAISE EXCEPTION 'One of the intents already has a PENDING proposal.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE UNIQUE INDEX idx_proposal_pending_intent_b 
-    ON match_proposal(intent_id_b) 
-    WHERE status = 'PENDING';
+CREATE TRIGGER trg_check_pending_proposal
+BEFORE INSERT OR UPDATE ON match_proposal
+FOR EACH ROW
+WHEN (NEW.status = 'PENDING')
+EXECUTE FUNCTION check_pending_proposal_overlap();
 
 CREATE INDEX idx_match_proposal_intent_a ON match_proposal(intent_id_a);
 CREATE INDEX idx_match_proposal_intent_b ON match_proposal(intent_id_b);
@@ -209,7 +228,7 @@ CREATE INDEX idx_match_proposal_expires ON match_proposal(expires_at) WHERE stat
 -- WALK LIFECYCLE CONTEXT
 -- =====================================================
 
-CREATE TYPE session_status AS ENUM ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED');
+CREATE TYPE session_status AS ENUM ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED', 'ABORTED');
 
 CREATE TABLE walk_session (
     session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -237,10 +256,10 @@ CREATE TABLE walk_session (
     ),
     CONSTRAINT terminal_immutable CHECK (
         -- Terminal states cannot be modified (application enforced)
-        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED')
+        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED', 'ABORTED')
     ),
     CONSTRAINT no_overlap_in_status CHECK (
-        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED')
+        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED', 'ABORTED')
     )
 );
 
@@ -366,6 +385,7 @@ CREATE TABLE trust_score (
     completed_sessions INTEGER DEFAULT 0,
     cancelled_sessions INTEGER DEFAULT 0,
     no_show_sessions INTEGER DEFAULT 0,
+    aborted_sessions INTEGER DEFAULT 0,
     last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_score CHECK (score >= 0 AND score <= 1000),
@@ -374,7 +394,8 @@ CREATE TABLE trust_score (
         completed_sessions >= 0 AND
         cancelled_sessions >= 0 AND
         no_show_sessions >= 0 AND
-        completed_sessions + cancelled_sessions + no_show_sessions <= total_sessions
+        aborted_sessions >= 0 AND
+        completed_sessions + cancelled_sessions + no_show_sessions + aborted_sessions <= total_sessions
     )
 );
 
