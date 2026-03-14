@@ -33,7 +33,11 @@
 ### 23127438 – Đặng Trường Nguyên
 
 - Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Implement register/login flow.
+- Status: Register flow is finished (for both FE and BE). Login flow is not finished yet (Only FE is implemented).
+- **Evidence:**
+- [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-24?atlOrigin=eyJpIjoiN2VmYTBkOTU4MzE3NGQ3ZjlhNjQxYjFlMDdmYmE0OWEiLCJwIjoiaiJ9)
+- [Github branch](https://github.com/BuhDuy256/WalkMate/tree/auth_activity)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
