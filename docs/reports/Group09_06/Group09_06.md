@@ -37,8 +37,11 @@
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Task 1 description
+- Task: Implement rating flow
+- Status: Not finished. Just learn about the flow that meet MVVM architecture and implement the UI. Haven't finish the BE implementation yet and the architecture of the flow.
 - **Evidence:** _(Jira screenshot link / output document / artifact)_
+- [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-27)
+- [Github branch](https://github.com/BuhDuy256/WalkMate/tree/feature/rating)
 
 ---
 
