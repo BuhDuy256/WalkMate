@@ -19,6 +19,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
+import com.walkmate.data.model.WalkTag;
+import com.walkmate.data.model.WalkTagData;
+import android.content.res.ColorStateList;
 
 public class RatingActivity extends AppCompatActivity {
 
@@ -61,19 +64,12 @@ public class RatingActivity extends AppCompatActivity {
         btnLater = findViewById(R.id.btnLater);
         progressBar = findViewById(R.id.progressBar);
 
-        // Create default chips
-        String[] defaultTags = {"Friendly", "On-time", "Great chat", "Good pace", "Nature lover", "Safe route"};
-
-        for (String tag : defaultTags) {
-            Chip chip = new Chip(this);
-            chip.setText(tag);
-            chip.setCheckable(true);
-            chip.setClickable(true);
-
-            chip.setOnClickListener(v -> viewModel.toggleTag(tag));
-
-            chipGroupTags.addView(chip);
-        }
+        // Create chips from WalkTagData
+        ChipGroupSetup.setupChipGroup(
+                chipGroupTags,
+                this,
+                tag -> viewModel.toggleTag(tag.getName())
+        );
     }
 
     private void setupListeners() {
