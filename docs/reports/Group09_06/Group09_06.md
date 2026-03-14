@@ -42,6 +42,7 @@
 - **Evidence:** _(Jira screenshot link / output document / artifact)_
 - [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-27)
 - [Github branch](https://github.com/BuhDuy256/WalkMate/tree/feature/rating)
+- [UI Screenshot](https://drive.google.com/file/d/1MRHtxsrDjqBIElg20mKst3uqvNjvAimh/view?usp=sharing)
 
 ---
 
@@ -70,8 +71,8 @@
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: Giải thích mô hình MVVM-lite + Repository pattern + Backend as Single Source of Truth.
+- - **Evidence:** [ChatGPT](https://chatgpt.com/share/69b549fa-9c58-800a-aaeb-eb04e854a726)
 
 ---
 
