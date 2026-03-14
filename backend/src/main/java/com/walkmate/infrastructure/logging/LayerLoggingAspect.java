@@ -22,7 +22,7 @@ public class LayerLoggingAspect {
     /**
      * Log request in/out for Controller layer
      */
-    @Around("within(com.walkmate.controller..*)")
+    @Around("within(com.walkmate.presentation.controller..*)")
     public Object logControllerAccess(ProceedingJoinPoint joinPoint) throws Throwable {
         Instant start = Instant.now();
         String methodName = joinPoint.getSignature().getName();
