@@ -40,35 +40,23 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
-
-**Screenshots / Chat History:** _(attach files or paste links)_
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
-
-**Screenshots / Chat History:** _(attach files or paste links)_
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
 
 ### 23127438 – Đặng Trường Nguyên
 
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
-
-**Screenshots / Chat History:** _(attach files or paste links)_
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-| #   | Tool & Version          | Access Time                | Prompt Used | Purpose                    | Content Generated      | Student Validation            |
-| --- | ----------------------- | -------------------------- | ----------- | -------------------------- | ---------------------- | ----------------------------- |
-| 1   | _(e.g., ChatGPT GPT-4)_ | _(e.g., 2026-03-03 14:00)_ | _"..."_     | _(e.g., assist section X)_ | _(describe AI output)_ | _(describe edits/validation)_ |
-
-**Screenshots / Chat History:** _(attach files or paste links)_
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
 
 ---
 
