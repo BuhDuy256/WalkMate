@@ -18,9 +18,7 @@
 
 - Implement end-to-end walk session flow
 - Status: Not finished. Finished BE implementation. Didn't finish FE.
-- **Evidence:**
-- [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-26)
-- [Github branch](https://github.com/BuhDuy256/WalkMate/tree/features/walk-session)
+- **Evidence:** [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-26), [Github branch](https://github.com/BuhDuy256/WalkMate/tree/features/walk-session)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -44,10 +42,10 @@
 ### 23127179 – Nguyễn Bảo Duy
 
 - Prompt 1: "Code GPS Route Tracking bằng Android Java làm như thế nào? Có dùng Rest ko? Payload của Frontend gửi tới Backend là gì? Service Logic phải xử lí như nào? DB lưu như nào?"
-- **Evidence:** [ChatGPT](https://chatgpt.com/share/e/69b52aaa-82b4-800a-9959-0875fb1628be)
+- **Evidence:** ![alt text](./images/{F7312781-9B14-4B91-9811-B4FF19530259}.png)
 
 - Prompt 2: Domain Lifecycle, State Machine, Invariant, Stress Test. Cho tôi thứ tự của mấy cái này?
-- **Evidence:** [ChatGPT](https://chatgpt.com/share/e/69b52afd-dc0c-800a-869e-7b426121ce2b)
+- **Evidence:** ![alt text](./images/{F4683CA4-2D96-4F42-AA07-78B60644AF25}.png)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
