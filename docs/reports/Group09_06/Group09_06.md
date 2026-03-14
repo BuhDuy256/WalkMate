@@ -17,15 +17,18 @@
 ### 23127179 – Nguyễn Bảo Duy
 
 - Implement end-to-end walk session flow
-- Status: Not finished. Finished BE implementation. Didn't finish FE.
+- Status: Not finished. Finished BE implementation. Haven't finish FE yet.
 - **Evidence:**
 - [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-26)
 - [Github branch](https://github.com/BuhDuy256/WalkMate/tree/features/walk-session)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Implement walk intent flow
+- Status: Not finished. Finished BE implementation. Haven't finish FE yet.
+- **Evidence:**
+- [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-25)
+- [Github branch](https://github.com/BuhDuy256/WalkMate/tree/features/walk-intent)
 
 ### 23127438 – Đặng Trường Nguyên
 
@@ -51,8 +54,11 @@
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: giải thích về phương pháp thiết kế DDD
+- **Evidence:** [ChatGPT](https://chatgpt.com/share/69b5316a-5184-8003-9007-41940983f19e)
+
+- Prompt 2: giải thích cho tôi về DDD
+- **Evidence:** [Gemini](https://gemini.google.com/share/e5365736ba73)
 
 ### 23127438 – Đặng Trường Nguyên
 
