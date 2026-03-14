@@ -22,16 +22,25 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.walkmate.frontend.R;
+import com.walkmate.network.ApiClient;
+import com.walkmate.network.AuthApiService;
+import com.walkmate.network.ApiResponse;
 import com.walkmate.ui.login.LoginActivity;
 
 import java.util.regex.Pattern;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RegisterActivity extends AppCompatActivity {
     private EditText etFullName;
     private EditText etEmail;
     private EditText etPassword;
     private ImageView ivTogglePassword;
+    private AppCompatButton btnRegisterAction;
     private boolean isPasswordVisible = false;
+    private final AuthApiService authApiService = ApiClient.getAuthApiService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,14 +104,63 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void initRegisterAction(){
-        AppCompatButton btnRegisterAction = findViewById(R.id.btn_register_action);
+        btnRegisterAction = findViewById(R.id.btn_register_action);
         if (btnRegisterAction != null) {
             btnRegisterAction.setOnClickListener(v -> {
                 if (validateInput()) {
-                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
+                    submitRegister();
                 }
             });
         }
+    }
+
+    private void submitRegister() {
+        setRegisterLoading(true);
+
+        RegisterRequest request = new RegisterRequest(
+                etFullName.getText().toString().trim(),
+                etEmail.getText().toString().trim(),
+                etPassword.getText().toString().trim()
+        );
+
+        authApiService.register(request).enqueue(new Callback<ApiResponse>() {
+            @Override
+            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                setRegisterLoading(false);
+
+                ApiResponse body = response.body();
+                if (response.isSuccessful() && body != null && "success".equalsIgnoreCase(body.getCode())) {
+                    Toast.makeText(RegisterActivity.this, body.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    return;
+                }
+
+                String message = body != null && body.getMessage() != null
+                        ? body.getMessage()
+                        : response.code() == 409 ? "Email already exists" : "Registration failed with status code: " + response.code();
+                Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
+                
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable throwable) {
+                setRegisterLoading(false);
+                Toast.makeText(RegisterActivity.this, "Cannot connect to backend: " + throwable.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void setRegisterLoading(boolean isLoading) {
+        if (btnRegisterAction == null) {
+            return;
+        }
+
+        btnRegisterAction.setEnabled(!isLoading);
+        btnRegisterAction.setText(isLoading ? "Creating..." : "Create Account ✦");
     }
 
     private boolean validateInput() {
