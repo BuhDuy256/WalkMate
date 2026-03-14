@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace = "com.walkmate.frontend"
+    namespace = "com.walkmate"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.walkmate.frontend"
+        applicationId = "com.walkmate"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
