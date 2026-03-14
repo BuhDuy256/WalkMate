@@ -19,72 +19,72 @@ import java.time.Instant;
 @Slf4j
 public class LayerLoggingAspect {
 
-    /**
-     * Log request in/out for Controller layer
-     */
-    @Around("within(com.walkmate.controller..*)")
-    public Object logControllerAccess(ProceedingJoinPoint joinPoint) throws Throwable {
-        Instant start = Instant.now();
-        String methodName = joinPoint.getSignature().getName();
-        String className = joinPoint.getTarget().getClass().getSimpleName();
-        
-        HttpServletRequest request = null;
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            request = attributes.getRequest();
-        }
+  /**
+   * Log request in/out for Controller layer
+   */
+  @Around("within(com.walkmate.presentation.controller..*)")
+  public Object logControllerAccess(ProceedingJoinPoint joinPoint) throws Throwable {
+    Instant start = Instant.now();
+    String methodName = joinPoint.getSignature().getName();
+    String className = joinPoint.getTarget().getClass().getSimpleName();
 
-        if (request != null) {
-            log.info("REST REQUEST | {} {} | Method: {}.{}", 
-                    request.getMethod(), request.getRequestURI(), className, methodName);
-        } else {
-            log.info("REST REQUEST | Method: {}.{}", className, methodName);
-        }
-
-        try {
-            Object result = joinPoint.proceed();
-            long elapsedTime = Duration.between(start, Instant.now()).toMillis();
-            
-            if (request != null) {
-                log.info("REST RESPONSE | {} {} | STATUS: OK | Time: {}ms", 
-                        request.getMethod(), request.getRequestURI(), elapsedTime);
-            } else {
-                log.info("REST RESPONSE | Method: {}.{} | STATUS: OK | Time: {}ms", className, methodName, elapsedTime);
-            }
-            return result;
-        } catch (Throwable e) {
-            long elapsedTime = Duration.between(start, Instant.now()).toMillis();
-            if (request != null) {
-                log.warn("REST EXCEPTION | {} {} | STATUS: ERROR | Time: {}ms | Error: {}", 
-                        request.getMethod(), request.getRequestURI(), elapsedTime, e.getMessage());
-            } else {
-                log.warn("REST EXCEPTION | Method: {}.{} | STATUS: ERROR | Time: {}ms | Error: {}", 
-                        className, methodName, elapsedTime, e.getMessage());
-            }
-            throw e; // Let the GlobalExceptionHandler handle it
-        }
+    HttpServletRequest request = null;
+    ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+    if (attributes != null) {
+      request = attributes.getRequest();
     }
 
-    /**
-     * Log request in/out for Application (Service) layer
-     */
-    @Around("within(com.walkmate.application..*)")
-    public Object logApplicationAccess(ProceedingJoinPoint joinPoint) throws Throwable {
-        String methodName = joinPoint.getSignature().getName();
-        String className = joinPoint.getTarget().getClass().getSimpleName();
-        
-        log.debug("SERVICE ENTER | {}.{}", className, methodName);
-        
-        Instant start = Instant.now();
-        try {
-            Object result = joinPoint.proceed();
-            long elapsedTime = Duration.between(start, Instant.now()).toMillis();
-            log.debug("SERVICE EXIT  | {}.{} | Time: {}ms", className, methodName, elapsedTime);
-            return result;
-        } catch (Throwable e) {
-            long elapsedTime = Duration.between(start, Instant.now()).toMillis();
-            log.debug("SERVICE ERROR | {}.{} | Time: {}ms | Error: {}", className, methodName, elapsedTime, e.getMessage());
-            throw e;
-        }
+    if (request != null) {
+      log.info("REST REQUEST | {} {} | Method: {}.{}",
+          request.getMethod(), request.getRequestURI(), className, methodName);
+    } else {
+      log.info("REST REQUEST | Method: {}.{}", className, methodName);
     }
+
+    try {
+      Object result = joinPoint.proceed();
+      long elapsedTime = Duration.between(start, Instant.now()).toMillis();
+
+      if (request != null) {
+        log.info("REST RESPONSE | {} {} | STATUS: OK | Time: {}ms",
+            request.getMethod(), request.getRequestURI(), elapsedTime);
+      } else {
+        log.info("REST RESPONSE | Method: {}.{} | STATUS: OK | Time: {}ms", className, methodName, elapsedTime);
+      }
+      return result;
+    } catch (Throwable e) {
+      long elapsedTime = Duration.between(start, Instant.now()).toMillis();
+      if (request != null) {
+        log.warn("REST EXCEPTION | {} {} | STATUS: ERROR | Time: {}ms | Error: {}",
+            request.getMethod(), request.getRequestURI(), elapsedTime, e.getMessage());
+      } else {
+        log.warn("REST EXCEPTION | Method: {}.{} | STATUS: ERROR | Time: {}ms | Error: {}",
+            className, methodName, elapsedTime, e.getMessage());
+      }
+      throw e; // Let the GlobalExceptionHandler handle it
+    }
+  }
+
+  /**
+   * Log request in/out for Application (Service) layer
+   */
+  @Around("within(com.walkmate.application..*)")
+  public Object logApplicationAccess(ProceedingJoinPoint joinPoint) throws Throwable {
+    String methodName = joinPoint.getSignature().getName();
+    String className = joinPoint.getTarget().getClass().getSimpleName();
+
+    log.debug("SERVICE ENTER | {}.{}", className, methodName);
+
+    Instant start = Instant.now();
+    try {
+      Object result = joinPoint.proceed();
+      long elapsedTime = Duration.between(start, Instant.now()).toMillis();
+      log.debug("SERVICE EXIT  | {}.{} | Time: {}ms", className, methodName, elapsedTime);
+      return result;
+    } catch (Throwable e) {
+      long elapsedTime = Duration.between(start, Instant.now()).toMillis();
+      log.debug("SERVICE ERROR | {}.{} | Time: {}ms | Error: {}", className, methodName, elapsedTime, e.getMessage());
+      throw e;
+    }
+  }
 }

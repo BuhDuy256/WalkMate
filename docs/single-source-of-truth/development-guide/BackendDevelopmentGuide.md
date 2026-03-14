@@ -16,11 +16,14 @@ We strictly adhere to a **DDD-lite (Domain-Driven Design)** layered architecture
 > **Read this carefully:** The architecture is NOT "Package-by-Feature".
 > The `domain/` directory is the **ONLY** place where features (like `/session/` or `/intent/`) are actively given sub-folders.
 > The other layers (`application/`, `presentation/`, `infrastructure/`) MUST REMAIN FLAT. You must **NEVER** create paths like `application/session/` or `presentation/session/controller/`.
-> Put controllers directly in `presentation/controller/`, and UseCases directly in `application/`.
+> Put controllers directly in `presentation/controller/`, and Services directly in `application/`.
+
+> Terminology convention: In this guide, a "Use Case" is implemented as an **Application Service** class.
+> Naming standard is `*Service` (e.g., `CompleteSessionService`).
 
 ```text
 com.walkmate
-├── application           # Usecase coordination & transaction boundaries (Services)
+├── application           # Service coordination & transaction boundaries
 ├── domain                # Core business logic, Entities, Value Objects, Domain Exceptions
 │   ├── intent
 │   ├── session
@@ -63,13 +66,16 @@ Client Request (HTTP)
 ```
 
 ### 1.3 Separation of Responsibilities
-- **Presentation Layer**: *Dumb routing.* Only knows about HTTP, URLs, payloads, and mapping.
-- **Application Layer**: *Workflow orchestrator.* Only knows about transaction boundaries and coordinating domain objects. No complex business logic.
-- **Domain Layer**: *Heart of the system.* Knows ONLY about business logic and invariants. Zero knowledge of databases or HTTP.
-- **Infrastructure Layer**: *The plumbing.* Knows how to write to PostgreSQL, talk to external APIs, and read config properties.
+
+- **Presentation Layer**: _Dumb routing._ Only knows about HTTP, URLs, payloads, and mapping.
+- **Application Layer**: _Workflow orchestrator._ Only knows about transaction boundaries and coordinating domain objects. No complex business logic.
+- **Domain Layer**: _Heart of the system._ Knows ONLY about business logic and invariants. Zero knowledge of databases or HTTP.
+- **Infrastructure Layer**: _The plumbing._ Knows how to write to PostgreSQL, talk to external APIs, and read config properties.
 
 ### 1.4 Data Flow Standard (The Contract)
+
 To avoid confusing responsibilities, all requests MUST follow this strict flow without skipping steps:
+
 1. **Request JSON** → Deserialized and validated into **Request DTO**
 2. **Controller** → Extracts context, maps payload, calls **Application Service**
 3. **Application Service** → Starts transaction, fetches entities, calls **Domain Method**
@@ -85,6 +91,7 @@ To avoid confusing responsibilities, all requests MUST follow this strict flow w
 ### 2.1 Presentation Layer
 
 #### Controllers (`presentation/controller`)
+
 - **Purpose**: Expose REST APIs, validate HTTP requests, and return standard responses.
 - **Rules**: Must be extremely thin. Never inject repositories. Never write business logic.
 - **DO/DON'T**:
@@ -96,21 +103,22 @@ To avoid confusing responsibilities, all requests MUST follow this strict flow w
 @RequestMapping("/api/v1/sessions")
 @RequiredArgsConstructor
 public class SessionController {
-    private final CreateSessionUseCase createSessionUseCase;
+  private final CreateSessionService createSessionService;
     private final SessionMapper mapper;
 
     @PostMapping
     public ApiResponse<SessionResponse> createSession(
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody CreateSessionRequest request) {
-        
-        Session session = createSessionUseCase.execute(user.getId(), request);
+
+        Session session = createSessionService.execute(user.getId(), request);
         return ApiResponse.success(mapper.toResponse(session));
     }
 }
 ```
 
 #### DTOs (`presentation/dto`)
+
 - **Purpose**: Define exactly what JSON comes in (Request) and what goes out (Response).
 - **Rules**: Use Java Records or immutable POJOs (`@Value` / `@Data` without setters). Separate Request and Response completely.
 - **DO/DON'T**:
@@ -118,14 +126,16 @@ public class SessionController {
   - **DON'T**: Reuse Domain Entities as DTOs. Never leak entities to the client.
 
 #### Mappers (`presentation/mapper`)
+
 - **Purpose**: Translate DTO ↔ Domain Entity.
 - **Rules**: Use MapStruct or manual static mapping methods. Keep mapping logic out of controllers and services.
 
 ### 2.2 Application Layer
 
 #### Services (`application`)
+
 - **Purpose**: Defines system use cases and transaction boundaries.
-- **Rules**: Classes should be named after actions/use cases (`CreateUserUseCase`, `UpdateSessionService`).
+- **Rules**: Classes should be named after actions/services (`CreateUserService`, `UpdateSessionService`).
 - **DO/DON'T**:
   - **DO**: Annotate public methods with `@Transactional`.
   - **DON'T**: Put heavy domain logic here. The service should fetch the entity, call an entity method to perform the logic, and save it back.
@@ -133,16 +143,16 @@ public class SessionController {
 ```java
 @Service
 @RequiredArgsConstructor
-public class CompleteSessionUseCase {
+public class CompleteSessionService {
     private final SessionRepository repository;
 
     @Transactional
     public Session execute(Long userId, Long sessionId) {
         Session session = repository.findByIdAndUserId(sessionId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
-        
+
         session.complete(); // Business logic happens inside the entity!
-        
+
         return repository.save(session);
     }
 }
@@ -151,6 +161,7 @@ public class CompleteSessionUseCase {
 ### 2.3 Domain Layer
 
 #### Domain Entities (`domain/...`)
+
 - **Purpose**: Represent business concepts, relationships, and state.
 - **Rules**: Must hold their own invariants. State transitions happen via intention-revealing methods, not setters.
 - **DO/DON'T**:
@@ -160,16 +171,18 @@ public class CompleteSessionUseCase {
 ### 2.4 Infrastructure Layer
 
 #### Repository Interfaces (`infrastructure/repository`)
+
 - **Purpose**: Abstract the persistence mechanism.
 - **Repository Rules**:
   - **No business decision logic**: The repository strictly saves or loads state.
   - **No entity mutation**: Do not write custom `UPDATE` queries if the action can be resolved via an entity's method and a `.save()`.
   - **No transaction management**: `@Transactional` belongs on the Application Service.
   - **Only persistence abstraction**: Hide JPA/SQL details from the Domain layer.
-  - **Custom queries must be documented**: Any complex `@Query` must explain *why* it is needed.
+  - **Custom queries must be documented**: Any complex `@Query` must explain _why_ it is needed.
   - **Use `Optional` for single fetch**: Standardize on `Optional<Entity>` to securely handle nullable returns.
 
 #### Global Exceptions (`infrastructure/exception`)
+
 - **Purpose**: Centralized `@RestControllerAdvice` to map Java exceptions to standard HTTP payload errors.
 
 ---
@@ -193,21 +206,25 @@ public record ApiResponse<T>(
 ```
 
 ### 3.2 Explicit Return Type Standard
+
 - **Application Service** MUST return a **Domain Entity**, a **Value Object**, or a standard Java collection of those. Services NEVER return DTOs or `ApiResponse`.
 - **Controller** MUST return `ApiResponse<ResponseDTO>`.
 - **NEVER** return generic `Object`.
 - **NEVER** return `ResponseEntity<Object>` (unless responding with raw byte streams like file downloads).
 
 ### 3.3 ErrorCode Governance
+
 We use a central `ErrorCode` enum. It MUST adhere to the following rules:
+
 - **Be unique**: No two errors can share the same string code.
-- **Be immutable**: Standard Java Enums only. 
+- **Be immutable**: Standard Java Enums only.
 - **Be grouped by module prefix**: E.g., `AUTH_INVALID_TOKEN`, `SESSION_NOT_FOUND`, `USER_CONFLICT`.
 - **Never expose internal details**: Do not leak internal Spring/Java exception class names, database constraints, or stack traces to the client.
 
 ### 3.4 Example JSON
 
 **Success (2xx):**
+
 ```json
 {
   "success": true,
@@ -221,6 +238,7 @@ We use a central `ErrorCode` enum. It MUST adhere to the following rules:
 ```
 
 **Error (4xx/5xx):**
+
 ```json
 {
   "success": false,
@@ -238,20 +256,23 @@ We use a central `ErrorCode` enum. It MUST adhere to the following rules:
 ## 4. Development Workflow & File Layout
 
 ### 4.1 Step-by-Step Development Workflow
+
 When adding a new feature (e.g., updating a user's location):
+
 1. **Define DTOs**: Create `UpdateLocationRequest` and `LocationResponse` in `presentation/dto`.
 2. **Update Domain**: Add an `updateLocation(lat, lng)` method to the `User` or `Session` entity that enforces business rules.
 3. **Add Repository Method**: If a custom query is needed, add it to `UserRepository`.
-4. **Implement Service**: Create `UpdateLocationUseCase` in `application`. Fetch entity -> call domain method -> save repository. Add `@Transactional`.
+4. **Implement Service**: Create `UpdateLocationService` in `application`. Fetch entity -> call domain method -> save repository. Add `@Transactional`.
 5. **Add Controller**: Create a new endpoint mapped to the Controller. Validate request, extract user ID from token, call Service, Map to Response.
 6. **Add Mapper**: Update MapStruct/manual mapper to turn the entity into `LocationResponse`.
 7. **Write Tests**: Write Domain Unit Tests for invariants, Service Integration Tests for database edge cases, and Controller API tests.
 
 ### 4.2 File Layout for New Feature (Example: "Session")
+
 This layout is strictly enforced. Do not group files randomly.
 
 > ⚠️ **AI / LLM INSTRUCTION: DO NOT NEST BY FEATURE** ⚠️
-> Look at the example below. Notice that `CreateSessionUseCase.java` goes *directly* into `application/`. It does NOT go into `application/session/`. Do NOT hallucinate extra feature folders outside of the `domain/` layer.
+> Look at the example below. Notice that `CreateSessionService.java` goes _directly_ into `application/`. It does NOT go into `application/session/`. Do NOT hallucinate extra feature folders outside of the `domain/` layer.
 
 ```text
 presentation/
@@ -261,8 +282,8 @@ presentation/
     mapper/SessionMapper.java
 
 application/
-    CreateSessionUseCase.java
-    CompleteSessionUseCase.java
+  CreateSessionService.java
+  CompleteSessionService.java
 
 domain/session/
     Session.java
@@ -281,7 +302,7 @@ For team consistency, use the established patterns for common flows:
 
 - **Create Aggregate**: Application Service instantiates entity via a static factory method `Entity.create(...)` then calls `repository.save()`.
 - **State Transition (Update)**: Application Service uses `repository.findById()` -> calls an intention-revealing method on the entity: `entity.complete()` -> calls `repository.save()`.
-- **Read-only Query**: For endpoints purely fetching data, it is acceptable for a Service or specific Query Implementation to bypass the Domain Entity and map database results directly to a Read DTO for performance optimization. 
+- **Read-only Query**: For endpoints purely fetching data, it is acceptable for a Service or specific Query Implementation to bypass the Domain Entity and map database results directly to a Read DTO for performance optimization.
 - **Pagination Query**: Controller accepts Spring's `Pageable`. Service returns standard `Page<Entity>`. Controller/Mapper translates this to `Page<ResponseDTO>`, wrapped in `ApiResponse`.
 - **Soft Delete**: Apply Hibernate's `@SQLDelete` and `@Where(clause = "deleted = false")` on the entity instead of hard-deleting records.
 
@@ -291,17 +312,19 @@ For team consistency, use the established patterns for common flows:
 
 ### 6.1 Golden Rules (Critical Constraints)
 
-| Rule | Description | Do | Don't |
-| :--- | :--- | :--- | :--- |
-| **Separation of Concerns** | Layers must not bypass neighbors. | Controller -> Service -> Domain | Controller -> Repository |
-| **No Logic in Controller** | Routing and Mapping only. | Call `service.execute(dto)` | `if (dto.getAge() > 18) { ... }` |
-| **No Anemic Domains** | Put logic in Entities. | `user.changePassword(newHash)` | `user.setPassword(newHash)` |
-| **Transaction Boundary** | One TX per use-case via Application Service. | `@Transactional` on Service. | `@Transactional` on Controller. |
-| **No External Calls in TX** | Keep TX short. Don't block DB threads expecting external HTTP replies. | Call API, *then* start DB TX. | Call third-party API inside `@Transactional`. |
-| **DTO Separation** | Never leak Domain to Client. | Return `ApiResponse<UserResponse>` | Return `ApiResponse<User>` |
+| Rule                        | Description                                                            | Do                                 | Don't                                         |
+| :-------------------------- | :--------------------------------------------------------------------- | :--------------------------------- | :-------------------------------------------- |
+| **Separation of Concerns**  | Layers must not bypass neighbors.                                      | Controller -> Service -> Domain    | Controller -> Repository                      |
+| **No Logic in Controller**  | Routing and Mapping only.                                              | Call `service.execute(dto)`        | `if (dto.getAge() > 18) { ... }`              |
+| **No Anemic Domains**       | Put logic in Entities.                                                 | `user.changePassword(newHash)`     | `user.setPassword(newHash)`                   |
+| **Transaction Boundary**    | One TX per use-case via Application Service.                           | `@Transactional` on Service.       | `@Transactional` on Controller.               |
+| **No External Calls in TX** | Keep TX short. Don't block DB threads expecting external HTTP replies. | Call API, _then_ start DB TX.      | Call third-party API inside `@Transactional`. |
+| **DTO Separation**          | Never leak Domain to Client.                                           | Return `ApiResponse<UserResponse>` | Return `ApiResponse<User>`                    |
 
 ### 6.2 Anti-Patterns (Strictly Forbidden)
+
 Any Pull Request containing these will be automatically rejected by reviewers:
+
 - ❌ **Injecting a Repository in a Controller**: Strictly forbidden. Always go through the Application layer.
 - ❌ **Exposing an Entity in the API**: Never return a raw Domain Entity. Always use a Response DTO.
 - ❌ **Using `@Data` on an Entity**: `@Data` generates setters and poorly performing `equals()`/`hashCode()` for JPA entities.
@@ -314,7 +337,7 @@ Any Pull Request containing these will be automatically rejected by reviewers:
 
 ## 7. Naming Conventions
 
-- **Classes (Entities, Services, Controllers)**: `PascalCase`. (e.g., `UserProfile`, `CreateSessionUseCase`).
+- **Classes (Entities, Services, Controllers)**: `PascalCase`. (e.g., `UserProfile`, `CreateSessionService`).
 - **Methods**: `camelCase`. Verbs targeting actions. (e.g., `calculateScore()`, `findById()`).
 - **Request DTOs**: Suffix with `Request`. (e.g., `UpdateEmailRequest`).
 - **Response DTOs**: Suffix with `Response`. (e.g., `SessionDetailResponse`).
@@ -327,10 +350,12 @@ Any Pull Request containing these will be automatically rejected by reviewers:
 ## 8. Concurrency & Transaction Standards
 
 ### Optimistic Locking
+
 - All entities subject to concurrent updates MUST use a `@Version` field.
 - **Handling 409 Conflicts**: If an `ObjectOptimisticLockingFailureException` is thrown, the Global Exception Handler MUST catch it and return a standard `409 Conflict` response with an appropriate error code. Do not handle locking manually in the service layer unless explicit retry logic is required.
 
 ### Boundaries and Idempotency
+
 - Services represent exactly ONE transaction boundary. Do not nest transactions (`@Transactional(propagation = Propagation.REQUIRES_NEW)`) without extreme justification.
 - Modifying REST endpoints (`POST`, `PUT`, `PATCH`) must be designed with idempotency in mind where applicable.
 
@@ -349,8 +374,8 @@ public ApiResponse<Void> create(@AuthenticationPrincipal CustomUserDetails user)
 
 // ❌ NEVER DO THIS
 @PostMapping("/sessions")
-public ApiResponse<Void> create(@RequestBody CreateRequest req) { 
-    // relying on req.getUserId() allows privilege escalation 
+public ApiResponse<Void> create(@RequestBody CreateRequest req) {
+    // relying on req.getUserId() allows privilege escalation
 }
 ```
 
@@ -379,6 +404,7 @@ We strictly follow the test pyramid.
 ## 12. PR Review Checklist
 
 Before approving a backend Pull Request, the reviewer MUST verify:
+
 - [ ] Is all business logic encapsulated inside the Domain Entity (No anemic objects)?
 - [ ] Is the transaction boundary clearly defined on the Application Service?
 - [ ] Are Domain Entities strictly separated from Presentation DTOs?
@@ -393,21 +419,24 @@ Before approving a backend Pull Request, the reviewer MUST verify:
 ## 13. Quick Reference Section
 
 **Standard Service Method Signature**
+
 ```java
 @Transactional
 public ReturnPayload execute(Long authenticatedUserId, InputPayload payload) { ... }
 ```
 
 **Standard Controller Endpoint**
+
 ```java
 @PostMapping("/{id}")
 public ApiResponse<ResDTO> handle(
-    @PathVariable Long id, 
+    @PathVariable Long id,
     @AuthenticationPrincipal AuthCtx auth,
     @Valid @RequestBody ReqDTO req) { ... }
 ```
 
 **Entity Exception Throwing Standard**
+
 ```java
 if (invalidCondition) {
     throw new DomainRuleException(ErrorCode.INVALID_STATE, "State transition is invalid.");
