@@ -2,6 +2,7 @@ package com.walkmate.domain.session;
 
 import com.walkmate.domain.valueobject.SessionPoint;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,8 @@ public interface SessionRepository {
     List<WalkSession> findExpiredPendingSessionsForUpdate(int limit);
 
     List<WalkSession> findExpiredActiveSessionsForUpdate(int limit);
+
+    boolean hasOverlappingPendingOrActive(UUID userId, Instant scheduledStartTime, Instant scheduledEndTime);
 
     int appendSessionPoints(UUID sessionId, List<SessionPoint> points);
 }

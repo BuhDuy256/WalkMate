@@ -42,11 +42,11 @@ plugins {
 }
 
 android {
-    namespace = "com.walkmate.frontend"
+    namespace = "com.walkmate"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.walkmate.frontend"
+        applicationId = "com.walkmate"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -131,7 +131,7 @@ dependencies {
 ## 3) Cấu trúc package đề xuất
 
 ```text
-com.walkmate.frontend
+com.walkmate
 ├── core
 │   ├── Result.java
 │   └── ResultCallback.java
@@ -171,7 +171,7 @@ com.walkmate.frontend
 ## 4.1 ApiResponseDto.java
 
 ```java
-package com.walkmate.frontend.data.remote.dto;
+package com.walkmate.data.remote.dto;
 
 public class ApiResponseDto<T> {
     public boolean success;
@@ -189,13 +189,13 @@ public class ApiResponseDto<T> {
 ## 4.2 SessionApi.java
 
 ```java
-package com.walkmate.frontend.data.remote;
+package com.walkmate.data.remote;
 
-import com.walkmate.frontend.data.remote.dto.ApiResponseDto;
-import com.walkmate.frontend.data.remote.dto.AppendSessionPointsRequestDto;
-import com.walkmate.frontend.data.remote.dto.CompleteSessionRequestDto;
-import com.walkmate.frontend.data.remote.dto.SessionResponseDto;
-import com.walkmate.frontend.data.remote.dto.SessionTrackingResponseDto;
+import com.walkmate.data.remote.dto.ApiResponseDto;
+import com.walkmate.data.remote.dto.AppendSessionPointsRequestDto;
+import com.walkmate.data.remote.dto.CompleteSessionRequestDto;
+import com.walkmate.data.remote.dto.SessionResponseDto;
+import com.walkmate.data.remote.dto.SessionTrackingResponseDto;
 
 import java.util.Map;
 
@@ -237,7 +237,7 @@ public interface SessionApi {
 ## 5.1 SessionPointLocalEntity.java
 
 ```java
-package com.walkmate.frontend.data.local.entity;
+package com.walkmate.data.local.entity;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
@@ -276,7 +276,7 @@ public class SessionPointLocalEntity {
 ## 5.2 SessionLocalEntity.java
 
 ```java
-package com.walkmate.frontend.data.local.entity;
+package com.walkmate.data.local.entity;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
@@ -313,14 +313,14 @@ public class SessionLocalEntity {
 ## 5.3 DAO
 
 ```java
-package com.walkmate.frontend.data.local.dao;
+package com.walkmate.data.local.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
-import com.walkmate.frontend.data.local.entity.SessionPointLocalEntity;
+import com.walkmate.data.local.entity.SessionPointLocalEntity;
 
 import java.util.List;
 
@@ -353,15 +353,15 @@ public interface SessionPointLocalDao {
 ## 5.4 Database
 
 ```java
-package com.walkmate.frontend.data.local.db;
+package com.walkmate.data.local.db;
 
 import androidx.room.Database;
 import androidx.room.RoomDatabase;
 
-import com.walkmate.frontend.data.local.dao.SessionLocalDao;
-import com.walkmate.frontend.data.local.dao.SessionPointLocalDao;
-import com.walkmate.frontend.data.local.entity.SessionLocalEntity;
-import com.walkmate.frontend.data.local.entity.SessionPointLocalEntity;
+import com.walkmate.data.local.dao.SessionLocalDao;
+import com.walkmate.data.local.dao.SessionPointLocalDao;
+import com.walkmate.data.local.entity.SessionLocalEntity;
+import com.walkmate.data.local.entity.SessionPointLocalEntity;
 
 @Database(entities = {SessionLocalEntity.class, SessionPointLocalEntity.class}, version = 1, exportSchema = false)
 public abstract class WalkSessionDatabase extends RoomDatabase {
@@ -373,7 +373,7 @@ public abstract class WalkSessionDatabase extends RoomDatabase {
 ## 6) Foreground service ghi point vào Room
 
 ```java
-package com.walkmate.frontend.tracking;
+package com.walkmate.tracking;
 
 import android.Manifest;
 import android.app.Notification;
@@ -396,8 +396,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.walkmate.frontend.data.local.dao.SessionPointLocalDao;
-import com.walkmate.frontend.data.local.entity.SessionPointLocalEntity;
+import com.walkmate.data.local.dao.SessionPointLocalDao;
+import com.walkmate.data.local.entity.SessionPointLocalEntity;
 
 public class LocationTrackingService extends Service {
 
@@ -512,7 +512,7 @@ public class LocationTrackingService extends Service {
 ## 7) Worker sync points theo batch
 
 ```java
-package com.walkmate.frontend.data.worker;
+package com.walkmate.data.worker;
 
 import android.content.Context;
 
@@ -520,13 +520,13 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.walkmate.frontend.data.local.dao.SessionPointLocalDao;
-import com.walkmate.frontend.data.local.entity.SessionPointLocalEntity;
-import com.walkmate.frontend.data.remote.SessionApi;
-import com.walkmate.frontend.data.remote.dto.AppendPointItemDto;
-import com.walkmate.frontend.data.remote.dto.AppendSessionPointsRequestDto;
-import com.walkmate.frontend.data.remote.dto.ApiResponseDto;
-import com.walkmate.frontend.data.remote.dto.SessionTrackingResponseDto;
+import com.walkmate.data.local.dao.SessionPointLocalDao;
+import com.walkmate.data.local.entity.SessionPointLocalEntity;
+import com.walkmate.data.remote.SessionApi;
+import com.walkmate.data.remote.dto.AppendPointItemDto;
+import com.walkmate.data.remote.dto.AppendSessionPointsRequestDto;
+import com.walkmate.data.remote.dto.ApiResponseDto;
+import com.walkmate.data.remote.dto.SessionTrackingResponseDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -585,7 +585,7 @@ public class SessionPointSyncWorker extends Worker {
 ## 8) ViewModel cho đủ 5 use case
 
 ```java
-package com.walkmate.frontend.ui.session;
+package com.walkmate.ui.session;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -635,7 +635,7 @@ public class SessionViewModel extends ViewModel {
 ## 9) Activity dùng com.google.android.gms.maps để trace GPS
 
 ```java
-package com.walkmate.frontend.ui.session;
+package com.walkmate.ui.session;
 
 import android.os.Bundle;
 
@@ -649,7 +649,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.walkmate.frontend.R;
+import com.walkmate.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -697,9 +697,9 @@ public class SessionActivity extends AppCompatActivity implements OnMapReadyCall
         }
     }
 
-    private List<LatLng> toLatLngList(List<com.walkmate.frontend.data.local.entity.SessionPointLocalEntity> entities) {
+    private List<LatLng> toLatLngList(List<com.walkmate.data.local.entity.SessionPointLocalEntity> entities) {
         List<LatLng> out = new ArrayList<>();
-        for (com.walkmate.frontend.data.local.entity.SessionPointLocalEntity e : entities) {
+        for (com.walkmate.data.local.entity.SessionPointLocalEntity e : entities) {
             out.add(new LatLng(e.lat, e.lng));
         }
         return out;

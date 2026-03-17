@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">WalkMate</string>
+    <string name="google_maps_key">YOUR_GOOGLE_MAPS_API_KEY</string>
+    <string name="start_walk">Start Walk</string>
+    <string name="cancel_walk">Cancel Walk</string>
+    <string name="pause_walk">Pause Walk</string>
+    <string name="resume_walk">Resume Walk</string>
+    <string name="end_walk">End Walk</string>
+    <string name="abort_walk">Abort Walk</string>
+    <string name="permission_denied">Location permission denied</string>
+    <string name="distance_format">%.1f m</string>
+    <string name="duration_format">%1$d s</string>
 </resources>

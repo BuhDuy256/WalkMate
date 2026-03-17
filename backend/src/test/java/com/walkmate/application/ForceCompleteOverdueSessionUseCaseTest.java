@@ -19,73 +19,79 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ForceCompleteOverdueSessionUseCaseTest {
 
-  @Test
-  void shouldForceCompleteOverdueActiveSessions() {
-    Instant now = Instant.parse("2026-03-14T12:00:00Z");
-    InMemoryRepository repo = new InMemoryRepository();
-    repo.sessions.add(sampleActive(now.minusSeconds(5 * 3600L)));
+    @Test
+    void shouldForceCompleteOverdueActiveSessions() {
+        Instant now = Instant.parse("2026-03-14T12:00:00Z");
+        InMemoryRepository repo = new InMemoryRepository();
+        repo.sessions.add(sampleActive(now.minusSeconds(5 * 3600L)));
 
-    ForceCompleteOverdueSessionService useCase = new ForceCompleteOverdueSessionService(
-        repo,
-        Clock.fixed(now, ZoneOffset.UTC));
+        ForceCompleteOverdueSessionService useCase = new ForceCompleteOverdueSessionService(
+                repo,
+                Clock.fixed(now, ZoneOffset.UTC));
 
-    int updated = useCase.execute(100);
+        int updated = useCase.execute(100);
 
-    assertEquals(1, updated);
-    assertEquals(SessionStatus.COMPLETED, repo.sessions.get(0).getStatus());
-  }
-
-  private WalkSession sampleActive(Instant actualStart) {
-    return new WalkSession(
-        UUID.randomUUID(),
-        UUID.randomUUID(),
-        UUID.randomUUID(),
-        actualStart.minusSeconds(120),
-        actualStart.plusSeconds(1800),
-        actualStart.minusSeconds(120),
-        actualStart.minusSeconds(100),
-        actualStart,
-        null,
-        SessionStatus.ACTIVE,
-        BigDecimal.ZERO,
-        0,
-        null,
-        null,
-        null,
-        0);
-  }
-
-  private static class InMemoryRepository implements SessionRepository {
-    private final List<WalkSession> sessions = new ArrayList<>();
-
-    @Override
-    public Optional<WalkSession> findById(UUID sessionId) {
-      return sessions.stream().filter(s -> s.getSessionId().equals(sessionId)).findFirst();
+        assertEquals(1, updated);
+        assertEquals(SessionStatus.COMPLETED, repo.sessions.get(0).getStatus());
     }
 
-    @Override
-    public Optional<WalkSession> findByIdForUpdate(UUID sessionId) {
-      return findById(sessionId);
+    private WalkSession sampleActive(Instant actualStart) {
+        return new WalkSession(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                actualStart.minusSeconds(120),
+                actualStart.plusSeconds(1800),
+                actualStart.minusSeconds(120),
+                actualStart.minusSeconds(100),
+                actualStart,
+                null,
+                SessionStatus.ACTIVE,
+                BigDecimal.ZERO,
+                0,
+                null,
+                null,
+                null,
+                0);
     }
 
-    @Override
-    public WalkSession save(WalkSession session) {
-      return session;
-    }
+    private static class InMemoryRepository implements SessionRepository {
+        private final List<WalkSession> sessions = new ArrayList<>();
 
-    @Override
-    public List<WalkSession> findExpiredPendingSessionsForUpdate(int limit) {
-      return List.of();
-    }
+        @Override
+        public Optional<WalkSession> findById(UUID sessionId) {
+            return sessions.stream().filter(s -> s.getSessionId().equals(sessionId)).findFirst();
+        }
 
-    @Override
-    public List<WalkSession> findExpiredActiveSessionsForUpdate(int limit) {
-      return sessions.stream().filter(s -> s.getStatus() == SessionStatus.ACTIVE).limit(limit).toList();
-    }
+        @Override
+        public Optional<WalkSession> findByIdForUpdate(UUID sessionId) {
+            return findById(sessionId);
+        }
 
-    @Override
-    public int appendSessionPoints(UUID sessionId, List<SessionPoint> points) {
-      return points.size();
+        @Override
+        public WalkSession save(WalkSession session) {
+            return session;
+        }
+
+        @Override
+        public List<WalkSession> findExpiredPendingSessionsForUpdate(int limit) {
+            return List.of();
+        }
+
+        @Override
+        public List<WalkSession> findExpiredActiveSessionsForUpdate(int limit) {
+            return sessions.stream().filter(s -> s.getStatus() == SessionStatus.ACTIVE).limit(limit).toList();
+        }
+
+        @Override
+        public boolean hasOverlappingPendingOrActive(UUID userId, Instant scheduledStartTime,
+                Instant scheduledEndTime) {
+            return false;
+        }
+
+        @Override
+        public int appendSessionPoints(UUID sessionId, List<SessionPoint> points) {
+            return points.size();
+        }
     }
-  }
 }
