@@ -6,6 +6,7 @@ import com.walkmate.domain.valueobject.SessionTrackingStats;
 import com.walkmate.presentation.dto.request.AppendSessionPointsRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.SessionTrackingResponse;
+import com.walkmate.presentation.util.UserIdentityExtractor;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,6 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,23 +25,24 @@ import java.util.UUID;
 @RequestMapping("/api/v1/sessions")
 @RequiredArgsConstructor
 public class SessionTrackingController {
-  private final AppendSessionPointsService appendSessionPointsService;
+    private final AppendSessionPointsService appendSessionPointsService;
 
-  @PostMapping("/{id}/points:append")
-  public ApiResponse<SessionTrackingResponse> appendPoints(
-      @PathVariable UUID id,
-      @AuthenticationPrincipal Jwt jwt,
-      @Valid @RequestBody AppendSessionPointsRequest request) {
-    List<SessionPoint> points = request.points().stream()
-        .map(point -> new SessionPoint(point.pointOrder(), point.lat(), point.lng(), point.time()))
-        .toList();
+    @PostMapping("/{id}/points:append")
+    public ApiResponse<SessionTrackingResponse> appendPoints(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AppendSessionPointsRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
+        List<SessionPoint> points = request.points().stream()
+                .map(point -> new SessionPoint(point.pointOrder(), point.lat(), point.lng(), point.time()))
+                .toList();
 
-    int count = appendSessionPointsService.execute(
-        UUID.fromString(jwt.getSubject()),
-        id,
-        points,
-        new SessionTrackingStats(request.totalDistance(), request.totalDuration()));
+        int count = appendSessionPointsService.execute(
+                UserIdentityExtractor.extractUserId(jwt, userIdHeader),
+                id,
+                points,
+                new SessionTrackingStats(request.totalDistance(), request.totalDuration()));
 
-    return ApiResponse.success(new SessionTrackingResponse(id, count, "Points appended"));
-  }
+        return ApiResponse.success(new SessionTrackingResponse(id, count, "Points appended"));
+    }
 }

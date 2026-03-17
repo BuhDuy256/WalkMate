@@ -7,15 +7,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SessionRepository {
-  Optional<WalkSession> findById(UUID sessionId);
+    Optional<WalkSession> findById(UUID sessionId);
 
-  Optional<WalkSession> findByIdForUpdate(UUID sessionId);
+    Optional<WalkSession> findByIdForUpdate(UUID sessionId);
 
-  WalkSession save(WalkSession session);
+    WalkSession save(WalkSession session);
 
-  List<WalkSession> findExpiredPendingSessionsForUpdate(int limit);
+    List<WalkSession> findExpiredPendingSessionsForUpdate(int limit);
 
-  List<WalkSession> findExpiredActiveSessionsForUpdate(int limit);
+    List<WalkSession> findExpiredActiveSessionsForUpdate(int limit);
 
-  int appendSessionPoints(UUID sessionId, List<SessionPoint> points);
+    int appendSessionPoints(UUID sessionId, List<SessionPoint> points);
 }

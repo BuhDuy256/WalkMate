@@ -21,7 +21,7 @@ public class ActivateWalkSessionService {
         WalkSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        session.activate(userId, clock.instant());
+        session.activate2(userId, clock.instant());
         return sessionRepository.save(session);
     }
 }
