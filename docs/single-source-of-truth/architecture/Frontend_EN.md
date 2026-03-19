@@ -33,6 +33,7 @@ frontend/src/main/java/com/walkmate/
 │   └── <feature-name>/
 │       ├── <Feature>Screen.java
 │       ├── <Feature>ViewModel.java
+│       ├── <Feature>ViewData.java
 │       ├── <Feature>UiState.java
 │       ├── <Feature>UiEvent.java
 │       ├── <Feature>UiEffect.java
@@ -82,9 +83,12 @@ Note: do not default to `usecase/` with one-file-per-use-case. Only split out if
 | --------- | ------------------------- | ---------------------- |
 | Screen    | `<Feature>Screen.java`    | `IntentScreen.java`    |
 | ViewModel | `<Feature>ViewModel.java` | `IntentViewModel.java` |
+| ViewData  | `<Feature>ViewData.java`  | `IntentViewData.java`  |
 | State     | `<Feature>UiState.java`   | `IntentUiState.java`   |
 | Event     | `<Feature>UiEvent.java`   | `IntentUiEvent.java`   |
 | Effect    | `<Feature>UiEffect.java`  | `IntentUiEffect.java`  |
+
+Note: keep `ViewData` at the same level as `ViewModel` in `ui/<feature-name>/` by default (no dedicated folder unless needed).
 
 ### 3.2 Domain with DDD-lite (backend-aligned)
 

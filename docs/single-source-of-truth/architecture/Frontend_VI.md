@@ -33,6 +33,7 @@ frontend/src/main/java/com/walkmate/
 │   └── <feature-name>/
 │       ├── <Feature>Screen.java
 │       ├── <Feature>ViewModel.java
+│       ├── <Feature>ViewData.java
 │       ├── <Feature>UiState.java
 │       ├── <Feature>UiEvent.java
 │       ├── <Feature>UiEffect.java
@@ -82,9 +83,12 @@ Lưu ý: không dùng `usecase/` theo kiểu mỗi use case một file mặc đ�
 | ---------- | ------------------------- | ---------------------- |
 | Screen     | `<Feature>Screen.java`    | `IntentScreen.java`    |
 | ViewModel  | `<Feature>ViewModel.java` | `IntentViewModel.java` |
+| ViewData   | `<Feature>ViewData.java`  | `IntentViewData.java`  |
 | State      | `<Feature>UiState.java`   | `IntentUiState.java`   |
 | Event      | `<Feature>UiEvent.java`   | `IntentUiEvent.java`   |
 | Effect     | `<Feature>UiEffect.java`  | `IntentUiEffect.java`  |
+
+Note: `ViewData` để cùng cấp với `ViewModel` trong `ui/<feature-name>/`, không tách folder riêng mặc định.
 
 ### 3.2 Domain theo DDD-lite (na ná backend)
 
