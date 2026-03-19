@@ -29,22 +29,22 @@ frontend/src/main/java/com/walkmate/
 │   └── designsystem/
 ├── ui/
 │   ├── main/
-│   │   └── MainActivity.kt
+│   │   └── MainActivity.java
 │   └── <feature-name>/
-│       ├── <Feature>Screen.kt
-│       ├── <Feature>ViewModel.kt
-│       ├── <Feature>UiState.kt
-│       ├── <Feature>UiEvent.kt
-│       ├── <Feature>UiEffect.kt
+│       ├── <Feature>Screen.java
+│       ├── <Feature>ViewModel.java
+│       ├── <Feature>UiState.java
+│       ├── <Feature>UiEvent.java
+│       ├── <Feature>UiEffect.java
 │       └── component/
 ├── domain/
 │   ├── <domain-name>/
-│   │   ├── <Domain>.kt
-│   │   ├── <Domain>Repository.kt
-│   │   ├── <Domain>ErrorCode.kt
-│   │   ├── <Domain>Service.kt
-│   │   ├── <ValueObject>.kt
-│   │   └── <EnumOrPolicy>.kt
+│   │   ├── <Domain>.java
+│   │   ├── <Domain>Repository.java
+│   │   ├── <Domain>ErrorCode.java
+│   │   ├── <Domain>Service.java
+│   │   ├── <ValueObject>.java
+│   │   └── <EnumOrPolicy>.java
 │   └── shared/
 │       ├── exception/
 │       └── valueobject/
@@ -58,7 +58,7 @@ frontend/src/main/java/com/walkmate/
     │       └── entity/
     ├── mapper/
     └── repository/
-        └── <Domain>RepositoryImpl.kt
+        └── <Domain>RepositoryImpl.java
 ```
 
 ## 2. Trách Nhiệm Từng Layer
@@ -78,31 +78,31 @@ Lưu ý: không dùng `usecase/` theo kiểu mỗi use case một file mặc đ�
 
 ### 3.1 UI theo MVVM + UiState
 
-| Thành phần | Mẫu tên                 | Ví dụ                |
-| ---------- | ----------------------- | -------------------- |
-| Screen     | `<Feature>Screen.kt`    | `IntentScreen.kt`    |
-| ViewModel  | `<Feature>ViewModel.kt` | `IntentViewModel.kt` |
-| State      | `<Feature>UiState.kt`   | `IntentUiState.kt`   |
-| Event      | `<Feature>UiEvent.kt`   | `IntentUiEvent.kt`   |
-| Effect     | `<Feature>UiEffect.kt`  | `IntentUiEffect.kt`  |
+| Thành phần | Mẫu tên                   | Ví dụ                  |
+| ---------- | ------------------------- | ---------------------- |
+| Screen     | `<Feature>Screen.java`    | `IntentScreen.java`    |
+| ViewModel  | `<Feature>ViewModel.java` | `IntentViewModel.java` |
+| State      | `<Feature>UiState.java`   | `IntentUiState.java`   |
+| Event      | `<Feature>UiEvent.java`   | `IntentUiEvent.java`   |
+| Effect     | `<Feature>UiEffect.java`  | `IntentUiEffect.java`  |
 
 ### 3.2 Domain theo DDD-lite (na ná backend)
 
-| Thành phần           | Mẫu tên                 | Ví dụ                 |
-| -------------------- | ----------------------- | --------------------- |
-| Domain model         | `<Domain>.kt`           | `Intent.kt`           |
-| Repository interface | `<Domain>Repository.kt` | `IntentRepository.kt` |
-| Domain service       | `<Domain>Service.kt`    | `IntentService.kt`    |
-| Domain error code    | `<Domain>ErrorCode.kt`  | `IntentErrorCode.kt`  |
+| Thành phần           | Mẫu tên                   | Ví dụ                   |
+| -------------------- | ------------------------- | ----------------------- |
+| Domain model         | `<Domain>.java`           | `Intent.java`           |
+| Repository interface | `<Domain>Repository.java` | `IntentRepository.java` |
+| Domain service       | `<Domain>Service.java`    | `IntentService.java`    |
+| Domain error code    | `<Domain>ErrorCode.java`  | `IntentErrorCode.java`  |
 
 ### 3.3 Data implementation
 
-| Thành phần      | Mẫu tên                            | Ví dụ                        |
-| --------------- | ---------------------------------- | ---------------------------- |
-| Repository impl | `<Domain>RepositoryImpl.kt`        | `IntentRepositoryImpl.kt`    |
-| Remote DTO      | `<Domain>Dto.kt`                   | `IntentDto.kt`               |
-| Local entity    | `<Domain>Entity.kt`                | `IntentEntity.kt`            |
-| Mapper          | `<Source>To<Destination>Mapper.kt` | `IntentDtoToDomainMapper.kt` |
+| Thành phần      | Mẫu tên                              | Ví dụ                          |
+| --------------- | ------------------------------------ | ------------------------------ |
+| Repository impl | `<Domain>RepositoryImpl.java`        | `IntentRepositoryImpl.java`    |
+| Remote DTO      | `<Domain>Dto.java`                   | `IntentDto.java`               |
+| Local entity    | `<Domain>Entity.java`                | `IntentEntity.java`            |
+| Mapper          | `<Source>To<Destination>Mapper.java` | `IntentDtoToDomainMapper.java` |
 
 ### 3.4 DTO -> Mapper -> Domain (bắt buộc)
 
@@ -121,12 +121,22 @@ DTO/Entity -> Mapper -> Domain Model -> Domain Service/Domain Method
 
 `UiState` nên immutable và đủ để render 100% màn hình:
 
-```kotlin
-data class IntentUiState(
-    val isLoading: Boolean = false,
-    val data: IntentViewData? = null,
-    val error: UiText? = null
-)
+```java
+public final class IntentUiState {
+    private final boolean loading;
+    private final IntentViewData data;
+    private final UiText error;
+
+    public IntentUiState(boolean loading, IntentViewData data, UiText error) {
+        this.loading = loading;
+        this.data = data;
+        this.error = error;
+    }
+
+    public boolean isLoading() { return loading; }
+    public IntentViewData getData() { return data; }
+    public UiText getError() { return error; }
+}
 ```
 
 `UiEvent`: action từ user (click, refresh, retry).  
