@@ -25,6 +25,10 @@ public interface RoutePointDao {
     @Query("SELECT * FROM route_points WHERE isSynced = 0 ORDER BY timestamp ASC")
     List<RoutePointEntity> getUnsyncedPoints();
 
+    // Khai thác từ DB như "Single Source of Truth" cho chiến lược Batching
+    @Query("SELECT COUNT(id) FROM route_points WHERE isSynced = 0")
+    int getUnsyncedCount();
+
     // 4. Dành cho Service đồng bộ: Cập nhật cờ những điểm đã đẩy server thành công.
     @Query("UPDATE route_points SET isSynced = 1 WHERE id IN (:pointIds)")
     void markAsSynced(List<Long> pointIds);

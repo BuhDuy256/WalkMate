@@ -12,6 +12,7 @@ public class RoutePointEntity {
     @PrimaryKey(autoGenerate = true)
     public long id;
 
+    public String sessionId;
     public double lat;
     public double lng;
     public long timestamp;
@@ -20,7 +21,8 @@ public class RoutePointEntity {
     // Cờ đánh dấu điểm này đã được đồng bộ với Server hay chưa
     public boolean isSynced = false;
 
-    public RoutePointEntity(double lat, double lng, long timestamp, float accuracy) {
+    public RoutePointEntity(String sessionId, double lat, double lng, long timestamp, float accuracy) {
+        this.sessionId = sessionId;
         this.lat = lat;
         this.lng = lng;
         this.timestamp = timestamp;

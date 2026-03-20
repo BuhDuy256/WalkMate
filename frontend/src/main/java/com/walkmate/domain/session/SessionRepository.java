@@ -16,6 +16,9 @@ public interface SessionRepository {
     // Dùng cho Sync Logic (Bước 5): Lấy ra các điểm chưa được gửi lên Server
     List<RoutePoint> getUnsyncedPoints();
 
+    // Dùng để kiểm tra Batching (Lấy đếm từ Database)
+    int getUnsyncedCount();
+
     // Dùng cho Sync Logic (Bước 5): Đánh dấu các điểm đã gửi thành công
     void markPointsAsSynced(List<Long> pointIds);
 }

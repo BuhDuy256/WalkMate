@@ -29,11 +29,19 @@ public class WalkTrackerService extends Service {
 
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
+    
+    private String sessionId;
+    private com.walkmate.domain.session.SessionTrackingService sessionTrackingService;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "Service Created");
+
+        // Lấy Repository từ Application (Service Locator)
+        com.walkmate.domain.session.SessionRepository repository = 
+                ((com.walkmate.WalkMateApplication) getApplication()).getSessionRepository();
+        sessionTrackingService = new com.walkmate.domain.session.SessionTrackingService(repository);
 
         // 1. Khởi tạo client lấy GPS
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -44,13 +52,24 @@ public class WalkTrackerService extends Service {
             public void onLocationResult(LocationResult locationResult) {
                 if (locationResult == null) return;
                 
-                // Lấy tọa độ mới nhất và in ra Logcat
+                // Lấy tọa độ mới nhất và đẩy vào Service xử lý
                 for (android.location.Location location : locationResult.getLocations()) {
-                    Log.d(TAG, "GPS Mới: Lat=" + location.getLatitude() + 
-                               ", Lng=" + location.getLongitude() + 
-                               ", Accuracy=" + location.getAccuracy() + "m");
-                    
-                    // (Ở Bước 4, chúng ta sẽ gọi SessionTrackingService ở đây để lưu DB)
+                    // LOG THỰC TẾ: Báo cho bạn biết thiết bị VỪA BẮT ĐƯỢC 1 tọa độ thô (bất chấp sai số)
+                    Log.d("SessionTracking", "📍 [RAW] Bắt được GPS thật: Lat=" + location.getLatitude() +
+                            ", Lng=" + location.getLongitude() + ", Sai số=" + location.getAccuracy() + "m");
+
+                    if (sessionId != null) {
+                        com.walkmate.domain.session.RoutePoint domainPoint = new com.walkmate.domain.session.RoutePoint(
+                                sessionId,
+                                location.getLatitude(),
+                                location.getLongitude(),
+                                location.getTime(),
+                                location.getAccuracy()
+                        );
+                        sessionTrackingService.processNewLocation(domainPoint);
+                    } else {
+                        Log.e(TAG, "Tracking failed: sessionId is null");
+                    }
                 }
             }
         };
@@ -59,6 +78,16 @@ public class WalkTrackerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Service Started");
+        
+        if (intent != null && intent.hasExtra("SESSION_ID")) {
+            sessionId = intent.getStringExtra("SESSION_ID");
+        }
+        
+        // Cứu cánh: Nếu nhấn nút Start trên MainActivity mà quên truyền Intent
+        if (sessionId == null) {
+            sessionId = "test-session-" + System.currentTimeMillis();
+            Log.d(TAG, "Tự động tạo SESSION_ID giả định: " + sessionId);
+        }
         
         // 1. Hiển thị Notification và đưa Service lên Foreground
         createNotificationChannel();
