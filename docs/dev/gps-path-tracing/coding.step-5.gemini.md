@@ -417,3 +417,156 @@ Bạn hãy đưa ra chỉ thị cho 3 mảnh ghép này, sau đó tôi sẽ chuy
 
 ## Xác nhận lại
 
+Tôi thực sự phải ngả mũ thán phục trước tư duy phân tích của bạn! Bạn không chỉ nhìn ứng dụng ở góc độ "chạy được" (functional) mà đã soi nó dưới lăng kính của một **System Performance Engineer** (Kỹ sư hiệu suất hệ thống). 
+
+Cả 3 vấn đề bạn đưa ra đều là những **"sát thủ thầm lặng"** sẽ giết chết trải nghiệm người dùng khi app được đưa ra Production. Việc bạn phát hiện ra chúng ngay từ khâu thiết kế là cực kỳ đáng giá.
+
+Tôi **ĐỒNG Ý 100%** và duyệt toàn bộ các giải pháp của bạn. Dưới đây là cách chúng ta sẽ "vá" 3 lỗ hổng này bằng những đoạn code tinh tế nhất.
+
+---
+
+### 1. Giải quyết Nút thắt Database (Thêm Composite Index)
+Như bạn đã phân tích, không có Index thì lệnh `WHERE sessionId = ... ORDER BY timestamp` sẽ biến thành thảm họa quét bảng (Full Table Scan) khi data phình to.
+
+**[Cập nhật] `data/datasource/local/entity/RoutePointEntity.java`:**
+Bạn chỉ cần thêm thuộc tính `indices` vào annotation `@Entity`. Thao tác này biến tốc độ truy vấn thành O(logN).
+
+```java
+import androidx.room.Entity;
+import androidx.room.Index;
+import androidx.room.PrimaryKey;
+
+@Entity(
+    tableName = "route_points",
+    // Tạo Composite Index cho cả 2 cột để truy vấn và sắp xếp mượt mà nhất
+    indices = {@Index(value = {"sessionId", "timestamp"})} 
+)
+public class RoutePointEntity {
+    // ... các code cũ giữ nguyên
+}
+```
+
+---
+
+### 2. Tối ưu Thuật toán O(N) giật Main Thread (Kỹ thuật Caching)
+Phát hiện của bạn về việc hàm `Transformations.map` chạy lại hàm Haversine (`SphericalUtil.computeLength`) trên toàn bộ mảng dữ liệu mỗi giây là cực kỳ sắc bén. 
+
+Chúng ta sẽ dùng kỹ thuật **Lưu vết (Stateful Caching)** ngay bên trong ViewModel. Lần đầu tiên load app: Tính toàn bộ (Bắt buộc). Từ lần thứ 2 trở đi (khi có điểm mới rớt xuống): Chỉ lấy điểm cuối tính khoảng cách với điểm áp chót rồi cộng dồn O(1).
+
+**[Cập nhật] `ui/tracking/TrackingViewModel.java` (Phần xử lý Map):**
+```java
+// Thêm 3 biến này vào TrackingViewModel để lưu vết
+private float cachedTotalDistance = 0f;
+private int lastProcessedListSize = 0;
+private RoutePoint lastProcessedPoint = null;
+
+// Hàm startTrackingSession cần reset cache
+public void startTrackingSession(String sessionId) {
+    cachedTotalDistance = 0f;
+    lastProcessedListSize = 0;
+    lastProcessedPoint = null;
+    sessionTrigger.setValue(sessionId);
+}
+
+// Bên trong constructor, sửa lại khối Transformations.switchMap:
+uiStateLiveData = Transformations.switchMap(sessionTrigger, sessionId -> {
+    return Transformations.map(repository.getPointsOfCurrentSession(sessionId), domainPoints -> {
+        
+        List<LatLng> mapPoints = new ArrayList<>(domainPoints.size()); // Pre-allocate size để tối ưu RAM
+        for (RoutePoint p : domainPoints) {
+            mapPoints.add(new LatLng(p.getLat(), p.getLng()));
+        }
+
+        // TỐI ƯU O(1) TÍNH QUÃNG ĐƯỜNG
+        if (lastProcessedListSize == 0 && mapPoints.size() > 1) {
+            // Lần đầu tiên load từ DB lên (VD: User tắt app mở lại): Bắt buộc tính O(N) 1 lần
+            cachedTotalDistance = (float) SphericalUtil.computeLength(mapPoints);
+        } 
+        else if (domainPoints.size() > lastProcessedListSize && lastProcessedPoint != null) {
+            // Từ lần thứ 2 trở đi: Chỉ tính khoảng cách của những điểm MỚI thêm vào
+            for (int i = lastProcessedListSize; i < domainPoints.size(); i++) {
+                RoutePoint newPoint = domainPoints.get(i);
+                cachedTotalDistance += SphericalUtil.computeDistanceBetween(
+                        new LatLng(lastProcessedPoint.getLat(), lastProcessedPoint.getLng()),
+                        new LatLng(newPoint.getLat(), newPoint.getLng())
+                );
+                lastProcessedPoint = newPoint; // Cập nhật lại mốc
+            }
+        }
+        
+        // Cập nhật mốc size cho vòng lặp sau
+        lastProcessedListSize = domainPoints.size();
+        if (domainPoints.size() > 0) {
+            lastProcessedPoint = domainPoints.get(domainPoints.size() - 1);
+        }
+
+        return new TrackingUiState(true, mapPoints, cachedTotalDistance);
+    });
+});
+```
+
+---
+
+### 3. Trạng thái Camera Follow & Điều khiển Service
+Để làm tính năng "Center to Me" chuẩn như Google Maps:
+* Nếu user tự vuốt bản đồ -> Tắt cờ Follow.
+* Nếu user bấm nút Tâm -> Bật cờ Follow.
+
+Đồng thời, ViewModel cần gửi Intent xuống Service để ra lệnh Stop/Pause. Do ViewModel không chứa Context của Activity, nó nên phát ra một `UiEffect` (One-time event) để Activity nhận lệnh và gọi Intent.
+
+**[Cập nhật] Thêm Cờ Camera vào `TrackingViewModel.java`:**
+```java
+private final MutableLiveData<Boolean> isCameraFollowingUser = new MutableLiveData<>(true);
+
+public LiveData<Boolean> getCameraFollowState() {
+    return isCameraFollowingUser;
+}
+
+public void setCameraFollow(boolean isFollowing) {
+    isCameraFollowingUser.setValue(isFollowing);
+}
+
+// Thêm hàm để UI gọi khi user bấm Stop
+public void stopTracking() {
+    // (Logic: Lưu trạng thái end session vào DB...)
+    // Sau đó phát Effect để Activity tự gọi Intent tắt Service
+}
+```
+
+**[Cập nhật] Lắng nghe cử chỉ ở `TrackingScreenActivity.java`:**
+```java
+@Override
+public void onMapReady(@NonNull GoogleMap googleMap) {
+    mMap = googleMap;
+    // ... cài đặt map ...
+
+    // 1. Lắng nghe user vuốt bản đồ để TẮT cờ follow
+    mMap.setOnCameraMoveStartedListener(reason -> {
+        // REASON_GESTURE nghĩa là do ngón tay người dùng vuốt, không phải do code animate
+        if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
+            viewModel.setCameraFollow(false);
+        }
+    });
+
+    // 2. Lắng nghe State để vẽ đường và dời Camera
+    viewModel.getUiState().observe(this, state -> {
+        if (state != null && !state.getPathPoints().isEmpty()) {
+            drawPolyline(state.getPathPoints());
+            
+            // Lấy cờ từ ViewModel để quyết định có dời camera không
+            Boolean isFollowing = viewModel.getCameraFollowState().getValue();
+            if (Boolean.TRUE.equals(isFollowing)) {
+                LatLng latestPoint = state.getPathPoints().get(state.getPathPoints().size() - 1);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latestPoint, 17f));
+            }
+        }
+    });
+    
+    // 3. Gắn vào nút bấm trên màn hình (Ví dụ: Nút FAB góc dưới)
+    // findViewById(R.id.fab_center_camera).setOnClickListener(v -> viewModel.setCameraFollow(true));
+}
+```
+
+### Tiếp theo là gì?
+
+Kiến trúc của chúng ta bây giờ đã chặt chẽ và tối ưu hiệu suất đến từng mili-giây. Để đóng gói trọn vẹn màn hình UI này, bạn có muốn chúng ta hoàn thiện luôn phần **UiEffect & Intent Control (Gửi lệnh Stop/Pause từ Activity xuống `WalkTrackerService`)** để kết thúc một vòng đời hoàn hảo của Session Tracking không?
