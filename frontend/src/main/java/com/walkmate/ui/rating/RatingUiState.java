@@ -1,8 +1,6 @@
 package com.walkmate.ui.rating;
 
-/**
- * UI State for Rating screen
- */
+
 public class RatingUiState {
     private final boolean loading;
     private final RatingViewData data;

@@ -8,9 +8,7 @@ import com.walkmate.domain.rating.RatingService;
 
 import java.util.UUID;
 
-/**
- * Factory for RatingViewModel
- */
+
 public class RatingViewModelFactory implements ViewModelProvider.Factory {
     private final RatingService ratingService;
     private final RatingViewData initialData;

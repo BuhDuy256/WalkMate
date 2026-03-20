@@ -1,8 +1,6 @@
 package com.walkmate.domain.rating;
 
-/**
- * Rating tags enum (Frontend)
- */
+
 public enum RatingTag {
     FRIENDLY,
     PUNCTUAL,

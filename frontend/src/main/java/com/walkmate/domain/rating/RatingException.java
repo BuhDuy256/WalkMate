@@ -1,8 +1,6 @@
 package com.walkmate.domain.rating;
 
-/**
- * Domain exception for Rating (Frontend)
- */
+
 public class RatingException extends Exception {
     private final RatingErrorCode errorCode;
 
