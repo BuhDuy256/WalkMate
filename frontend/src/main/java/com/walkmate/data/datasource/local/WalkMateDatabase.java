@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase;
 import com.walkmate.data.datasource.local.dao.RoutePointDao;
 import com.walkmate.data.datasource.local.entity.RoutePointEntity;
 
-@Database(entities = {RoutePointEntity.class}, version = 1, exportSchema = false)
+@Database(entities = {RoutePointEntity.class}, version = 2, exportSchema = false)
 public abstract class WalkMateDatabase extends RoomDatabase {
     
     public abstract RoutePointDao routePointDao();

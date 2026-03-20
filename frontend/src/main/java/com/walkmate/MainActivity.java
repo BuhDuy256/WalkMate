@@ -27,12 +27,9 @@ public class MainActivity extends AppCompatActivity {
 
     Button btnTestGps = findViewById(R.id.btn_test_gps);
     btnTestGps.setOnClickListener(v -> {
-        Intent serviceIntent = new Intent(this, com.walkmate.core.service.WalkTrackerService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
-        }
+        // Chuyển thẳng sang Màn hình Bản đồ
+        Intent intent = new Intent(this, com.walkmate.ui.tracking.TrackingScreenActivity.class);
+        startActivity(intent);
     });
   }
 }

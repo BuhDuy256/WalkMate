@@ -11,6 +11,9 @@ public class SessionTrackingService {
     private final SessionRepository sessionRepository;
     private final LocationFilterPolicy filterPolicy;
     
+    // Bộ nhớ đệm giữ tọa độ hợp lệ Cuối Cùng để tính độ dời
+    private RoutePoint lastAcceptedPoint = null;
+    
     // Đẩy ExecutorService lên tầng này để đảm bảo Sync Flow và tránh MainThread exception
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -22,11 +25,14 @@ public class SessionTrackingService {
     public void processNewLocation(RoutePoint point) {
         // Ném toàn bộ công việc tính toán, lưu, và đếm sang một luồng phụ duy nhất
         executorService.execute(() -> {
-            // 1. Kiểm tra bằng Policy (Lọc nhiễu)
-            if (!filterPolicy.isValid(point)) {
-                Log.w("SessionTracking", "⏭️ Bỏ qua điểm nhiễu (Kháng bộ lọc: Sai số = " + point.getAccuracy() + "m)");
+            // 1. Kiểm tra bằng Policy (Lọc nhiễu bán kính và micro-movement)
+            if (!filterPolicy.isValid(point, lastAcceptedPoint)) {
+                Log.w("SessionTracking", "⏭️ Bỏ qua điểm tĩnh/nhiễu (Sai số=" + point.getAccuracy() + "m)");
                 return;
             }
+
+            // Gọi thành công -> Cập nhật mốc điểm mới
+            lastAcceptedPoint = point;
 
             // 2. Điểm hợp lệ -> Lưu xuống Database đồng bộ
             sessionRepository.saveRoutePoint(point);

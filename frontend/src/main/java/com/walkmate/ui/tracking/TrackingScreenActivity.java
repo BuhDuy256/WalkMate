@@ -49,6 +49,15 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         // Ví dụ: viewModel.startTrackingSession(getIntent().getStringExtra("SESSION_ID"));
         String mockSessionId = "test-session-123";
         viewModel.startTrackingSession(mockSessionId);
+        
+        // Tự động bật luôn luồng thu thập GPS ngầm (Service) với đúng SessionID này
+        android.content.Intent serviceIntent = new android.content.Intent(this, com.walkmate.core.service.WalkTrackerService.class);
+        serviceIntent.putExtra("SESSION_ID", mockSessionId);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
 
         fabCenterCamera.setOnClickListener(v -> viewModel.setCameraFollow(true));
     }
@@ -57,6 +66,12 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
         mMap.getUiSettings().setCompassEnabled(false);
+
+        // 💥 Bật dấu chấm xanh hiển thị vị trí theo thời gian thực của thuật toán Google
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(false); // Ẩn nút mặc định vì mình đã làm cái FAB nổi đẹp hơn
+        }
 
         // 1. Lắng nghe user vuốt bản đồ để TẮT cờ follow
         mMap.setOnCameraMoveStartedListener(reason -> {
