@@ -5,16 +5,32 @@ package com.walkmate.domain.session;
  * Đây là thực thể thuần lõi không chứa framework annotations (như Room).
  */
 public class RoutePoint {
+    private final long id;
     private final double lat;
     private final double lng;
     private final long timestamp;
     private final float accuracy;
 
+    // Constructor 1: Dùng khi tạo mới từ GPS (chưa lưu DB nên chưa có ID)
     public RoutePoint(double lat, double lng, long timestamp, float accuracy) {
+        this.id = 0; // Khởi tạo mặc định, sau khi lưu Room sẽ có ID auto-gen
         this.lat = lat;
         this.lng = lng;
         this.timestamp = timestamp;
         this.accuracy = accuracy;
+    }
+
+    // Constructor 2: Dùng khi lấy dữ liệu ngược từ phần Entity của Database lên
+    public RoutePoint(long id, double lat, double lng, long timestamp, float accuracy) {
+        this.id = id;
+        this.lat = lat;
+        this.lng = lng;
+        this.timestamp = timestamp;
+        this.accuracy = accuracy;
+    }
+
+    public long getId() {
+        return id;
     }
 
     public double getLat() {
