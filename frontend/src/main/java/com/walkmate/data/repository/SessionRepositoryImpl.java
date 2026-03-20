@@ -35,8 +35,8 @@ public class SessionRepositoryImpl implements SessionRepository {
     }
 
     @Override
-    public LiveData<List<RoutePoint>> getPointsOfCurrentSession() {
-        return Transformations.map(routePointDao.getAllPoints(), entities -> {
+    public LiveData<List<RoutePoint>> getPointsOfCurrentSession(String sessionId) {
+        return Transformations.map(routePointDao.getPointsBySessionId(sessionId), entities -> {
             List<RoutePoint> domainPoints = new ArrayList<>();
             for (RoutePointEntity entity : entities) {
                 // Bước Mapper: Chuyển từ Entity ngược lại thành Domain Model

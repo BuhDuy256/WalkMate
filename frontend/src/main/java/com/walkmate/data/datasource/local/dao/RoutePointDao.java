@@ -18,8 +18,8 @@ public interface RoutePointDao {
 
     // 2. Dành cho UI (ViewModel): Rút toàn bộ dữ liệu ra dưới dạng LiveData.
     // Room sẽ tự động trigger và cập nhật lên UI (Main Thread) bất cứ khi nào DB thay đổi.
-    @Query("SELECT * FROM route_points ORDER BY timestamp ASC")
-    LiveData<List<RoutePointEntity>> getAllPoints();
+    @Query("SELECT * FROM route_points WHERE sessionId = :sessionId ORDER BY timestamp ASC")
+    LiveData<List<RoutePointEntity>> getPointsBySessionId(String sessionId);
 
     // 3. Dành cho Service đồng bộ (Batching): Lấy thuần data dạng List (những điểm chưa đi)
     @Query("SELECT * FROM route_points WHERE isSynced = 0 ORDER BY timestamp ASC")

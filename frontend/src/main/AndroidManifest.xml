@@ -27,10 +27,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Nơi đăng ký API Key của Google Maps (BẠN HÃY THAY MÃ API CỦA BẠN VÀO ĐÂY) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="YOUR_API_KEY_HERE" />
+
         <service
             android:name="com.walkmate.core.service.WalkTrackerService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <activity
+            android:name="com.walkmate.ui.tracking.TrackingScreenActivity"
+            android:exported="true" />
+            
     </application>
 
 </manifest>

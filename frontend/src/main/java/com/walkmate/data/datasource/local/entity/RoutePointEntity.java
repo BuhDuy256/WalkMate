@@ -1,13 +1,17 @@
 package com.walkmate.data.datasource.local.entity;
 
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 /**
  * Ánh xạ của RoutePoint dưới Local Database (SQLite).
  * Entity này có thêm cờ 'isSynced' để phục vụ chiến lược Batching.
  */
-@Entity(tableName = "route_points")
+@Entity(
+    tableName = "route_points",
+    indices = {@Index(value = {"sessionId", "timestamp"})}
+)
 public class RoutePointEntity {
     @PrimaryKey(autoGenerate = true)
     public long id;

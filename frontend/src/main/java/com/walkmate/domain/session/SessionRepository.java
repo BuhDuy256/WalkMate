@@ -11,7 +11,7 @@ public interface SessionRepository {
 
     // Dùng cho TrackingViewModel (UI): Lắng nghe liên tục các điểm trong DB để vẽ Polyline
     // (Đây chính là sự châm chước nguyên tắc DDD mà chúng ta đã thống nhất: cho phép dùng LiveData ở Domain)
-    LiveData<List<RoutePoint>> getPointsOfCurrentSession();
+    LiveData<List<RoutePoint>> getPointsOfCurrentSession(String sessionId);
 
     // Dùng cho Sync Logic (Bước 5): Lấy ra các điểm chưa được gửi lên Server
     List<RoutePoint> getUnsyncedPoints();

@@ -50,6 +50,10 @@ dependencies {
     // GPS Tracking
     implementation(libs.play.services.location)
 
+    // Google Maps & Utils
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.maps.android:android-maps-utils:3.8.2")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
