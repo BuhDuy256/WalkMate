@@ -1,4 +1,4 @@
-package com.walkmate.frontend;
+package com.walkmate;
 
 import android.os.Bundle;
 
@@ -14,11 +14,13 @@ public class MainActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_main);
-    ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-      Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-      v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-      return insets;
-    });
+//    setContentView(R.layout.activity_main);
+    android.content.Intent intent = new android.content.Intent(this, com.walkmate.ui.rating.RatingActivity.class);
+    startActivity(intent);
+    // ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+    //   Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+    //   v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+    //   return insets;
+    // });
   }
 }
