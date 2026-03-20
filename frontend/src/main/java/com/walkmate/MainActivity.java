@@ -8,6 +8,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import android.content.Intent;
+import android.os.Build;
+import android.widget.Button;
+
 public class MainActivity extends AppCompatActivity {
 
   @Override
@@ -19,6 +23,16 @@ public class MainActivity extends AppCompatActivity {
       Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
       v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
       return insets;
+    });
+
+    Button btnTestGps = findViewById(R.id.btn_test_gps);
+    btnTestGps.setOnClickListener(v -> {
+        Intent serviceIntent = new Intent(this, com.walkmate.core.service.WalkTrackerService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
     });
   }
 }

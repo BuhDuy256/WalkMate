@@ -47,6 +47,9 @@ dependencies {
     implementation(libs.lifecycle.livedata)
     implementation(libs.lifecycle.viewmodel)
 
+    // GPS Tracking
+    implementation(libs.play.services.location)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
