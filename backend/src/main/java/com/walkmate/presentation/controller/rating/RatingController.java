@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * REST Controller for Rating operations
- */
+
 @RestController
 @RequestMapping("/api/ratings")
 public class RatingController {
@@ -29,24 +27,14 @@ public class RatingController {
     @PostMapping
     public ResponseEntity<RatingResponse> submitRating(@Valid @RequestBody SubmitRatingRequest request) {
         try {
-            // Print received data from FE
-            System.out.println("[DEBUG] Received rating request: " + request);
 
             // Map DTO to domain
-            System.out.println("[DEBUG] Mapping to domain...");
             Rating rating = mapToDomain(request);
             System.out.println("[DEBUG] Domain rating created: " + rating);
 
-            // Submit rating
-            System.out.println("[DEBUG] Calling ratingCommandService.submitRating...");
-            // TODO: Fix database connection issue first
-            // Rating savedRating = ratingCommandService.submitRating(rating);
-
-            // Mock response for testing without DB
-            Rating savedRating = rating;
-            savedRating.setReviewId(java.util.UUID.randomUUID());
-            savedRating.setCreatedAt(java.time.LocalDateTime.now());
-            System.out.println("[DEBUG] Rating saved successfully (MOCK): " + savedRating);
+            // Submit rating (insert DB)
+            Rating savedRating = ratingCommandService.submitRating(rating);
+            System.out.println("[DEBUG] Rating saved successfully: " + savedRating);
 
             // Map domain to response
             RatingResponse response = mapToResponse(savedRating);

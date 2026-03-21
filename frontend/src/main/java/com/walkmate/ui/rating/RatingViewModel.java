@@ -125,6 +125,10 @@ public class RatingViewModel extends ViewModel {
         UUID reviewerId = currentUserId;
         UUID revieweeId = data.getPartner().getUserId();
 
+        //    UUID sessionId = UUID.fromString("6e0a56b5-47ad-4771-ae70-de3a8dbb84dc"); // session_id cố định
+        // UUID reviewerId = UUID.fromString("c7a989f0-9f68-43f2-9ca8-160c4e301ce5"); // reviewer cố định
+        // UUID revieweeId = UUID.fromString("66448f3a-9beb-40b8-9f8f-214d2d18d484"); // reviewee cố định
+
         RatingScore score = new RatingScore(data.getSelectedStars());
 
         List<RatingTag> tags = data.getSelectedTagsWithDbCode().stream()

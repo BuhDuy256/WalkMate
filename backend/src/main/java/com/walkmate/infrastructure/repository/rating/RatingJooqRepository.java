@@ -8,9 +8,7 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * JOOQ/JDBC implementation of RatingRepository
- */
+
 @Repository
 public class RatingJooqRepository implements RatingRepository {
 

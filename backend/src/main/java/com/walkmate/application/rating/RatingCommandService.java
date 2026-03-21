@@ -13,9 +13,7 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
-/**
- * Command Service for Rating operations
- */
+
 @Service
 public class RatingCommandService {
 
@@ -27,13 +25,6 @@ public class RatingCommandService {
         this.dataSource = dataSource;
     }
 
-    /**
-     * Submit a rating for a completed session
-     * Business rules:
-     * - Session must be COMPLETED
-     * - User can only rate once per session
-     * - Rating score must be 1-5
-     */
     @Transactional
     public Rating submitRating(Rating rating) {
         // Business rule 1: Check if user already rated this session
@@ -57,7 +48,7 @@ public class RatingCommandService {
                      "SELECT status, user1_id, user2_id FROM walk_session WHERE session_id = ?"
              )) {
 
-            stmt.setObject(1, sessionId);
+            stmt.setObject(1, sessionId);   
             ResultSet rs = stmt.executeQuery();
 
             if (!rs.next()) {

@@ -122,7 +122,7 @@ public class RatingActivity extends AppCompatActivity {
     private void setupMaybeLaterListener() {
         tvMaybeLater.setOnClickListener(v -> viewModel.onEvent(new RatingUiEvent.CancelClicked()));
     }
-
+     
     private void initViewModel() {
         UUID sessionId = getIntent().hasExtra("SESSION_ID")
                 ? UUID.fromString(getIntent().getStringExtra("SESSION_ID"))
