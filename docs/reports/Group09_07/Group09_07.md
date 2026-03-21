@@ -35,15 +35,20 @@
 
 - Task: Login API, Login Flow
 - Task description: Implement Login API and Login Flow. The API is implemented and tested with Postman, and connected with Frontend. access token is stored in Shared Preferences and used for authentication in other API calls. Refresh token is stored in Supabase DB and used to refresh access token when it expires.
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- **Evidence:**
 - [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-24)
 - [Github branch](https://github.com/BuhDuy256/WalkMate/tree/feature/auth_activity)
 - [Login/Postman/Supabase Screenshot](https://drive.google.com/drive/folders/1CQ1Vkzui3kZ_-L61a_depbZTgTvKFc8V?usp=drive_link)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+Task: Implement Rating Flow
+Task description: Implement end-to-end rating feature, including UI for submitting ratings, API integration, data validation, and backend processing to store and retrieve user ratings for walk sessions.
+
+- **Evidence:**
+- [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-27)
+- [Github branch](https://github.com/BuhDuy256/WalkMate/tree/feature/rating)
+- [Rating Feature Screenshot](https://drive.google.com/file/d/194o3kjbrTl_9V3wsVT0aMqRFEdgGGWM3/view?usp=sharing)
 
 ---
 
@@ -76,15 +81,14 @@ _Evidence:_ https://gemini.google.com/share/0d33f1a80b2a
 - Prompt 1: hãy cho t 1 flow code đăng nhập, ví dụ hồi xưa t có làm web là đăng nhập -> gửi email + pass -> giải mã -> so sánh db -> tạo token bằng jwt -> gửi qua web bằng cookie
 - **Evidence:** [ChatGPT conversation](https://chatgpt.com/share/69be61c9-7030-800b-b47b-8b7da4b9083d)
 
-### 23127539 – Nguyễn Thanh Tiến
-
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
-
----
-
 ## Tasks Planned for Next Week
 
 - **Goal:**
   - Finish uncompleted tasks in current week
   - Implement Chat, Noti, History, Profile flow
+
+## Issues
+
+| Issue                                                                                                                                                       | Raised by         | Status / Resolution                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| Lack of experience with Java (Android) and Spring Boot, leading to difficulties in implementing features, debugging, and integrating frontend with backend. | Nguyễn Thanh Tiến | In Progress: Actively learning, seeking support, practicing, and using AI tools to overcome these challenges. |
