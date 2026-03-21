@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * REST Controller for Rating operations
  */
 @RestController
-@RequestMapping("/api/v1/ratings")
+@RequestMapping("/api/ratings")
 public class RatingController {
 
     private final RatingCommandService ratingCommandService;
@@ -25,22 +25,39 @@ public class RatingController {
         this.ratingCommandService = ratingCommandService;
     }
 
-    /**
-     * Submit a rating for a completed session
-     * POST /api/v1/ratings
-     */
+  
     @PostMapping
     public ResponseEntity<RatingResponse> submitRating(@Valid @RequestBody SubmitRatingRequest request) {
-        // Map DTO to domain
-        Rating rating = mapToDomain(request);
+        try {
+            // Print received data from FE
+            System.out.println("[DEBUG] Received rating request: " + request);
 
-        // Submit rating
-        Rating savedRating = ratingCommandService.submitRating(rating);
+            // Map DTO to domain
+            System.out.println("[DEBUG] Mapping to domain...");
+            Rating rating = mapToDomain(request);
+            System.out.println("[DEBUG] Domain rating created: " + rating);
 
-        // Map domain to response
-        RatingResponse response = mapToResponse(savedRating);
+            // Submit rating
+            System.out.println("[DEBUG] Calling ratingCommandService.submitRating...");
+            // TODO: Fix database connection issue first
+            // Rating savedRating = ratingCommandService.submitRating(rating);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            // Mock response for testing without DB
+            Rating savedRating = rating;
+            savedRating.setReviewId(java.util.UUID.randomUUID());
+            savedRating.setCreatedAt(java.time.LocalDateTime.now());
+            System.out.println("[DEBUG] Rating saved successfully (MOCK): " + savedRating);
+
+            // Map domain to response
+            RatingResponse response = mapToResponse(savedRating);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            System.err.println("[ERROR] Exception in submitRating: " + e.getClass().getName());
+            System.err.println("[ERROR] Message: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private Rating mapToDomain(SubmitRatingRequest request) {

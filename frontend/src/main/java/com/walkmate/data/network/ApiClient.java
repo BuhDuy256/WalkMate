@@ -16,8 +16,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ApiClient {
     private static final String BASE_URL = "http://10.0.2.2:8080"; // For Android emulator
-    // For real device use: http://YOUR_LOCAL_IP:8080
-
     private static Retrofit retrofit = null;
 
     public static Retrofit getClient() {

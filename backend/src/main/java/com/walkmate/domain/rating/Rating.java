@@ -92,4 +92,18 @@ public class Rating {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    @Override
+    public String toString() {
+        return "Rating{" +
+                "reviewId=" + reviewId +
+                ", sessionId=" + sessionId +
+                ", reviewerId=" + reviewerId +
+                ", revieweeId=" + revieweeId +
+                ", score=" + score +
+                ", tags=" + tags +
+                ", comment=" + comment +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

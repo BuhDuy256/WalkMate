@@ -3,10 +3,19 @@ package com.walkmate.data.datasource.remote.dto;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Request DTO for submitting rating
- */
+
 public class SubmitRatingRequestDto {
+        @Override
+        public String toString() {
+            return "SubmitRatingRequestDto{" +
+                    "userId=" + userId +
+                    ", sessionId=" + sessionId +
+                    ", revieweeId=" + revieweeId +
+                    ", score=" + score +
+                    ", tags=" + tags +
+                    ", note='" + note + '\'' +
+                    '}';
+        }
     private UUID userId;
     private UUID sessionId;
     private UUID revieweeId;

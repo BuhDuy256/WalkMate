@@ -29,24 +29,33 @@ public class RatingRepositoryImpl implements RatingRepository {
 
     @Override
     public Rating submitRating(Rating rating) throws RatingException {
+
         SubmitRatingRequestDto requestDto = mapper.mapToDto(rating);
+        // Print request data before sending to backend
+        System.out.println("[DEBUG] Sending rating request: " + requestDto);    
 
         Call<RatingResponseDto> call = apiService.submitRating(requestDto);
 
         try {
+            System.out.println("[DEBUG] Executing API call...");
             Response<RatingResponseDto> response = call.execute();
+            System.out.println("[DEBUG] Response received - Code: " + response.code() + ", Success: " + response.isSuccessful());
 
             if (response.isSuccessful() && response.body() != null) {
+                System.out.println("[DEBUG] Rating submitted successfully");
                 return rating; // Return original rating (could map response if needed)
             } else {
                 // Handle HTTP errors
                 int code = response.code();
                 String errorBody = response.errorBody() != null ? response.errorBody().string() : "";
+                System.out.println("[DEBUG] Error response - Code: " + code + ", Body: " + errorBody);
 
                 RatingErrorCode errorCode = mapHttpErrorToRatingError(code, errorBody);
                 throw new RatingException(errorCode, "Failed to submit rating: " + errorBody);
             }
         } catch (IOException e) {
+            System.out.println("[DEBUG] IOException occurred: " + e.getMessage());
+            e.printStackTrace();
             throw new RatingException(RatingErrorCode.NETWORK_ERROR, "Network error", e);
         }
     }

@@ -7,9 +7,7 @@ import com.walkmate.domain.rating.RatingTag;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Mapper: Domain Rating -> DTO
- */
+
 public class RatingDomainToDtoMapper {
 
     public SubmitRatingRequestDto mapToDto(Rating rating) {
