@@ -1,10 +1,15 @@
 package com.walkmate.presentation.controller;
 
 import com.walkmate.application.RegisterUserCommand;
+import com.walkmate.application.LoginResult;
+import com.walkmate.application.LoginUserCommand;
+import com.walkmate.application.LoginUserUseCase;
 import com.walkmate.application.RegisterUserUseCase;
 import com.walkmate.domain.user.User;
+import com.walkmate.presentation.dto.request.LoginRequest;
 import com.walkmate.presentation.dto.request.RegisterUserRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.LoginResponse;
 import com.walkmate.presentation.mapper.AuthMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final RegisterUserUseCase registerUserUseCase;
+    private final LoginUserUseCase loginUserUseCase;
     private final AuthMapper authMapper;
 
     @PostMapping("/register")
@@ -31,5 +37,14 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(authMapper.toRegisterResponse(user));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResult loginResult = loginUserUseCase.execute(
+                new LoginUserCommand(request.email(), request.password())
+        );
+
+        return ResponseEntity.ok(authMapper.toLoginResponse(loginResult));
     }
 }

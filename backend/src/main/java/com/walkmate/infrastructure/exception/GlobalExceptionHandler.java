@@ -1,5 +1,6 @@
 package com.walkmate.infrastructure.exception;
 
+import com.walkmate.domain.user.InvalidCredentialsException;
 import com.walkmate.domain.user.UserAlreadyExistsException;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
@@ -18,6 +19,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponse> handleUserAlreadyExists(UserAlreadyExistsException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiResponse> handleInvalidCredentials(InvalidCredentialsException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error(exception.getMessage()));
     }
 

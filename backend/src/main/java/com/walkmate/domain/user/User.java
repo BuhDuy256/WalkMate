@@ -75,6 +75,10 @@ public class User {
         return requireText(email, "Email is required").trim().toLowerCase(Locale.ROOT);
     }
 
+    public void markLoggedIn() {
+        this.lastLoginAt = Instant.now();
+    }
+
     @PrePersist
     void onCreate() {
         if (createdAt == null) {
