@@ -30,7 +30,7 @@
         <!-- Nơi đăng ký API Key của Google Maps (BẠN HÃY THAY MÃ API CỦA BẠN VÀO ĐÂY) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_API_KEY_HERE" />
+            android:value="${MAPS_API_KEY}" />
 
         <service
             android:name="com.walkmate.core.service.WalkTrackerService"

@@ -1,6 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
+
+val envProperties = Properties()
+val envFile = file(".env")
+if (envFile.exists()) {
+    envFile.inputStream().use { envProperties.load(it) }
+}
+val mapsApiKey: String = envProperties.getProperty("MAPS_API_KEY") ?: ""
 
 android {
     namespace = "com.walkmate.frontend"
@@ -16,6 +25,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
