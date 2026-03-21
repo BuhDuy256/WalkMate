@@ -33,8 +33,12 @@
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Task 1 description
+- Task: Login API, Login Flow
+- Task description: Implement Login API and Login Flow. The API is implemented and tested with Postman, and connected with Frontend. access token is stored in Shared Preferences and used for authentication in other API calls. Refresh token is stored in Supabase DB and used to refresh access token when it expires.
 - **Evidence:** _(Jira screenshot link / output document / artifact)_
+- [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-24)
+- [Github branch](https://github.com/BuhDuy256/WalkMate/tree/feature/auth_activity)
+- [Login/Postman/Supabase Screenshot](https://drive.google.com/drive/folders/1CQ1Vkzui3kZ_-L61a_depbZTgTvKFc8V?usp=drive_link)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
@@ -69,8 +73,8 @@ _Evidence:_ https://gemini.google.com/share/0d33f1a80b2a
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: hãy cho t 1 flow code đăng nhập, ví dụ hồi xưa t có làm web là đăng nhập -> gửi email + pass -> giải mã -> so sánh db -> tạo token bằng jwt -> gửi qua web bằng cookie
+- **Evidence:** [ChatGPT conversation](https://chatgpt.com/share/69be61c9-7030-800b-b47b-8b7da4b9083d)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
