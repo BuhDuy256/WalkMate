@@ -28,8 +28,13 @@
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Task 1: get the api key for google maps from google
+- Task 2: determine the current problem in the project and brainstorm the folder structure
+- Status: Still just finish the backend. Haven't finish the frontend yet.
+- **Evidence:**
+  - ![alt text](images/api.png)
+  - [Jira task](https://duybaonguyendev.atlassian.net/browse/KAN-25)
+  - [Github branch](https://github.com/BuhDuy256/WalkMate/tree/features/walk-intent)
 
 ### 23127438 – Đặng Trường Nguyên
 
@@ -73,8 +78,10 @@ _Evidence:_ https://gemini.google.com/share/0d33f1a80b2a
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- **Evidence:**
+  - [Claude](https://claude.ai/share/2751e52f-51a2-40fc-a498-d09217451ec0)
+  - [Claude](https://claude.ai/share/7414cb1f-c041-40c4-a148-de35c8243c05)
+  - [Claude](https://claude.ai/share/b78bf65e-f9cb-4292-8425-ac7e7b52721a)
 
 ### 23127438 – Đặng Trường Nguyên
 
