@@ -1,6 +1,7 @@
 package com.walkmate.ui.login;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -22,15 +23,25 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.walkmate.frontend.R;
+import com.walkmate.network.ApiClient;
+import com.walkmate.network.AuthApiService;
+import com.walkmate.ui.main.MainActivity;
 import com.walkmate.ui.register.RegisterActivity;
 
-import java.util.regex.Pattern;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String PREFS_AUTH = "walkmate_auth";
+    private static final String KEY_ACCESS_TOKEN = "access_token";
+
     private EditText etEmail, etPassword;
     private ImageView ivTogglePassword;
+    private AppCompatButton btnSignInAction;
     private boolean isPasswordVisible = false;
+    private final AuthApiService authApiService = ApiClient.getAuthApiService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,14 +104,65 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void initLoginAction(){
-        AppCompatButton btnSignInAction = findViewById(R.id.btn_signin_action);
+        btnSignInAction = findViewById(R.id.btn_signin_action);
         if (btnSignInAction != null) {
             btnSignInAction.setOnClickListener(v -> {
                 if (validateInput()) {
-                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                    submitLogin();
                 }
             });
         }
+    }
+
+    private void submitLogin() {
+        setLoginLoading(true);
+
+        LoginRequest request = new LoginRequest(
+                etEmail.getText().toString().trim(),
+                etPassword.getText().toString().trim()
+        );
+
+        authApiService.login(request).enqueue(new Callback<LoginResponse>() {
+            @Override
+            public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                setLoginLoading(false);
+
+                LoginResponse body = response.body();
+                if (response.isSuccessful() && body != null && !TextUtils.isEmpty(body.getAccessToken())) {
+                    saveAccessToken(body.getAccessToken());
+                    Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    return;
+                }
+
+                Toast.makeText(LoginActivity.this, "Invalid email or password", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(Call<LoginResponse> call, Throwable throwable) {
+                setLoginLoading(false);
+                Toast.makeText(LoginActivity.this, "Cannot connect to backend: " + throwable.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void saveAccessToken(String accessToken) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AUTH, MODE_PRIVATE);
+        prefs.edit().putString(KEY_ACCESS_TOKEN, accessToken).apply();
+    }
+
+    private void setLoginLoading(boolean isLoading) {
+        if (btnSignInAction == null) {
+            return;
+        }
+
+        btnSignInAction.setEnabled(!isLoading);
+        btnSignInAction.setText(isLoading ? "Signing in..." : "Sign In ✦");
     }
 
     private boolean validateInput() {
@@ -119,15 +181,6 @@ public class LoginActivity extends AppCompatActivity {
             etPassword.setError("Password is required");
             return false;
         }
-        if (!isValidPassword(password)) {
-            etPassword.setError("Password must be at least 8 characters, include uppercase, number, and special character");
-            return false;
-        }
         return true;
-    }
-
-    private boolean isValidPassword(String password) {
-        String passwordPattern = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
-        return Pattern.compile(passwordPattern).matcher(password).matches();
     }
 }
