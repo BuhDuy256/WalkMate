@@ -25,7 +25,8 @@ public class User {
     }
 
     // Rehydration constructor
-    public User(UUID userId, String email, String phone, AuthProvider provider, AccountStatus status, String passwordHash, Instant createdAt, Instant lastLoginAt) {
+    public User(UUID userId, String email, String phone, AuthProvider provider, AccountStatus status,
+            String passwordHash, Instant createdAt, Instant lastLoginAt) {
         this.userId = userId;
         this.email = email;
         this.phone = phone;
@@ -38,6 +39,7 @@ public class User {
 
     private User(String fullName, String email, String passwordHash) {
         requireText(fullName, "Full name is required");
+        this.userId = UUID.randomUUID();
         this.email = normalizeEmail(email);
         this.phone = null;
         this.provider = DEFAULT_PROVIDER;

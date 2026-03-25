@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     /**
-     * Handles all DomainException thrown by any domain (UserErrorCode, SessionErrorCode, etc.)
+     * Handles all DomainException thrown by any domain (UserErrorCode,
+     * SessionErrorCode, etc.)
      * They are mapped to 400 Bad Request by default; adjust per domain if needed.
      */
     @ExceptionHandler(DomainException.class)
@@ -35,7 +36,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles domain guard-clause violations (e.g. null/blank arguments passed to domain factories).
+     * Handles domain guard-clause violations (e.g. null/blank arguments passed to
+     * domain factories).
      * These should be caught by @Valid at the presentation layer first;
      * this handler is a safety net in case that validation is bypassed.
      */
@@ -50,7 +52,12 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(Exception ex) {
-        ApiResponse<Void> body = ApiResponse.error("INTERNAL_ERROR", "An unexpected error occurred");
+        String details = ex.getClass().getSimpleName();
+        if (ex.getMessage() != null && !ex.getMessage().isBlank()) {
+            details = details + ": " + ex.getMessage();
+        }
+
+        ApiResponse<Void> body = ApiResponse.error("INTERNAL_ERROR", details);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

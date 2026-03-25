@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace = "com.walkmate.frontend"
+    namespace = "com.walkmate"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.walkmate.frontend"
+        applicationId = "com.walkmate"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -41,4 +41,15 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // Khối Network (Retrofit, OkHttp, Gson)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Khối Architecture Components (ViewModel, LiveData)
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.5")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.8.5")
 }
