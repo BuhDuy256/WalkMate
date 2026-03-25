@@ -44,6 +44,13 @@ frontend/src/main/java/com/walkmate/
     │   ├── remote/
     │   │   ├── api/
     │   │   └── dto/
+    │   │       ├── request/
+    │   │       │   └── <domain-name>/
+    │   │       │       └── <Verb><Domain>Request.java
+    │   │       └── response/
+    │   │           ├── ApiResponse.java (Generic Response Wrapper)
+    │   │           └── <domain-name>/
+    │   │               └── <Domain>Response.java
     │   └── local/
     │       ├── dao/
     │       └── entity/ (Room Entities)
@@ -54,23 +61,40 @@ frontend/src/main/java/com/walkmate/
 
 ## 2. Trách Nhiệm Từng Layer
 
-| Layer     | Định hướng       | Trách nhiệm                                                                                  |
-| --------- | ---------------- | -------------------------------------------------------------------------------------------- |
+| Layer     | Định hướng       | Trách nhiệm                                                                                                               |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `ui/`     | Feature-oriented | Render giao diện tuân theo `UiState`. Bắt sự kiện Click và đẩy thẳng vào Method của ViewModel. Không nhét Logic/Validate. |
-| `domain/` | Domain-oriented  | Chứa Business Rule bề mặt (Client-side), Repository Interface (`UserRepository`), Các Model được gọt giũa nhẹ nhất. |
-| `data/`   | Technical        | Triển khai logic chọc REST API (Retrofit), lưu Room DB (SQLite), Cấu hình SharedPref. |
-| `core/`   | Shared technical | Các helper dùng chung, Constants, Theme. |
+| `domain/` | Domain-oriented  | Chứa Business Rule bề mặt (Client-side), Repository Interface (`UserRepository`), Các Model được gọt giũa nhẹ nhất.       |
+| `data/`   | Technical        | Triển khai logic chọc REST API (Retrofit), lưu Room DB (SQLite), Cấu hình SharedPref.                                     |
+| `core/`   | Shared technical | Các helper dùng chung, Constants, Theme.                                                                                  |
 
 ## 3. Quy Ước Đặt Tên (MVVM Tinh Gọn)
 
 Bộ khung MVVM đã được cắt tỉa triệt để, xóa sổ hoàn toàn rác boilerplate như `<Feature>ViewData`, `<Feature>UiEvent`, và `<Feature>UiEffect`.
 
-| Thành phần | Mẫu tên                   | Ví dụ                  |
-| ---------- | ------------------------- | ---------------------- |
-| View       | `<Feature>Activity.java`  | `LoginActivity.java`   |
-| ViewModel  | `<Feature>ViewModel.java` | `LoginViewModel.java`  |
-| State      | `<Feature>UiState.java`   | `LoginUiState.java`    |
-| DI Factory | `<Feature>ViewModelFactory.java`| `LoginViewModelFactory.java`|
+| Thành phần | Mẫu tên                          | Ví dụ                        |
+| ---------- | -------------------------------- | ---------------------------- |
+| View       | `<Feature>Activity.java`         | `LoginActivity.java`         |
+| ViewModel  | `<Feature>ViewModel.java`        | `LoginViewModel.java`        |
+| State      | `<Feature>UiState.java`          | `LoginUiState.java`          |
+| DI Factory | `<Feature>ViewModelFactory.java` | `LoginViewModelFactory.java` |
+
+### 3.1 Quy Ước DTO Remote (Đồng bộ với Backend)
+
+DTO ở frontend phải bám chuẩn naming theo domain để mapping 1-1 với API contract của backend.
+
+| Thành phần                    | Mẫu tên                      | Ví dụ                            |
+| ----------------------------- | ---------------------------- | -------------------------------- |
+| Request DTO                   | `<Verb><Domain>Request.java` | `LoginUserRequest.java`          |
+| Response DTO (wrapper)        | `ApiResponse.java`           | `ApiResponse<LoginUserResponse>` |
+| Response DTO (domain payload) | `<Domain>Response.java`      | `LoginUserResponse.java`         |
+
+Quy tắc sử dụng:
+
+1. DTO chỉ sống trong `data/datasource/remote/dto/`, không được leak vào `ui/` và `domain/`.
+2. `repository/` chịu trách nhiệm map từ `ApiResponse<<Domain>Response>` sang model/domain object của frontend.
+3. Mapping bắt buộc đi qua `data/mapper/` (vd: `UserMapper`) để cắt phụ thuộc của ViewModel với schema API.
+4. Không parse thủ công JSON ngay tại `Activity`/`ViewModel`; mọi xử lý contract HTTP phải đi qua `remote/api` + `remote/dto`.
 
 ## 4. Contract Chuẩn cho UiState (Immutable)
 
@@ -84,7 +108,7 @@ public class IntentUiState {
     // Các Data Models cần render...
 
     public IntentUiState(...) { ... }
-    
+
     // Thuần Getters...
 }
 ```
@@ -96,6 +120,7 @@ User Action (VD: Nhấn nút Start Tracking)
 -> Activity trích xuất dữ liệu, gọi thẳng hàm `viewModel.startTracking()`
 -> ViewModel mở `ExecutorService` thả việc nặng xuống Background
 -> Gọi API thông qua `Repository` / Ghi dữ liệu Polyline xuống Room DB
+-> Repository dùng `Mapper` để đổi DTO (`ApiResponse<T>`) thành Domain Object trước khi callback về ViewModel
 -> Kết quả trả về qua `DomainCallback<T>` (Hoặc fetch từ DB lên)
 -> ViewModel bắn lệnh `.postValue(new UiState(loading=false, success...))`
 -> Activity đang Observe `LiveData<UiState>` lập tức chạy lệnh Update UI tự động.
@@ -105,9 +130,11 @@ User Action (VD: Nhấn nút Start Tracking)
 
 Đây là những luật thép bắt buộc phải tuân theo khi đóng góp code cho dự án WalkMate:
 
-| Ràng buộc | Trạng thái | Yêu cầu Kỷ luật |
-| --------- | ---------- | --------------- |
-| **View tự chọc API/Database?** | ❌ NGHIÊM CẤM | View/Activity **tuyệt đối cấm** import các thư viện như `Retrofit` hay `Room`. Mọi xử lý Data phải đi vòng qua `ViewModel` để nhờ `Repository` xử lý hộ. Cầm View đi sửa DB là chém không tha.
-| **Đẻ thêm class MVI (UiEvent / UiEffect)?** | ❌ CẤM DÙNG | Ứng dụng vẽ bằng Java XML truyền thống, hãy dùng hàm trực tiếp. Việc áp dụng triết lý MVI đẻ ra quá nhiều class Action Event gây rác codebase và phí phạm thời gian.
-| **Giải quyết Dependency Injection (DI)** | ⚙️ BẮT BUỘC | Khai sinh các cục Dependencies khổng lồ (`RoomDatabase`, `AuthRepository`) tại 1 instance độc tôn (Singleton) ở cấp `Application` class (Service Locator Pattern). Cấm cài cắm Hilt/Dagger vào hệ thống.
-| **Xử lý Thread/Async Mượt mà** | ⚙️ BẮT BUỘC | Luôn phải tạo luồng phụ `ExecutorService.execute()` khi insert mảng tọa độ vào Room hoặc call HTTP Network. Tỉ lệ rớt frame sẽ về 0. Cấm dùng các lib ngoài chuẩn như RxJava.
+| Ràng buộc                                   | Trạng thái    | Yêu cầu Kỷ luật                                                                                                                                                                                          |
+| ------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **View tự chọc API/Database?**              | ❌ NGHIÊM CẤM | View/Activity **tuyệt đối cấm** import các thư viện như `Retrofit` hay `Room`. Mọi xử lý Data phải đi vòng qua `ViewModel` để nhờ `Repository` xử lý hộ. Cầm View đi sửa DB là chém không tha.           |
+| **Đẻ thêm class MVI (UiEvent / UiEffect)?** | ❌ CẤM DÙNG   | Ứng dụng vẽ bằng Java XML truyền thống, hãy dùng hàm trực tiếp. Việc áp dụng triết lý MVI đẻ ra quá nhiều class Action Event gây rác codebase và phí phạm thời gian.                                     |
+| **Giải quyết Dependency Injection (DI)**    | ⚙️ BẮT BUỘC   | Khai sinh các cục Dependencies khổng lồ (`RoomDatabase`, `AuthRepository`) tại 1 instance độc tôn (Singleton) ở cấp `Application` class (Service Locator Pattern). Cấm cài cắm Hilt/Dagger vào hệ thống. |
+| **Xử lý Thread/Async Mượt mà**              | ⚙️ BẮT BUỘC   | Luôn phải tạo luồng phụ `ExecutorService.execute()` khi insert mảng tọa độ vào Room hoặc call HTTP Network. Tỉ lệ rớt frame sẽ về 0. Cấm dùng các lib ngoài chuẩn như RxJava.                            |
+| **API Response Boundary rõ ràng?**          | ⚙️ BẮT BUỘC   | Response từ backend phải đi qua `ApiResponse<T>` ở tầng `data`. Chỉ dữ liệu đã map mới được đưa sang `domain/ui`. Không cho `ui/` phụ thuộc trực tiếp vào schema JSON trả về từ server.                  |
+| **Repository phải chặt DTO boundary?**      | ⚙️ BẮT BUỘC   | Repository bắt buộc map DTO -> Domain bằng Mapper trước khi trả về `DomainCallback<T>`. Tuyệt đối không trả `ApiResponse`/DTO ra ngoài tầng `data`.                                                      |

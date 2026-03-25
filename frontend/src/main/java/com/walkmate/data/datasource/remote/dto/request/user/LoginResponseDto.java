@@ -1,4 +1,4 @@
-package com.walkmate.data.datasource.remote.dto;
+package com.walkmate.data.datasource.remote.dto.request.user;
 
 public class LoginResponseDto {
     private String accessToken;

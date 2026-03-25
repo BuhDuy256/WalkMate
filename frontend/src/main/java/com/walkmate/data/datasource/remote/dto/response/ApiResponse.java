@@ -1,4 +1,4 @@
-package com.walkmate.data.datasource.remote.dto;
+package com.walkmate.data.datasource.remote.dto.response;
 
 public class ApiResponse<T> {
 

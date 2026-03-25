@@ -1,6 +1,5 @@
 package com.walkmate.ui.register;
 
-import android.text.TextUtils;
 import android.util.Patterns;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -76,8 +75,8 @@ public class RegisterViewModel extends ViewModel {
     public void consumeError() {
         RegisterUiState current = uiState.getValue();
         if (current != null) {
-            uiState.setValue(new RegisterUiState(current.isLoading(), current.isSuccess(), null, 
-                current.getFullNameError(), current.getEmailError(), current.getPasswordError()));
+            uiState.setValue(new RegisterUiState(current.isLoading(), current.isSuccess(), null,
+                    current.getFullNameError(), current.getEmailError(), current.getPasswordError()));
         }
     }
 }
