@@ -126,6 +126,12 @@ User Action (VD: Nhấn nút Start Tracking)
 -> Activity đang Observe `LiveData<UiState>` lập tức chạy lệnh Update UI tự động.
 ```
 
+Lưu ý cho flow Auth khi scale:
+
+1. `AuthActivity` chỉ đóng vai trò container điều hướng, không giữ layout form business.
+2. `LoginFragment` và `RegisterFragment` phải dùng layout fragment độc lập; không `include` lại layout của activity cũ.
+3. Khi cần refactor UI auth, ưu tiên sửa trực tiếp ở fragment layout để tránh coupling với navigation legacy.
+
 ## 6. Các Ràng Buộc Kiến Trúc Cốt Lõi (Hard Constraints)
 
 Đây là những luật thép bắt buộc phải tuân theo khi đóng góp code cho dự án WalkMate:
@@ -138,3 +144,4 @@ User Action (VD: Nhấn nút Start Tracking)
 | **Xử lý Thread/Async Mượt mà**              | ⚙️ BẮT BUỘC   | Luôn phải tạo luồng phụ `ExecutorService.execute()` khi insert mảng tọa độ vào Room hoặc call HTTP Network. Tỉ lệ rớt frame sẽ về 0. Cấm dùng các lib ngoài chuẩn như RxJava.                            |
 | **API Response Boundary rõ ràng?**          | ⚙️ BẮT BUỘC   | Response từ backend phải đi qua `ApiResponse<T>` ở tầng `data`. Chỉ dữ liệu đã map mới được đưa sang `domain/ui`. Không cho `ui/` phụ thuộc trực tiếp vào schema JSON trả về từ server.                  |
 | **Repository phải chặt DTO boundary?**      | ⚙️ BẮT BUỘC   | Repository bắt buộc map DTO -> Domain bằng Mapper trước khi trả về `DomainCallback<T>`. Tuyệt đối không trả `ApiResponse`/DTO ra ngoài tầng `data`.                                                      |
+| **Fragment được reuse layout Activity?**    | ❌ CẤM DÙNG   | Fragment không được `include` layout activity legacy (vd: `activity_login.xml`, `activity_register.xml`). Mỗi fragment auth phải sở hữu layout riêng để tách biệt container và UI business.              |

@@ -1,61 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/login"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF9F1"
-    android:fillViewport="true">
+    android:paddingHorizontal="24dp">
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_height="match_parent"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="48dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp">
 
-        <!-- Logo Section -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="84dp"
-            android:layout_height="84dp"
-            android:layout_marginTop="10dp"
-            app:cardBackgroundColor="#FF9E67"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="0dp">
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="18dp"
-                android:src="@drawable/logo"
-                app:tint="@color/white" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:fontFamily="sans-serif-black"
-            android:text="Zestify"
-            android:textColor="#1A1A1A"
-            android:textSize="32sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Your friendly space ✨"
-            android:textColor="#A8927B"
-            android:textSize="15sp" />
-
-        <!-- Main Login Card -->
-        <com.google.android.material.card.MaterialCardView
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="48dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="0dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -63,7 +25,6 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <!-- Tabs -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="54dp"
@@ -110,7 +71,6 @@
                     android:textColor="#9E8D7F"
                     android:textSize="14sp" />
 
-                <!-- Input Fields -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -131,8 +91,8 @@
                     android:hint="hello@example.com"
                     android:inputType="textEmailAddress"
                     android:paddingHorizontal="20dp"
-                    android:textSize="14sp"
-                    android:textColorHint="#C6B5A6" />
+                    android:textColorHint="#C6B5A6"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -159,8 +119,8 @@
                         android:drawablePadding="12dp"
                         android:hint="Enter your password"
                         android:inputType="textPassword"
-                        android:textSize="14sp"
-                        android:textColorHint="#C6B5A6" />
+                        android:textColorHint="#C6B5A6"
+                        android:textSize="14sp" />
                     <ImageView
                         android:id="@+id/iv_toggle_password"
                         android:layout_width="24dp"
@@ -181,7 +141,6 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <!-- Action Buttons -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btn_signin_action"
                     android:layout_width="match_parent"
@@ -200,9 +159,23 @@
                     android:layout_marginTop="20dp"
                     android:gravity="center"
                     android:orientation="horizontal">
-                    <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" android:background="#E8DFD6" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingHorizontal="12dp" android:text="or continue with" android:textColor="#BDB2A7" android:textSize="12sp" />
-                    <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" android:background="#E8DFD6" />
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:background="#E8DFD6" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="12dp"
+                        android:text="or continue with"
+                        android:textColor="#BDB2A7"
+                        android:textSize="12sp" />
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:background="#E8DFD6" />
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
@@ -241,18 +214,7 @@
                 </LinearLayout>
 
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </ScrollView>
+    </com.google.android.material.card.MaterialCardView>
 
-        <!-- Footer -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="16dp"
-            android:gravity="center"
-            android:text="By continuing, you agree to our Terms &amp; Privacy Policy"
-            android:textColor="#BAA694"
-            android:textSize="12sp" />
-
-    </LinearLayout>
-</ScrollView>
+</FrameLayout>
