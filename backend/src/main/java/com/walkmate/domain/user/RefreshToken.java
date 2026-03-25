@@ -25,7 +25,6 @@ public class RefreshToken {
     }
 
     private RefreshToken(UUID userId, String tokenValue) {
-        this.tokenId = UUID.randomUUID();
         this.userId = requireUserId(userId);
         this.tokenValue = requireText(tokenValue, "Refresh token is required");
         this.createdAt = Instant.now();

@@ -6,6 +6,7 @@ import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
 import java.sql.Timestamp;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -40,6 +41,19 @@ public class UserJdbcRepository implements UserRepository {
 
     @Override
     public User save(User user) {
+        UUID userId = user.getUserId() != null ? user.getUserId() : UUID.randomUUID();
+        User persistedUser = user.getUserId() != null
+                ? user
+                : new User(
+                        userId,
+                        user.getEmail(),
+                        user.getPhone(),
+                        user.getProvider(),
+                        user.getStatus(),
+                        user.getPasswordHash(),
+                        user.getCreatedAt(),
+                        user.getLastLoginAt());
+
         final String sql = """
                 INSERT INTO user_account (
                     user_id,
@@ -71,16 +85,17 @@ public class UserJdbcRepository implements UserRepository {
                 """;
 
         jdbcClient.sql(sql)
-                .param("userId", user.getUserId())
-                .param("email", user.getEmail())
-                .param("phone", user.getPhone())
-                .param("provider", user.getProvider().name())
-                .param("status", user.getStatus().name())
-                .param("passwordHash", user.getPasswordHash())
-                .param("createdAt", Timestamp.from(user.getCreatedAt()))
-                .param("lastLoginAt", user.getLastLoginAt() != null ? Timestamp.from(user.getLastLoginAt()) : null)
+                .param("userId", persistedUser.getUserId())
+                .param("email", persistedUser.getEmail())
+                .param("phone", persistedUser.getPhone())
+                .param("provider", persistedUser.getProvider().name())
+                .param("status", persistedUser.getStatus().name())
+                .param("passwordHash", persistedUser.getPasswordHash())
+                .param("createdAt", Timestamp.from(persistedUser.getCreatedAt()))
+                .param("lastLoginAt",
+                        persistedUser.getLastLoginAt() != null ? Timestamp.from(persistedUser.getLastLoginAt()) : null)
                 .update();
 
-        return user;
+        return persistedUser;
     }
 }

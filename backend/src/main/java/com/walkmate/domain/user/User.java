@@ -39,7 +39,6 @@ public class User {
 
     private User(String fullName, String email, String passwordHash) {
         requireText(fullName, "Full name is required");
-        this.userId = UUID.randomUUID();
         this.email = normalizeEmail(email);
         this.phone = null;
         this.provider = DEFAULT_PROVIDER;
