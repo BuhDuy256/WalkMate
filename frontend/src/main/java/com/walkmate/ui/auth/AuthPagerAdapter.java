@@ -5,8 +5,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.walkmate.ui.login.LoginFragment;
-import com.walkmate.ui.register.RegisterFragment;
+import com.walkmate.ui.auth.login.LoginFragment;
+import com.walkmate.ui.auth.register.RegisterFragment;
 
 public class AuthPagerAdapter extends FragmentStateAdapter {
 

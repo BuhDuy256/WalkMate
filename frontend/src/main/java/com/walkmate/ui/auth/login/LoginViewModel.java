@@ -1,4 +1,4 @@
-package com.walkmate.ui.login;
+package com.walkmate.ui.auth.login;
 
 import android.util.Patterns;
 import androidx.lifecycle.LiveData;
@@ -11,10 +11,10 @@ import com.walkmate.domain.user.UserRepository;
 public class LoginViewModel extends ViewModel {
 
     private final UserRepository userRepository;
-    
+
     // Unidirectional Data Flow state
     private final MutableLiveData<LoginUiState> uiState = new MutableLiveData<>(LoginUiState.initial());
-    
+
     public LoginViewModel(UserRepository userRepository) {
         this.userRepository = userRepository;
     }

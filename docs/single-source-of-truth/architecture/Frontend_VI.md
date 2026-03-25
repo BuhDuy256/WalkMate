@@ -4,7 +4,7 @@ Dự án WalkMate Android (Java Thuần)
 
 ## Tổng Quan & Tech Stack Chốt Hạ (SSOT)
 
-Dựa trên thực tiễn code module GPS Path Tracing và Authentication, kiến trúc Frontend đã được vạch rõ ranh giới để đạt độ tinh gọn tối đa, bảo vệ bộ nhớ và phù hợp nhất với phong cách lập trình Java Android:
+Dựa trên thực tiễn các module hiện tại, kiến trúc Frontend đã được vạch rõ ranh giới để đạt độ tinh gọn tối đa, bảo vệ bộ nhớ và phù hợp nhất với phong cách lập trình Java Android:
 
 1. **Kiến trúc tổng thể:** MVVM (tại UI) + DDD-lite (tại Domain/Data).
 2. **Luồng dữ liệu (Asynchronous):** Sử dụng `LiveData` (để UI theo dõi State) + Java `ExecutorService` (cho Background Worker/thực thi luồng phụ). **Tuyệt đối không dùng RxJava hay Coroutines** để tránh learning curve quá dốc và rủi ro Memory Leak.
@@ -27,6 +27,12 @@ frontend/src/main/java/com/walkmate/
 │   │   └── MainActivity.java
 │   └── <feature-name>/
 │       ├── <Feature>Activity.java / <Feature>Fragment.java
+│       ├── <Feature>PagerAdapter.java (Tùy chọn nếu có tab)
+│       ├── <sub-feature-name>/ (Tùy chọn)
+│       │   ├── <SubFeature>Fragment.java
+│       │   ├── <SubFeature>ViewModel.java
+│       │   ├── <SubFeature>ViewModelFactory.java
+│       │   └── <SubFeature>UiState.java
 │       ├── <Feature>ViewModel.java
 │       ├── <Feature>ViewModelFactory.java (Tùy chọn DI)
 │       └── <Feature>UiState.java
@@ -59,6 +65,11 @@ frontend/src/main/java/com/walkmate/
         └── <Domain>RepositoryImpl.java
 ```
 
+Ví dụ áp dụng thực tế (tham khảo):
+
+1. `ui/auth/` có container `AuthActivity` + `AuthPagerAdapter`, sub-feature `login/`, `register/`.
+2. `ui/intent/` có container `IntentActivity` + `IntentPagerAdapter`, sub-feature `create/`, `matching/`, `result/`.
+
 ## 2. Trách Nhiệm Từng Layer
 
 | Layer     | Định hướng       | Trách nhiệm                                                                                                               |
@@ -72,12 +83,31 @@ frontend/src/main/java/com/walkmate/
 
 Bộ khung MVVM đã được cắt tỉa triệt để, xóa sổ hoàn toàn rác boilerplate như `<Feature>ViewData`, `<Feature>UiEvent`, và `<Feature>UiEffect`.
 
-| Thành phần | Mẫu tên                          | Ví dụ                        |
-| ---------- | -------------------------------- | ---------------------------- |
-| View       | `<Feature>Activity.java`         | `LoginActivity.java`         |
-| ViewModel  | `<Feature>ViewModel.java`        | `LoginViewModel.java`        |
-| State      | `<Feature>UiState.java`          | `LoginUiState.java`          |
-| DI Factory | `<Feature>ViewModelFactory.java` | `LoginViewModelFactory.java` |
+| Thành phần | Mẫu tên                                                | Ví dụ                                     |
+| ---------- | ------------------------------------------------------ | ----------------------------------------- |
+| View       | `<Feature>Activity.java` hoặc `<Feature>Fragment.java` | `AuthActivity.java`, `LoginFragment.java` |
+| ViewModel  | `<Feature>ViewModel.java`                              | `LoginViewModel.java`                     |
+| State      | `<Feature>UiState.java`                                | `LoginUiState.java`                       |
+| DI Factory | `<Feature>ViewModelFactory.java`                       | `LoginViewModelFactory.java`              |
+
+Quy ước package để dễ reuse và scale:
+
+1. Feature root luôn nằm dưới `ui/<feature-name>/`.
+2. Nếu có nhiều luồng con, tách thành sub-feature dưới `ui/<feature-name>/<sub-feature-name>/`.
+3. Mỗi sub-feature nên self-contained: Fragment + ViewModel + Factory + UiState.
+4. Không đặt class UI của feature con trực tiếp dưới `ui/` (tránh flat package khó bảo trì).
+
+Quy ước đặt tên package:
+
+| Loại package        | Mẫu                                            | Ví dụ                |
+| ------------------- | ---------------------------------------------- | -------------------- |
+| Feature root UI     | `ui.<feature>`                                 | `ui.auth`            |
+| Sub-feature UI      | `ui.<feature>.<subFeature>`                    | `ui.auth.login`      |
+| Domain              | `domain.<domain>`                              | `domain.user`        |
+| Remote DTO request  | `data.datasource.remote.dto.request.<domain>`  | `...request.user`    |
+| Remote DTO response | `data.datasource.remote.dto.response.<domain>` | `...response.user`   |
+| Repository impl     | `data.repository`                              | `UserRepositoryImpl` |
+| Mapper              | `data.mapper`                                  | `UserMapper`         |
 
 ### 3.1 Quy Ước DTO Remote (Đồng bộ với Backend)
 
@@ -126,22 +156,32 @@ User Action (VD: Nhấn nút Start Tracking)
 -> Activity đang Observe `LiveData<UiState>` lập tức chạy lệnh Update UI tự động.
 ```
 
-Lưu ý cho flow Auth khi scale:
+Lưu ý cho flow dạng Container + Sub-feature khi scale:
 
-1. `AuthActivity` chỉ đóng vai trò container điều hướng, không giữ layout form business.
-2. `LoginFragment` và `RegisterFragment` phải dùng layout fragment độc lập; không `include` lại layout của activity cũ.
-3. Khi cần refactor UI auth, ưu tiên sửa trực tiếp ở fragment layout để tránh coupling với navigation legacy.
+1. Activity/Fragment ở root chỉ đóng vai trò container điều hướng, không giữ business form của sub-feature.
+2. Mỗi sub-feature phải có layout fragment độc lập; không `include` lại layout của activity legacy.
+3. Khi refactor UI, ưu tiên sửa trong sub-feature layout thay vì sửa container.
+4. Package bắt buộc theo chuẩn module hóa: `ui/<feature>/<sub-feature>/*`.
 
 ## 6. Các Ràng Buộc Kiến Trúc Cốt Lõi (Hard Constraints)
 
 Đây là những luật thép bắt buộc phải tuân theo khi đóng góp code cho dự án WalkMate:
 
-| Ràng buộc                                   | Trạng thái    | Yêu cầu Kỷ luật                                                                                                                                                                                          |
-| ------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **View tự chọc API/Database?**              | ❌ NGHIÊM CẤM | View/Activity **tuyệt đối cấm** import các thư viện như `Retrofit` hay `Room`. Mọi xử lý Data phải đi vòng qua `ViewModel` để nhờ `Repository` xử lý hộ. Cầm View đi sửa DB là chém không tha.           |
-| **Đẻ thêm class MVI (UiEvent / UiEffect)?** | ❌ CẤM DÙNG   | Ứng dụng vẽ bằng Java XML truyền thống, hãy dùng hàm trực tiếp. Việc áp dụng triết lý MVI đẻ ra quá nhiều class Action Event gây rác codebase và phí phạm thời gian.                                     |
-| **Giải quyết Dependency Injection (DI)**    | ⚙️ BẮT BUỘC   | Khai sinh các cục Dependencies khổng lồ (`RoomDatabase`, `AuthRepository`) tại 1 instance độc tôn (Singleton) ở cấp `Application` class (Service Locator Pattern). Cấm cài cắm Hilt/Dagger vào hệ thống. |
-| **Xử lý Thread/Async Mượt mà**              | ⚙️ BẮT BUỘC   | Luôn phải tạo luồng phụ `ExecutorService.execute()` khi insert mảng tọa độ vào Room hoặc call HTTP Network. Tỉ lệ rớt frame sẽ về 0. Cấm dùng các lib ngoài chuẩn như RxJava.                            |
-| **API Response Boundary rõ ràng?**          | ⚙️ BẮT BUỘC   | Response từ backend phải đi qua `ApiResponse<T>` ở tầng `data`. Chỉ dữ liệu đã map mới được đưa sang `domain/ui`. Không cho `ui/` phụ thuộc trực tiếp vào schema JSON trả về từ server.                  |
-| **Repository phải chặt DTO boundary?**      | ⚙️ BẮT BUỘC   | Repository bắt buộc map DTO -> Domain bằng Mapper trước khi trả về `DomainCallback<T>`. Tuyệt đối không trả `ApiResponse`/DTO ra ngoài tầng `data`.                                                      |
-| **Fragment được reuse layout Activity?**    | ❌ CẤM DÙNG   | Fragment không được `include` layout activity legacy (vd: `activity_login.xml`, `activity_register.xml`). Mỗi fragment auth phải sở hữu layout riêng để tách biệt container và UI business.              |
+| Ràng buộc                                   | Trạng thái    | Yêu cầu Kỷ luật                                                                                                                                                                                               |
+| ------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **View tự chọc API/Database?**              | ❌ NGHIÊM CẤM | View/Activity **tuyệt đối cấm** import các thư viện như `Retrofit` hay `Room`. Mọi xử lý Data phải đi vòng qua `ViewModel` để nhờ `Repository` xử lý hộ. Cầm View đi sửa DB là chém không tha.                |
+| **Đẻ thêm class MVI (UiEvent / UiEffect)?** | ❌ CẤM DÙNG   | Ứng dụng vẽ bằng Java XML truyền thống, hãy dùng hàm trực tiếp. Việc áp dụng triết lý MVI đẻ ra quá nhiều class Action Event gây rác codebase và phí phạm thời gian.                                          |
+| **Giải quyết Dependency Injection (DI)**    | ⚙️ BẮT BUỘC   | Khai sinh các cục Dependencies khổng lồ (`RoomDatabase`, `<Feature>Repository`) tại 1 instance độc tôn (Singleton) ở cấp `Application` class (Service Locator Pattern). Cấm cài cắm Hilt/Dagger vào hệ thống. |
+| **Xử lý Thread/Async Mượt mà**              | ⚙️ BẮT BUỘC   | Luôn phải tạo luồng phụ `ExecutorService.execute()` khi insert mảng tọa độ vào Room hoặc call HTTP Network. Tỉ lệ rớt frame sẽ về 0. Cấm dùng các lib ngoài chuẩn như RxJava.                                 |
+| **API Response Boundary rõ ràng?**          | ⚙️ BẮT BUỘC   | Response từ backend phải đi qua `ApiResponse<T>` ở tầng `data`. Chỉ dữ liệu đã map mới được đưa sang `domain/ui`. Không cho `ui/` phụ thuộc trực tiếp vào schema JSON trả về từ server.                       |
+| **Repository phải chặt DTO boundary?**      | ⚙️ BẮT BUỘC   | Repository bắt buộc map DTO -> Domain bằng Mapper trước khi trả về `DomainCallback<T>`. Tuyệt đối không trả `ApiResponse`/DTO ra ngoài tầng `data`.                                                           |
+| **Fragment được reuse layout Activity?**    | ❌ CẤM DÙNG   | Fragment không được `include` layout activity legacy. Mỗi fragment/sub-feature phải sở hữu layout riêng để tách biệt container và UI business.                                                                |
+
+## 7. Checklist Reuse Khi Tạo Feature Mới
+
+1. Tạo package theo chuẩn: `ui/<feature>/` và tách `ui/<feature>/<sub-feature>/` nếu có nhiều luồng UI.
+2. Mỗi sub-feature phải có bộ tối thiểu: Fragment + ViewModel + UiState (Factory nếu cần dependency constructor).
+3. API contract chỉ được định nghĩa tại `data/datasource/remote/dto/`.
+4. Repository bắt buộc map DTO -> Domain qua `data/mapper/`, không trả DTO ra `ui/`.
+5. Async nặng phải qua `ExecutorService`, UI chỉ observe `LiveData<UiState>`.
+6. Nếu feature có tab/pager, adapter đặt ở feature root để điều phối sub-feature.

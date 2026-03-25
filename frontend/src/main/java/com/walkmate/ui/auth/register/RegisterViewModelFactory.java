@@ -1,4 +1,4 @@
-package com.walkmate.ui.register;
+package com.walkmate.ui.auth.register;
 
 import android.content.Context;
 import androidx.annotation.NonNull;

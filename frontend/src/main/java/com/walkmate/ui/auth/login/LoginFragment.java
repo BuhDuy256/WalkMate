@@ -1,4 +1,4 @@
-package com.walkmate.ui.login;
+package com.walkmate.ui.auth.login;
 
 import android.os.Bundle;
 import android.text.method.HideReturnsTransformationMethod;

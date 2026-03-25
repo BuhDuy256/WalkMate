@@ -1,4 +1,4 @@
-package com.walkmate.ui.login;
+package com.walkmate.ui.auth.login;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
@@ -9,7 +9,7 @@ import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.domain.user.UserRepository;
 
 public class LoginViewModelFactory implements ViewModelProvider.Factory {
-    
+
     private final UserRepository userRepository;
 
     public LoginViewModelFactory(Context context) {

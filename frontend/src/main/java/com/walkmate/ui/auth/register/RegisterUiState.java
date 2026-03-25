@@ -1,4 +1,4 @@
-package com.walkmate.ui.register;
+package com.walkmate.ui.auth.register;
 
 public class RegisterUiState {
     private final boolean isLoading;
@@ -9,7 +9,7 @@ public class RegisterUiState {
     private final String passwordError;
 
     public RegisterUiState(boolean isLoading, boolean isSuccess, String error,
-                           String fullNameError, String emailError, String passwordError) {
+            String fullNameError, String emailError, String passwordError) {
         this.isLoading = isLoading;
         this.isSuccess = isSuccess;
         this.error = error;
@@ -22,10 +22,27 @@ public class RegisterUiState {
         return new RegisterUiState(false, false, null, null, null, null);
     }
 
-    public boolean isLoading() { return isLoading; }
-    public boolean isSuccess() { return isSuccess; }
-    public String getError() { return error; }
-    public String getFullNameError() { return fullNameError; }
-    public String getEmailError() { return emailError; }
-    public String getPasswordError() { return passwordError; }
+    public boolean isLoading() {
+        return isLoading;
+    }
+
+    public boolean isSuccess() {
+        return isSuccess;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public String getFullNameError() {
+        return fullNameError;
+    }
+
+    public String getEmailError() {
+        return emailError;
+    }
+
+    public String getPasswordError() {
+        return passwordError;
+    }
 }

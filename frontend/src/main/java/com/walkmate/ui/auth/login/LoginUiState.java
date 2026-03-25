@@ -1,4 +1,4 @@
-package com.walkmate.ui.login;
+package com.walkmate.ui.auth.login;
 
 public class LoginUiState {
     private final boolean isLoading;
