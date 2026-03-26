@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/intentSheet"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_sheet_top_rounded"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Handle bar -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_handle_bar" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="32dp">
+
+            <!-- Title row with close button -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/set_preferences_title"
+                    android:textColor="@color/text_dark"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <FrameLayout
+                    android:id="@+id/btnCloseSheet"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_white_circle"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="✕"
+                        android:textColor="@color/text_muted"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- SECTION: When (Time) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_when_time"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/txtTimeStart"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="16:00"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/txtTimeEnd"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="22:00"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/sliderTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="6.0"
+                android:valueTo="24.0"
+                android:stepSize="0.5"
+                app:thumbColor="@color/white"
+                app:thumbStrokeColor="@color/orange_primary"
+                app:thumbStrokeWidth="2dp"
+                app:thumbRadius="10dp"
+                app:trackColorActive="@color/orange_primary"
+                app:trackColorInactive="@color/slider_track_inactive"
+                app:trackHeight="6dp"
+                app:haloColor="#40FF9E67" />
+
+            <!-- SECTION: When (Duration) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_when_duration"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true"
+                app:chipSpacingHorizontal="8dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDur15"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dur_15" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDur30"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dur_30"
+                    android:checked="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDur60"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dur_60" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- SECTION: Who (Age) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_who_age"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/txtAgeMin"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="18"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/txtAgeMax"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="40"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/sliderAge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="16.0"
+                android:valueTo="65.0"
+                android:stepSize="1.0"
+                app:thumbColor="@color/white"
+                app:thumbStrokeColor="@color/orange_primary"
+                app:thumbStrokeWidth="2dp"
+                app:thumbRadius="10dp"
+                app:trackColorActive="@color/orange_primary"
+                app:trackColorInactive="@color/slider_track_inactive"
+                app:trackHeight="6dp"
+                app:haloColor="#40FF9E67" />
+
+            <!-- SECTION: Who (Gender) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_who_gender"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupGender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true"
+                app:chipSpacingHorizontal="8dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMale"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/gender_male" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFemale"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/gender_female" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAny"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/gender_any"
+                    android:checked="true" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- SECTION: What (Tags) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_what_tags"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="false"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRunning"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tag_running"
+                    android:checked="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipPodcast"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tag_podcast" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDog"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tag_dog" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMeditation"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tag_meditation" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSlowWalk"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tag_slow_walk" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipPhotography"
+                    style="@style/Widget.WalkMate.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tag_photography" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- CTA: Find Match -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFindMatch"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height_large"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_gradient_orange_pill"
+                android:text="@string/find_match"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:stateListAnimator="@null"
+                app:backgroundTint="@null"
+                app:cornerRadius="999dp" />
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

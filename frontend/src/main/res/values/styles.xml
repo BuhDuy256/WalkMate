@@ -29,6 +29,32 @@
         <item name="ensureMinTouchTargetSize">false</item>
     </style>
 
+    <!-- BottomSheet theme for CreateIntentFragment -->
+    <style name="Theme.WalkMate.BottomSheet" parent="Theme.Material3.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.WalkMate.BottomSheet</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+
+    <style name="Widget.WalkMate.BottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.WalkMate.BottomSheet</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+
+    <style name="ShapeAppearance.WalkMate.BottomSheet" parent="">
+        <item name="cornerSizeTopLeft">24dp</item>
+        <item name="cornerSizeTopRight">24dp</item>
+    </style>
+
+    <!-- Transparent dialog theme for overlay fragments -->
+    <style name="Theme.WalkMate.TransparentDialog" parent="Theme.Material3.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.5</item>
+    </style>
+
     <!-- Chip: Always active style (for match result tags) -->
     <style name="Widget.WalkMate.Chip.Active" parent="Widget.Material3.Chip.Assist">
         <item name="chipBackgroundColor">@color/orange_end</item>
