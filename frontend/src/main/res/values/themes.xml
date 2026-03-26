@@ -1,9 +1,151 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.WalkMate" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Converted from: src/styles/theme.css  (:root block)
+    Place at:       app/src/main/res/values/themes.xml
+
+    Uses Material3 (Theme.Material3.Light.NoActionBar) as base.
+    All color tokens reference colors.xml for easy overriding.
+-->
+<resources>
+
+    <style name="Theme.WalkMate" parent="Theme.Material3.Light.NoActionBar">
+
+        <!-- ── Primary brand color ── -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/primary_foreground</item>
+        <item name="colorPrimaryContainer">@color/secondary</item>
+        <item name="colorOnPrimaryContainer">@color/secondary_foreground</item>
+
+        <!-- ── Secondary ── -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/secondary_foreground</item>
+        <item name="colorSecondaryContainer">@color/accent</item>
+        <item name="colorOnSecondaryContainer">@color/accent_foreground</item>
+
+        <!-- ── Tertiary (mapped to accent) ── -->
+        <item name="colorTertiary">@color/accent</item>
+        <item name="colorOnTertiary">@color/accent_foreground</item>
+        <item name="colorTertiaryContainer">@color/muted</item>
+        <item name="colorOnTertiaryContainer">@color/foreground</item>
+
+        <!-- ── Error / Destructive ── -->
+        <item name="colorError">@color/destructive</item>
+        <item name="colorOnError">@color/destructive_foreground</item>
+
+        <!-- ── Background & Surface ── -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/card</item>
+        <item name="colorOnSurface">@color/card_foreground</item>
+        <item name="colorSurfaceVariant">@color/muted</item>
+        <item name="colorOnSurfaceVariant">@color/muted_foreground</item>
+
+        <!-- ── Outline (border) ── -->
+        <item name="colorOutline">@color/border</item>
+
+        <!-- ── Window ── -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- ── Shape (radius tokens) ── -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.WalkMate.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.WalkMate.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.WalkMate.Large</item>
+
+        <!-- ── Typography ── -->
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.WalkMate.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.WalkMate.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.WalkMate.BodySmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.WalkMate.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.WalkMate.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.WalkMate.TitleSmall</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.WalkMate.HeadlineMedium</item>
+
     </style>
 
-    <style name="Theme.WalkMate" parent="Base.Theme.WalkMate" />
+    <!-- ══════════════════ SHAPE APPEARANCES ══════════════════ -->
+
+    <style name="ShapeAppearance.WalkMate.Small" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerSize">@dimen/radius_sm</item>
+    </style>
+
+    <style name="ShapeAppearance.WalkMate.Medium" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSize">@dimen/radius_md</item>
+    </style>
+
+    <style name="ShapeAppearance.WalkMate.Large" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">@dimen/radius_lg</item>
+    </style>
+
+    <style name="ShapeAppearance.WalkMate.XLarge" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">@dimen/radius_xl</item>
+    </style>
+
+    <!-- ══════════════════ TEXT APPEARANCES ══════════════════ -->
+    <!-- Mapped from theme.css h1-h4, label, button, input rules -->
+    <!-- font-weight-medium = 500, font-weight-normal = 400       -->
+
+    <!-- h1: 24sp / medium -->
+    <style name="TextAppearance.WalkMate.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_2xl</item>
+        <item name="android:textStyle">normal</item>
+        <item name="fontWeight">500</item>
+    </style>
+
+    <!-- h2: 20sp / medium -->
+    <style name="TextAppearance.WalkMate.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_xl</item>
+        <item name="fontWeight">500</item>
+    </style>
+
+    <!-- h3: 18sp / medium -->
+    <style name="TextAppearance.WalkMate.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_lg</item>
+        <item name="fontWeight">500</item>
+    </style>
+
+    <!-- h4 / label / button: 16sp / medium -->
+    <style name="TextAppearance.WalkMate.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_base</item>
+        <item name="fontWeight">500</item>
+    </style>
+
+    <style name="TextAppearance.WalkMate.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_sm</item>
+        <item name="fontWeight">500</item>
+    </style>
+
+    <!-- body / input: 16sp / normal (400) -->
+    <style name="TextAppearance.WalkMate.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_base</item>
+        <item name="fontWeight">400</item>
+    </style>
+
+    <style name="TextAppearance.WalkMate.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">@dimen/text_sm</item>
+        <item name="fontWeight">400</item>
+    </style>
+
+    <style name="TextAppearance.WalkMate.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/nunito</item>
+        <item name="android:fontFamily">@font/nunito</item>
+        <item name="android:textSize">12sp</item>
+        <item name="fontWeight">400</item>
+    </style>
+
 </resources>

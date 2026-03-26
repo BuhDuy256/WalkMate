@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Converted from: src/styles/theme.css  (.dark block)
+    Place at:       app/src/main/res/values-night/colors.xml
+
+    Android automatically uses this file when the device is in dark mode.
+    Only override values that actually change from light mode.
+-->
+<resources>
+
+    <!-- ===================== CORE ===================== -->
+    <color name="background">#090909</color>   <!-- oklch(0.145 0 0) -->
+    <color name="foreground">#FAFAFA</color>   <!-- oklch(0.985 0 0) -->
+
+    <!-- ===================== CARD ===================== -->
+    <color name="card">#090909</color>
+    <color name="card_foreground">#FAFAFA</color>
+
+    <!-- ===================== POPOVER ===================== -->
+    <color name="popover">#090909</color>
+    <color name="popover_foreground">#FAFAFA</color>
+
+    <!-- ===================== PRIMARY ===================== -->
+    <color name="primary">#FAFAFA</color>
+    <color name="primary_foreground">#1C1C1C</color>  <!-- oklch(0.205 0 0) -->
+
+    <!-- ===================== SECONDARY ===================== -->
+    <color name="secondary">#2A2A2A</color>   <!-- oklch(0.269 0 0) -->
+    <color name="secondary_foreground">#FAFAFA</color>
+
+    <!-- ===================== MUTED ===================== -->
+    <color name="muted">#2A2A2A</color>
+    <color name="muted_foreground">#B3B3B3</color>  <!-- oklch(0.708 0 0) -->
+
+    <!-- ===================== ACCENT ===================== -->
+    <color name="accent">#2A2A2A</color>
+    <color name="accent_foreground">#FAFAFA</color>
+
+    <!-- ===================== DESTRUCTIVE ===================== -->
+    <color name="destructive">#7F1D1D</color>  <!-- oklch(0.396 0.141 25.723) -->
+    <color name="destructive_foreground">#F87171</color>  <!-- oklch(0.637 0.237 25.331) -->
+
+    <!-- ===================== BORDER / INPUT ===================== -->
+    <color name="border">#2A2A2A</color>
+    <color name="input">#2A2A2A</color>
+    <color name="input_background">#1C1C1C</color>
+
+    <!-- ===================== RING ===================== -->
+    <color name="ring">#6B6B6B</color>  <!-- oklch(0.439 0 0) -->
+
+    <!-- ===================== CHARTS ===================== -->
+    <color name="chart_1">#3B82F6</color>  <!-- oklch(0.488 0.243 264.376) -->
+    <color name="chart_2">#34D399</color>  <!-- oklch(0.696 0.17 162.48) -->
+    <color name="chart_3">#C9921A</color>  <!-- oklch(0.769 0.188 70.08) -->
+    <color name="chart_4">#A855F7</color>  <!-- oklch(0.627 0.265 303.9) -->
+    <color name="chart_5">#F97316</color>  <!-- oklch(0.645 0.246 16.439) -->
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <color name="sidebar">#1C1C1C</color>
+    <color name="sidebar_foreground">#FAFAFA</color>
+    <color name="sidebar_primary">#3B82F6</color>
+    <color name="sidebar_primary_foreground">#FAFAFA</color>
+    <color name="sidebar_accent">#2A2A2A</color>
+    <color name="sidebar_accent_foreground">#FAFAFA</color>
+    <color name="sidebar_border">#2A2A2A</color>
+    <color name="sidebar_ring">#6B6B6B</color>
+
+</resources>
