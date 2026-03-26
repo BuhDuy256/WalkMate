@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <!-- Brand / Primary Gradient -->
+    <color name="orange_start">#FFFF9E67</color>
+    <color name="orange_end">#FFFF7B3A</color>
+    <color name="orange_primary">#FFFF9E67</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_cream">#FFFFF9F1</color>
+    <color name="bg_white">#FFFFFFFF</color>
+    <color name="bg_warm_light">#FFFFF3EB</color>
+    <color name="bg_tag_inactive">#FFF5EDE4</color>
+    <color name="bg_map">#FFE8E0D4</color>
+    <color name="bg_map_road">#FFD4CBBF</color>
+    <color name="bg_map_park">#FFC5DEB5</color>
+    <color name="bg_map_water">#FFB5D4DE</color>
+    <color name="bg_map_block">#FFF0E8DC</color>
+
+    <!-- Text -->
+    <color name="text_dark">#FF332218</color>
+    <color name="text_muted">#FF9E8D7F</color>
+    <color name="text_label">#FF7A6657</color>
+
+    <!-- Misc -->
+    <color name="handle_bar">#FFD4CBBF</color>
+    <color name="slider_track_inactive">#FFF5EDE4</color>
+    <color name="overlay_dim">#40000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="shadow_orange">#59FF7B3A</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
 </resources>

@@ -18,8 +18,9 @@
             android:exported="false" />
 
         <activity
-            android:name="com.walkmate.ui.intent.IntentActivity"
-            android:exported="true">
+            android:name="com.walkmate.ui.coordination.CoordinationActivity"
+            android:exported="true"
+            android:theme="@style/Theme.WalkMate">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

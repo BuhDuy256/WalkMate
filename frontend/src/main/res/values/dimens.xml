@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Corner radii (from React borderRadius values) -->
+    <dimen name="radius_pill">999dp</dimen>
+    <dimen name="radius_sheet">48dp</dimen>
+    <dimen name="radius_card">32dp</dimen>
+    <dimen name="radius_dialog">48dp</dimen>
+    <dimen name="radius_time_window">16dp</dimen>
+    <dimen name="radius_small">6dp</dimen>
+
+    <!-- Padding / Margins -->
+    <dimen name="screen_padding_horizontal">16dp</dimen>
+    <dimen name="sheet_padding_horizontal">24dp</dimen>
+    <dimen name="card_padding">20dp</dimen>
+    <dimen name="section_gap">20dp</dimen>
+
+    <!-- Component sizes -->
+    <dimen name="avatar_match_size">80dp</dimen>
+    <dimen name="avatar_match_border">3dp</dimen>
+    <dimen name="hotspot_icon_size">44dp</dimen>
+    <dimen name="top_bar_icon_size">40dp</dimen>
+    <dimen name="handle_width">40dp</dimen>
+    <dimen name="handle_height">4dp</dimen>
+    <dimen name="pulse_dot_size">12dp</dimen>
+    <dimen name="pulse_ring_size">32dp</dimen>
+
+    <!-- Button heights -->
+    <dimen name="button_height_large">56dp</dimen>
+    <dimen name="button_height_medium">48dp</dimen>
+    <dimen name="chip_height">40dp</dimen>
+</resources>

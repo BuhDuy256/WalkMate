@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.walkmate.R;
-import com.walkmate.ui.intent.IntentActivity;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -57,10 +56,6 @@ public class AuthActivity extends AppCompatActivity {
 
     public void onLoginSuccess() {
         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, IntentActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 

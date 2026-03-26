@@ -1,9 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.WalkMate" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-    </style>
-
-    <style name="Theme.WalkMate" parent="Base.Theme.WalkMate" />
+    <!--
+        Theme.WalkMate is now defined in styles.xml with full theming.
+        This file is kept empty to avoid duplicate resource errors.
+    -->
 </resources>
