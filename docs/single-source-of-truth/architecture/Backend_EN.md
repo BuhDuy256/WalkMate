@@ -4,181 +4,130 @@ DDD-lite + Layered | WalkMate Android Project
 
 ## Overview
 
-Model: DDD-lite + Layered architecture.
+Model: DDD-lite + Layered architecture (Aiming for **Rich Domain Model**).
 
-Organizational orientation:
+Organization strategy:
+
 - `domain/` - domain-oriented (organized by aggregate root)
 - `application/` - feature-oriented (organized by use case)
 
 Goals:
-- Separate business logic from technical implementation
-- Keep domain independent from framework, DB, and HTTP
-- Easy to extend when adding new domains or features
 
-## 1. Standard Folder Structure
+- Separate business logic from technical implementation (Dependency Inversion).
+- Keep domain independent from frameworks, DB, and HTTP. Entities must protect their own state (Rich Domain).
+- Enable easy horizontal scaling when adding new domains or features.
+- Centralize Exception handling at the Presentation layer.
+
+## 1. Standard Directory Structure
 
 ```text
-src/main/java/com/walkmate/walkmate/
+src/main/java/com/walkmate/
 ├── application/
 │   └── <domain-name>/
 │       ├── <Domain>CommandService.java
-│       └── <Domain>QueryService.java
+│       ├── <Domain>QueryService.java
+│       ├── <Verb><Domain>Command.java (E.g: LoginUserCommand)
+│       └── <Name>Provider.java (Interface, E.g: TokenProvider)
 ├── domain/
 │   ├── <domain-name>/
-│   │   ├── <AggregateRoot>.java
+│   │   ├── <AggregateRoot>.java (Rich Domain Entity)
 │   │   ├── <Domain>Repository.java
 │   │   ├── <Domain>ErrorCode.java
-│   │   ├── <ValueObject>.java
-│   │   └── <EnumOrPolicy>.java
+│   │   └── <ValueObject>.java / <EnumOrPolicy>.java
 │   └── shared/
-│       ├── exception/
-│       │   ├── DomainException.java
-│       │   └── ErrorCode.java
-│       └── valueobject/
+│       └── exception/
+│           ├── DomainException.java
+│           └── ErrorCode.java
 ├── infrastructure/
 │   ├── repository/
 │   │   └── <domain-name>/
-│   │       └── <Domain>JooqRepository.java
-│   ├── config/
+│   │       └── <Domain><Tech>Repository.java (E.g: UserJdbcRepository)
 │   ├── security/
-│   └── exception/
-├── presentation/
-│   ├── controller/
-│   │   └── <domain-name>/
-│   │       └── <Domain>Controller.java
-│   ├── dto/
-│   │   ├── request/
-│   │   │   └── <domain-name>/
-│   │   │       └── <Verb><Domain>Request.java
-│   │   └── response/
-│   │       ├── <Domain>Response.java
-│   │       └── <Domain>SummaryResponse.java
-│   ├── mapper/
-│   └── exception/
-└── Application.java
+│   │   └── jwt/
+│   │       └── JwtTokenProvider.java (Impl)
+│   └── config/
+└── presentation/
+    ├── controller/
+    │   └── <domain-name>/
+    │       └── <Domain>Controller.java
+    ├── dto/
+    │   ├── request/
+    │   │   └── <domain-name>/
+    │   │       └── <Verb><Domain>Request.java
+    │   └── response/
+    │       ├── ApiResponse.java (Generic Response Wrapper)
+    │       └── <domain-name>/
+    │           └── <Domain>Response.java
+    ├── mapper/
+    └── exception/
+        └── GlobalExceptionHandler.java
 ```
 
 ## 2. Layer Responsibilities
 
-| Layer | Orientation | Responsibility |
-|---|---|---|
-| `application/` | Feature-oriented | Coordinates use cases, transaction boundary, calls domain repository interface. No business rules. |
-| `domain/` | Domain-oriented | Core business rules, entity/value object/policy, repository contract, domain-scoped errors. |
-| `infrastructure/` | Technical | DB/query/framework/security implementation. Repository implements domain interface via jOOQ. Only technical exceptions here. |
-| `presentation/` | HTTP entry point | Controller, DTO mapping, validation, exception-to-response conversion. |
-
-Note on `domain/shared/`: only use for value objects and exceptions reused by multiple domains. Do not use as a junk drawer.
+| Layer             | Focus            | Responsibility                                                                                                         |
+| ----------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `application/`    | Feature-oriented | Use case orchestration, defining Boundaries & Transactions, calling Domain Interfaces. Receives Command objects. No core business logic. |
+| `domain/`         | Domain-oriented  | **Rich Domain Model**: Entities encapsulate business logic, guard state, and throw `DomainException` upon invariant violations. Contains repository/provider contracts. |
+| `infrastructure/` | Technical        | Implements DB/jwt/framework/security. Repository implements domain interfaces (using JDBC/jOOQ). Contains only technical details. |
+| `presentation/`   | HTTP entry point | Controller, DTO to Command mapping, HTTP validation (`@Valid`), exception aggregation via `GlobalExceptionHandler`. |
 
 ## 3. Naming Conventions
 
-The domain name drives naming across all layers. If the domain is `intent`, every layer uses `intent` as the folder and `Intent` as the class prefix.
+The domain name serves as the primary axis for naming across all layers. Ensure structural consistency.
 
-### 3.1 Class naming by layer
+### 3.1 Class Naming per Layer
 
-| Layer | Pattern | Example |
-|---|---|---|
-| `domain/` aggregate | `<Domain>.java` | `Intent.java` |
-| `domain/` repo interface | `<Domain>Repository.java` | `IntentRepository.java` |
-| `domain/` error codes | `<Domain>ErrorCode.java` | `IntentErrorCode.java` |
-| `application/` writes | `<Domain>CommandService.java` | `IntentCommandService.java` |
-| `application/` reads | `<Domain>QueryService.java` | `IntentQueryService.java` |
-| `infrastructure/` repo impl | `<Domain>JooqRepository.java` | `IntentJooqRepository.java` |
-| `presentation/` controller | `<Domain>Controller.java` | `IntentController.java` |
-| `presentation/` request DTO | `<Verb><Domain>Request.java` | `CreateIntentRequest.java` |
-| `presentation/` response DTO | `<Domain>Response.java` | `IntentResponse.java` |
-| `presentation/` list DTO | `<Domain>SummaryResponse.java` | `IntentSummaryResponse.java` |
+| Layer                        | Name Pattern                   | Example                      |
+| ---------------------------- | ------------------------------ | ---------------------------- |
+| `domain/` aggregate          | `<Domain>.java`                | `Intent.java`                |
+| `domain/` repo interface     | `<Domain>Repository.java`      | `IntentRepository.java`      |
+| `domain/` error codes        | `<Domain>ErrorCode.java`       | `IntentErrorCode.java`       |
+| `application/` write         | `<Domain>CommandService.java`  | `IntentCommandService.java`  |
+| `application/` internal cmd  | `<Verb><Domain>Command.java`   | `LoginUserCommand.java`      |
+| `application/` / `domain/` interface  | `<Name>Provider.java` / `Matcher`   | `TokenProvider.java`         |
+| `infrastructure/` repo impl  | `<Domain><Tech>Repository.java`| `IntentJdbcRepository.java`  |
+| `infrastructure/` tech impl  | `<Tech><Name>Provider.java`    | `JwtTokenProvider.java`      |
+| `presentation/` controller   | `<Domain>Controller.java`      | `IntentController.java`      |
+| `presentation/` request DTO  | `<Verb><Domain>Request.java`   | `CreateIntentRequest.java`   |
 
-### 3.2 Request DTO - use the verb
+### 3.2 Request DTO vs Application Command
 
-Generic names like `IntentRequest` do not communicate which operation is being performed. Use the verb as a prefix.
+- **DTO (`presentation`)**: `LoginUserRequest` contains `@Valid` annotations, tightly coupled to Spring Web.
+- **Command (`application`)**: `LoginUserCommand` is a pure Java `record` used to group parameters. Highly decoupled and intrinsically safe.
 
-| Avoid | Use instead |
-|---|---|
-| `IntentRequest` | `CreateIntentRequest` |
-| `SessionRequest` | `StartSessionRequest` / `EndSessionRequest` |
-| `RatingRequest` | `SubmitRatingRequest` |
+### 3.3 Service Method Naming - CQRS Segregation
 
-### 3.3 Response DTO - single vs list
+Methods in `CommandService` must handle writes. Methods in `QueryService` must handle reads.
 
-Distinguish between full and lightweight response shapes to prevent over-fetching in list endpoints.
+### 3.4 Error Codes
 
-```java
-// Single object - full detail
-IntentResponse.java
+All error code constants must have a domain prefix adhering to `UPPER_SNAKE_CASE` (e.g `USER_NOT_FOUND`).
 
-// Lightweight - for match cards / list views
-IntentSummaryResponse.java
-```
-
-### 3.4 Repository - impl suffix carries the technology
-
-Never use the generic `Impl` suffix. The technology name (`Jooq`) tells readers exactly what they are looking at.
-
-| Avoid | Use instead |
-|---|---|
-| `IntentRepositoryImpl` | `IntentJooqRepository` |
-
-### 3.5 Service method naming - respect the CQRS split
-
-Methods in `CommandService` must write. Methods in `QueryService` must read.
-
-```java
-// IntentCommandService.java
-createIntent(...)
-cancelIntent(...)
-
-// IntentQueryService.java
-findNearbyMatches(...)
-getIntentById(...)
-```
-
-### 3.6 Error codes - domain prefix always
-
-Prefix every error code constant with the domain name in `UPPER_SNAKE_CASE`.
-
-```java
-// IntentErrorCode.java
-INTENT_NOT_FOUND
-INTENT_ALREADY_CONFIRMED
-INTENT_EXPIRED
-
-// SessionErrorCode.java
-SESSION_NOT_STARTED
-SESSION_ALREADY_ENDED
-```
-
-## 4. Standard Request Flow
+## 4. Standard Exception Flow
 
 ```text
-Controller
--> <Domain>CommandService / <Domain>QueryService
--> Domain Model
--> <Domain>Repository (interface)
--> <Domain>JooqRepository (infrastructure impl)
--> Database
+Controller (Initiates @PostMapping request)
+-> <Domain>CommandService (Application throws DomainException targeting data bounds: USER_NOT_FOUND)
+-> Domain Model (Rich Domain throws DomainException for internal invariants: INVALID_USER_DATA, USER_INVALID_CREDENTIALS)
 ```
+All emitted `DomainException` instances **bubble up** to `presentation/exception/GlobalExceptionHandler` and map automatically into a standard `ApiResponse<T>` wrapper returning HTTP Status 400.
 
 ## 5. Core Principles
 
-- Domain is the center. Infrastructure and presentation depend on domain, never the reverse.
-- Organize by feature first, split by type only when genuinely needed.
-- DTO stays in presentation only. Never let it leak into domain or application layers.
-- Repository interface lives in `domain/`. Implementation lives in `infrastructure/repository/<domain-name>/` using jOOQ.
-- `domain/shared/` is for reused cross-domain objects only, not a catch-all folder.
-- `infrastructure/exception/` holds only technical exceptions (DB, external services).
-- Business exceptions live in `domain/<domain-name>/<Domain>ErrorCode.java`.
+1. **Rich Domain Model**: Domain is the logic epicenter. Entities autonomously guarantee their state and throw `DomainException`. The Application Service must not drain logic away from Entities (Avoid Anemic Domain Model).
+2. **Dependency Inversion**: Password hashing algorithms, JWT generation... must pass through an Interface declared at the Application/Domain. The Infrastructure layer exclusively implements these Interfaces.
+3. **One Global Exception Handler**: The Presentation layer absolutely must use a `GlobalExceptionHandler` to catch all `DomainException`, `@Valid` 422s, and 500 fallbacks. JSON Responses must be uniformly serialized into `ApiResponse<T>`.
+4. **DTO Boundaries**: Web DTOs die upon hitting the Controller. Upon entering the Application layer, data must be converted into standard parameters or unannotated Pure Java Commands (`record`).
+5. **Technology Suffix**: Infrastructure classes must reflect their operational technology via suffix (e.g., `UserJdbcRepository` for JDBC, `JwtTokenProvider` for JWT).
 
-## 6. Quick Reference Cheat Sheet
+## 6. Core Architecture Hard Constraints
 
-| Token | Meaning | Example |
-|---|---|---|
-| `<domain>` | Lowercase domain folder name | `intent`, `session`, `user`, `rating` |
-| `<Domain>` | PascalCase class prefix | `Intent`, `Session`, `User`, `Rating` |
-| `<Domain>Repository` | Interface in `domain/` | `IntentRepository` |
-| `<Domain>JooqRepository` | Impl in `infrastructure/` | `IntentJooqRepository` |
-| `<Domain>CommandService` | Writes in `application/` | `IntentCommandService` |
-| `<Domain>QueryService` | Reads in `application/` | `IntentQueryService` |
-| `<Verb><Domain>Request` | Request DTO | `CreateIntentRequest` |
-| `<Domain>Response` | Single result DTO | `IntentResponse` |
-| `<Domain>SummaryResponse` | Lightweight list DTO | `IntentSummaryResponse` |
-| `<DOMAIN>_<STATE>` | Error code constant | `INTENT_NOT_FOUND` |
+These are absolute **Hard Constraints** shaping the foundation of the architecture. **Zero tolerance for violations:**
+
+| Constraint Criterion | Status | Disciplinary Requirement |
+| -------------------- | ---------- | --------------- |
+| **Logic inside Domain Entity?** | ✅ MANDATORY (Rich Model) | A pure getter/setter Entity generates a **Critical Anemic Domain Violation!** Business logic (including validation/authentication) must be pushed into the Entity to protect system states. |
+| **Infrastructure knows about Web?** | ❌ STRICTLY FORBIDDEN | `infrastructure` cares solely about persistent DB/technologies and implements Application/Domain Contracts. Importations of HTTP/Web annotations are strictly forbidden. |
+| **Application houses DB Logic?** | ❌ STRICTLY FORBIDDEN | The `application` orchestrator remains thin. Its sole duty: (1) Unload Data from Repo -> (2) Ship data to Entity for logic validation -> (3) Instruct Repo to commit. Complex logic statements here are strictly forbidden. |
+| **Controller throws / catches Exception?** | ❌ STRICTLY FORBIDDEN | Controllers remain "try-catch free". Exceptions must seamlessly bubble upwards into the `GlobalExceptionHandler` for automated HTTP mapped responses. |

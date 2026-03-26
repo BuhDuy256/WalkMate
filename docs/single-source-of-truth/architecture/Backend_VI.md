@@ -4,7 +4,7 @@ DDD-lite + Layered | Dự án WalkMate Android
 
 ## Tổng Quan
 
-Mô hình: kiến trúc DDD-lite + Layered.
+Mô hình: kiến trúc DDD-lite + Layered (Hướng tới **Rich Domain Model**).
 
 Định hướng tổ chức:
 
@@ -13,67 +13,70 @@ Mô hình: kiến trúc DDD-lite + Layered.
 
 Mục tiêu:
 
-- Tách business logic khỏi technical implementation
-- Giữ domain độc lập với framework, DB và HTTP
-- Dễ mở rộng khi thêm domain hoặc feature mới
+- Tách business logic khỏi technical implementation (Dependency Inversion).
+- Giữ domain độc lập với framework, DB và HTTP. Entity tự bảo vệ trạng thái (Rich Domain).
+- Dễ mở rộng khi thêm domain hoặc feature mới.
+- Gom cụm xử lý Exception duy nhất tại Presentation.
 
 ## 1. Cấu Trúc Thư Mục Chuẩn
 
 ```text
-src/main/java/com/walkmate/walkmate/
+src/main/java/com/walkmate/
 ├── application/
 │   └── <domain-name>/
 │       ├── <Domain>CommandService.java
-│       └── <Domain>QueryService.java
+│       ├── <Domain>QueryService.java
+│       ├── <Verb><Domain>Command.java (VD: LoginUserCommand)
+│       └── <Name>Provider.java (Interface, VD: TokenProvider)
 ├── domain/
 │   ├── <domain-name>/
-│   │   ├── <AggregateRoot>.java
+│   │   ├── <AggregateRoot>.java (Rich Domain Entity)
 │   │   ├── <Domain>Repository.java
 │   │   ├── <Domain>ErrorCode.java
-│   │   ├── <ValueObject>.java
-│   │   └── <EnumOrPolicy>.java
+│   │   └── <ValueObject>.java / <EnumOrPolicy>.java
 │   └── shared/
-│       ├── exception/
-│       │   ├── DomainException.java
-│       │   └── ErrorCode.java
-│       └── valueobject/
+│       └── exception/
+│           ├── DomainException.java
+│           └── ErrorCode.java
 ├── infrastructure/
 │   ├── repository/
 │   │   └── <domain-name>/
-│   │       └── <Domain>JooqRepository.java
-│   ├── config/
+│   │       └── <Domain><Tech>Repository.java (VD: UserJdbcRepository)
 │   ├── security/
-│   └── exception/
-├── presentation/
-│   ├── controller/
-│   │   └── <domain-name>/
-│   │       └── <Domain>Controller.java
-│   ├── dto/
-│   │   ├── request/
-│   │   │   └── <domain-name>/
-│   │   │       └── <Verb><Domain>Request.java
-│   │   └── response/
-│   │       ├── <Domain>Response.java
-│   │       └── <Domain>SummaryResponse.java
-│   ├── mapper/
-│   └── exception/
-└── Application.java
+│   │   └── jwt/
+│   │       └── JwtTokenProvider.java (Impl)
+│   └── config/
+└── presentation/
+    ├── controller/
+    │   └── <domain-name>/
+    │       └── <Domain>Controller.java
+    ├── dto/
+    │   ├── request/
+    │   │   └── <domain-name>/
+    │   │       └── <Verb><Domain>Request.java
+    │   └── response/
+    │       ├── ApiResponse.java (Generic Response Wrapper)
+    │       └── <domain-name>/
+    │           └── <Domain>Response.java
+    ├── mapper/
+    └── exception/
+        └── GlobalExceptionHandler.java
 ```
 
 ## 2. Trách Nhiệm Từng Layer
 
 | Layer             | Định hướng       | Trách nhiệm                                                                                                            |
 | ----------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `application/`    | Feature-oriented | Điều phối use case, quản lý transaction boundary, gọi domain repository interface. Không chứa business rule.           |
-| `domain/`         | Domain-oriented  | Chứa business rule cốt lõi, entity/value object/policy, repository contract, domain-scoped errors.                     |
-| `infrastructure/` | Technical        | Hiện thực DB/query/framework/security. Repository implements domain interface bằng jOOQ. Chỉ chứa technical exception. |
-| `presentation/`   | HTTP entry point | Controller, mapping DTO, validation, chuyển exception sang response.                                                   |
+| `application/`    | Feature-oriented | Điều phối use case, định nghĩa Boundary & Transaction, gọi Domain Repository/Interface. Nhận Command objects từ Controller. Không chứa business rule nội tại. |
+| `domain/`         | Domain-oriented  | **Rich Domain Model**: Entity chứa logic nghiệp vụ, tự vệ và ném `DomainException` nếu vi phạm. Chứa repository/provider contracts, domain-scoped errors. |
+| `infrastructure/` | Technical        | Hiện thực DB/jwt/framework/security. Repository implements domain interface (bằng JDBC/jOOQ). Chỉ chứa implementation chi tiết công nghệ. |
+| `presentation/`   | HTTP entry point | Controller, mapping DTO sang Command, HTTP validation (`@Valid`), gom Exception tại `GlobalExceptionHandler`. |
 
-Lưu ý về `domain/shared/`: chỉ dùng cho value object và exception được tái sử dụng bởi nhiều domain. Không dùng như thư mục gom tạp.
+Lưu ý: Không leak framework HTTP vào Application/Domain và ngược lại, không leak logic Database vào Domain. Tầng `domain/shared/` chỉ dùng cho value object và exception tái sử dụng.
 
 ## 3. Quy Ước Đặt Tên
 
-Tên domain là trục chính để đặt tên xuyên suốt các layer. Nếu domain là `intent`, mọi layer dùng `intent` làm tên thư mục và `Intent` làm class prefix.
+Tên domain là trục chính để đặt tên xuyên suốt các layer. Nhất quán từ Thư mục -> Class.
 
 ### 3.1 Đặt tên class theo layer
 
@@ -83,44 +86,19 @@ Tên domain là trục chính để đặt tên xuyên suốt các layer. Nếu 
 | `domain/` repo interface     | `<Domain>Repository.java`      | `IntentRepository.java`      |
 | `domain/` error codes        | `<Domain>ErrorCode.java`       | `IntentErrorCode.java`       |
 | `application/` write         | `<Domain>CommandService.java`  | `IntentCommandService.java`  |
-| `application/` read          | `<Domain>QueryService.java`    | `IntentQueryService.java`    |
-| `infrastructure/` repo impl  | `<Domain>JooqRepository.java`  | `IntentJooqRepository.java`  |
+| `application/` internal cmd  | `<Verb><Domain>Command.java`   | `LoginUserCommand.java`      |
+| `application/` / `domain/` interface  | `<Name>Provider.java` / `Matcher`   | `TokenProvider.java`         |
+| `infrastructure/` repo impl  | `<Domain><Tech>Repository.java`| `IntentJdbcRepository.java`  |
+| `infrastructure/` tech impl  | `<Tech><Name>Provider.java`    | `JwtTokenProvider.java`      |
 | `presentation/` controller   | `<Domain>Controller.java`      | `IntentController.java`      |
 | `presentation/` request DTO  | `<Verb><Domain>Request.java`   | `CreateIntentRequest.java`   |
-| `presentation/` response DTO | `<Domain>Response.java`        | `IntentResponse.java`        |
-| `presentation/` list DTO     | `<Domain>SummaryResponse.java` | `IntentSummaryResponse.java` |
 
-### 3.2 Request DTO - luôn có động từ
+### 3.2 Request DTO vs Application Command
 
-Tên chung như `IntentRequest` không thể hiện rõ hành động nghiệp vụ. Hãy dùng động từ làm prefix.
+- **DTO (`presentation`)**: `LoginUserRequest` chứa annotation `@Valid`, dùng riêng cho Spring Web. Tên phải có động từ.
+- **Command (`application`)**: `LoginUserCommand` là pure Java `record`, dùng để gom nhóm tham số cho Use Case. Không chứa annotation framework, an toàn xuyên suốt layer.
 
-| Tránh            | Dùng thay thế                               |
-| ---------------- | ------------------------------------------- |
-| `IntentRequest`  | `CreateIntentRequest`                       |
-| `SessionRequest` | `StartSessionRequest` / `EndSessionRequest` |
-| `RatingRequest`  | `SubmitRatingRequest`                       |
-
-### 3.3 Response DTO - phân biệt chi tiết và danh sách
-
-Tách response đầy đủ và response rút gọn để tránh over-fetching ở endpoint danh sách.
-
-```java
-// Đối tượng đơn - đầy đủ chi tiết
-IntentResponse.java
-
-// Rút gọn - dùng cho card/list
-IntentSummaryResponse.java
-```
-
-### 3.4 Repository - suffix phải thể hiện công nghệ
-
-Không dùng suffix chung chung `Impl`. Tên công nghệ (`Jooq`) giúp người đọc biết ngay implementation đang dùng gì.
-
-| Tránh                  | Dùng thay thế          |
-| ---------------------- | ---------------------- |
-| `IntentRepositoryImpl` | `IntentJooqRepository` |
-
-### 3.5 Đặt tên method service - tôn trọng tách CQRS
+### 3.3 Đặt tên method service - tôn trọng tách CQRS
 
 Method trong `CommandService` phải là write. Method trong `QueryService` phải là read.
 
@@ -131,56 +109,56 @@ cancelIntent(...)
 
 // IntentQueryService.java
 findNearbyMatches(...)
-getIntentById(...)
 ```
 
-### 3.6 Error code - luôn có tiền tố domain
+### 3.4 Error code - luôn có tiền tố domain
 
 Mọi hằng số error code phải có tiền tố domain theo chuẩn `UPPER_SNAKE_CASE`.
 
 ```java
-// IntentErrorCode.java
-INTENT_NOT_FOUND
-INTENT_ALREADY_CONFIRMED
-INTENT_EXPIRED
-
-// SessionErrorCode.java
-SESSION_NOT_STARTED
-SESSION_ALREADY_ENDED
+// UserErrorCode.java
+USER_NOT_FOUND
+USER_INVALID_CREDENTIALS
+INVALID_USER_DATA
 ```
 
-## 4. Luồng Request Chuẩn
+## 4. Luồng Xử Lý Lỗi (Exception Flow) Chuẩn
 
 ```text
-Controller
--> <Domain>CommandService / <Domain>QueryService
--> Domain Model
--> <Domain>Repository (interface)
--> <Domain>JooqRepository (infrastructure implementation)
--> Database
+Controller (Bắt đầu Request @PostMapping)
+-> <Domain>CommandService (Application ném DomainException nếu lỗi liên kết Data: USER_NOT_FOUND)
+-> Domain Model (Rich Domain tự ném DomainException nếu vi phạm Nội tại: INVALID_USER_DATA, USER_INVALID_CREDENTIALS)
 ```
+Tất cả các `DomainException` trên sẽ **sủi bọt (bubble up)** về `presentation/exception/GlobalExceptionHandler` và được tự động map trả về thành `ApiResponse<Void>` với chuẩn HTTP Status 400.
 
 ## 5. Nguyên Tắc Cốt Lõi
 
-- Domain là trung tâm. Infrastructure và presentation phụ thuộc vào domain, không theo chiều ngược lại.
-- Ưu tiên tổ chức theo feature trước, chỉ tách theo type khi thực sự cần.
-- DTO chỉ tồn tại ở presentation, không để leak vào domain hoặc application.
-- Repository interface nằm trong `domain/`. Implementation nằm trong `infrastructure/repository/<domain-name>/` và dùng jOOQ.
-- `domain/shared/` chỉ chứa thành phần tái sử dụng liên domain, không phải thư mục catch-all.
-- `infrastructure/exception/` chỉ chứa technical exception (DB, external services).
-- Business exception nằm trong `domain/<domain-name>/<Domain>ErrorCode.java`.
+1. **Rich Domain Model**: Domain là trung tâm logic. Entity tự bảo vệ trạng thái của nó và tự ném phần lớn `DomainException`. Không để Application Service "móc ruột" Entity tự kiểm tra (Tránh Anemic Domain Model).
+2. **Dependency Inversion**: Thuật toán băm mật khẩu, sinh JWT, gọi API ngoài... đều phải thông qua giao diện (Interface) khai báo ở Application/Domain. Tầng Infrastructure chỉ implements các Interface này.
+3. **One Global Exception Handler**: Tầng Presentation bắt buộc có `GlobalExceptionHandler` để handle Catch-all `DomainException`, lỗi Validation `@Valid` 422, và fallback 500. JSON Response phải bọc chung một chuẩn `ApiResponse<T>`.
+4. **DTO Boundaries**: DTO chỉ sống từ Presentation chạm đến Controller. Khi đi vào tầng Application, dữ liệu phải được convert sang Parameter hoặc Pure Java Command (`record` không chứa logic).
+5. **Technology Suffix**: Tên class ở Infrastructure phải thể hiện công nghệ thao tác (ví dụ: `UserJdbcRepository` cho JDBC, `UserJooqRepository` cho jOOQ, `JwtTokenProvider` cho JWT).
 
 ## 6. Bảng Tra Cứu Nhanh
 
 | Token                     | Ý nghĩa                         | Ví dụ                                 |
 | ------------------------- | ------------------------------- | ------------------------------------- |
-| `<domain>`                | Tên thư mục domain viết thường  | `intent`, `session`, `user`, `rating` |
-| `<Domain>`                | Prefix class theo PascalCase    | `Intent`, `Session`, `User`, `Rating` |
+| `<Domain>`                | Prefix class theo PascalCase    | `Intent`, `Session`, `User`           |
 | `<Domain>Repository`      | Interface trong `domain/`       | `IntentRepository`                    |
-| `<Domain>JooqRepository`  | Impl trong `infrastructure/`    | `IntentJooqRepository`                |
+| `<Domain><Tech>Repository`| Impl trong `infrastructure/`    | `IntentJdbcRepository`                |
+| `<Tech><Name>Provider`    | Technical Impl                  | `JwtTokenProvider`                    |
 | `<Domain>CommandService`  | Nhóm write trong `application/` | `IntentCommandService`                |
-| `<Domain>QueryService`    | Nhóm read trong `application/`  | `IntentQueryService`                  |
-| `<Verb><Domain>Request`   | Request DTO                     | `CreateIntentRequest`                 |
-| `<Domain>Response`        | DTO trả về đơn                  | `IntentResponse`                      |
-| `<Domain>SummaryResponse` | DTO danh sách rút gọn           | `IntentSummaryResponse`               |
-| `<DOMAIN>_<STATE>`        | Hằng số error code              | `INTENT_NOT_FOUND`                    |
+| `<Verb><Domain>Command`   | Khối lệnh cho Application       | `LoginUserCommand`                    |
+| `<Verb><Domain>Request`   | Request DTO của Web             | `CreateIntentRequest`                 |
+| `<DOMAIN>_<STATE>`        | Hằng số error code              | `USER_NOT_FOUND`                      |
+
+## 7. Các Ràng Buộc Kiến Trúc Cốt Lõi (Hard Constraints)
+
+Đây là các **ràng buộc bắt buộc (Constraints)** định hình toàn bộ kiến trúc của dự án. **Tuyệt đối không được vi phạm** dưới mọi hình thức:
+
+| Tiêu chuẩn Ràng Buộc | Trạng thái | Yêu cầu Kỷ luật |
+| -------------------- | ---------- | --------------- |
+| **Domain Entity có chứa logic?** | ✅ BẮT BUỘC (Rich Model) | Nếu Entity chỉ có getter/setter -> **Vi phạm Anemic Domain!** Bắt buộc phải đẩy business logic (chứa cả các hàm validate/authenticate) vào trong Entity để nó tự bảo vệ tính toàn vẹn. |
+| **Infrastructure biết về Web?** | ❌ NGHIÊM CẤM | Tầng `infrastructure` chỉ quan tâm đến CSDL/công nghệ và implements các Interface của Application/Domain. Tuyệt đối không import hay dính dáng đến bất kỳ annotation HTTP nào. |
+| **Application chứa logic DB?** | ❌ NGHIÊM CẤM | Tầng `application` thao tác dữ liệu phải mỏng. Nhiệm vụ duy nhất là điều phối Use Case: (1) Lấy data từ Repo -> (2) Đưa Entity tự xử lý logic -> (3) Ra lệnh Repo cập nhật. Cấm viết các logic xử lý nghiệp vụ phức tạp ở đây. |
+| **Controller ném / catch Exception?** | ❌ NGHIÊM CẤM | Controller không được phép dùng `try-catch` để tự trả về HTTP Code. Mọi Exception bắn ra bắt buộc phải được đẩy lên để `GlobalExceptionHandler` tóm gọn và tự động response. |
