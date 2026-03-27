@@ -1,25 +1,16 @@
--- ============================================================
--- V2: Create walk_intent table
---
--- Aligned with the actual WalkMate schema with one adaptation:
--- we use hotspot_id (FK → hotspot) instead of location_lat/lng
--- directly, because the MVP selects a named hotspot from the map.
---
--- matching_constraints (JSONB) holds all soft/hard filter criteria
--- (age_min, age_max, gender_preference, etc.) in an extensible
--- format — no column changes needed when adding new filter types.
---
--- time_window_start / time_window_end are full TIMESTAMP values
--- so that intents can be scheduled for a specific date+time,
--- not just a time-of-day.
---
--- expires_at: intent automatically expires if unmatched.
--- version: optimistic-locking sentinel (increment on every update).
--- ============================================================
+-- Kiểm tra và tạo Type intent_status nếu chưa có
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'intent_status') THEN
+        CREATE TYPE intent_status AS ENUM ('OPEN', 'MATCHED', 'CANCELLED', 'EXPIRED');
+    END IF;
+END $$;
 
-CREATE TYPE intent_status AS ENUM ('OPEN', 'MATCHED', 'CANCELLED', 'EXPIRED');
+-- Xóa bảng cũ nếu nó không giống cấu trúc (vì bản cũ dùng location_lat/lng thay vì hotspot_id)
+-- Nếu bạn muốn giữ data, hãy bỏ dòng DROP này và dùng ALTER TABLE.
+DROP TABLE IF EXISTS walk_intent CASCADE;
 
-CREATE TABLE walk_intent (
+CREATE TABLE IF NOT EXISTS walk_intent (
     intent_id           UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     hotspot_id          UUID            NOT NULL REFERENCES hotspot(id),
     user_id             UUID            NOT NULL REFERENCES user_account(user_id),
@@ -34,14 +25,7 @@ CREATE TABLE walk_intent (
     CONSTRAINT walk_intent_time_valid CHECK (time_window_end > time_window_start)
 );
 
--- Primary lookup for the candidate-search query
-CREATE INDEX idx_walk_intent_hotspot_status
-    ON walk_intent (hotspot_id, status);
-
--- Ownership and cancellation lookups
-CREATE INDEX idx_walk_intent_user_id
-    ON walk_intent (user_id);
-
--- GIN index for JSONB constraint queries
-CREATE INDEX idx_walk_intent_constraints
-    ON walk_intent USING GIN (matching_constraints);
+-- Các index nên dùng CREATE INDEX IF NOT EXISTS
+CREATE INDEX IF NOT EXISTS idx_walk_intent_hotspot_status ON walk_intent (hotspot_id, status);
+CREATE INDEX IF NOT EXISTS idx_walk_intent_user_id ON walk_intent (user_id);
+CREATE INDEX IF NOT EXISTS idx_walk_intent_constraints ON walk_intent USING GIN (matching_constraints);

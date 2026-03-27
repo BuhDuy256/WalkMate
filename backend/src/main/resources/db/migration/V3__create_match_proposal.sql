@@ -1,15 +1,15 @@
--- ============================================================
--- V3: Create match_proposal table
---
--- A match_proposal is created when the system finds two compatible
--- WalkIntents. Both users must accept before a walk_session begins.
--- If either rejects (or expires_at passes), the proposal closes
--- and the system tries the next ranked candidate.
--- ============================================================
+-- Kiểm tra và tạo Type proposal_status
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'proposal_status') THEN
+        CREATE TYPE proposal_status AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED');
+    END IF;
+END $$;
 
-CREATE TYPE proposal_status AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED');
+-- Xóa và tạo lại để khớp với logic migration mới
+DROP TABLE IF EXISTS match_proposal CASCADE;
 
-CREATE TABLE match_proposal (
+CREATE TABLE IF NOT EXISTS match_proposal (
     proposal_id             UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     intent_id_a             UUID            NOT NULL REFERENCES walk_intent(intent_id),
     intent_id_b             UUID            NOT NULL REFERENCES walk_intent(intent_id),
@@ -25,6 +25,6 @@ CREATE TABLE match_proposal (
     confirmed_at            TIMESTAMP
 );
 
-CREATE INDEX idx_match_proposal_intent_a ON match_proposal (intent_id_a);
-CREATE INDEX idx_match_proposal_intent_b ON match_proposal (intent_id_b);
-CREATE INDEX idx_match_proposal_status   ON match_proposal (status);
+CREATE INDEX IF NOT EXISTS idx_match_proposal_intent_a ON match_proposal (intent_id_a);
+CREATE INDEX IF NOT EXISTS idx_match_proposal_intent_b ON match_proposal (intent_id_b);
+CREATE INDEX IF NOT EXISTS idx_match_proposal_status   ON match_proposal (status);
