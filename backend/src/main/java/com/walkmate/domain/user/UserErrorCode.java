@@ -14,7 +14,7 @@ public enum UserErrorCode implements ErrorCode {
 
     private final String message;
 
-    @used
+    @Override
     public String getCode() {
         return name();
     }
