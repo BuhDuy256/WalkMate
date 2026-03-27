@@ -192,6 +192,7 @@ public class CoordinationActivity extends AppCompatActivity
                 dismissFragmentByTag(TAG_MATCH_RESULT);
                 if (state.getSelectedHotspot() != null) {
                     txtHotspotName.setText(state.getSelectedHotspot().getName());
+                    zoomToHotspot(state.getSelectedHotspot());
                 }
                 showWithAnim(hotspotCtaCard, R.anim.slide_up);
                 break;
@@ -254,6 +255,15 @@ public class CoordinationActivity extends AppCompatActivity
         if (!hotspots.isEmpty()) {
             googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 180));
         }
+    }
+
+    private void zoomToHotspot(Hotspot hotspot) {
+        if (googleMap == null) return;
+        LatLng target = new LatLng(hotspot.getLat(), hotspot.getLng());
+        googleMap.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(target, 15f),
+                400,
+                null);
     }
 
     private void updateMarkerSelection(String selectedId) {
