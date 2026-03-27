@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="16dp">
+
+        <!-- Left color bar Indicator -->
+        <View
+            android:id="@+id/viewStatusIndicator"
+            android:layout_width="4dp"
+            android:layout_height="0dp"
+            android:background="#34C759"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Date block -->
+        <LinearLayout
+            android:id="@+id/llDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintStart_toEndOf="@id/viewStatusIndicator"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvDateDay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="04"
+                android:textColor="#2C2C2C"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDateMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TUE"
+                android:textColor="#5C5C5C"
+                android:textSize="10sp"
+                android:textAllCaps="true"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Avatar -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvAvatar"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="16dp"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toEndOf="@id/llDate"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#E0E0E0"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_myplaces" />
+        </androidx.cardview.widget.CardView>
+
+        <!-- Name & Status -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="Sophia K."
+            android:textColor="#2C2C2C"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/cvAvatar"
+            app:layout_constraintTop_toTopOf="@id/cvAvatar" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            app:cardBackgroundColor="#E8F8EE"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="@id/tvName"
+            app:layout_constraintStart_toEndOf="@id/tvName"
+            app:layout_constraintTop_toTopOf="@id/tvName">
+
+            <TextView
+                android:id="@+id/tvStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:text="Completed"
+                android:textColor="#34C759"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </androidx.cardview.widget.CardView>
+
+
+        <!-- Location & Type -->
+        <TextView
+            android:id="@+id/tvLocationAndType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="📍 City Park    🌿 Park Stroll"
+            android:textColor="#8E8E8E"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="@id/tvName"
+            app:layout_constraintTop_toBottomOf="@id/tvName" />
+
+        <!-- Stats Row -->
+        <LinearLayout
+            android:id="@+id/llSessionStats"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintStart_toStartOf="@id/cvAvatar"
+            app:layout_constraintEnd_toStartOf="@id/ivChevron"
+            app:layout_constraintTop_toBottomOf="@id/tvLocationAndType">
+
+            <TextView
+                android:id="@+id/tvDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏱ 32 min"
+                android:textColor="#5C5C5C"
+                android:textSize="12sp"
+                android:layout_marginEnd="16dp"/>
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📍 1.2 km"
+                android:textColor="#5C5C5C"
+                android:textSize="12sp"
+                android:layout_marginEnd="16dp"/>
+
+            <TextView
+                android:id="@+id/tvSteps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👟 3,150 steps"
+                android:textColor="#5C5C5C"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Rating -->
+        <TextView
+            android:id="@+id/tvRatingLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Your rating: "
+            android:textColor="#8E8E8E"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="@id/cvAvatar"
+            app:layout_constraintTop_toBottomOf="@id/llSessionStats" />
+
+        <TextView
+            android:id="@+id/tvRatingStars"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="★ ★ ★ ★ ★"
+            android:textColor="#FFB300"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@id/tvRatingLabel"
+            app:layout_constraintBottom_toBottomOf="@id/tvRatingLabel"
+            app:layout_constraintTop_toTopOf="@id/tvRatingLabel" />
+
+        <!-- Optional Warning/Cancel Banner -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvAlertMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="#FFF0F0"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/cvAvatar"
+            app:layout_constraintTop_toBottomOf="@id/tvRatingLabel">
+            
+            <TextView
+                android:id="@+id/tvAlertMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="🚨 Partner didn't show up - Contact support"
+                android:textColor="#D32F2F"
+                android:textSize="12sp" />
+        </androidx.cardview.widget.CardView>
+
+
+        <!-- Right arrow -->
+        <ImageView
+            android:id="@+id/ivChevron"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="16dp"
+            android:src="@android:drawable/ic_media_next"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvName"
+            app:layout_constraintBottom_toBottomOf="@id/tvName" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

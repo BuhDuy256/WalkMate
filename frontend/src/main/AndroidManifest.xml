@@ -14,12 +14,18 @@
         android:theme="@style/Theme.WalkMate">
 
         <activity
-            android:name="com.walkmate.ui.login.LoginActivity"
+            android:name="com.walkmate.ui.history.HistoryActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.walkmate.ui.login.LoginActivity"
+            android:exported="false">
+
         </activity>
 
         <activity
