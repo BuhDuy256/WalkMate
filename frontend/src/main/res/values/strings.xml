@@ -1,3 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">WalkMate</string>
+    <string name="status_time">9:41</string>
+    <string name="walkers_active">12 walkers active now</string>
+    <string name="set_walking_intent">Set Walking Intent ✦</string>
+    <string name="set_preferences_title">Set your preferences ⏱️</string>
+    <string name="label_when_time">When (Time)</string>
+    <string name="label_when_duration">When (Duration)</string>
+    <string name="label_who_age">Who (Age)</string>
+    <string name="label_who_gender">Who (Gender)</string>
+    <string name="label_what_tags">What (Tags)</string>
+    <string name="find_match">Find Match ✦</string>
+    <string name="scanning_format">Scanning %s…</string>
+    <string name="match_name">Minh Anh</string>
+    <string name="match_distance">2.1 km away • ⭐ 4.8</string>
+    <string name="match_walk_time">🚶 Walk from 17:15 – 18:00</string>
+    <string name="btn_pass">Pass</string>
+    <string name="btn_accept">Accept ✦</string>
+
+    <!-- Duration options -->
+    <string name="dur_15">15 min</string>
+    <string name="dur_30">30 min</string>
+    <string name="dur_60">60 min</string>
+
+    <!-- Gender options -->
+    <string name="gender_male">Nam</string>
+    <string name="gender_female">Nữ</string>
+    <string name="gender_any">Bất kỳ</string>
+
+    <!-- Tag options -->
+    <string name="tag_running">Chạy bộ</string>
+    <string name="tag_podcast">Nghe podcast</string>
+    <string name="tag_dog">Dắt chó</string>
+    <string name="tag_meditation">Thiền</string>
+    <string name="tag_slow_walk">Đi bộ chậm</string>
+    <string name="tag_photography">Chụp ảnh</string>
+
+    <!-- Hotspots -->
+    <string name="hotspot_1">Công viên Tao Đàn</string>
+    <string name="hotspot_2">Hồ Con Rùa</string>
+    <string name="hotspot_3">Công viên Gia Định</string>
+    <string name="hotspot_4">Công viên Lê Văn Tám</string>
 </resources>

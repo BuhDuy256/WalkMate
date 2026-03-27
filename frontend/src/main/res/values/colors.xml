@@ -1,69 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Converted from: src/styles/theme.css
-    Place at:       app/src/main/res/values/colors.xml
-
-    oklch() values have been converted to their closest sRGB hex equivalents.
-    Dark mode overrides live in res/values-night/colors.xml
--->
 <resources>
+    <!-- Brand / Primary Gradient -->
+    <color name="orange_start">#FFFF9E67</color>
+    <color name="orange_end">#FFFF7B3A</color>
+    <color name="orange_primary">#FFFF9E67</color>
 
-    <!-- ===================== CORE ===================== -->
-    <color name="background">#FFFFFF</color>
-    <color name="foreground">#09090B</color>   <!-- oklch(0.145 0 0) -->
+    <!-- Backgrounds -->
+    <color name="bg_cream">#FFFFF9F1</color>
+    <color name="bg_white">#FFFFFFFF</color>
+    <color name="bg_warm_light">#FFFFF3EB</color>
+    <color name="bg_tag_inactive">#FFF5EDE4</color>
+    <color name="bg_map">#FFE8E0D4</color>
+    <color name="bg_map_road">#FFD4CBBF</color>
+    <color name="bg_map_park">#FFC5DEB5</color>
+    <color name="bg_map_water">#FFB5D4DE</color>
+    <color name="bg_map_block">#FFF0E8DC</color>
 
-    <!-- ===================== CARD ===================== -->
-    <color name="card">#FFFFFF</color>
-    <color name="card_foreground">#09090B</color>
+    <!-- Text -->
+    <color name="text_dark">#FF332218</color>
+    <color name="text_muted">#FF9E8D7F</color>
+    <color name="text_label">#FF7A6657</color>
 
-    <!-- ===================== POPOVER ===================== -->
-    <color name="popover">#FFFFFF</color>
-    <color name="popover_foreground">#09090B</color>
-
-    <!-- ===================== PRIMARY ===================== -->
-    <color name="primary">#030213</color>
-    <color name="primary_foreground">#FFFFFF</color>
-
-    <!-- ===================== SECONDARY ===================== -->
-    <color name="secondary">#F1F1F8</color>   <!-- oklch(0.95 0.0058 264.53) -->
-    <color name="secondary_foreground">#030213</color>
-
-    <!-- ===================== MUTED ===================== -->
-    <color name="muted">#ECECF0</color>
-    <color name="muted_foreground">#717182</color>
-
-    <!-- ===================== ACCENT ===================== -->
-    <color name="accent">#E9EBEF</color>
-    <color name="accent_foreground">#030213</color>
-
-    <!-- ===================== DESTRUCTIVE ===================== -->
-    <color name="destructive">#D4183D</color>
-    <color name="destructive_foreground">#FFFFFF</color>
-
-    <!-- ===================== BORDER / INPUT ===================== -->
-    <color name="border">#1A000000</color>    <!-- rgba(0,0,0,0.1) -->
-    <color name="input">#00000000</color>     <!-- transparent -->
-    <color name="input_background">#F3F3F5</color>
-    <color name="switch_background">#CBCED4</color>
-
-    <!-- ===================== RING ===================== -->
-    <color name="ring">#B3B3B3</color>        <!-- oklch(0.708 0 0) -->
-
-    <!-- ===================== CHARTS ===================== -->
-    <color name="chart_1">#E8612C</color>     <!-- oklch(0.646 0.222 41.116) -->
-    <color name="chart_2">#2DA68A</color>     <!-- oklch(0.6 0.118 184.704) -->
-    <color name="chart_3">#3A5F8A</color>     <!-- oklch(0.398 0.07 227.392) -->
-    <color name="chart_4">#D4A827</color>     <!-- oklch(0.828 0.189 84.429) -->
-    <color name="chart_5">#C9921A</color>     <!-- oklch(0.769 0.188 70.08) -->
-
-    <!-- ===================== SIDEBAR ===================== -->
-    <color name="sidebar">#F8F8F8</color>     <!-- oklch(0.985 0 0) -->
-    <color name="sidebar_foreground">#09090B</color>
-    <color name="sidebar_primary">#030213</color>
-    <color name="sidebar_primary_foreground">#F8F8F8</color>
-    <color name="sidebar_accent">#F7F7F7</color>  <!-- oklch(0.97 0 0) -->
-    <color name="sidebar_accent_foreground">#1C1C1C</color>
-    <color name="sidebar_border">#EBEBEB</color>  <!-- oklch(0.922 0 0) -->
-    <color name="sidebar_ring">#B3B3B3</color>
-
+    <!-- Misc -->
+    <color name="handle_bar">#FFD4CBBF</color>
+    <color name="slider_track_inactive">#FFF5EDE4</color>
+    <color name="overlay_dim">#40000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="shadow_orange">#59FF7B3A</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
 </resources>

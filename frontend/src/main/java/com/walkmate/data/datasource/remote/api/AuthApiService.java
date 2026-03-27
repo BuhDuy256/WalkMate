@@ -1,10 +1,10 @@
 package com.walkmate.data.datasource.remote.api;
 
-import com.walkmate.data.datasource.remote.dto.ApiResponse;
-import com.walkmate.data.datasource.remote.dto.LoginRequestDto;
-import com.walkmate.data.datasource.remote.dto.LoginResponseDto;
-import com.walkmate.data.datasource.remote.dto.RegisterRequestDto;
-import com.walkmate.data.datasource.remote.dto.RegisterResponseDto;
+import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
+import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
+import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.user.LoginResponseDto;
+import com.walkmate.data.datasource.remote.dto.response.user.RegisterResponseDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;

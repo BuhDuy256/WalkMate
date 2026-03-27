@@ -1,622 +1,307 @@
--- =====================================================
--- WalkMate Database Schema
--- DDD-Driven Design with Invariant Enforcement
--- Architecture: Scheduled Discovery (Intent-Intent Matching)
--- =====================================================
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- Enable Required Extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "postgis";
-
--- =====================================================
--- IDENTITY & ACCESS CONTEXT
--- =====================================================
-
-CREATE TYPE auth_provider AS ENUM ('GOOGLE', 'LOCAL', 'PHONE');
-CREATE TYPE account_status AS ENUM ('ACTIVE', 'SUSPENDED', 'DELETED');
-
-CREATE TABLE user_account (
-    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(20) UNIQUE,
-    password_hash TEXT,
-    provider auth_provider NOT NULL DEFAULT 'LOCAL',
-    status account_status NOT NULL DEFAULT 'ACTIVE',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login_at TIMESTAMP,
-    
-    CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT password_required CHECK (
-        (provider = 'LOCAL' AND password_hash IS NOT NULL) OR 
-        (provider != 'LOCAL')
-    )
+CREATE TABLE public.badge (
+  badge_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL UNIQUE,
+  description text,
+  icon_url text,
+  condition_type USER-DEFINED NOT NULL,
+  condition_value integer NOT NULL,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT badge_pkey PRIMARY KEY (badge_id)
 );
-
-CREATE INDEX idx_user_account_email ON user_account(email);
-CREATE INDEX idx_user_account_phone ON user_account(phone);
-CREATE INDEX idx_user_account_status ON user_account(status);
-
--- =====================================================
--- USER PROFILE CONTEXT
--- =====================================================
-
-CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER');
-CREATE TYPE tag_type AS ENUM ('HAS_PET', 'QUIET', 'MUSIC', 'EXERCISE', 'RELAX');
-
-CREATE TABLE user_profile (
-    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
-    full_name VARCHAR(255) NOT NULL,
-    gender gender,
-    date_of_birth DATE,
-    avatar_url TEXT,
-    bio TEXT,
-    search_radius INTEGER DEFAULT 5000, -- meters
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT valid_search_radius CHECK (search_radius > 0 AND search_radius <= 50000),
-    CONSTRAINT valid_age CHECK (date_of_birth IS NULL OR date_of_birth < CURRENT_DATE - INTERVAL '13 years')
+CREATE TABLE public.block_relation (
+  block_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  blocker_id uuid NOT NULL,
+  blocked_id uuid NOT NULL,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT block_relation_pkey PRIMARY KEY (block_id),
+  CONSTRAINT block_relation_blocker_id_fkey FOREIGN KEY (blocker_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT block_relation_blocked_id_fkey FOREIGN KEY (blocked_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE TABLE profile_tag (
-    tag_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES user_profile(user_id) ON DELETE CASCADE,
-    tag_type tag_type NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT unique_user_tag UNIQUE (user_id, tag_type)
+CREATE TABLE public.chat_message (
+  message_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  chat_room_id uuid NOT NULL,
+  sender_id uuid NOT NULL,
+  content text NOT NULL CHECK (length(TRIM(BOTH FROM content)) > 0),
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at timestamp without time zone,
+  CONSTRAINT chat_message_pkey PRIMARY KEY (message_id),
+  CONSTRAINT chat_message_chat_room_id_fkey FOREIGN KEY (chat_room_id) REFERENCES public.chat_room(chat_room_id),
+  CONSTRAINT chat_message_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_profile_tag_user ON profile_tag(user_id);
-
--- =====================================================
--- SOCIAL GRAPH CONTEXT
--- =====================================================
-
-CREATE TABLE follow_relation (
-    follow_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    follower_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    followee_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT different_users_follow CHECK (follower_id != followee_id),
-    CONSTRAINT unique_follow UNIQUE (follower_id, followee_id)
+CREATE TABLE public.chat_room (
+  chat_room_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid NOT NULL UNIQUE,
+  open_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  close_at timestamp without time zone,
+  status USER-DEFINED NOT NULL DEFAULT 'OPEN'::chat_status,
+  CONSTRAINT chat_room_pkey PRIMARY KEY (chat_room_id),
+  CONSTRAINT chat_room_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
 );
-
-CREATE INDEX idx_follow_follower ON follow_relation(follower_id);
-CREATE INDEX idx_follow_followee ON follow_relation(followee_id);
-
-CREATE TABLE block_relation (
-    block_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    blocker_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    blocked_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT different_users_block CHECK (blocker_id != blocked_id),
-    CONSTRAINT unique_block UNIQUE (blocker_id, blocked_id)
+CREATE TABLE public.dispute_case (
+  dispute_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid NOT NULL,
+  opened_by uuid NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'OPEN'::dispute_status,
+  resolution_action text,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at timestamp without time zone NOT NULL,
+  CONSTRAINT dispute_case_pkey PRIMARY KEY (dispute_id),
+  CONSTRAINT dispute_case_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
+  CONSTRAINT dispute_case_opened_by_fkey FOREIGN KEY (opened_by) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_block_blocker ON block_relation(blocker_id);
-CREATE INDEX idx_block_blocked ON block_relation(blocked_id);
-
--- =====================================================
--- PRESENCE CONTEXT
--- =====================================================
-
-CREATE TYPE presence_status AS ENUM ('ONLINE', 'OFFLINE');
-CREATE TYPE presence_availability AS ENUM ('AVAILABLE', 'UNAVAILABLE');
-
-CREATE TABLE user_presence (
-    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
-    status presence_status NOT NULL DEFAULT 'OFFLINE',
-    availability presence_availability NOT NULL DEFAULT 'UNAVAILABLE',
-    quick_mode BOOLEAN NOT NULL DEFAULT FALSE,
-    last_active_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP
+CREATE TABLE public.flyway_schema_history (
+  installed_rank integer NOT NULL,
+  version character varying,
+  description character varying NOT NULL,
+  type character varying NOT NULL,
+  script character varying NOT NULL,
+  checksum integer,
+  installed_by character varying NOT NULL,
+  installed_on timestamp without time zone NOT NULL DEFAULT now(),
+  execution_time integer NOT NULL,
+  success boolean NOT NULL,
+  CONSTRAINT flyway_schema_history_pkey PRIMARY KEY (installed_rank)
 );
-
--- =====================================================
--- WALK COORDINATION CONTEXT (Intent-Intent Matching)
--- =====================================================
-
-CREATE TYPE intent_status AS ENUM ('OPEN', 'EXPIRED', 'CANCELLED', 'CONSUMED');
-CREATE TYPE walk_purpose AS ENUM ('EXERCISE', 'RELAX', 'PET', 'SIGHTSEEING', 'CHAT', 'OTHER');
-
-CREATE TABLE walk_intent (
-    intent_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    location GEOGRAPHY(POINT, 4326) NOT NULL,
-    location_lat DOUBLE PRECISION NOT NULL,
-    location_lng DOUBLE PRECISION NOT NULL,
-    time_window_start TIMESTAMP NOT NULL,
-    time_window_end TIMESTAMP NOT NULL,
-    purpose walk_purpose NOT NULL,
-    matching_constraints JSONB, -- {min_age, max_age, gender_preference, tags_preference}
-    status intent_status NOT NULL DEFAULT 'OPEN',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
-    
-    CONSTRAINT valid_time_window CHECK (time_window_end > time_window_start),
-    CONSTRAINT valid_expiry CHECK (expires_at > created_at),
-    CONSTRAINT future_time_window CHECK (time_window_start > created_at),
-    CONSTRAINT valid_coordinates CHECK (
-        location_lat >= -90 AND location_lat <= 90 AND
-        location_lng >= -180 AND location_lng <= 180
-    )
+CREATE TABLE public.follow_relation (
+  follow_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  follower_id uuid NOT NULL,
+  followee_id uuid NOT NULL,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT follow_relation_pkey PRIMARY KEY (follow_id),
+  CONSTRAINT follow_relation_follower_id_fkey FOREIGN KEY (follower_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT follow_relation_followee_id_fkey FOREIGN KEY (followee_id) REFERENCES public.user_account(user_id)
 );
-
--- 🔴 INVARIANT 2: No overlapping OPEN intents for same user
--- Note: This is enforced at application layer due to complexity of overlap detection
--- Application must check: EXISTS (SELECT 1 FROM walk_intent WHERE user_id = ? AND status = 'OPEN' 
---   AND time_window_start < ? AND time_window_end > ?)
-
-CREATE INDEX idx_walk_intent_user ON walk_intent(user_id);
-CREATE INDEX idx_walk_intent_status ON walk_intent(status);
-CREATE INDEX idx_walk_intent_time_window ON walk_intent(time_window_start, time_window_end);
-CREATE INDEX idx_walk_intent_location ON walk_intent USING GIST(location);
-CREATE INDEX idx_walk_intent_active ON walk_intent(user_id, status) WHERE status = 'OPEN';
-
--- =====================================================
--- MATCH PROPOSAL
--- =====================================================
-
-CREATE TYPE proposal_status AS ENUM (
-    'PENDING', 
-    'CONFIRMED', 
-    'REJECTED', 
-    'EXPIRED'
+CREATE TABLE public.match_proposal (
+  proposal_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  intent_id_a uuid NOT NULL,
+  intent_id_b uuid NOT NULL,
+  proposed_start_time timestamp without time zone NOT NULL,
+  proposed_end_time timestamp without time zone NOT NULL,
+  proposed_location USER-DEFINED NOT NULL,
+  proposed_location_lat double precision NOT NULL,
+  proposed_location_lng double precision NOT NULL,
+  accepted_by_a boolean NOT NULL DEFAULT false,
+  accepted_by_b boolean NOT NULL DEFAULT false,
+  status USER-DEFINED NOT NULL DEFAULT 'PENDING'::proposal_status,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at timestamp without time zone NOT NULL,
+  confirmed_at timestamp without time zone,
+  CONSTRAINT match_proposal_pkey PRIMARY KEY (proposal_id),
+  CONSTRAINT match_proposal_intent_id_a_fkey FOREIGN KEY (intent_id_a) REFERENCES public.walk_intent(intent_id),
+  CONSTRAINT match_proposal_intent_id_b_fkey FOREIGN KEY (intent_id_b) REFERENCES public.walk_intent(intent_id)
 );
-
-CREATE TABLE match_proposal (
-    proposal_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    intent_id_a UUID NOT NULL REFERENCES walk_intent(intent_id) ON DELETE CASCADE,
-    intent_id_b UUID NOT NULL REFERENCES walk_intent(intent_id) ON DELETE CASCADE,
-    proposed_start_time TIMESTAMP NOT NULL,
-    proposed_end_time TIMESTAMP NOT NULL,
-    proposed_location GEOGRAPHY(POINT, 4326) NOT NULL,
-    proposed_location_lat DOUBLE PRECISION NOT NULL,
-    proposed_location_lng DOUBLE PRECISION NOT NULL,
-    accepted_by_a BOOLEAN NOT NULL DEFAULT FALSE,
-    accepted_by_b BOOLEAN NOT NULL DEFAULT FALSE,
-    status proposal_status NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
-    confirmed_at TIMESTAMP,
-    
-    CONSTRAINT different_intents CHECK (intent_id_a != intent_id_b),
-    CONSTRAINT valid_proposed_time CHECK (proposed_end_time > proposed_start_time),
-    CONSTRAINT valid_proposed_coords CHECK (
-        proposed_location_lat >= -90 AND proposed_location_lat <= 90 AND
-        proposed_location_lng >= -180 AND proposed_location_lng <= 180
-    )
+CREATE TABLE public.matching_preference_model (
+  user_id uuid NOT NULL,
+  weight_time_overlap double precision DEFAULT 1.0,
+  weight_interest double precision DEFAULT 1.0,
+  weight_behavior double precision DEFAULT 1.0,
+  weight_distance double precision DEFAULT 1.0,
+  last_trained_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT matching_preference_model_pkey PRIMARY KEY (user_id),
+  CONSTRAINT matching_preference_model_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
--- 🔴 INVARIANT 3: One PENDING proposal per intent at a time
-CREATE UNIQUE INDEX idx_proposal_pending_intent_a 
-    ON match_proposal(intent_id_a) 
-    WHERE status = 'PENDING';
-
-CREATE UNIQUE INDEX idx_proposal_pending_intent_b 
-    ON match_proposal(intent_id_b) 
-    WHERE status = 'PENDING';
-
-CREATE INDEX idx_match_proposal_intent_a ON match_proposal(intent_id_a);
-CREATE INDEX idx_match_proposal_intent_b ON match_proposal(intent_id_b);
-CREATE INDEX idx_match_proposal_status ON match_proposal(status);
-CREATE INDEX idx_match_proposal_expires ON match_proposal(expires_at) WHERE status = 'PENDING';
-
--- =====================================================
--- WALK LIFECYCLE CONTEXT
--- =====================================================
-
-CREATE TYPE session_status AS ENUM ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED');
-
-CREATE TABLE walk_session (
-    session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user1_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE RESTRICT,
-    user2_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE RESTRICT,
-    scheduled_start_time TIMESTAMP NOT NULL,
-    scheduled_end_time TIMESTAMP NOT NULL,
-    user1_activated_at TIMESTAMP,
-    user2_activated_at TIMESTAMP,
-    actual_start_time TIMESTAMP,
-    actual_end_time TIMESTAMP,
-    status session_status NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    source_intent_id_a UUID REFERENCES walk_intent(intent_id),
-    source_intent_id_b UUID REFERENCES walk_intent(intent_id),
-    cancellation_reason VARCHAR(255),
-    cancelled_by UUID REFERENCES user_account(user_id) ON DELETE SET NULL,
-    
-    CONSTRAINT different_users CHECK (user1_id != user2_id),
-    CONSTRAINT valid_scheduled_time CHECK (scheduled_end_time > scheduled_start_time),
-    CONSTRAINT valid_actual_time CHECK (
-        actual_end_time IS NULL OR 
-        actual_start_time IS NULL OR 
-        actual_end_time > actual_start_time
-    ),
-    CONSTRAINT terminal_immutable CHECK (
-        -- Terminal states cannot be modified (application enforced)
-        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED')
-    ),
-    CONSTRAINT no_overlap_in_status CHECK (
-        status IN ('PENDING', 'ACTIVE', 'COMPLETED', 'NO_SHOW', 'CANCELLED')
-    )
+CREATE TABLE public.notification (
+  notification_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  type character varying NOT NULL,
+  payload jsonb,
+  status USER-DEFINED NOT NULL DEFAULT 'PENDING'::notification_status,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT notification_pkey PRIMARY KEY (notification_id),
+  CONSTRAINT notification_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
--- 🔴 INVARIANT 1: No overlapping sessions for same user with status in (PENDING, ACTIVE)
--- Note: Complex overlap detection - enforced at application layer
--- Application must validate BEFORE insert:
--- - No existing session for user1_id with overlap in [scheduled_start, scheduled_end]
--- - No existing session for user2_id with overlap in [scheduled_start, scheduled_end]
--- - Both sessions must have status IN ('PENDING', 'ACTIVE')
-
-CREATE INDEX idx_walk_session_user1 ON walk_session(user1_id);
-CREATE INDEX idx_walk_session_user2 ON walk_session(user2_id);
-CREATE INDEX idx_walk_session_status ON walk_session(status);
-CREATE INDEX idx_walk_session_scheduled_time ON walk_session(scheduled_start_time, scheduled_end_time);
-CREATE INDEX idx_walk_session_active ON walk_session(user1_id, user2_id, status) 
-    WHERE status IN ('PENDING', 'ACTIVE');
-
--- 🔴 INVARIANT 4: Session Creation Guard
--- Helper function to check overlapping sessions
-CREATE OR REPLACE FUNCTION check_session_overlap(
-    p_user_id UUID,
-    p_start_time TIMESTAMP,
-    p_end_time TIMESTAMP,
-    p_exclude_session_id UUID DEFAULT NULL
-) RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM walk_session
-        WHERE (user1_id = p_user_id OR user2_id = p_user_id)
-        AND status IN ('PENDING', 'ACTIVE')
-        AND session_id != COALESCE(p_exclude_session_id, '00000000-0000-0000-0000-000000000000'::UUID)
-        AND (
-            -- Overlap detection
-            (scheduled_start_time < p_end_time AND scheduled_end_time > p_start_time)
-        )
-    );
-END;
-$$ LANGUAGE plpgsql;
-
--- =====================================================
--- CHAT ROOM & MESSAGES
--- =====================================================
-
-CREATE TYPE chat_status AS ENUM ('OPEN', 'CLOSED');
-
-CREATE TABLE chat_room (
-    chat_room_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID NOT NULL UNIQUE REFERENCES walk_session(session_id) ON DELETE CASCADE,
-    open_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    close_at TIMESTAMP,
-    status chat_status NOT NULL DEFAULT 'OPEN',
-    
-    CONSTRAINT valid_chat_time CHECK (close_at IS NULL OR close_at > open_at)
+CREATE TABLE public.profile_tag (
+  tag_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  tag_type USER-DEFINED NOT NULL,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT profile_tag_pkey PRIMARY KEY (tag_id),
+  CONSTRAINT profile_tag_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(user_id)
 );
-
-CREATE INDEX idx_chat_room_session ON chat_room(session_id);
-CREATE INDEX idx_chat_room_status ON chat_room(status);
-
-CREATE TABLE chat_message (
-    message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    chat_room_id UUID NOT NULL REFERENCES chat_room(chat_room_id) ON DELETE CASCADE,
-    sender_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    read_at TIMESTAMP,
-    
-    CONSTRAINT non_empty_content CHECK (length(trim(content)) > 0)
+CREATE TABLE public.refresh_token (
+  token_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  token_value text NOT NULL UNIQUE,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT refresh_token_pkey PRIMARY KEY (token_id),
+  CONSTRAINT refresh_token_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_chat_message_room ON chat_message(chat_room_id, created_at);
-CREATE INDEX idx_chat_message_sender ON chat_message(sender_id);
-
--- =====================================================
--- TRUST & REPUTATION CONTEXT
--- =====================================================
-
-CREATE TABLE walk_review (
-    review_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID NOT NULL REFERENCES walk_session(session_id) ON DELETE CASCADE,
-    reviewer_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    reviewee_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    rating_stars INTEGER NOT NULL,
-    comment TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT valid_rating CHECK (rating_stars >= 1 AND rating_stars <= 5),
-    CONSTRAINT different_reviewer_reviewee CHECK (reviewer_id != reviewee_id),
-    CONSTRAINT one_review_per_user_per_session UNIQUE (session_id, reviewer_id)
+CREATE TABLE public.review_tag (
+  tag_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  review_id uuid NOT NULL,
+  tag_type USER-DEFINED NOT NULL,
+  CONSTRAINT review_tag_pkey PRIMARY KEY (tag_id),
+  CONSTRAINT review_tag_review_id_fkey FOREIGN KEY (review_id) REFERENCES public.walk_review(review_id)
 );
-
-CREATE INDEX idx_walk_review_session ON walk_review(session_id);
-CREATE INDEX idx_walk_review_reviewer ON walk_review(reviewer_id);
-CREATE INDEX idx_walk_review_reviewee ON walk_review(reviewee_id);
-
-CREATE TYPE review_tag_type AS ENUM (
-    'FRIENDLY', 
-    'PUNCTUAL', 
-    'GOOD_CONVERSATION', 
-    'RESPECTFUL', 
-    'LATE', 
-    'RUDE', 
-    'UNCOMFORTABLE'
+CREATE TABLE public.session_point_chunks (
+  chunk_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid NOT NULL,
+  chunk_index integer NOT NULL CHECK (chunk_index >= 0),
+  polyline text NOT NULL,
+  timestamps bytea,
+  elevations bytea,
+  point_count integer NOT NULL CHECK (point_count > 0),
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT session_point_chunks_pkey PRIMARY KEY (chunk_id),
+  CONSTRAINT session_point_chunks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
 );
-
-CREATE TABLE review_tag (
-    tag_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    review_id UUID NOT NULL REFERENCES walk_review(review_id) ON DELETE CASCADE,
-    tag_type review_tag_type NOT NULL,
-    
-    CONSTRAINT unique_review_tag UNIQUE (review_id, tag_type)
+CREATE TABLE public.session_report (
+  report_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid,
+  reporter_id uuid NOT NULL,
+  reported_user_id uuid NOT NULL,
+  reason character varying NOT NULL,
+  evidence_url text,
+  status USER-DEFINED NOT NULL DEFAULT 'OPEN'::report_status,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT session_report_pkey PRIMARY KEY (report_id),
+  CONSTRAINT session_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
+  CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_review_tag_review ON review_tag(review_id);
-
--- =====================================================
--- TRUST SCORE
--- =====================================================
-
-CREATE TABLE trust_score (
-    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
-    score INTEGER NOT NULL DEFAULT 100,
-    total_sessions INTEGER DEFAULT 0,
-    completed_sessions INTEGER DEFAULT 0,
-    cancelled_sessions INTEGER DEFAULT 0,
-    no_show_sessions INTEGER DEFAULT 0,
-    last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT valid_score CHECK (score >= 0 AND score <= 1000),
-    CONSTRAINT valid_counts CHECK (
-        total_sessions >= 0 AND
-        completed_sessions >= 0 AND
-        cancelled_sessions >= 0 AND
-        no_show_sessions >= 0 AND
-        completed_sessions + cancelled_sessions + no_show_sessions <= total_sessions
-    )
+CREATE TABLE public.session_state_change_log (
+  log_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid NOT NULL,
+  from_status USER-DEFINED,
+  to_status USER-DEFINED NOT NULL,
+  changed_by uuid,
+  reason text,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT session_state_change_log_pkey PRIMARY KEY (log_id),
+  CONSTRAINT session_state_change_log_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
+  CONSTRAINT session_state_change_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_trust_score_score ON trust_score(score DESC);
-
--- =====================================================
--- BADGES
--- =====================================================
-
-CREATE TYPE badge_condition_type AS ENUM (
-    'TOTAL_SESSIONS',
-    'CONSECUTIVE_SESSIONS',
-    'PERFECT_RATING',
-    'EARLY_ADOPTER'
+CREATE TABLE public.spatial_ref_sys (
+  srid integer NOT NULL CHECK (srid > 0 AND srid <= 998999),
+  auth_name character varying,
+  auth_srid integer,
+  srtext character varying,
+  proj4text character varying,
+  CONSTRAINT spatial_ref_sys_pkey PRIMARY KEY (srid)
 );
-
-CREATE TABLE badge (
-    badge_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    icon_url TEXT,
-    condition_type badge_condition_type NOT NULL,
-    condition_value INTEGER NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.test_table (
+  id uuid NOT NULL,
+  name character varying NOT NULL,
+  CONSTRAINT test_table_pkey PRIMARY KEY (id)
 );
-
-CREATE TABLE user_badge (
-    user_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    badge_id UUID NOT NULL REFERENCES badge(badge_id) ON DELETE CASCADE,
-    earned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    PRIMARY KEY (user_id, badge_id)
+CREATE TABLE public.trust_score (
+  user_id uuid NOT NULL,
+  score integer NOT NULL DEFAULT 100 CHECK (score >= 0 AND score <= 1000),
+  total_sessions integer DEFAULT 0,
+  completed_sessions integer DEFAULT 0,
+  cancelled_sessions integer DEFAULT 0,
+  no_show_sessions integer DEFAULT 0,
+  aborted_sessions integer DEFAULT 0,
+  last_updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT trust_score_pkey PRIMARY KEY (user_id),
+  CONSTRAINT trust_score_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_user_badge_user ON user_badge(user_id);
-CREATE INDEX idx_user_badge_earned ON user_badge(earned_at DESC);
-
--- =====================================================
--- MODERATION CONTEXT
--- =====================================================
-
-CREATE TYPE report_status AS ENUM ('OPEN', 'RESOLVED', 'REJECTED');
-CREATE TYPE dispute_status AS ENUM ('OPEN', 'RESOLVED', 'CLOSED');
-
-CREATE TABLE session_report (
-    report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID REFERENCES walk_session(session_id) ON DELETE SET NULL,
-    reporter_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    reported_user_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    reason VARCHAR(255) NOT NULL,
-    evidence_url TEXT,
-    status report_status NOT NULL DEFAULT 'OPEN',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT different_reporter_reported CHECK (reporter_id != reported_user_id)
+CREATE TABLE public.user_account (
+  user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  email character varying NOT NULL UNIQUE CHECK (email::text ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'::text),
+  phone character varying UNIQUE,
+  password_hash text,
+  provider USER-DEFINED NOT NULL DEFAULT 'LOCAL'::auth_provider,
+  status USER-DEFINED NOT NULL DEFAULT 'ACTIVE'::account_status,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_login_at timestamp without time zone,
+  CONSTRAINT user_account_pkey PRIMARY KEY (user_id)
 );
-
-CREATE INDEX idx_report_reporter ON session_report(reporter_id);
-CREATE INDEX idx_report_reported ON session_report(reported_user_id);
-CREATE INDEX idx_report_session ON session_report(session_id);
-CREATE INDEX idx_report_status ON session_report(status);
-
-CREATE TABLE dispute_case (
-    dispute_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID NOT NULL REFERENCES walk_session(session_id) ON DELETE CASCADE,
-    opened_by UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    status dispute_status NOT NULL DEFAULT 'OPEN',
-    resolution_action TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL
+CREATE TABLE public.user_badge (
+  user_id uuid NOT NULL,
+  badge_id uuid NOT NULL,
+  earned_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_badge_pkey PRIMARY KEY (user_id, badge_id),
+  CONSTRAINT user_badge_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT user_badge_badge_id_fkey FOREIGN KEY (badge_id) REFERENCES public.badge(badge_id)
 );
-
-CREATE INDEX idx_dispute_session ON dispute_case(session_id);
-
-CREATE TYPE notification_status AS ENUM ('PENDING', 'SENT', 'FAILED');
-
-CREATE TABLE notification (
-    notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES user_account(user_id) ON DELETE CASCADE,
-    type VARCHAR(100) NOT NULL,
-    payload JSONB,
-    status notification_status NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.user_embedding (
+  user_id uuid NOT NULL,
+  vector_data ARRAY NOT NULL CHECK (array_length(vector_data, 1) > 0),
+  last_updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_embedding_pkey PRIMARY KEY (user_id),
+  CONSTRAINT user_embedding_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_noti_user ON notification(user_id, status);
-
--- =====================================================
--- AI PERSONALIZATION CONTEXT
--- =====================================================
-
-CREATE TABLE matching_preference_model (
-    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
-    weight_time_overlap DOUBLE PRECISION DEFAULT 1.0,
-    weight_interest DOUBLE PRECISION DEFAULT 1.0,
-    weight_behavior DOUBLE PRECISION DEFAULT 1.0,
-    weight_distance DOUBLE PRECISION DEFAULT 1.0,
-    last_trained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.user_presence (
+  user_id uuid NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'OFFLINE'::presence_status,
+  availability USER-DEFINED NOT NULL DEFAULT 'UNAVAILABLE'::presence_availability,
+  quick_mode boolean NOT NULL DEFAULT false,
+  last_active_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at timestamp without time zone,
+  CONSTRAINT user_presence_pkey PRIMARY KEY (user_id),
+  CONSTRAINT user_presence_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE TABLE user_embedding (
-    user_id UUID PRIMARY KEY REFERENCES user_account(user_id) ON DELETE CASCADE,
-    vector_data FLOAT[] NOT NULL, -- Store as array, can use pgvector extension for similarity search
-    last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT valid_vector CHECK (array_length(vector_data, 1) > 0)
+CREATE TABLE public.user_profile (
+  user_id uuid NOT NULL,
+  full_name character varying NOT NULL,
+  gender USER-DEFINED,
+  date_of_birth date CHECK (date_of_birth IS NULL OR date_of_birth < (CURRENT_DATE - '13 years'::interval)),
+  avatar_url text,
+  bio text,
+  search_radius integer DEFAULT 5000 CHECK (search_radius > 0 AND search_radius <= 50000),
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_profile_pkey PRIMARY KEY (user_id),
+  CONSTRAINT user_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_user_embedding_updated ON user_embedding(last_updated);
-
--- =====================================================
--- AUDIT & LOGGING (Optional but Recommended)
--- =====================================================
-
-CREATE TABLE session_state_change_log (
-    log_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID NOT NULL REFERENCES walk_session(session_id) ON DELETE CASCADE,
-    from_status session_status,
-    to_status session_status NOT NULL,
-    changed_by UUID REFERENCES user_account(user_id),
-    reason TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.walk_intent (
+  intent_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  location USER-DEFINED NOT NULL,
+  location_lat double precision NOT NULL,
+  location_lng double precision NOT NULL,
+  time_window_start timestamp without time zone NOT NULL,
+  time_window_end timestamp without time zone NOT NULL,
+  purpose USER-DEFINED NOT NULL,
+  matching_constraints jsonb,
+  status USER-DEFINED NOT NULL DEFAULT 'OPEN'::intent_status,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at timestamp without time zone NOT NULL,
+  version bigint NOT NULL DEFAULT 0 CHECK (version >= 0),
+  CONSTRAINT walk_intent_pkey PRIMARY KEY (intent_id),
+  CONSTRAINT walk_intent_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
-
-CREATE INDEX idx_session_log_session ON session_state_change_log(session_id, created_at);
-
--- =====================================================
--- VIEWS FOR COMMON QUERIES
--- =====================================================
-
--- Active sessions per user
-CREATE VIEW v_user_active_sessions AS
-SELECT 
-    user_id,
-    COUNT(*) as active_session_count
-FROM (
-    SELECT user1_id as user_id, session_id FROM walk_session WHERE status IN ('PENDING', 'ACTIVE')
-    UNION ALL
-    SELECT user2_id as user_id, session_id FROM walk_session WHERE status IN ('PENDING', 'ACTIVE')
-) active_sessions
-GROUP BY user_id;
-
--- User reputation summary
-CREATE VIEW v_user_reputation AS
-SELECT 
-    ua.user_id,
-    up.full_name,
-    ts.score as trust_score,
-    ts.completed_sessions,
-    ts.total_sessions,
-    COALESCE(AVG(wr.rating_stars), 0) as average_rating,
-    COUNT(ub.badge_id) as total_badges
-FROM user_account ua
-LEFT JOIN user_profile up ON ua.user_id = up.user_id
-LEFT JOIN trust_score ts ON ua.user_id = ts.user_id
-LEFT JOIN walk_review wr ON ua.user_id = wr.reviewee_id
-LEFT JOIN user_badge ub ON ua.user_id = ub.user_id
-GROUP BY ua.user_id, up.full_name, ts.score, ts.completed_sessions, ts.total_sessions;
-
--- =====================================================
--- INITIAL DATA (Optional)
--- =====================================================
-
--- Insert default badges
-INSERT INTO badge (badge_id, name, description, condition_type, condition_value) VALUES
-    (uuid_generate_v4(), 'First Steps', 'Complete your first walk session', 'TOTAL_SESSIONS', 1),
-    (uuid_generate_v4(), 'Social Butterfly', 'Complete 10 walk sessions', 'TOTAL_SESSIONS', 10),
-    (uuid_generate_v4(), 'Walking Champion', 'Complete 50 walk sessions', 'TOTAL_SESSIONS', 50),
-    (uuid_generate_v4(), 'Perfect Score', 'Receive 10 consecutive 5-star ratings', 'PERFECT_RATING', 10),
-    (uuid_generate_v4(), 'Early Adopter', 'Join during launch month', 'EARLY_ADOPTER', 1);
-
--- =====================================================
--- TRIGGERS FOR AUTOMATION
--- =====================================================
-
--- Auto-create trust score on user creation
-CREATE OR REPLACE FUNCTION create_trust_score_for_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO trust_score (user_id) VALUES (NEW.user_id);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_create_trust_score
-AFTER INSERT ON user_account
-FOR EACH ROW
-EXECUTE FUNCTION create_trust_score_for_new_user();
-
--- Update timestamp on profile update
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_user_profile_updated_at
-BEFORE UPDATE ON user_profile
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
-
-
--- Log session state changes
-CREATE OR REPLACE FUNCTION log_session_state_change()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF OLD.status IS DISTINCT FROM NEW.status THEN
-        INSERT INTO session_state_change_log (session_id, from_status, to_status)
-        VALUES (NEW.session_id, OLD.status, NEW.status);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_log_session_state
-AFTER UPDATE ON walk_session
-FOR EACH ROW
-EXECUTE FUNCTION log_session_state_change();
-
--- =====================================================
--- COMMENTS FOR DOCUMENTATION
--- =====================================================
-
-COMMENT ON TABLE walk_session IS 'Core aggregate for walk lifecycle. Enforces Invariant #1: No overlapping sessions per user.';
-COMMENT ON TABLE walk_intent IS 'Discovery phase aggregate. Enforces Invariant #2: No overlapping OPEN intents per user.';
-COMMENT ON TABLE match_proposal IS 'Coordination aggregate. Enforces Invariant #3: One PENDING proposal per intent.';
-COMMENT ON FUNCTION check_session_overlap IS 'Helper function for Invariant #4: Session creation guard - validates no time window overlap.';
-
--- =====================================================
--- PERFORMANCE NOTES
--- =====================================================
-
--- For production, consider:
--- 1. Partitioning walk_session by created_at (monthly/yearly)
--- 2. Archiving old COMPLETED/CANCELLED sessions
--- 3. Using pgvector extension for user_embedding similarity search
--- 4. Adding materialized views for complex analytics
--- 5. Implementing connection pooling (PgBouncer)
--- 6. Setting up read replicas for reporting queries
-
--- =====================================================
--- END OF SCHEMA
--- =====================================================
+CREATE TABLE public.walk_review (
+  review_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  session_id uuid NOT NULL,
+  reviewer_id uuid NOT NULL,
+  reviewee_id uuid NOT NULL,
+  rating_stars integer NOT NULL CHECK (rating_stars >= 1 AND rating_stars <= 5),
+  comment text,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT walk_review_pkey PRIMARY KEY (review_id),
+  CONSTRAINT walk_review_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
+  CONSTRAINT walk_review_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT walk_review_reviewee_id_fkey FOREIGN KEY (reviewee_id) REFERENCES public.user_account(user_id)
+);
+CREATE TABLE public.walk_session (
+  session_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user1_id uuid NOT NULL,
+  user2_id uuid NOT NULL,
+  scheduled_start_time timestamp without time zone NOT NULL,
+  scheduled_end_time timestamp without time zone NOT NULL,
+  user1_activated_at timestamp without time zone,
+  user2_activated_at timestamp without time zone,
+  actual_start_time timestamp without time zone,
+  actual_end_time timestamp without time zone,
+  status USER-DEFINED NOT NULL DEFAULT 'PENDING'::session_status CHECK (status = ANY (ARRAY['PENDING'::session_status, 'ACTIVE'::session_status, 'COMPLETED'::session_status, 'NO_SHOW'::session_status, 'CANCELLED'::session_status, 'ABORTED'::session_status])),
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  source_intent_id_a uuid,
+  source_intent_id_b uuid,
+  cancellation_reason character varying,
+  cancelled_by uuid,
+  total_distance numeric NOT NULL DEFAULT 0 CHECK (total_distance >= 0::numeric),
+  total_duration bigint NOT NULL DEFAULT 0 CHECK (total_duration >= 0),
+  version bigint NOT NULL DEFAULT 0 CHECK (version >= 0),
+  abort_reason character varying CHECK (abort_reason IS NULL OR (abort_reason::text = ANY (ARRAY['INJURY'::character varying, 'SAFETY'::character varying, 'ENVIRONMENT'::character varying, 'OTHER'::character varying]::text[]))),
+  CONSTRAINT walk_session_pkey PRIMARY KEY (session_id),
+  CONSTRAINT walk_session_user1_id_fkey FOREIGN KEY (user1_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT walk_session_user2_id_fkey FOREIGN KEY (user2_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT walk_session_source_intent_id_a_fkey FOREIGN KEY (source_intent_id_a) REFERENCES public.walk_intent(intent_id),
+  CONSTRAINT walk_session_source_intent_id_b_fkey FOREIGN KEY (source_intent_id_b) REFERENCES public.walk_intent(intent_id),
+  CONSTRAINT walk_session_cancelled_by_fkey FOREIGN KEY (cancelled_by) REFERENCES public.user_account(user_id)
+);
