@@ -111,7 +111,7 @@ Controller (Initiates @PostMapping request)
 -> <Domain>CommandService (Application throws DomainException targeting data bounds: USER_NOT_FOUND)
 -> Domain Model (Rich Domain throws DomainException for internal invariants: INVALID_USER_DATA, USER_INVALID_CREDENTIALS)
 ```
-All emitted `DomainException` instances **bubble up** to `presentation/exception/GlobalExceptionHandler` and map automatically into a standard `ApiResponse<T>` wrapper returning HTTP Status 400.
+All emitted `DomainException` instances **bubble up** to `presentation/exception/GlobalExceptionHandler` and map automatically into a standard `ApiResponse<T>` wrapper. The HTTP status is determined dynamically by `ErrorCode.httpStatus()` — each error code declares its own correct HTTP status (404 for not-found, 403 for forbidden, 401 for unauthenticated, 409 for state conflicts, 400 for business rule violations).
 
 ## 5. Core Principles
 

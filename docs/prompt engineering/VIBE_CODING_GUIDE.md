@@ -134,6 +134,37 @@ Rules:
 
 ---
 
+### Prompt 3b — Generate QueryService
+
+```
+You are implementing the backend for WalkMate.
+
+Architecture rules:
+[paste "Layer Responsibilities" and "Hard Constraints" from Backend_EN.md]
+
+Domain contract:
+[paste the aggregate section from DOMAIN_CONTRACTS.md]
+
+Existing domain files (already generated):
+[paste domain entity class]
+[paste domain repository interface]
+[paste error code enum]
+
+Task:
+Generate `application/[domain-name]/[Domain]QueryService.java`
+
+Rules:
+- QueryService receives plain query parameters — not Command records
+- All method names must use `get`, `find`, `list`, or `search` prefixes
+- QueryService must NEVER call `repository.save()` — read-only access only
+- Methods may return domain entities, read models, or plain value types — declare which per method in the javadoc
+- The service must not contain any business logic — orchestration only
+- Must not catch DomainException — let it bubble up to GlobalExceptionHandler
+- Zero Spring DB annotations inside the service
+```
+
+---
+
 ### Prompt 4 — Generate Command Service Tests
 
 ```
@@ -246,6 +277,36 @@ Rules:
 
 ---
 
+### Prompt 7b — Generate Infrastructure Repository Test
+
+```
+You are writing integration tests for the WalkMate backend.
+
+Test conventions:
+[paste sections 1, 2, and 8 from TESTING.md]
+
+Repository interface to test:
+[paste the domain repository interface]
+
+Infrastructure implementation under test:
+[paste the JdbcRepository implementation class]
+
+Task:
+Generate `[Domain]JdbcRepositoryTest.java` in the test mirror path.
+
+Rules:
+- Use @DataJdbcTest (or @SpringBootTest if the query spans multiple tables or joins)
+- Use TestContainers to spin up a real database instance matching the production DB engine
+- Required test scenarios per repository method:
+  1. save() + findById() round-trip: saved entity is retrievable with identical field values
+  2. findById() with an unknown ID returns Optional.empty()
+  3. Any custom query method (e.g. findByStatus, findAllByUserId) asserts correct filtering and ordering
+- Set up test data via @Sql fixture scripts or a dedicated test data builder — do NOT write raw INSERT statements inline in test methods
+- Mirror-path convention: test class lives in the same package path as the implementation class
+```
+
+---
+
 ## The Debug Prompt (use when a test fails)
 
 Never touch any code before running this prompt:
@@ -308,6 +369,58 @@ If no violations found, say "CLEAN" and nothing else.
 
 ---
 
+### Prompt 2b — Generate Cross-Aggregate Domain Service
+
+```
+You are implementing a Domain Service for WalkMate that enforces cross-aggregate invariants.
+
+Cross-aggregate rules to enforce:
+[paste the relevant rules from DOMAIN_CONTRACTS.md §6]
+
+Aggregates involved:
+[paste each relevant aggregate section — states, invariants, error codes, method contracts]
+
+Task:
+Generate `domain/[domain-name]/[Name]DomainService.java`
+
+Rules:
+- This is a domain service, not an application service — it contains real business logic
+- It receives fully loaded domain entities as parameters, NOT IDs or Command records
+- The application service is responsible for loading entities from repositories before calling this
+- It calls entity methods and throws DomainException for any cross-aggregate invariant violations
+- It does NOT call repositories directly — no repository dependency injection
+- It does NOT handle persistence — that is always the application service's responsibility
+- Zero Spring/framework imports — pure Java only
+```
+
+Also generate tests for the cross-aggregate Domain Service:
+
+```
+You are writing tests for a WalkMate cross-aggregate Domain Service.
+
+Test conventions:
+[paste sections 3 and 5 from TESTING.md]
+
+Cross-aggregate rules under test:
+[paste the rules from DOMAIN_CONTRACTS.md §6 that this service enforces]
+
+Production code to test:
+[paste the Domain Service class]
+[paste the relevant Fixture classes]
+
+Task:
+Generate `[Name]DomainServiceTest.java` in the test mirror path.
+
+Rules:
+- Use JUnit 5 only. No Spring, no Mockito.
+- Pass real entity instances (use Fixture classes) — never mock domain entities.
+- Write exactly one test per cross-aggregate rule from §6:
+  - Happy path: all preconditions satisfied, service passes without exception
+  - Violation: one precondition fails, assertThrows DomainException with exact ErrorCode
+```
+
+---
+
 ## Feature Implementation Checklist
 
 Use this as a checklist before marking any feature as done:
@@ -340,6 +453,175 @@ Use this as a checklist before marking any feature as done:
 4. Then start from Prompt 1 using the new contract as input.
 
 This ensures the contract always exists before the code, so every test has a ground truth to verify against.
+
+---
+
+---
+
+## Frontend Feature Workflow (Android / Java)
+
+Use this flow for every Android feature. Language is Java. State via `LiveData<UiState>`. Async via `DomainCallback<T>`.
+
+```
+Step 1 → Generate domain model + repository interface + error codes
+Step 2 → Generate domain service
+Step 3 → Generate RepositoryImpl + remote DTO + mapper
+Step 4 → Generate ViewModel + UiState
+Step 5 → Generate Fragment / Activity (Screen)
+Step 6 → Run all tests
+```
+
+---
+
+### Frontend Prompt 1 — Generate Domain Model + Repository Interface
+
+```
+You are implementing the Android (Java) frontend for WalkMate.
+
+Architecture rules:
+[paste the "Layer Responsibilities" and "Naming Conventions §3.2" sections from Frontend_EN.md]
+
+Domain contract:
+[paste the relevant aggregate section from DOMAIN_CONTRACTS.md — states, invariants, error codes]
+
+Task:
+Generate the following files:
+1. `domain/[domain-name]/[Domain].java` — immutable domain model (no Android imports)
+2. `domain/[domain-name]/[Domain]Repository.java` — interface only, no implementation
+3. `domain/[domain-name]/[Domain]ErrorCode.java` — string constants class
+
+Rules:
+- Zero Android or framework imports in domain/ files
+- The domain model must be a plain immutable Java class with a constructor and getters only
+- The repository interface declares method signatures using DomainCallback<T> for async results
+- Do not generate any other files
+```
+
+---
+
+### Frontend Prompt 2 — Generate Domain Service
+
+```
+You are implementing the Android (Java) frontend for WalkMate.
+
+Architecture rules:
+[paste "Layer Responsibilities §domain/" from Frontend_EN.md]
+
+Domain contract:
+[paste the relevant aggregate section from DOMAIN_CONTRACTS.md]
+
+Existing domain files:
+[paste domain model class]
+[paste repository interface]
+[paste error code class]
+
+Task:
+Generate `domain/[domain-name]/[Domain]Service.java`
+
+Rules:
+- Domain service coordinates calls to the repository and applies business validation rules
+- Receives and returns domain model objects, never DTOs or Android types
+- Calls repository methods via DomainCallback<T>
+- Zero Android framework imports
+```
+
+---
+
+### Frontend Prompt 3 — Generate RepositoryImpl + DTO + Mapper
+
+```
+You are implementing the Android (Java) frontend for WalkMate.
+
+Architecture rules:
+[paste "Layer Responsibilities §data/" and "Naming Conventions §3.3 and §3.4" from Frontend_EN.md]
+
+Domain repository interface to implement:
+[paste repository interface]
+
+Domain model:
+[paste domain model class]
+
+Task:
+Generate the following files:
+1. `data/datasource/remote/dto/[Domain]Dto.java` — matches the backend API response shape
+2. `data/mapper/[Domain]DtoToDomainMapper.java` — maps DTO → domain model
+3. `data/repository/[Domain]RepositoryImpl.java` — implements the domain repository interface
+
+Rules:
+- RepositoryImpl is the only class that knows about the DTO and the API service
+- Mapping must go through the Mapper class — never inline inside RepositoryImpl
+- Domain model must never reach the data layer; DTO must never reach the domain or UI layer
+- Use DomainCallback<T> to deliver results to callers
+```
+
+---
+
+### Frontend Prompt 4 — Generate ViewModel + UiState
+
+```
+You are implementing the Android (Java) frontend for WalkMate.
+
+Architecture rules:
+[paste "Standard UiState Contract §4" and "Standard Request Flow §5" from Frontend_EN.md]
+
+Domain service to use:
+[paste domain service class]
+
+Task:
+Generate the following files:
+1. `ui/[feature-name]/[Feature]UiState.java` — immutable POJO with static initial() factory
+2. `ui/[feature-name]/[Feature]ViewModel.java` — extends ViewModel
+
+Rules:
+- UiState fields are all final, set only via constructor. Provide static initial() factory.
+- ViewModel holds MutableLiveData<[Feature]UiState> and exposes LiveData<[Feature]UiState>
+- Every user action is a public void method on ViewModel
+- ViewModel calls domain service methods with DomainCallback<T> for async results
+- Use postValue() when updating state from a callback (background thread)
+- ViewModel must not contain business logic — delegate everything to the domain service
+- No Android UI imports in ViewModel (no View, Fragment, Context)
+```
+
+---
+
+### Frontend Prompt 5 — Generate Fragment / Activity (Screen)
+
+```
+You are implementing the Android (Java) frontend for WalkMate.
+
+Architecture rules:
+[paste "Layer Responsibilities §ui/" from Frontend_EN.md]
+
+ViewModel and UiState:
+[paste ViewModel class]
+[paste UiState class]
+
+Task:
+Generate `ui/[feature-name]/[Feature]Fragment.java` (or Activity)
+
+Rules:
+- Fragment observes LiveData<UiState> via getViewLifecycleOwner()
+- All user interactions call methods on ViewModel — no direct domain or data calls
+- Fragment renders state; it does not compute state
+- No business logic in the Fragment
+- Use ViewBinding for view access
+```
+
+---
+
+### Frontend Feature Checklist
+
+```
+□ Domain model generated (immutable, no Android imports)
+□ Repository interface generated (DomainCallback<T> signatures)
+□ Domain service generated (zero Android imports)
+□ RepositoryImpl generated, mapper in separate class
+□ UiState generated with initial() factory and all-final fields
+□ ViewModel generated with MutableLiveData + DomainCallback pattern
+□ Fragment/Activity observes LiveData and delegates all actions to ViewModel
+□ No DTO leaks into domain or ui/ layers
+□ No business logic in Fragment or ViewModel
+```
 
 ---
 

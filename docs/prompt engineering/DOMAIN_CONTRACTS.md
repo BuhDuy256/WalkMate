@@ -51,14 +51,14 @@ Forbidden transitions (must throw `DomainException`):
 
 ## 1.4 Error Codes (WalkIntentErrorCode)
 
-| Code                        | Thrown When                                           |
-| --------------------------- | ----------------------------------------------------- |
-| `INTENT_NOT_FOUND`          | findById returns empty in application layer           |
-| `INTENT_ALREADY_TERMINAL`   | Any mutation called on CONSUMED / EXPIRED / CANCELLED |
-| `INTENT_INVALID_TIME_RANGE` | startTime >= endTime at creation                      |
-| `INTENT_TIME_IN_PAST`       | endTime is in the past at creation                    |
-| `INTENT_OWNER_MISMATCH`     | User attempts to cancel an intent they don't own      |
-| `INTENT_NOT_OPEN`           | Attempt to CONSUME an intent that is not OPEN         |
+| Code                        | Thrown When                                           | HTTP |
+| --------------------------- | ----------------------------------------------------- | ---- |
+| `INTENT_NOT_FOUND`          | findById returns empty in application layer           | 404  |
+| `INTENT_ALREADY_TERMINAL`   | Any mutation called on CONSUMED / EXPIRED / CANCELLED | 409  |
+| `INTENT_INVALID_TIME_RANGE` | startTime >= endTime at creation                      | 400  |
+| `INTENT_TIME_IN_PAST`       | endTime is in the past at creation                    | 400  |
+| `INTENT_OWNER_MISMATCH`     | User attempts to cancel an intent they don't own      | 403  |
+| `INTENT_NOT_OPEN`           | Attempt to CONSUME an intent that is not OPEN         | 409  |
 
 ## 1.5 Method Contracts
 
@@ -119,13 +119,34 @@ Forbidden: WalkSession creation without `MatchProposal.status == CONFIRMED`. No 
 
 ## 2.4 Error Codes (MatchProposalErrorCode)
 
-| Code                         | Thrown When                                           |
-| ---------------------------- | ----------------------------------------------------- |
-| `PROPOSAL_NOT_FOUND`         | findById returns empty                                |
-| `PROPOSAL_ALREADY_TERMINAL`  | Mutation on REJECTED or EXPIRED                       |
-| `PROPOSAL_ALREADY_CONFIRMED` | Accept called but already CONFIRMED                   |
-| `PROPOSAL_BLOCK_EXISTS`      | A block relation exists between the two users         |
-| `PROPOSAL_DUPLICATE_INTENT`  | A PENDING proposal already references the same intent |
+| Code                           | Thrown When                                           | HTTP |
+| ------------------------------ | ----------------------------------------------------- | ---- |
+| `PROPOSAL_NOT_FOUND`           | findById returns empty                                | 404  |
+| `PROPOSAL_ALREADY_TERMINAL`    | Mutation on REJECTED or EXPIRED                       | 409  |
+| `PROPOSAL_ALREADY_CONFIRMED`   | Accept called but already CONFIRMED                   | 409  |
+| `PROPOSAL_BLOCK_EXISTS`        | A block relation exists between the two users         | 403  |
+| `PROPOSAL_DUPLICATE_INTENT`    | A PENDING proposal already references the same intent | 409  |
+| `PROPOSAL_USER_NOT_PARTICIPANT`| userId is neither intentOwnerA nor intentOwnerB       | 403  |
+
+## 2.5 Method Contracts
+
+### `MatchProposal.acceptByUser(userId)`
+- Guards: status is `REJECTED` or `EXPIRED` → throws `PROPOSAL_ALREADY_TERMINAL`
+- Guards: status is `CONFIRMED` → throws `PROPOSAL_ALREADY_CONFIRMED`
+- Guards: `userId` is not `intentOwnerA` or `intentOwnerB` → throws `PROPOSAL_USER_NOT_PARTICIPANT`
+- Records acceptance for that user (sets `acceptedByA` or `acceptedByB` to `true`)
+- If both users have now accepted → transitions to `CONFIRMED`
+- A CONFIRMED proposal must NOT trigger WalkSession creation inside this method — that is the responsibility of the Domain Service after it observes the CONFIRMED state
+
+### `MatchProposal.rejectByUser(userId)`
+- Guards: status is not `PENDING` → throws `PROPOSAL_ALREADY_TERMINAL`
+- Guards: `userId` is not `intentOwnerA` or `intentOwnerB` → throws `PROPOSAL_USER_NOT_PARTICIPANT`
+- Transitions to `REJECTED` immediately — a single rejection from either party is sufficient
+
+### `MatchProposal.expire()`
+- Called only by system job (no userId check)
+- Guards: status is not `PENDING` → throws `PROPOSAL_ALREADY_TERMINAL`
+- Transitions to `EXPIRED`
 
 ---
 
@@ -208,17 +229,17 @@ Manual complete: user calls complete() after >= 5 minutes in ACTIVE state
 
 ## 3.7 Error Codes (WalkSessionErrorCode)
 
-| Code                                 | Thrown When                                              |
-| ------------------------------------ | -------------------------------------------------------- |
-| `SESSION_NOT_FOUND`                  | findById returns empty in application layer              |
-| `SESSION_ALREADY_TERMINAL`           | Any mutation on COMPLETED / NO_SHOW / CANCELLED          |
-| `SESSION_ACTIVATION_WINDOW_EXPIRED`  | activateByUser() called after window close time          |
-| `SESSION_ACTIVATION_WINDOW_NOT_OPEN` | activateByUser() called before window open time          |
-| `SESSION_ALREADY_ACTIVATED_BY_USER`  | Same user calls activateByUser() twice                   |
-| `SESSION_MINIMUM_DURATION_NOT_MET`   | complete() called before 5 minutes have elapsed          |
-| `SESSION_NOT_ACTIVE`                 | complete() called when state is not ACTIVE               |
-| `SESSION_NOT_PENDING`                | cancel() called when state is not PENDING                |
-| `SESSION_USER_NOT_PARTICIPANT`       | Action by a user who is not participantA or participantB |
+| Code                                 | Thrown When                                              | HTTP |
+| ------------------------------------ | -------------------------------------------------------- | ---- |
+| `SESSION_NOT_FOUND`                  | findById returns empty in application layer              | 404  |
+| `SESSION_ALREADY_TERMINAL`           | Any mutation on COMPLETED / NO_SHOW / CANCELLED          | 409  |
+| `SESSION_ACTIVATION_WINDOW_EXPIRED`  | activateByUser() called after window close time          | 400  |
+| `SESSION_ACTIVATION_WINDOW_NOT_OPEN` | activateByUser() called before window open time          | 400  |
+| `SESSION_ALREADY_ACTIVATED_BY_USER`  | Same user calls activateByUser() twice                   | 409  |
+| `SESSION_MINIMUM_DURATION_NOT_MET`   | complete() called before 5 minutes have elapsed          | 400  |
+| `SESSION_NOT_ACTIVE`                 | complete() called when state is not ACTIVE               | 409  |
+| `SESSION_NOT_PENDING`                | cancel() called when state is not PENDING                | 409  |
+| `SESSION_USER_NOT_PARTICIPANT`       | Action by a user who is not participantA or participantB | 403  |
 
 ## 3.8 Method Contracts
 
@@ -250,6 +271,34 @@ Manual complete: user calls complete() after >= 5 minutes in ACTIVE state
 - Returns `false` for all other states
 - No side effects. Never throws.
 
+## 3.9 Cancellation Penalty Policy
+
+Penalty is determined at the moment `cancel()` is called, based on how far the cancellation is from `scheduledStart`.
+
+```
+Tier 0 – No penalty:
+  (scheduledStart - cancellationTime) > 2 hours
+
+Tier 1 – Light penalty:
+  30 minutes < (scheduledStart - cancellationTime) <= 2 hours
+
+Tier 2 – Heavy penalty:
+  (scheduledStart - cancellationTime) <= 30 minutes
+```
+
+Rules:
+- `WalkSession.cancel(requestingUserId, cancellationTime)` computes and **returns** the penalty tier (0, 1, or 2). It does NOT apply TrustScore changes directly.
+- The penalty tier is included in the `SessionCancelled` domain event payload.
+- The TrustScore aggregate applies the appropriate deduction when it handles the `SessionCancelled` event, keyed on the tier value.
+- `WalkSession` has no dependency on `TrustScore` — separation is enforced by the event boundary.
+
+### Updated `WalkSession.cancel(requestingUserId, cancellationTime)` contract
+- Guards: status must be `PENDING` → throws `SESSION_NOT_PENDING`
+- Guards: `requestingUserId` must be a participant → throws `SESSION_USER_NOT_PARTICIPANT`
+- Computes penalty tier from `(scheduledStart - cancellationTime)`
+- Sets status to `CANCELLED`
+- Returns `CancellationResult` containing the `requestingUserId` and resolved `penaltyTier`
+
 ---
 
 # 4. User Aggregate
@@ -274,15 +323,39 @@ No full state machine — User does not have lifecycle states like Session.
 
 ## 4.3 Error Codes (UserErrorCode)
 
-| Code                        | Thrown When                                      |
-| --------------------------- | ------------------------------------------------ |
-| `USER_NOT_FOUND`            | findById returns empty                           |
-| `USER_INVALID_CREDENTIALS`  | Password does not match during login             |
-| `USER_EMAIL_ALREADY_EXISTS` | Registration with a duplicate email              |
-| `USER_PHONE_ALREADY_EXISTS` | Registration with a duplicate phone number       |
-| `USER_DISPLAY_NAME_BLANK`   | displayName is null or empty                     |
-| `USER_ALREADY_PRIVATE`      | Attempt to set PRIVATE mode when already PRIVATE |
-| `USER_ALREADY_PUBLIC`       | Attempt to set PUBLIC mode when already PUBLIC   |
+| Code                          | Thrown When                                      | HTTP |
+| ----------------------------- | ------------------------------------------------ | ---- |
+| `USER_NOT_FOUND`              | findById returns empty                           | 404  |
+| `USER_INVALID_CREDENTIALS`    | Password does not match during login             | 401  |
+| `USER_EMAIL_ALREADY_EXISTS`   | Registration with a duplicate email              | 409  |
+| `USER_PHONE_ALREADY_EXISTS`   | Registration with a duplicate phone number       | 409  |
+| `USER_DISPLAY_NAME_BLANK`     | displayName is null or empty                     | 400  |
+| `USER_ALREADY_PRIVATE`        | Attempt to set PRIVATE mode when already PRIVATE | 409  |
+| `USER_ALREADY_PUBLIC`         | Attempt to set PUBLIC mode when already PUBLIC   | 409  |
+| `USER_INVALID_EMAIL_FORMAT`   | Email provided but fails format validation       | 400  |
+
+## 4.4 Method Contracts
+
+### `User.register(email, phone, displayName, passwordHash)`
+- Validates: email format if provided → throws `USER_INVALID_EMAIL_FORMAT`
+- Validates: displayName not blank → throws `USER_DISPLAY_NAME_BLANK`
+- Sets `visibilityMode` to `PUBLIC` by default
+- Receives an already-hashed password — does NOT call the password hasher itself
+
+### `User.validateCredentials(rawPassword, passwordHasher)`
+- Compares `rawPassword` against the stored hash via the `PasswordHasher` interface
+- Throws `USER_INVALID_CREDENTIALS` if mismatch
+- Does NOT return the hash — only succeeds (returns void) or throws
+
+### `User.setVisibilityMode(mode)`
+- Guards: mode is `PUBLIC` and current is `PUBLIC` → throws `USER_ALREADY_PUBLIC`
+- Guards: mode is `PRIVATE` and current is `PRIVATE` → throws `USER_ALREADY_PRIVATE`
+- Sets `visibilityMode` to the given mode
+
+### `User.updateProfile(displayName, tags)`
+- Validates: displayName not blank → throws `USER_DISPLAY_NAME_BLANK`
+- Updates allowed public profile fields only (`displayName`, `tags`)
+- Does not change email, phone, password, or `visibilityMode`
 
 ---
 
@@ -292,12 +365,16 @@ No full state machine — User does not have lifecycle states like Session.
 
 TrustScore is updated by domain events, not by direct user action.
 
-| Trigger Event                 | Effect                                   |
-| ----------------------------- | ---------------------------------------- |
-| `WalkSessionCompleted`        | Positive contribution                    |
-| `WalkReviewCreated` (5 stars) | Positive contribution                    |
-| `PartnerNoShowReported`       | Negative contribution                    |
-| `SessionCancelled` (late)     | Negative contribution (tiered by timing) |
+| Trigger Event                      | Effect                                                  |
+| ---------------------------------- | ------------------------------------------------------- |
+| `WalkSessionCompleted`             | Positive contribution                                   |
+| `WalkReviewCreated` (5 stars)      | Positive contribution                                   |
+| `PartnerNoShowReported`            | Negative contribution                                   |
+| `SessionCancelled` (Tier 0)        | No penalty — cancellation was > 2 hours before start    |
+| `SessionCancelled` (Tier 1)        | Light negative contribution — 30 min – 2 hours before   |
+| `SessionCancelled` (Tier 2)        | Heavy negative contribution — within 30 min of start    |
+
+Penalty tier is carried in the `SessionCancelled` event payload (see §3.9). TrustScore reads the tier and applies the corresponding deduction. Floor at 0 is always enforced.
 
 ## 5.2 Invariants
 
@@ -309,10 +386,35 @@ TrustScore is updated by domain events, not by direct user action.
 
 ## 5.3 Error Codes (TrustScoreErrorCode)
 
-| Code                     | Thrown When                                                         |
-| ------------------------ | ------------------------------------------------------------------- |
-| `TRUST_SCORE_NOT_FOUND`  | findByUserId returns empty                                          |
-| `TRUST_SCORE_BELOW_ZERO` | A deduction would push the score below 0 (apply floor at 0 instead) |
+| Code                     | Thrown When                                                       | HTTP |
+| ------------------------ | ----------------------------------------------------------------- | ---- |
+| `TRUST_SCORE_NOT_FOUND`  | findByUserId returns empty                                        | 404  |
+| `TRUST_SCORE_BELOW_ZERO` | Direct mutation bypasses `applyNegative()` and would produce < 0 | 400  |
+
+## 5.4 Method Contracts
+
+### Delta Policy Table
+
+| Reason                    | Delta |
+| ------------------------- | ----- |
+| `SESSION_COMPLETED`       | +10   |
+| `FIVE_STAR_REVIEW`        | +5    |
+| `NO_SHOW`                 | -20   |
+| `LATE_CANCELLATION_TIER1` | -5    |
+| `LATE_CANCELLATION_TIER2` | -15   |
+
+Adjust values to product decision. This table is the single source of truth for scoring magnitudes.
+
+### `TrustScore.applyPositive(reason)`
+- `reason`: enum — `SESSION_COMPLETED` | `FIVE_STAR_REVIEW`
+- Adds the delta defined in the policy table above
+- No upper cap
+
+### `TrustScore.applyNegative(reason)`
+- `reason`: enum — `NO_SHOW` | `LATE_CANCELLATION_TIER1` | `LATE_CANCELLATION_TIER2`
+- Subtracts the delta defined in the policy table above
+- Floor enforcement: if `(score - delta) < 0` → set score to `0`. Never throws for a floor hit — clamps silently.
+- `TRUST_SCORE_BELOW_ZERO` is a guard against direct mutation bypassing this method, not thrown here.
 
 ---
 
@@ -339,6 +441,74 @@ These rules span multiple aggregates and are enforced by Domain Services, not by
 
 ---
 
+# 8. UserEmbedding Aggregate
+
+UserEmbedding is a read-model aggregate. It is built from domain events and used exclusively by the AI ranking layer. It never mutates any other aggregate.
+
+## 8.1 States
+
+| State        | Meaning                                          | Condition                    |
+| ------------ | ------------------------------------------------ | ---------------------------- |
+| `COLD_START` | Insufficient history for personalization         | < 3 completed sessions       |
+| `ACTIVE`     | Enough history — vector scoring is enabled       | >= 3 completed sessions      |
+
+## 8.2 Vector Structure
+
+```
+Vector(User) = [
+  time_preference_pattern,
+  average_walk_duration,
+  average_speed,
+  favorite_tags_distribution,
+  reliability_score,
+  acceptance_pattern,
+  cancellation_pattern
+]
+```
+
+## 8.3 Invariants
+
+```
+1. UserEmbedding never directly affects WalkIntent, MatchProposal, or WalkSession state
+2. UserEmbedding is only written by projection/event handlers, never by direct user action
+3. A COLD_START embedding must fall back to geo/time/purpose matching — no vector scoring applied
+```
+
+## 8.4 Update Triggers
+
+| Domain Event              | Vector Dimension(s) Updated        |
+| ------------------------- | ---------------------------------- |
+| `WalkSessionCompleted`    | All dimensions                     |
+| `WalkReviewCreated`       | `reliability_score`                |
+| `FollowRelationCreated`   | `acceptance_pattern`               |
+| `PartnerNoShowReported`   | `reliability_score`                |
+
+## 8.5 Method Contracts
+
+### `UserEmbedding.updateFromSessionCompleted(sessionData)`
+- Updates all vector dimensions from the completed session metrics (duration, speed, time window, etc.)
+
+### `UserEmbedding.updateFromReview(rating)`
+- Updates `reliability_score` dimension based on the star rating value
+
+### `UserEmbedding.updateFromFollow()`
+- Updates `acceptance_pattern` dimension (positive signal)
+
+### `UserEmbedding.updateFromNoShow()`
+- Updates `reliability_score` dimension (negative signal)
+
+### `UserEmbedding.isReadyForPersonalization()`
+- Returns `true` only if status is `ACTIVE` (>= 3 completed sessions)
+- No side effects. Never throws.
+
+## 8.6 Error Codes (UserEmbeddingErrorCode)
+
+| Code                  | Thrown When                | HTTP |
+| --------------------- | -------------------------- | ---- |
+| `EMBEDDING_NOT_FOUND` | findByUserId returns empty | 404  |
+
+---
+
 # 7. How to Use This Document in Vibe Coding
 
 ## When generating domain entity code
@@ -354,3 +524,14 @@ Compare the actual behavior against the relevant section here. The contract is t
 
 ## When adding a new feature
 Update this document first, then generate code from it. The document leads the code, never the reverse.
+
+## When generating frontend domain code
+Paste the relevant aggregate section (states + invariants + error codes + method contracts) into your prompt:
+> "Implement `IntentService.createIntent()` on the Android domain layer according to these contracts: [paste section 1.3 invariants + 1.5 method contracts]"
+
+## When generating frontend mappers
+Paste the domain model fields alongside the DTO structure:
+> "Write `IntentDtoToDomainMapper` using these domain invariants as validation rules: [paste relevant invariants from section 1.3]"
+
+## When a frontend test fails
+Same protocol as backend — compare the actual behavior against the relevant section here first. The contract is the referee for both platforms. The backend and Android domain layers must enforce the same invariants.

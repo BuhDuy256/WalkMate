@@ -15,12 +15,12 @@ public class GlobalExceptionHandler {
     /**
      * Handles all DomainException thrown by any domain (UserErrorCode,
      * SessionErrorCode, etc.)
-     * They are mapped to 400 Bad Request by default; adjust per domain if needed.
+     * The HTTP status is determined by each ErrorCode's httpStatus() declaration.
      */
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiResponse<Void>> handleDomainException(DomainException ex) {
         ApiResponse<Void> body = ApiResponse.error(ex.getErrorCode(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(ex.getErrorCode().httpStatus()).body(body);
     }
 
     /**

@@ -4,6 +4,8 @@ MVVM + UiState + DDD | WalkMate Android Project
 
 ## Overview
 
+**Language: Java** (no Kotlin). All source files use `.java` extensions.
+
 Model: MVVM at the UI layer, DDD-lite at the domain layer.
 
 Organizational orientation:
@@ -11,6 +13,9 @@ Organizational orientation:
 - `ui/` - feature-oriented (organized by screens)
 - `domain/` - domain-oriented (organized by business domain, aligned with backend mindset)
 - `data/` - technical implementation (datasource + mapping + repository implementation)
+
+State mechanism: `LiveData<UiState>` backed by `MutableLiveData` inside each `ViewModel`.
+Async mechanism: `DomainCallback<T>` (callback interface) — no coroutines, no RxJava, no StateFlow.
 
 Goals:
 
@@ -123,27 +128,54 @@ DTO/Entity -> Mapper -> Domain Model -> Domain Service/Domain Method
 
 ## 4. Standard UiState Contract
 
-`UiState` should be immutable and sufficient to render the full screen:
+`UiState` is an immutable Java POJO. Fields are `final`, set via constructor only. Provide a static `initial()` factory for the default/empty state.
 
 ```java
 public final class IntentUiState {
     private final boolean loading;
     private final IntentViewData data;
-    private final UiText error;
+    private final String error; // null means no error
 
-    public IntentUiState(boolean loading, IntentViewData data, UiText error) {
+    public IntentUiState(boolean loading, IntentViewData data, String error) {
         this.loading = loading;
         this.data = data;
         this.error = error;
     }
 
+    public static IntentUiState initial() {
+        return new IntentUiState(false, null, null);
+    }
+
     public boolean isLoading() { return loading; }
     public IntentViewData getData() { return data; }
-    public UiText getError() { return error; }
+    public String getError() { return error; }
 }
 ```
 
-`UiEvent`: user actions (click, refresh, retry).  
+Standard `ViewModel` pattern with `LiveData` and `DomainCallback`:
+
+```java
+public class IntentViewModel extends ViewModel {
+    private final MutableLiveData<IntentUiState> uiState =
+            new MutableLiveData<>(IntentUiState.initial());
+
+    public LiveData<IntentUiState> getUiState() { return uiState; }
+
+    public void loadIntent(String intentId) {
+        uiState.setValue(new IntentUiState(true, null, null));
+        intentService.findById(intentId, new DomainCallback<IntentViewData>() {
+            @Override public void onSuccess(IntentViewData data) {
+                uiState.postValue(new IntentUiState(false, data, null));
+            }
+            @Override public void onError(Exception e) {
+                uiState.postValue(new IntentUiState(false, null, e.getMessage()));
+            }
+        });
+    }
+}
+```
+
+`UiEvent`: user actions (click, refresh, retry).
 `UiEffect`: one-time effects (toast, navigate, snackbar).
 
 Optional: rename `UiEffect` to `UiSideEffect` if your team prefers clearer semantics.
