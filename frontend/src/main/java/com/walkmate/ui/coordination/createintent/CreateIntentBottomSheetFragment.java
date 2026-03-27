@@ -89,7 +89,7 @@ public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        viewModel = new ViewModelProvider(this, new CreateIntentViewModelFactory())
+        viewModel = new ViewModelProvider(this, new CreateIntentViewModelFactory(requireContext()))
                 .get(CreateIntentViewModel.class);
 
         btnFindMatch = view.findViewById(R.id.btnFindMatch);

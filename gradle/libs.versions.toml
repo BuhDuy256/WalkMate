@@ -15,6 +15,7 @@ playServicesLocation = "21.3.0"
 playServicesMaps = "20.0.0"
 androidMapsUtils = "4.1.1"
 lifecycle = "2.10.0"
+securityCrypto = "1.1.0-alpha06"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -35,6 +36,7 @@ playServicesMaps = { group = "com.google.android.gms", name = "play-services-map
 androidMapsUtils = { group = "com.google.maps.android", name = "android-maps-utils", version.ref = "androidMapsUtils" }
 lifecycleViewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycleLivedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
+securityCrypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -15,11 +15,11 @@ public class WalkIntentResponse {
     @SerializedName("user_id")
     private String userId;
 
-    @SerializedName("time_start")
-    private float timeStart;
+    @SerializedName("time_window_start")
+    private String timeWindowStart;
 
-    @SerializedName("time_end")
-    private float timeEnd;
+    @SerializedName("time_window_end")
+    private String timeWindowEnd;
 
     @SerializedName("age_min")
     private int ageMin;
@@ -33,13 +33,17 @@ public class WalkIntentResponse {
     @SerializedName("created_at")
     private String createdAt;
 
+    @SerializedName("expires_at")
+    private String expiresAt;
+
     public String getId() { return id; }
     public String getHotspotId() { return hotspotId; }
     public String getUserId() { return userId; }
-    public float getTimeStart() { return timeStart; }
-    public float getTimeEnd() { return timeEnd; }
+    public String getTimeWindowStart() { return timeWindowStart; }
+    public String getTimeWindowEnd() { return timeWindowEnd; }
     public int getAgeMin() { return ageMin; }
     public int getAgeMax() { return ageMax; }
     public String getStatus() { return status; }
     public String getCreatedAt() { return createdAt; }
+    public String getExpiresAt() { return expiresAt; }
 }

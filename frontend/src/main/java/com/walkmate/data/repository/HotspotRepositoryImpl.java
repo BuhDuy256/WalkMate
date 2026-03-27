@@ -1,43 +1,107 @@
 package com.walkmate.data.repository;
 
+import android.content.Context;
+
+import com.walkmate.data.datasource.remote.api.ApiClient;
+import com.walkmate.data.datasource.remote.api.HotspotApiService;
+import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.hotspot.HotspotResponse;
+import com.walkmate.data.mapper.HotspotMapper;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.shared.DomainCallback;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class HotspotRepositoryImpl implements HotspotRepository {
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final HotspotApiService apiService;
+    private final ExecutorService callbackExecutor;
 
-    // ── Mock data ─────────────────────────────────────────────────────────
-    // TODO: Replace with Retrofit call — GET /api/v1/hotspots
-    //       Expected: ApiResponse<List<HotspotResponse>> → map via HotspotMapper.toDomainList()
-    private static final List<Hotspot> MOCK_HOTSPOTS = Arrays.asList(
-            new Hotspot("1", "Công viên Tao Đàn",  10.77702, 106.69328, 12),
-            new Hotspot("2", "Hồ Con Rùa",          10.78756, 106.69506,  8),
-            new Hotspot("3", "Công viên Gia Định",  10.81289, 106.67790,  5),
-            new Hotspot("4", "Công viên Lê Văn Tám",10.78720, 106.69863,  3)
-    );
+    public HotspotRepositoryImpl(Context context) {
+        SessionManager sessionManager = new SessionManager(context);
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+                .create(HotspotApiService.class);
+        this.callbackExecutor = Executors.newSingleThreadExecutor();
+    }
 
     @Override
     public void getHotspots(DomainCallback<List<Hotspot>> callback) {
-        executor.execute(() -> callback.onSuccess(MOCK_HOTSPOTS));
+        apiService.getHotspots().enqueue(new Callback<ApiResponse<List<HotspotResponse>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<HotspotResponse>>> call,
+                    Response<ApiResponse<List<HotspotResponse>>> response) {
+                callbackExecutor.execute(() -> {
+                    try {
+                        ApiResponse<List<HotspotResponse>> body = response.body();
+                        if (response.isSuccessful() && body != null && body.isSuccess() && body.getData() != null) {
+                            callback.onSuccess(HotspotMapper.toDomainList(body.getData()));
+                            return;
+                        }
+                        callback.onError(new Exception(extractErrorMessage(body, "Failed to load hotspots")));
+                    } catch (Exception error) {
+                        callback.onError(error);
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<HotspotResponse>>> call, Throwable t) {
+                callbackExecutor.execute(
+                        () -> callback.onError(new Exception("Network error: " + safeMessage(t), t)));
+            }
+        });
     }
 
     @Override
     public void getHotspotById(String id, DomainCallback<Hotspot> callback) {
-        executor.execute(() -> {
-            for (Hotspot hotspot : MOCK_HOTSPOTS) {
-                if (hotspot.getId().equals(id)) {
-                    callback.onSuccess(hotspot);
-                    return;
-                }
+        apiService.getHotspotById(id).enqueue(new Callback<ApiResponse<HotspotResponse>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<HotspotResponse>> call,
+                    Response<ApiResponse<HotspotResponse>> response) {
+                callbackExecutor.execute(() -> {
+                    try {
+                        ApiResponse<HotspotResponse> body = response.body();
+                        if (response.isSuccessful() && body != null && body.isSuccess() && body.getData() != null) {
+                            callback.onSuccess(HotspotMapper.toDomain(body.getData()));
+                            return;
+                        }
+                        callback.onError(new Exception(extractErrorMessage(body, "Hotspot not found: " + id)));
+                    } catch (Exception error) {
+                        callback.onError(error);
+                    }
+                });
             }
-            callback.onError(new Exception("Hotspot not found: " + id));
+
+            @Override
+            public void onFailure(Call<ApiResponse<HotspotResponse>> call, Throwable t) {
+                callbackExecutor.execute(
+                        () -> callback.onError(new Exception("Network error: " + safeMessage(t), t)));
+            }
         });
+    }
+
+    private static String extractErrorMessage(ApiResponse<?> responseBody, String fallback) {
+        if (responseBody != null && responseBody.getError() != null) {
+            String message = responseBody.getError().getMessage();
+            if (message != null && !message.trim().isEmpty()) {
+                return message;
+            }
+        }
+        return fallback;
+    }
+
+    private static String safeMessage(Throwable throwable) {
+        if (throwable == null || throwable.getMessage() == null || throwable.getMessage().trim().isEmpty()) {
+            return "Unknown network error";
+        }
+        return throwable.getMessage();
     }
 }

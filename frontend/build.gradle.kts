@@ -76,4 +76,7 @@ dependencies {
     // Khối Architecture Components (ViewModel, LiveData)
     implementation(libs.lifecycleViewmodel)
     implementation(libs.lifecycleLivedata)
+
+    // Secure local token storage
+    implementation(libs.securityCrypto)
 }

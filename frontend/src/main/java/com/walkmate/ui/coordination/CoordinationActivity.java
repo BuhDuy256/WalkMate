@@ -111,7 +111,7 @@ public class CoordinationActivity extends AppCompatActivity
     // ════════════════════════════════════════════════════════════════════
 
     private void setupViewModel() {
-        viewModel = new ViewModelProvider(this, new CoordinationViewModelFactory())
+        viewModel = new ViewModelProvider(this, new CoordinationViewModelFactory(getApplicationContext()))
                 .get(CoordinationViewModel.class);
 
         viewModel.getUiState().observe(this, this::renderState);

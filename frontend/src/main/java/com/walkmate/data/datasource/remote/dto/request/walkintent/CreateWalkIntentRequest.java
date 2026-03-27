@@ -8,14 +8,11 @@ public class CreateWalkIntentRequest {
     @SerializedName("hotspot_id")
     private final String hotspotId;
 
-    @SerializedName("user_id")
-    private final String userId;
+    @SerializedName("time_window_start")
+    private final String timeWindowStart;
 
-    @SerializedName("time_start")
-    private final float timeStart;
-
-    @SerializedName("time_end")
-    private final float timeEnd;
+    @SerializedName("time_window_end")
+    private final String timeWindowEnd;
 
     @SerializedName("age_min")
     private final int ageMin;
@@ -23,21 +20,19 @@ public class CreateWalkIntentRequest {
     @SerializedName("age_max")
     private final int ageMax;
 
-    public CreateWalkIntentRequest(String hotspotId, String userId,
-                                   float timeStart, float timeEnd,
+    public CreateWalkIntentRequest(String hotspotId,
+                                   String timeWindowStart, String timeWindowEnd,
                                    int ageMin, int ageMax) {
         this.hotspotId = hotspotId;
-        this.userId = userId;
-        this.timeStart = timeStart;
-        this.timeEnd = timeEnd;
+        this.timeWindowStart = timeWindowStart;
+        this.timeWindowEnd = timeWindowEnd;
         this.ageMin = ageMin;
         this.ageMax = ageMax;
     }
 
     public String getHotspotId() { return hotspotId; }
-    public String getUserId() { return userId; }
-    public float getTimeStart() { return timeStart; }
-    public float getTimeEnd() { return timeEnd; }
+    public String getTimeWindowStart() { return timeWindowStart; }
+    public String getTimeWindowEnd() { return timeWindowEnd; }
     public int getAgeMin() { return ageMin; }
     public int getAgeMax() { return ageMax; }
 }
