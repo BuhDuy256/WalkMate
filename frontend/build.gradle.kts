@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace = "com.walkmate.frontend"
+    namespace = "com.walkmate"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.walkmate.frontend"
+        applicationId = "com.walkmate"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -38,6 +38,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.8.4")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

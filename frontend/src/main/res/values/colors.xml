@@ -2,4 +2,19 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="profile_bg">#F5F0E8</color>
+    <color name="profile_card">#FFFDF9</color>
+    <color name="profile_stroke">#F0E6D7</color>
+    <color name="profile_input_bg">#F4EEE4</color>
+    <color name="profile_text_primary">#5A3D2B</color>
+    <color name="profile_text_muted">#8B7A6B</color>
+    <color name="profile_accent">#F58A45</color>
+    <color name="profile_accent_dark">#D5672D</color>
+
+    <color name="profile_chip_interest_checked">#FFDAB9</color>
+    <color name="profile_chip_interest_unchecked">#FFF2E6</color>
+    <color name="profile_chip_vibe_checked">#CFE9FF</color>
+    <color name="profile_chip_vibe_unchecked">#EAF4FF</color>
+    <color name="profile_chip_time_checked">#FFEAA4</color>
+    <color name="profile_chip_time_unchecked">#FFF5D6</color>
 </resources>
