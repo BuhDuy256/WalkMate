@@ -1,10 +1,10 @@
 package com.walkmate.data.repository;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.AuthApiService;
+import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
@@ -12,7 +12,6 @@ import com.walkmate.data.datasource.remote.dto.response.user.LoginResponseDto;
 import com.walkmate.data.datasource.remote.dto.response.user.RegisterResponseDto;
 import com.walkmate.data.mapper.UserMapper;
 import com.walkmate.domain.shared.DomainCallback;
-import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
 
 import java.util.concurrent.ExecutorService;
@@ -24,16 +23,13 @@ import retrofit2.Response;
 
 public class UserRepositoryImpl implements UserRepository {
 
-    private static final String PREFS_AUTH = "walkmate_auth";
-    private static final String KEY_ACCESS_TOKEN = "access_token";
-
     private final AuthApiService apiService;
-    private final SharedPreferences prefs;
+    private final SessionManager sessionManager;
     private final ExecutorService callbackExecutor;
 
     public UserRepositoryImpl(Context context) {
+        this.sessionManager = new SessionManager(context);
         this.apiService = ApiClient.getAuthApiService();
-        this.prefs = context.getSharedPreferences(PREFS_AUTH, Context.MODE_PRIVATE);
         this.callbackExecutor = Executors.newSingleThreadExecutor();
     }
 
@@ -53,7 +49,6 @@ public class UserRepositoryImpl implements UserRepository {
                             callback.onSuccess(token);
                             return;
                         }
-
                         callback.onError(new Exception(extractErrorMessage(body, "Invalid credentials")));
                     } catch (Exception error) {
                         callback.onError(error);
@@ -70,7 +65,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public void register(String fullname, String email, String password, DomainCallback<User> callback) {
+    public void register(String fullname, String email, String password, DomainCallback<Void> callback) {
         RegisterRequestDto request = UserMapper.toRegisterRequest(fullname, email, password);
         apiService.register(request).enqueue(new Callback<ApiResponse<RegisterResponseDto>>() {
             @Override
@@ -80,11 +75,9 @@ public class UserRepositoryImpl implements UserRepository {
                     try {
                         ApiResponse<RegisterResponseDto> body = response.body();
                         if (response.isSuccessful() && body != null && body.isSuccess()) {
-                            User user = UserMapper.toDomainUser(body.getData());
-                            callback.onSuccess(user);
+                            callback.onSuccess(null);
                             return;
                         }
-
                         callback.onError(new Exception(extractErrorMessage(body, "Registration failed")));
                     } catch (Exception error) {
                         callback.onError(error);
@@ -119,11 +112,20 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void saveAccessToken(String token) {
-        prefs.edit().putString(KEY_ACCESS_TOKEN, token).apply();
+        sessionManager.saveAccessToken(token);
     }
 
     @Override
     public String getAccessToken() {
-        return prefs.getString(KEY_ACCESS_TOKEN, null);
+        return sessionManager.getAccessToken();
+    }
+
+    /**
+     * Exposes the SessionManager so repositories for other domains
+     * (WalkIntent, Hotspot) can build authenticated Retrofit instances via
+     * ApiClient.buildAuthenticatedRetrofit(sessionManager).
+     */
+    public SessionManager getSessionManager() {
+        return sessionManager;
     }
 }

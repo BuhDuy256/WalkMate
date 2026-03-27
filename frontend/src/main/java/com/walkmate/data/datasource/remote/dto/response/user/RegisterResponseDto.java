@@ -1,19 +1,11 @@
 package com.walkmate.data.datasource.remote.dto.response.user;
 
+// Response payload for POST /api/v1/auth/register
+// Only confirms which email was registered. Frontend redirects to login after success.
 public class RegisterResponseDto {
-    private String id;
     private String email;
-    private String fullname;
-
-    public String getId() {
-        return id;
-    }
 
     public String getEmail() {
         return email;
-    }
-
-    public String getFullname() {
-        return fullname;
     }
 }

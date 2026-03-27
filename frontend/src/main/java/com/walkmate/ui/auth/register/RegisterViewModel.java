@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
-import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
 
 import java.util.regex.Pattern;
@@ -54,9 +53,9 @@ public class RegisterViewModel extends ViewModel {
 
         uiState.setValue(new RegisterUiState(true, false, null, null, null, null));
 
-        userRepository.register(fullName.trim(), email.trim(), password.trim(), new DomainCallback<User>() {
+        userRepository.register(fullName.trim(), email.trim(), password.trim(), new DomainCallback<Void>() {
             @Override
-            public void onSuccess(User result) {
+            public void onSuccess(Void result) {
                 uiState.postValue(new RegisterUiState(false, true, null, null, null, null));
             }
 
