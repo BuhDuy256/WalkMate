@@ -1,4 +1,4 @@
-package com.walkmate.ui.coordination;
+package com.walkmate.ui.coordination.createintent;
 
 import android.app.Dialog;
 import android.os.Bundle;
@@ -6,9 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -16,23 +18,39 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.RangeSlider;
 import com.walkmate.R;
+import com.walkmate.domain.walkintent.WalkIntent;
 
 import java.util.List;
 import java.util.Locale;
 
 /**
  * Phase 1: Create Intent Bottom Sheet.
- * Extracted from the "God Layout" Layer 4.
- * Only inflated when the user taps "Set Walking Intent".
+ * Owns its ViewModel (CreateIntentViewModel) for form submission logic.
+ * Notifies CoordinationActivity via OnIntentActionListener when intent is created.
  */
 public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
 
+    private static final String ARG_HOTSPOT_ID = "hotspot_id";
+
     public interface OnIntentActionListener {
-        void onFindMatchClicked();
+        void onIntentCreated(WalkIntent intent);
         void onSheetDismissed();
     }
 
     private OnIntentActionListener listener;
+    private CreateIntentViewModel viewModel;
+
+    private RangeSlider sliderTime;
+    private RangeSlider sliderAge;
+    private MaterialButton btnFindMatch;
+
+    public static CreateIntentBottomSheetFragment newInstance(String hotspotId) {
+        CreateIntentBottomSheetFragment fragment = new CreateIntentBottomSheetFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_HOTSPOT_ID, hotspotId);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     public void setOnIntentActionListener(OnIntentActionListener listener) {
         this.listener = listener;
@@ -52,11 +70,9 @@ public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
             View bottomSheet = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
                 BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-                // Expand to 2/3 of screen
                 int screenHeight = getResources().getDisplayMetrics().heightPixels;
                 behavior.setPeekHeight(screenHeight * 2 / 3);
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                // Transparent background so our rounded corners show
                 bottomSheet.setBackgroundResource(android.R.color.transparent);
             }
         });
@@ -74,34 +90,18 @@ public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Close button
-        View btnCloseSheet = view.findViewById(R.id.btnCloseSheet);
-        btnCloseSheet.setOnClickListener(v -> dismiss());
+        viewModel = new ViewModelProvider(this, new CreateIntentViewModelFactory())
+                .get(CreateIntentViewModel.class);
 
-        // Find Match button
-        MaterialButton btnFindMatch = view.findViewById(R.id.btnFindMatch);
-        btnFindMatch.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onFindMatchClicked();
-            }
-            dismiss();
-        });
-
-        // Sliders
+        btnFindMatch = view.findViewById(R.id.btnFindMatch);
         setupSliders(view);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (listener != null) {
-            listener.onSheetDismissed();
-        }
+        setupListeners();
+        observeState();
     }
 
     private void setupSliders(View view) {
-        RangeSlider sliderTime = view.findViewById(R.id.sliderTime);
-        RangeSlider sliderAge = view.findViewById(R.id.sliderAge);
+        sliderTime = view.findViewById(R.id.sliderTime);
+        sliderAge = view.findViewById(R.id.sliderAge);
         TextView txtTimeStart = view.findViewById(R.id.txtTimeStart);
         TextView txtTimeEnd = view.findViewById(R.id.txtTimeEnd);
         TextView txtAgeMin = view.findViewById(R.id.txtAgeMin);
@@ -120,6 +120,47 @@ public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
             txtAgeMin.setText(String.valueOf(Math.round(values.get(0))));
             txtAgeMax.setText(String.valueOf(Math.round(values.get(1))));
         });
+    }
+
+    private void setupListeners() {
+        requireView().findViewById(R.id.btnCloseSheet).setOnClickListener(v -> dismiss());
+
+        btnFindMatch.setOnClickListener(v -> {
+            String hotspotId = getArguments() != null
+                    ? getArguments().getString(ARG_HOTSPOT_ID, "") : "";
+            float timeStart = sliderTime.getValues().get(0);
+            float timeEnd   = sliderTime.getValues().get(1);
+            int ageMin      = Math.round(sliderAge.getValues().get(0));
+            int ageMax      = Math.round(sliderAge.getValues().get(1));
+            viewModel.submit(hotspotId, timeStart, timeEnd, ageMin, ageMax);
+        });
+    }
+
+    private void observeState() {
+        viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            btnFindMatch.setEnabled(!state.isLoading());
+
+            if (state.getSubmittedIntent() != null) {
+                if (listener != null) {
+                    listener.onIntentCreated(state.getSubmittedIntent());
+                }
+                dismiss();
+                return;
+            }
+
+            if (state.getError() != null) {
+                Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+                viewModel.consumeError();
+            }
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (listener != null) {
+            listener.onSheetDismissed();
+        }
     }
 
     private String formatTime(float val) {

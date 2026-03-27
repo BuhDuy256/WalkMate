@@ -1,4 +1,4 @@
-package com.walkmate.ui.coordination;
+package com.walkmate.ui.coordination.matchresult;
 
 import android.app.Dialog;
 import android.graphics.Color;
@@ -13,14 +13,15 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 
 /**
  * Phase 3: Match Result Dialog.
- * Extracted from the "God Layout" Layer 6.
- * Shown as a DialogFragment when a match is found.
+ * MatchResultViewModel owns the accept/pass action state.
+ * Fragment observes and fires the callback once an action is taken.
  */
 public class MatchResultFragment extends DialogFragment {
 
@@ -30,6 +31,7 @@ public class MatchResultFragment extends DialogFragment {
     }
 
     private OnMatchResultActionListener listener;
+    private MatchResultViewModel viewModel;
 
     public void setOnMatchResultActionListener(OnMatchResultActionListener listener) {
         this.listener = listener;
@@ -64,24 +66,34 @@ public class MatchResultFragment extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        viewModel = new ViewModelProvider(this).get(MatchResultViewModel.class);
+
         ImageView imgMatchAvatar = view.findViewById(R.id.imgMatchAvatar);
-        imgMatchAvatar.setImageResource(R.drawable.bg_warm_circle); // placeholder
+        imgMatchAvatar.setImageResource(R.drawable.bg_warm_circle);
 
         MaterialButton btnAccept = view.findViewById(R.id.btnAccept);
-        MaterialButton btnPass = view.findViewById(R.id.btnPass);
+        MaterialButton btnPass   = view.findViewById(R.id.btnPass);
 
-        btnAccept.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onAcceptClicked();
-            }
-            dismiss();
-        });
+        btnAccept.setOnClickListener(v -> viewModel.accept());
+        btnPass.setOnClickListener(v -> viewModel.pass());
 
-        btnPass.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onPassClicked();
+        observeState();
+    }
+
+    private void observeState() {
+        viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            switch (state.getAction()) {
+                case ACCEPTED:
+                    if (listener != null) listener.onAcceptClicked();
+                    dismiss();
+                    break;
+                case PASSED:
+                    if (listener != null) listener.onPassClicked();
+                    dismiss();
+                    break;
+                default:
+                    break;
             }
-            dismiss();
         });
     }
 }

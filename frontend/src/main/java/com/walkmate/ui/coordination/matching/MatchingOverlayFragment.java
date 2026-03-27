@@ -1,4 +1,4 @@
-package com.walkmate.ui.coordination;
+package com.walkmate.ui.coordination.matching;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
@@ -6,8 +6,6 @@ import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,27 +16,26 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
 
 /**
  * Phase 2: Matching Pulse Overlay.
- * Extracted from the "God Layout" Layer 5.
- * Shown as a DialogFragment over the map while scanning for matches.
+ * MatchingViewModel drives the 3-second timer (survives config changes).
+ * Pulse animation stays in the Fragment as it is pure UI.
  */
 public class MatchingOverlayFragment extends DialogFragment {
 
     private static final String ARG_HOTSPOT_NAME = "hotspot_name";
-    private static final long MATCH_DELAY_MS = 3000;
 
     public interface OnMatchFoundListener {
         void onMatchTimerComplete();
     }
 
     private OnMatchFoundListener listener;
+    private MatchingViewModel viewModel;
     private AnimatorSet pulseAnimatorSet;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private Runnable matchTimerRunnable;
 
     public static MatchingOverlayFragment newInstance(String hotspotName) {
         MatchingOverlayFragment fragment = new MatchingOverlayFragment();
@@ -84,28 +81,30 @@ public class MatchingOverlayFragment extends DialogFragment {
         String hotspotName = getArguments() != null
                 ? getArguments().getString(ARG_HOTSPOT_NAME, "") : "";
 
+        viewModel = new ViewModelProvider(this, new MatchingViewModelFactory(hotspotName))
+                .get(MatchingViewModel.class);
+
         TextView txtScanning = view.findViewById(R.id.txtScanning);
         txtScanning.setText(String.format(getString(R.string.scanning_format), hotspotName));
 
         startPulseAnimation(view);
+        observeState();
+    }
 
-        // Auto-advance after 3s
-        matchTimerRunnable = () -> {
-            if (listener != null) {
-                listener.onMatchTimerComplete();
+    private void observeState() {
+        viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            if (state.isMatchFound()) {
+                if (listener != null) {
+                    listener.onMatchTimerComplete();
+                }
             }
-        };
-        handler.postDelayed(matchTimerRunnable, MATCH_DELAY_MS);
+        });
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         stopPulseAnimation();
-        if (matchTimerRunnable != null) {
-            handler.removeCallbacks(matchTimerRunnable);
-            matchTimerRunnable = null;
-        }
     }
 
     private void startPulseAnimation(View root) {
@@ -114,7 +113,7 @@ public class MatchingOverlayFragment extends DialogFragment {
 
         ObjectAnimator outerScaleX = ObjectAnimator.ofFloat(pulseRingOuter, "scaleX", 1f, 1.6f, 1f);
         ObjectAnimator outerScaleY = ObjectAnimator.ofFloat(pulseRingOuter, "scaleY", 1f, 1.6f, 1f);
-        ObjectAnimator outerAlpha = ObjectAnimator.ofFloat(pulseRingOuter, "alpha", 0.6f, 0f, 0.6f);
+        ObjectAnimator outerAlpha  = ObjectAnimator.ofFloat(pulseRingOuter, "alpha",  0.6f, 0f, 0.6f);
         outerScaleX.setRepeatCount(ObjectAnimator.INFINITE);
         outerScaleY.setRepeatCount(ObjectAnimator.INFINITE);
         outerAlpha.setRepeatCount(ObjectAnimator.INFINITE);
@@ -124,7 +123,7 @@ public class MatchingOverlayFragment extends DialogFragment {
 
         ObjectAnimator innerScaleX = ObjectAnimator.ofFloat(pulseRingInner, "scaleX", 1f, 1.3f, 1f);
         ObjectAnimator innerScaleY = ObjectAnimator.ofFloat(pulseRingInner, "scaleY", 1f, 1.3f, 1f);
-        ObjectAnimator innerAlpha = ObjectAnimator.ofFloat(pulseRingInner, "alpha", 0.8f, 0.2f, 0.8f);
+        ObjectAnimator innerAlpha  = ObjectAnimator.ofFloat(pulseRingInner, "alpha",  0.8f, 0.2f, 0.8f);
         innerScaleX.setRepeatCount(ObjectAnimator.INFINITE);
         innerScaleY.setRepeatCount(ObjectAnimator.INFINITE);
         innerAlpha.setRepeatCount(ObjectAnimator.INFINITE);
@@ -138,8 +137,7 @@ public class MatchingOverlayFragment extends DialogFragment {
         pulseAnimatorSet = new AnimatorSet();
         pulseAnimatorSet.playTogether(
                 outerScaleX, outerScaleY, outerAlpha,
-                innerScaleX, innerScaleY, innerAlpha
-        );
+                innerScaleX, innerScaleY, innerAlpha);
         pulseAnimatorSet.setInterpolator(new AccelerateDecelerateInterpolator());
         pulseAnimatorSet.start();
     }

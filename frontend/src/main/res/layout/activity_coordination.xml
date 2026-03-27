@@ -7,17 +7,12 @@
     android:background="@color/bg_cream">
 
     <!-- ========================================================== -->
-    <!-- LAYER 1: Fake Map Background                               -->
+    <!-- LAYER 1: Google Map Background                             -->
     <!-- ========================================================== -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/bg_map">
-
-        <!-- Hotspot markers are added programmatically here -->
-
-    </FrameLayout>
+        android:layout_height="match_parent" />
 
     <!-- Dim overlay (shown when sheet/dialog is visible) -->
     <View
