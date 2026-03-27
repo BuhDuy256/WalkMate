@@ -70,8 +70,7 @@ public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
             View bottomSheet = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
                 BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-                int screenHeight = getResources().getDisplayMetrics().heightPixels;
-                behavior.setPeekHeight(screenHeight * 2 / 3);
+                behavior.setSkipCollapsed(true);
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 bottomSheet.setBackgroundResource(android.R.color.transparent);
             }
@@ -123,8 +122,6 @@ public class CreateIntentBottomSheetFragment extends BottomSheetDialogFragment {
     }
 
     private void setupListeners() {
-        requireView().findViewById(R.id.btnCloseSheet).setOnClickListener(v -> dismiss());
-
         btnFindMatch.setOnClickListener(v -> {
             String hotspotId = getArguments() != null
                     ? getArguments().getString(ARG_HOTSPOT_ID, "") : "";
