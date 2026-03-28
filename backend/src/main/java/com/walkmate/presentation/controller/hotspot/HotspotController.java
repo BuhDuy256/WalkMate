@@ -6,7 +6,6 @@ import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.hotspot.HotspotResponse;
 import com.walkmate.presentation.mapper.hotspot.HotspotMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,16 +24,12 @@ public class HotspotController {
 
     /**
      * GET /api/v1/hotspots
-     * Returns all available hotspots with their current active walker counts.
+        * Returns all available hotspots with their current active intent counts.
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<HotspotResponse>>> getAllHotspots() {
-
-        // [SERVICE CALL]
-        // List<Hotspot> hotspots = hotspotQueryService.getAllHotspots();
-        // return ResponseEntity.ok(ApiResponse.success(hotspotMapper.toResponseList(hotspots)));
-
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        List<Hotspot> hotspots = hotspotQueryService.getAllHotspots();
+        return ResponseEntity.ok(ApiResponse.success(hotspotMapper.toResponseList(hotspots)));
     }
 
     /**
@@ -44,11 +39,7 @@ public class HotspotController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<HotspotResponse>> getHotspotById(
             @PathVariable String id) {
-
-        // [SERVICE CALL]
-        // Hotspot hotspot = hotspotQueryService.getHotspotById(id);
-        // return ResponseEntity.ok(ApiResponse.success(hotspotMapper.toResponse(hotspot)));
-
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        Hotspot hotspot = hotspotQueryService.getHotspotById(id);
+        return ResponseEntity.ok(ApiResponse.success(hotspotMapper.toResponse(hotspot)));
     }
 }

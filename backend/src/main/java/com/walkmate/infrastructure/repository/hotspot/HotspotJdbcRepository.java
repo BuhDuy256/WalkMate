@@ -17,7 +17,7 @@ public class HotspotJdbcRepository implements HotspotRepository {
     private final JdbcClient jdbcClient;
 
     /**
-     * active_walker_count is computed inline to avoid a stored counter
+         * active_intent_count is computed inline to avoid a stored counter
      * that could drift out of sync with the actual walk_intent rows.
      */
     @Override
@@ -28,7 +28,7 @@ public class HotspotJdbcRepository implements HotspotRepository {
                     h.name,
                     h.lat,
                     h.lng,
-                    COUNT(wi.intent_id) FILTER (WHERE wi.status = 'OPEN') AS active_walker_count
+                                        COUNT(wi.intent_id) FILTER (WHERE wi.status = 'OPEN') AS active_intent_count
                 FROM hotspot h
                 LEFT JOIN walk_intent wi ON wi.hotspot_id = h.id
                 GROUP BY h.id, h.name, h.lat, h.lng
@@ -41,7 +41,7 @@ public class HotspotJdbcRepository implements HotspotRepository {
                         rs.getString("name"),
                         rs.getDouble("lat"),
                         rs.getDouble("lng"),
-                        rs.getInt("active_walker_count")
+                        rs.getInt("active_intent_count")
                 ))
                 .list();
     }
@@ -54,7 +54,7 @@ public class HotspotJdbcRepository implements HotspotRepository {
                     h.name,
                     h.lat,
                     h.lng,
-                    COUNT(wi.intent_id) FILTER (WHERE wi.status = 'OPEN') AS active_walker_count
+                                        COUNT(wi.intent_id) FILTER (WHERE wi.status = 'OPEN') AS active_intent_count
                 FROM hotspot h
                 LEFT JOIN walk_intent wi ON wi.hotspot_id = h.id
                 WHERE h.id = :id
@@ -68,7 +68,7 @@ public class HotspotJdbcRepository implements HotspotRepository {
                         rs.getString("name"),
                         rs.getDouble("lat"),
                         rs.getDouble("lng"),
-                        rs.getInt("active_walker_count")
+                        rs.getInt("active_intent_count")
                 ))
                 .optional();
     }

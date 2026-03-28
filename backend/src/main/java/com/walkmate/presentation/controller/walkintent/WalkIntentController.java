@@ -34,22 +34,18 @@ public class WalkIntentController {
     public ResponseEntity<ApiResponse<WalkIntentResponse>> createIntent(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateWalkIntentRequest request) {
-
-        // [SERVICE CALL]
-        // WalkIntent intent = walkIntentCommandService.createIntent(
-        //         new CreateWalkIntentCommand(
-        //                 request.hotspotId(),
-        //                 principal.userId(),
-        //                 request.timeWindowStart(),
-        //                 request.timeWindowEnd(),
-        //                 request.ageMin(),
-        //                 request.ageMax()
-        //         )
-        // );
-        // return ResponseEntity.status(HttpStatus.CREATED)
-        //         .body(ApiResponse.success(walkIntentMapper.toResponse(intent)));
-
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        var intent = walkIntentCommandService.createIntent(
+            new CreateWalkIntentCommand(
+                request.hotspotId(),
+                principal.userId(),
+                request.timeWindowStart(),
+                request.timeWindowEnd(),
+                request.ageMin(),
+                request.ageMax()
+            )
+        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(walkIntentMapper.toResponse(intent)));
     }
 
     /**
@@ -60,13 +56,12 @@ public class WalkIntentController {
     public ResponseEntity<ApiResponse<WalkIntentResponse>> findMatch(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String intentId) {
-
-        // [SERVICE CALL]
-        // Optional<MatchResult> result = walkIntentQueryService.findMatch(intentId);
-        // if (result.isEmpty()) return ResponseEntity.noContent().build(); // 204: still searching
-        // return ResponseEntity.ok(ApiResponse.success(walkIntentMapper.toResponse(result.get().matched())));
-
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        MatchResult result = walkIntentQueryService.findMatch(intentId)
+                .orElse(null);
+        if (result == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(ApiResponse.success(walkIntentMapper.toResponse(result.matched())));
     }
 
     /**
@@ -77,11 +72,7 @@ public class WalkIntentController {
     public ResponseEntity<ApiResponse<Void>> cancelIntent(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String intentId) {
-
-        // [SERVICE CALL]
-        // walkIntentCommandService.cancelIntent(intentId);
-        // return ResponseEntity.ok(ApiResponse.success(null));
-
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        walkIntentCommandService.cancelIntent(intentId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
