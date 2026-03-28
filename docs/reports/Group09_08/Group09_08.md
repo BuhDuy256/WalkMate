@@ -38,7 +38,15 @@
 ### 23127438 – Đặng Trường Nguyên
 
 - Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+
+- Task: Implement Walk History
+- Status:
+  - Unfinished (50% done)
+  - Done: Implement the UI for walk history screen and partially implement the logic for fetching walk history data from backend.
+- **Evidence:** 
+  [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-31?atlOrigin=eyJpIjoiMTI0NTk2NmViYzMwNGIzYjgzNGU5NzVkNDRmMjdhNDUiLCJwIjoiaiJ9)
+  [GitHub](https://github.com/BuhDuy256/WalkMate/tree/feature/history)
+  [Screenshots](https://drive.google.com/drive/folders/1a4_9G6ZmW_ieqdfKkhZGX1nrzWE3LU2F?usp=sharing)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
@@ -76,8 +84,9 @@ Hiện tại thì /intents/ đang trả về user valid. Cân nhắc 2 options l
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: Hãy tách badge ra thành 1 component riêng biệt và có thể tái sử dụng được. App của tôi là WalkMate.
+- Prompt 2: Hãy tách walk session history ra thành 1 component riêng biệt và có thể tái sử dụng được. App của tôi là WalkMate.
+- **Evidence:** [ChatGPT Link](https://chatgpt.com/share/69c7cfd0-e5c8-8322-ba94-23ace409b51e)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
