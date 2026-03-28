@@ -8,7 +8,7 @@
 | ---------------- | ---------------------------------------------- |
 | **Group ID**     | Group 09                                       |
 | **Project Name** | WalkMate                                       |
-| **Date Range**   | YYYY-MM-DD – YYYY-MM-DD _(Monday to Saturday)_ |
+| **Date Range**   | 2026-03-22 – 2026-03-28 _(Monday to Saturday)_ |
 
 ---
 
