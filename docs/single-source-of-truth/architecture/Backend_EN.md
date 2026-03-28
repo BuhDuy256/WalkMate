@@ -69,6 +69,7 @@ src/main/java/com/walkmate/
 | ----------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `application/`    | Feature-oriented | Use case orchestration, defining Boundaries & Transactions, calling Domain Interfaces. Receives Command objects. No core business logic. |
 | `domain/`         | Domain-oriented  | **Rich Domain Model**: Entities encapsulate business logic, guard state, and throw `DomainException` upon invariant violations. Contains repository/provider contracts. |
+| `domain/shared/service/` | Cross-aggregate | **Domain Services**: enforce cross-aggregate invariants (see §6 of DOMAIN_CONTRACTS). Receive fully loaded entities as parameters — no repository dependencies. Pure Java, zero framework imports. |
 | `infrastructure/` | Technical        | Implements DB/jwt/framework/security. Repository implements domain interfaces (using JDBC/jOOQ). Contains only technical details. |
 | `presentation/`   | HTTP entry point | Controller, DTO to Command mapping, HTTP validation (`@Valid`), exception aggregation via `GlobalExceptionHandler`. |
 
@@ -83,6 +84,7 @@ The domain name serves as the primary axis for naming across all layers. Ensure 
 | `domain/` aggregate          | `<Domain>.java`                | `Intent.java`                |
 | `domain/` repo interface     | `<Domain>Repository.java`      | `IntentRepository.java`      |
 | `domain/` error codes        | `<Domain>ErrorCode.java`       | `IntentErrorCode.java`       |
+| `domain/` domain service     | `<Name>DomainService.java`     | `SessionCreationDomainService.java` |
 | `application/` write         | `<Domain>CommandService.java`  | `IntentCommandService.java`  |
 | `application/` internal cmd  | `<Verb><Domain>Command.java`   | `LoginUserCommand.java`      |
 | `application/` / `domain/` interface  | `<Name>Provider.java` / `Matcher`   | `TokenProvider.java`         |

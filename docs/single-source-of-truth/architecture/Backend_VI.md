@@ -129,7 +129,7 @@ Controller (Bắt đầu Request @PostMapping)
 -> <Domain>CommandService (Application ném DomainException nếu lỗi liên kết Data: USER_NOT_FOUND)
 -> Domain Model (Rich Domain tự ném DomainException nếu vi phạm Nội tại: INVALID_USER_DATA, USER_INVALID_CREDENTIALS)
 ```
-Tất cả các `DomainException` trên sẽ **sủi bọt (bubble up)** về `presentation/exception/GlobalExceptionHandler` và được tự động map trả về thành `ApiResponse<Void>` với chuẩn HTTP Status 400.
+Tất cả các `DomainException` trên sẽ **sủi bọt (bubble up)** về `presentation/exception/GlobalExceptionHandler` và được tự động map trả về thành `ApiResponse<Void>`. HTTP Status được xác định **động** bằng `ex.getErrorCode().httpStatus()` — không hardcode 400 cho tất cả lỗi. Ví dụ: `USER_NOT_FOUND` → 404, `USER_INVALID_CREDENTIALS` → 401, vi phạm nghiệp vụ → 400.
 
 ## 5. Nguyên Tắc Cốt Lõi
 

@@ -79,6 +79,13 @@ Forbidden transitions (must throw `DomainException`):
 - Sets status to `CANCELLED`
 - Throws `INTENT_ALREADY_TERMINAL` if called on terminal state
 - Throws `INTENT_OWNER_MISMATCH` if user doesn't own the intent
+- **Cross-aggregate side effect (§6):** Domain Service must call `expire()` on all `PENDING` MatchProposals that reference this intent
+
+### `WalkIntent.expire()`
+- Called only by system job (no userId check)
+- Guards: current status must be `OPEN` → throws `INTENT_ALREADY_TERMINAL` if already terminal
+- Sets status to `EXPIRED`
+- **Cross-aggregate side effect (§6):** Domain Service must call `expire()` on all `PENDING` MatchProposals that reference this intent
 
 ---
 
@@ -93,7 +100,9 @@ Forbidden transitions (must throw `DomainException`):
 | `REJECTED`  | At least one user rejected. Terminal.                           |
 | `EXPIRED`   | Neither user responded within the response window. Terminal.    |
 
-Terminal states: `REJECTED`, `EXPIRED`.
+Terminal states: `CONFIRMED`, `REJECTED`, `EXPIRED`.
+
+> Note: `CONFIRMED` is terminal for the MatchProposal domain object. WalkSession creation happens atomically in the same DB transaction as the `CONFIRMED` transition — orchestrated by the Domain Service. There is never a moment where `CONFIRMED` exists without an associated WalkSession.
 
 ## 2.2 Valid Transitions
 
@@ -113,7 +122,7 @@ Forbidden: WalkSession creation without `MatchProposal.status == CONFIRMED`. No 
 ```
 1. A MatchProposal must reference exactly two distinct WalkIntents (intentA ≠ intentB)
 2. CONFIRMED state requires acceptedByA == true AND acceptedByB == true (both, not either)
-3. A CONFIRMED MatchProposal must have triggered WalkSession creation before becoming immutable
+3. WalkSession creation must occur atomically within the same transaction as the CONFIRMED transition — there is no moment where CONFIRMED exists in DB without an associated WalkSession
 4. No two PENDING MatchProposals may reference the same WalkIntent
 ```
 
@@ -159,8 +168,9 @@ Forbidden: WalkSession creation without `MatchProposal.status == CONFIRMED`. No 
 | `PENDING`   | Created after mutual confirmation. Waiting for both users to activate. | No       |
 | `ACTIVE`    | Both users activated within the activation window. GPS tracking on.    | No       |
 | `COMPLETED` | Walk finished successfully. Minimum duration was met.                  | ✅ Yes    |
-| `NO_SHOW`   | Activation window elapsed without both users activating.               | ✅ Yes    |
-| `CANCELLED` | Cancelled by a user from PENDING state only.                           | ✅ Yes    |
+| `NO_SHOW`   | Exactly one participant activated; the other did not act before window closed. | ✅ Yes    |
+| `CANCELLED` | Cancelled by a user from PENDING state, or neither participant activated before window closed. | ✅ Yes    |
+| `ABORTED`   | Walk stopped mid-session by a participant due to a safety/medical/environmental emergency. | ✅ Yes    |
 
 ## 3.2 Valid Transitions
 
@@ -170,13 +180,15 @@ Forbidden: WalkSession creation without `MatchProposal.status == CONFIRMED`. No 
 | `PENDING`   | `CANCELLED` | User cancels                                                | Must be called from `PENDING` only                       |
 | `PENDING`   | `NO_SHOW`   | System auto-job                                             | Activation window elapsed without full activation        |
 | `ACTIVE`    | `COMPLETED` | User calls `complete()` or auto-complete trigger            | Elapsed time >= 5 minutes (minimum duration)             |
+| `ACTIVE`    | `ABORTED`   | User calls `abort()` with an emergency reason               | abortReason ∈ {INJURY, SAFETY, ENVIRONMENT, OTHER}       |
 | `COMPLETED` | *(none)*    | —                                                           | Terminal. Immutable.                                     |
 | `NO_SHOW`   | *(none)*    | —                                                           | Terminal. Immutable.                                     |
 | `CANCELLED` | *(none)*    | —                                                           | Terminal. Immutable.                                     |
+| `ABORTED`   | *(none)*    | —                                                           | Terminal. Immutable.                                     |
 
 Forbidden transitions (must throw `DomainException`):
 - `ACTIVE` → `NO_SHOW` (by any mechanism — NO_SHOW only comes from PENDING)
-- `ACTIVE` → `CANCELLED` (cannot cancel an active walk)
+- `ACTIVE` → `CANCELLED` (cannot cancel an active walk — use abort() for emergencies)
 - `PENDING` → `COMPLETED` (cannot skip ACTIVE)
 - Any terminal state → any other state
 
@@ -188,7 +200,7 @@ Window closes: scheduledStart + 30 minutes
 
 Both userA and userB must call activateByUser() within this window.
 If only one user activates and the window closes → NO_SHOW (system job).
-If neither user activates and the window closes → NO_SHOW (system job).
+If neither user activates and the window closes → system calls cancel() → CANCELLED (system job).
 ```
 
 ## 3.4 Completion Rules
@@ -237,9 +249,10 @@ Manual complete: user calls complete() after >= 5 minutes in ACTIVE state
 | `SESSION_ACTIVATION_WINDOW_NOT_OPEN` | activateByUser() called before window open time          | 400  |
 | `SESSION_ALREADY_ACTIVATED_BY_USER`  | Same user calls activateByUser() twice                   | 409  |
 | `SESSION_MINIMUM_DURATION_NOT_MET`   | complete() called before 5 minutes have elapsed          | 400  |
-| `SESSION_NOT_ACTIVE`                 | complete() called when state is not ACTIVE               | 409  |
+| `SESSION_NOT_ACTIVE`                 | complete() or abort() called when state is not ACTIVE    | 409  |
 | `SESSION_NOT_PENDING`                | cancel() called when state is not PENDING                | 409  |
 | `SESSION_USER_NOT_PARTICIPANT`       | Action by a user who is not participantA or participantB | 403  |
+| `SESSION_INVALID_ABORT_REASON`       | abort() called with a reason not in the allowed enum     | 400  |
 
 ## 3.8 Method Contracts
 
@@ -256,15 +269,20 @@ Manual complete: user calls complete() after >= 5 minutes in ACTIVE state
 - Guards: `completionTime - activationTime >= 5 minutes` → throws `SESSION_MINIMUM_DURATION_NOT_MET`
 - Sets status to `COMPLETED`, records end time
 
-### `WalkSession.cancel(requestingUserId)`
-- Guards: status must be `PENDING` → throws `SESSION_NOT_PENDING`
-- Guards: `requestingUserId` must be a participant → throws `SESSION_USER_NOT_PARTICIPANT`
-- Sets status to `CANCELLED`
+### `WalkSession.cancel(requestingUserId, cancellationTime)`
+> Full contract defined in §3.9 (includes penalty tier computation and `CancellationResult` return type).
 
 ### `WalkSession.markNoShow()`
 - Called only by system job (no userId check)
 - Guards: status must be `PENDING` → throws `SESSION_NOT_PENDING`
 - Sets status to `NO_SHOW`
+
+### `WalkSession.abort(requestingUserId, abortReason)`
+- Guards: status must be `ACTIVE` → throws `SESSION_NOT_ACTIVE`
+- Guards: `requestingUserId` must be a participant → throws `SESSION_USER_NOT_PARTICIPANT`
+- Guards: `abortReason` must be one of: `INJURY` | `SAFETY` | `ENVIRONMENT` | `OTHER` → throws `SESSION_INVALID_ABORT_REASON`
+- Sets status to `ABORTED`, records the abort reason
+- Returns void. No penalty tier — ABORTED is treated as a non-penalised emergency stop.
 
 ### `WalkSession.isChatWritable()`
 - Returns `true` if status is `PENDING` or `ACTIVE`
@@ -380,8 +398,9 @@ Penalty tier is carried in the `SessionCancelled` event payload (see §3.9). Tru
 
 ```
 1. TrustScore value must never go below 0
-2. TrustScore is never mutated directly by user action — only by events
-3. Score changes are applied by TrustScore aggregate methods, not inline in services
+2. TrustScore value must never exceed 1000 (ceiling enforced by DB constraint and domain method)
+3. TrustScore is never mutated directly by user action — only by events
+4. Score changes are applied by TrustScore aggregate methods, not inline in services
 ```
 
 ## 5.3 Error Codes (TrustScoreErrorCode)
@@ -408,7 +427,7 @@ Adjust values to product decision. This table is the single source of truth for 
 ### `TrustScore.applyPositive(reason)`
 - `reason`: enum — `SESSION_COMPLETED` | `FIVE_STAR_REVIEW`
 - Adds the delta defined in the policy table above
-- No upper cap
+- Ceiling enforcement: if `(score + delta) > 1000` → set score to `1000`. Clamps silently.
 
 ### `TrustScore.applyNegative(reason)`
 - `reason`: enum — `NO_SHOW` | `LATE_CANCELLATION_TIER1` | `LATE_CANCELLATION_TIER2`
@@ -441,18 +460,18 @@ These rules span multiple aggregates and are enforced by Domain Services, not by
 
 ---
 
-# 8. UserEmbedding Aggregate
+# 7. UserEmbedding Aggregate
 
 UserEmbedding is a read-model aggregate. It is built from domain events and used exclusively by the AI ranking layer. It never mutates any other aggregate.
 
-## 8.1 States
+## 7.1 States
 
 | State        | Meaning                                          | Condition                    |
 | ------------ | ------------------------------------------------ | ---------------------------- |
 | `COLD_START` | Insufficient history for personalization         | < 3 completed sessions       |
 | `ACTIVE`     | Enough history — vector scoring is enabled       | >= 3 completed sessions      |
 
-## 8.2 Vector Structure
+## 7.2 Vector Structure
 
 ```
 Vector(User) = [
@@ -466,7 +485,7 @@ Vector(User) = [
 ]
 ```
 
-## 8.3 Invariants
+## 7.3 Invariants
 
 ```
 1. UserEmbedding never directly affects WalkIntent, MatchProposal, or WalkSession state
@@ -474,7 +493,7 @@ Vector(User) = [
 3. A COLD_START embedding must fall back to geo/time/purpose matching — no vector scoring applied
 ```
 
-## 8.4 Update Triggers
+## 7.4 Update Triggers
 
 | Domain Event              | Vector Dimension(s) Updated        |
 | ------------------------- | ---------------------------------- |
@@ -483,7 +502,7 @@ Vector(User) = [
 | `FollowRelationCreated`   | `acceptance_pattern`               |
 | `PartnerNoShowReported`   | `reliability_score`                |
 
-## 8.5 Method Contracts
+## 7.5 Method Contracts
 
 ### `UserEmbedding.updateFromSessionCompleted(sessionData)`
 - Updates all vector dimensions from the completed session metrics (duration, speed, time window, etc.)
@@ -501,7 +520,7 @@ Vector(User) = [
 - Returns `true` only if status is `ACTIVE` (>= 3 completed sessions)
 - No side effects. Never throws.
 
-## 8.6 Error Codes (UserEmbeddingErrorCode)
+## 7.6 Error Codes (UserEmbeddingErrorCode)
 
 | Code                  | Thrown When                | HTTP |
 | --------------------- | -------------------------- | ---- |
@@ -509,7 +528,7 @@ Vector(User) = [
 
 ---
 
-# 7. How to Use This Document in Vibe Coding
+# 8. How to Use This Document in Vibe Coding
 
 ## When generating domain entity code
 Paste the relevant aggregate section (state table + invariants + method contracts) into your prompt:
@@ -535,3 +554,212 @@ Paste the domain model fields alongside the DTO structure:
 
 ## When a frontend test fails
 Same protocol as backend — compare the actual behavior against the relevant section here first. The contract is the referee for both platforms. The backend and Android domain layers must enforce the same invariants.
+
+---
+
+# 9. ChatRoom Aggregate
+
+ChatRoom is created atomically when a WalkSession is created. It enables in-app messaging between the two session participants.
+
+## 9.1 States
+
+| State    | Meaning                                        | Terminal |
+| -------- | ---------------------------------------------- | -------- |
+| `OPEN`   | Messages can be sent and read.                 | No       |
+| `CLOSED` | No new messages permitted. Read-only archive.  | ✅ Yes    |
+
+## 9.2 Invariants
+
+```
+1. Exactly one ChatRoom exists per WalkSession — created atomically with the session
+2. A ChatRoom transitions to CLOSED when its WalkSession reaches a terminal state
+3. Only session participants (user1 and user2) may send messages to the ChatRoom
+4. Message content must not be blank (enforced at domain + DB level)
+```
+
+## 9.3 Error Codes (ChatRoomErrorCode)
+
+| Code                       | Thrown When                                         | HTTP |
+| -------------------------- | --------------------------------------------------- | ---- |
+| `CHAT_ROOM_NOT_FOUND`      | findBySessionId returns empty                       | 404  |
+| `CHAT_ROOM_CLOSED`         | sendMessage() called on a CLOSED room               | 409  |
+| `CHAT_NOT_PARTICIPANT`     | Sender is not a session participant                 | 403  |
+| `CHAT_MESSAGE_BLANK`       | Message content is blank after trimming             | 400  |
+
+## 9.4 Method Contracts
+
+### `ChatRoom.sendMessage(senderId, content)`
+- Guards: status must be `OPEN` → throws `CHAT_ROOM_CLOSED`
+- Guards: `senderId` must be participantA or participantB → throws `CHAT_NOT_PARTICIPANT`
+- Guards: `content.trim()` must not be empty → throws `CHAT_MESSAGE_BLANK`
+- Creates and persists a new ChatMessage
+
+### `ChatRoom.close()`
+- Called only by Domain Service when the associated WalkSession reaches a terminal state
+- Guards: status must be `OPEN` (idempotent — already CLOSED is a no-op)
+- Sets status to `CLOSED`
+
+---
+
+# 10. WalkReview Aggregate
+
+WalkReview captures post-session feedback. Each participant may leave one review for their partner after a COMPLETED session.
+
+## 10.1 Invariants
+
+```
+1. A review can only be created for a WalkSession in COMPLETED state
+2. Each participant may submit at most one review per session (one review per reviewer per session)
+3. reviewer_id and reviewee_id must be the two distinct participants of the session
+4. rating_stars must be between 1 and 5 (inclusive)
+5. A 5-star review triggers a TrustScore positive delta for the reviewee (see §5.4)
+```
+
+## 10.2 Error Codes (WalkReviewErrorCode)
+
+| Code                          | Thrown When                                                  | HTTP |
+| ----------------------------- | ------------------------------------------------------------ | ---- |
+| `REVIEW_SESSION_NOT_FOUND`    | Referenced session does not exist                            | 404  |
+| `REVIEW_SESSION_NOT_COMPLETE` | Review attempted on a session that is not COMPLETED          | 409  |
+| `REVIEW_ALREADY_SUBMITTED`    | This reviewer already submitted a review for this session    | 409  |
+| `REVIEW_INVALID_PARTICIPANT`  | reviewer or reviewee is not a session participant            | 403  |
+| `REVIEW_INVALID_RATING`       | rating_stars is outside the 1–5 range                       | 400  |
+
+## 10.3 Method Contracts
+
+### `WalkReview.create(sessionId, reviewerId, revieweeId, ratingStars, comment)`
+- Guards: session must be `COMPLETED` → throws `REVIEW_SESSION_NOT_COMPLETE`
+- Guards: no prior review by reviewerId for this session → throws `REVIEW_ALREADY_SUBMITTED`
+- Guards: reviewerId and revieweeId must be the two session participants → throws `REVIEW_INVALID_PARTICIPANT`
+- Guards: `ratingStars` ∈ {1, 2, 3, 4, 5} → throws `REVIEW_INVALID_RATING`
+- Creates the review record
+- **Cross-aggregate side effect (§6):** if ratingStars == 5, Domain Service must call `TrustScore.applyPositive(FIVE_STAR_REVIEW)` for the reviewee
+
+---
+
+# 11. BlockRelation Aggregate
+
+BlockRelation represents a unidirectional block from one user to another. It prevents MatchProposal creation and existing proposals between the two users are invalidated.
+
+## 11.1 Invariants
+
+```
+1. A user cannot block themselves
+2. A BlockRelation is unidirectional: A blocks B does not imply B blocks A
+3. A MatchProposal cannot be created if a BlockRelation exists in either direction between the two users (see §6)
+4. When a BlockRelation is created, all PENDING MatchProposals between the two users must be REJECTED
+5. A BlockRelation cannot be duplicated (blocker_id + blocked_id must be unique)
+```
+
+## 11.2 Error Codes (BlockRelationErrorCode)
+
+| Code                       | Thrown When                                         | HTTP |
+| -------------------------- | --------------------------------------------------- | ---- |
+| `BLOCK_SELF`               | User attempts to block themselves                   | 400  |
+| `BLOCK_ALREADY_EXISTS`     | A BlockRelation already exists for this pair        | 409  |
+| `BLOCK_NOT_FOUND`          | Unblock attempted but no relation exists            | 404  |
+
+## 11.3 Method Contracts
+
+### `BlockRelation.create(blockerId, blockedId)`
+- Guards: `blockerId != blockedId` → throws `BLOCK_SELF`
+- Guards: no existing BlockRelation for this pair → throws `BLOCK_ALREADY_EXISTS`
+- Creates the block record
+- **Cross-aggregate side effect (§6):** Domain Service must call `rejectByUser()` or `expire()` on all PENDING MatchProposals between the two users
+
+### `BlockRelation.remove(blockerId, blockedId)`
+- Guards: a BlockRelation for this pair must exist → throws `BLOCK_NOT_FOUND`
+- Deletes the block record
+- No cascade — existing WalkSessions are not affected
+
+---
+
+# 12. FollowRelation
+
+FollowRelation represents a unidirectional follow from one user to another. It is a social signal that feeds UserEmbedding's `acceptance_pattern` dimension.
+
+## 12.1 Invariants
+
+```
+1. A user cannot follow themselves
+2. A FollowRelation is unidirectional: A follows B does not imply B follows A
+3. A FollowRelation cannot be duplicated (follower_id + followee_id must be unique)
+4. Following is only possible after at least one COMPLETED WalkSession between the two users (see §6 rule 3)
+5. When a FollowRelation is created, a FollowRelationCreated event is emitted for UserEmbedding projection
+```
+
+## 12.2 Error Codes (FollowRelationErrorCode)
+
+| Code                         | Thrown When                                          | HTTP |
+| ---------------------------- | ---------------------------------------------------- | ---- |
+| `FOLLOW_SELF`                | User attempts to follow themselves                   | 400  |
+| `FOLLOW_ALREADY_EXISTS`      | A FollowRelation already exists for this pair        | 409  |
+| `FOLLOW_NOT_FOUND`           | Unfollow attempted but no relation exists            | 404  |
+| `FOLLOW_NO_SHARED_SESSION`   | No COMPLETED WalkSession exists between the two users| 403  |
+
+---
+
+# 13. UserPresence
+
+UserPresence tracks a user's real-time availability status for matching. It is a mutable value object updated frequently by the client.
+
+## 13.1 States (presence_status)
+
+| Value      | Meaning                                     |
+| ---------- | ------------------------------------------- |
+| `ONLINE`   | User is actively in the app                 |
+| `OFFLINE`  | User is not in the app or has gone inactive |
+
+## 13.2 States (presence_availability)
+
+| Value         | Meaning                                                |
+| ------------- | ------------------------------------------------------ |
+| `AVAILABLE`   | User is open to receiving MatchProposals               |
+| `UNAVAILABLE` | User is not accepting proposals (busy or opted out)    |
+
+## 13.3 Invariants
+
+```
+1. A user has exactly one UserPresence record (created on registration)
+2. UserPresence is always updated by the user's own client — never by another user's action
+3. expires_at defines when the presence record auto-degrades to OFFLINE/UNAVAILABLE
+4. A user in UNAVAILABLE status must not receive new MatchProposals
+5. quick_mode = true signals the user wants an immediate match (influences ranking weight)
+```
+
+## 13.4 Error Codes (UserPresenceErrorCode)
+
+| Code                        | Thrown When                                  | HTTP |
+| --------------------------- | -------------------------------------------- | ---- |
+| `PRESENCE_NOT_FOUND`        | findByUserId returns empty                   | 404  |
+| `PRESENCE_UPDATE_FORBIDDEN` | Another user attempts to update presence     | 403  |
+
+---
+
+# 14. Notification
+
+Notification is an immutable, append-only record of a system-generated event delivered to a user.
+
+## 14.1 States (notification_status)
+
+| Value    | Meaning                                       |
+| -------- | --------------------------------------------- |
+| `PENDING`  | Notification created, not yet delivered     |
+| `DELIVERED`| Successfully pushed to the user's device   |
+| `READ`     | User opened or acknowledged the notification|
+
+## 14.2 Invariants
+
+```
+1. Notifications are created only by system events — never by direct user action
+2. Notifications are immutable after creation — content cannot be changed
+3. Status transitions are one-way: PENDING → DELIVERED → READ
+4. A notification payload (jsonb) must always include the triggering entity type and ID
+```
+
+## 14.3 Error Codes (NotificationErrorCode)
+
+| Code                    | Thrown When                                     | HTTP |
+| ----------------------- | ----------------------------------------------- | ---- |
+| `NOTIFICATION_NOT_FOUND`| findById returns empty                          | 404  |
+| `NOTIFICATION_ALREADY_READ` | markRead() called on an already-READ notification | 409  |

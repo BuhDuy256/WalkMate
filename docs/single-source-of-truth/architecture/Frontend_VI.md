@@ -137,9 +137,43 @@ public class IntentUiState {
     private final String error; // Thường dùng cho lỗi One-time như Toast. Sau khi hiển thị sẽ gọi hàm consumeError() trong ViewModel để gỡ xuống.
     // Các Data Models cần render...
 
-    public IntentUiState(...) { ... }
+    private IntentUiState(boolean isLoading, boolean isSuccess, String error) { ... }
+
+    public static IntentUiState initial() { return new IntentUiState(false, false, null); }
+    public static IntentUiState loading() { return new IntentUiState(true, false, null); }
+    public static IntentUiState success() { return new IntentUiState(false, true, null); }
+    public static IntentUiState error(String msg) { return new IntentUiState(false, false, msg); }
 
     // Thuần Getters...
+}
+```
+
+## 4.1 Mẫu ViewModel Chuẩn (MutableLiveData + DomainCallback)
+
+```java
+public class IntentViewModel extends ViewModel {
+    private final MutableLiveData<IntentUiState> _uiState =
+        new MutableLiveData<>(IntentUiState.initial());
+    public final LiveData<IntentUiState> uiState = _uiState;
+
+    private final IntentRepository intentRepository;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    public IntentViewModel(IntentRepository intentRepository) {
+        this.intentRepository = intentRepository;
+    }
+
+    public void createIntent(CreateIntentParams params) {
+        _uiState.setValue(IntentUiState.loading());
+        executor.execute(() -> intentRepository.create(params, new DomainCallback<Intent>() {
+            @Override public void onSuccess(Intent result) {
+                _uiState.postValue(IntentUiState.success());
+            }
+            @Override public void onError(DomainException e) {
+                _uiState.postValue(IntentUiState.error(e.getMessage()));
+            }
+        }));
+    }
 }
 ```
 

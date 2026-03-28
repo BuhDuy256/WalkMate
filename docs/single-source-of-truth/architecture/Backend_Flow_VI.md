@@ -61,7 +61,7 @@ sequenceDiagram
 
 ---
 
-## 🟠 Flow 3: Lỗi Điều Phối - Trạng Thái Hệ Thống (Application Level 400)
+## 🟠 Flow 3: Lỗi Điều Phối - Trạng Thái Hệ Thống (Application Level - HTTP Status Động)
 
 Lỗi do Application bắt vì mâu thuẫn dữ liệu từ Repository (VD: Không tìm thấy, Xung đột dữ liệu).
 
@@ -82,13 +82,13 @@ sequenceDiagram
     Note right of CommandService: Không tìm thấy ai!
     CommandService--xGI: throw DomainException(USER_INVALID_CREDENTIALS)
     
-    GI-->>Client: 400 Bad Request
+    GI-->>Client: 401 Unauthorized
     Note over Client: {<br/>  success: false,<br/>  error: { <br/>    code: "USER_INVALID_CREDENTIALS", <br/>    message: "Invalid email or password"<br/>  }<br/>}
 ```
 
 ---
 
-## 🔴 Flow 4: Lỗi Nghiệp Vụ Xâu Xa Nằm Trong Lõi (Rich Domain Level 400)
+## 🔴 Flow 4: Lỗi Nghiệp Vụ Xâu Xa Nằm Trong Lõi (Rich Domain Level - HTTP Status Động)
 
 Lỗi xảy ra sâu bên trong nội tại do bản thân Domain Entity tự bảo vệ mình và từ chối.
 
@@ -107,7 +107,7 @@ sequenceDiagram
     Note right of DomainEntity: Check Password hash FAILED!
     DomainEntity--xGI: throw DomainException(USER_INVALID_CREDENTIALS)
     
-    GI-->>Client: 400 Bad Request
+    GI-->>Client: 401 Unauthorized
     Note over Client: {<br/>  success: false,<br/>  error: { <br/>    code: "USER_INVALID_CREDENTIALS", <br/>    message: "Invalid email or password"<br/>  }<br/>}
 ```
 

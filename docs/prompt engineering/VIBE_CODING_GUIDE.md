@@ -25,16 +25,18 @@ If the contract does not exist yet → write it in `DOMAIN_CONTRACTS.md` first, 
 Use this flow for every single feature without exception.
 
 ```
-Step 1 → Identify the aggregate
-Step 2 → Generate the domain entity
-Step 3 → Generate the domain entity tests
-Step 4 → Generate the repository interface
-Step 5 → Generate the command/query service
-Step 6 → Generate the service tests
-Step 7 → Generate the controller + DTO
-Step 8 → Generate the controller tests
-Step 9 → Generate the infrastructure (Jdbc repo)
-Step 10 → Run all tests
+Step 1  → Identify the aggregate
+Step 2  → Generate the domain entity (Prompt 1)
+Step 3  → Generate the domain entity tests (Prompt 2)
+Step 4  → [Optional] Generate cross-aggregate domain service if feature spans §6 rules (Prompt 2b)
+Step 5  → Generate the command service (Prompt 3)
+Step 6  → Generate the query service (Prompt 3b)
+Step 7  → Generate the command service tests (Prompt 4)
+Step 8  → Generate the controller + DTO (Prompt 5)
+Step 9  → Generate the controller tests (Prompt 6)
+Step 10 → Generate the infrastructure repository (Prompt 7)
+Step 11 → Generate the infrastructure repository tests (Prompt 7b)
+Step 12 → Run all tests
 ```
 
 Each step produces one file. Each file has a test before you proceed to the next layer.
@@ -369,7 +371,7 @@ If no violations found, say "CLEAN" and nothing else.
 
 ---
 
-### Prompt 2b — Generate Cross-Aggregate Domain Service
+### Prompt 2b — Generate Cross-Aggregate Domain Service (Optional — run after Step 3 when feature spans §6 rules)
 
 ```
 You are implementing a Domain Service for WalkMate that enforces cross-aggregate invariants.
@@ -459,6 +461,8 @@ This ensures the contract always exists before the code, so every test has a gro
 ---
 
 ## Frontend Feature Workflow (Android / Java)
+
+> **Full-stack sequencing:** Complete all backend steps (Prompts 1 → 7b, Steps 2–12) before starting this workflow. The Android domain layer mirrors the backend contracts — generate the backend first so the contracts are stable.
 
 Use this flow for every Android feature. Language is Java. State via `LiveData<UiState>`. Async via `DomainCallback<T>`.
 

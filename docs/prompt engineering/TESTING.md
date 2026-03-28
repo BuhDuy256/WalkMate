@@ -224,7 +224,7 @@ class WalkSessionControllerTest {
 }
 ```
 
-### 6.5 GlobalExceptionHandler Test Template
+### 6.4 GlobalExceptionHandler Test Template
 
 ```java
 // presentation/exception/GlobalExceptionHandlerTest.java
@@ -276,7 +276,7 @@ class GlobalExceptionHandlerTest {
 
 Rule: write one `GlobalExceptionHandlerTest` per HTTP status code variant your domain introduces, not one per domain. It is a cross-cutting concern — keep it in one class.
 
-### 6.4 Fixture Class Convention
+### 6.5 Fixture Class Convention
 
 Every domain has a `<Domain>Fixture.java` in `src/test/java/.../domain/<domain-name>/`. This class provides pre-built valid and invalid domain objects so tests never duplicate construction logic.
 

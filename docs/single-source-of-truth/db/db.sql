@@ -221,6 +221,7 @@ CREATE TABLE public.user_badge (
 CREATE TABLE public.user_embedding (
   user_id uuid NOT NULL,
   vector_data ARRAY NOT NULL CHECK (array_length(vector_data, 1) > 0),
+  status character varying(20) NOT NULL DEFAULT 'COLD_START',
   last_updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT user_embedding_pkey PRIMARY KEY (user_id),
   CONSTRAINT user_embedding_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
@@ -242,6 +243,7 @@ CREATE TABLE public.user_profile (
   date_of_birth date CHECK (date_of_birth IS NULL OR date_of_birth < (CURRENT_DATE - '13 years'::interval)),
   avatar_url text,
   bio text,
+  visibility_mode character varying(20) NOT NULL DEFAULT 'PUBLIC',
   search_radius integer DEFAULT 5000 CHECK (search_radius > 0 AND search_radius <= 50000),
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -6,7 +6,6 @@ The WalkIntent domain declares a user's availability at a specific time and loca
 
 ### Lifecycle Stages
 
-*   **DRAFT:** The intent is incomplete and not visible for matching.
 *   **OPEN:** The intent is eligible for proposals and blocks the time overlap invariant.
 *   **CONSUMED:** A WalkSession was created using this intent. It no longer blocks the time overlap invariant.
 *   **CANCELLED:** The user manually withdrew the intent before session creation.
@@ -16,7 +15,6 @@ The WalkIntent domain declares a user's availability at a specific time and loca
 
 | From | To | Trigger |
 | :--- | :--- | :--- |
-| DRAFT | OPEN | User submits the intent. |
 | OPEN | CONSUMED | A related MatchProposal becomes CONFIRMED. |
 | OPEN | CANCELLED | User manually withdraws the intent. |
 | OPEN | EXPIRED | The valid time window elapses. |
@@ -52,6 +50,7 @@ The WalkSession domain manages the real-world execution of the scheduled walk an
 *   **COMPLETED:** The ACTIVE session reached its end time or satisfied the completion threshold.
 *   **NO_SHOW:** Only one participant activated the session within the activation window.
 *   **CANCELLED:** The session was cancelled prior to the activation window, or neither participant activated it.
+*   **ABORTED:** The session was stopped mid-walk by a participant due to a safety, medical, or environmental emergency.
 
 ### Transitions
 
@@ -62,3 +61,4 @@ The WalkSession domain manages the real-world execution of the scheduled walk an
 | PENDING | NO_SHOW | One user activates, but the other does not act within the valid window. |
 | PENDING | CANCELLED | User manually cancels before the window, or no users activate within the window. |
 | ACTIVE | COMPLETED | The walk end time is reached or the completion threshold is met. |
+| ACTIVE | ABORTED | A participant aborts due to an emergency reason (INJURY, SAFETY, ENVIRONMENT, OTHER). |
