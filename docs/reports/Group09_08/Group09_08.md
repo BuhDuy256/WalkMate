@@ -32,8 +32,18 @@
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Task 1: Implement chat message
+- Task 2: Implement walk intent frontend
+
+- Status:
+  - Task 1: done for the documentation and database migration which serve chat feature, not implemented yet.
+  - Task 2: on reviewing the UI, thinking the strategy to vibe coding, currently done the backend but not tested yet => don't know that feature works ot not.
+  - Researching about the testing strategy, currently done the testing document for backend
+  - Done preparing document which support vibe coding (these files are in the folder docs/prompt engineering/).
+- **Evidence:**
+  - [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-29)
+  - [Github](https://github.com/BuhDuy256/WalkMate/tree/ui-mapping)
+  - [Github](https://github.com/BuhDuy256/WalkMate/tree/feature/chat)
 
 ### 23127438 – Đặng Trường Nguyên
 
@@ -43,7 +53,7 @@
 - Status:
   - Unfinished (50% done)
   - Done: Implement the UI for walk history screen and partially implement the logic for fetching walk history data from backend.
-- **Evidence:** 
+- **Evidence:**
   [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-31?atlOrigin=eyJpIjoiMTI0NTk2NmViYzMwNGIzYjgzNGU5NzVkNDRmMjdhNDUiLCJwIjoiaiJ9)
   [GitHub](https://github.com/BuhDuy256/WalkMate/tree/feature/history)
   [Screenshots](https://drive.google.com/drive/folders/1a4_9G6ZmW_ieqdfKkhZGX1nrzWE3LU2F?usp=sharing)
@@ -79,8 +89,12 @@ Hiện tại thì /intents/ đang trả về user valid. Cân nhắc 2 options l
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: tôi đang làm tính năng chat message cho app walkmate của tôi, bạn hãy đọc các code base và rút ra các phần cần reuse như button, color, theme, size, font, ... bạn có thể tự rút ra thêm. Hãy cho tôi biết những tư duy đúng, tư duy sai. bạn có thể hỏi ngược lại tôi và đề xuất cải thiện để có thể hướng tới UX tốt
+- Prompt 2: is there any conflicts between these files about the backend implementation. Should I use vibe_coding and then use test_prompts or I just use test_prompts only in case of the feature is not implemented yet
+- **Evidence:**
+  - [Gemini Link](https://gemini.google.com/share/ad4252176724)
+  - [Claude Link](https://claude.ai/share/90647cea-ede1-49ac-b7ac-ab7e2d1c67b0)
+  - [Claude Link](https://claude.ai/share/c5804def-6c45-47e9-9636-693992ba1a0a)
 
 ### 23127438 – Đặng Trường Nguyên
 
