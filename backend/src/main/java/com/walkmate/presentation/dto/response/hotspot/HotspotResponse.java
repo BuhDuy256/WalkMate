@@ -8,7 +8,7 @@ public record HotspotResponse(
         double lat,
         double lng,
 
-        @JsonProperty("active_walker_count")
-        int activeWalkerCount
+        @JsonProperty("active_intent_count")
+        int activeIntentCount
 ) {
 }

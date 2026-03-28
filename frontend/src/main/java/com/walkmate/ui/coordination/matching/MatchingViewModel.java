@@ -24,6 +24,7 @@ public class MatchingViewModel extends ViewModel {
     }
 
     private void scheduleMatchComplete() {
+        // TODO: Update to using GET("api/v1/intents/{intentId}/match")
         executor.execute(() -> {
             try {
                 Thread.sleep(MATCH_DELAY_MS);
