@@ -19,16 +19,16 @@
 - Task 1: Implement Push Notification
 - Task 2: Merge Authentication - Walk intent matching - Walk session - Rating
 
-- Status: 
-    - Unfinished: Task 1 and 50% Task 2.
-    - Done: Merge authentication and adjust to fit with backend architecture which used DDD; Implement Walk intent UI with DDD-based MVVM architecture; Optimize UX for the UI. 
-    - Current Problem: 
-        - The UX design when user creates intent and finds match isn't clear enough => I also re-design the UX and will implement in next week.
-        - I optimized the drawing logic to O(1) complexity but didn't solve the case when user pause the walk and re-active the tracing feature.
-- **Evidence:** 
-    - [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-30?atlOrigin=eyJpIjoiMmIwODI1ZjliYjg3NDc0NmEzMjQ0ODllZGMzODZkODMiLCJwIjoiaiJ9)
-    - [GitHub](https://github.com/BuhDuy256/WalkMate/tree/flow/main)
-    - See the images of screen in folder images (If I put these into here, the file is really long)
+- Status:
+  - Unfinished: Task 1 and 50% Task 2.
+  - Done: Merge authentication and adjust to fit with backend architecture which used DDD; Implement Walk intent UI with DDD-based MVVM architecture; Optimize UX for the UI.
+  - Current Problem:
+    - The UX design when user creates intent and finds match isn't clear enough => I also re-design the UX and will implement in next week.
+    - I optimized the drawing logic to O(1) complexity but didn't solve the case when user pause the walk and re-active the tracing feature.
+- **Evidence:**
+  - [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-30?atlOrigin=eyJpIjoiMmIwODI1ZjliYjg3NDc0NmEzMjQ0ODllZGMzODZkODMiLCJwIjoiaiJ9)
+  - [GitHub](https://github.com/BuhDuy256/WalkMate/tree/flow/main)
+  - See the images of screen in folder images (If I put these into here, the file is really long)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -42,8 +42,13 @@
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Task 1: Implement Profile Flow
+- Status:
+  - Unfinished (50% done)
+  - Done: Implement the UI for profile flow, including profile screen and edit profile screen. And also partially implement the logic for updating user profile.
+- **Evidence:**
+  [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-32)
+  [GitHub](https://github.com/BuhDuy256/WalkMate/tree/feature/profile)
 
 ---
 
@@ -54,11 +59,11 @@
 - Prompt 1:
 
 ```
-Danh sach van de: 
+Danh sach van de:
 
 1. Hiện tại thì findMatch trả về người valid nhất => Theo như thiết kế thì khi tìm được Match thì phải tạo ra Proposal và tùy vào User quết định Accept hay Pass thì update status => Phải sinh ra domain "Proposal". => Hàm findMatch của intent hiện tại chưa có logic tạo ra proposal.
-2. Hiện tại thì chưa rõ là response của findMatch trả về User mà nó tìm được có đúng ko hay là trả về proposal. 
-Hiện tại thì /intents/ đang trả về user valid. Cân nhắc 2 options là trả về "proposal" cho /intents/ hoặc di chuyển cái findMatch sang /proposal/ API. Hoặc có cách thiết kế khác. 
+2. Hiện tại thì chưa rõ là response của findMatch trả về User mà nó tìm được có đúng ko hay là trả về proposal.
+Hiện tại thì /intents/ đang trả về user valid. Cân nhắc 2 options là trả về "proposal" cho /intents/ hoặc di chuyển cái findMatch sang /proposal/ API. Hoặc có cách thiết kế khác.
 Đây là các vấn đề của tôi. hãy check và sau đó chỉ ra lỗi sai tư duy, tư duy đúng và dùng nó làm cơ sở cho lập luận của câu tả lời. App của tôi là WalKMate.
 ```
 
