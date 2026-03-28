@@ -80,11 +80,14 @@ Golden rule: **domain entities are never mocked.** They are instantiated directl
    (DomainException mapping is covered by GlobalExceptionHandler — test that separately)
 ```
 
-### 4.4 GlobalExceptionHandler Test — 2 required scenarios
+### 4.4 GlobalExceptionHandler Test — 3 required scenarios
 
 ```
-✅ DomainException maps to HTTP 400 with correct errorCode field in ApiResponse
+✅ DomainException with a 404 error code (e.g. NOT_FOUND) maps to HTTP 404 with errorCode in ApiResponse
+✅ DomainException with a 400 error code (e.g. business rule violation) maps to HTTP 400 with errorCode in ApiResponse
 ✅ MethodArgumentNotValidException maps to HTTP 422 with field error details
+
+Note: HTTP status is determined by ErrorCode.httpStatus() — do NOT hardcode 400 for all DomainExceptions.
 ```
 
 ---
@@ -221,7 +224,59 @@ class WalkSessionControllerTest {
 }
 ```
 
-### 6.4 Fixture Class Convention
+### 6.4 GlobalExceptionHandler Test Template
+
+```java
+// presentation/exception/GlobalExceptionHandlerTest.java
+@WebMvcTest(controllers = SomeController.class)
+class GlobalExceptionHandlerTest {
+
+    @Autowired MockMvc mockMvc;
+    @MockBean SomeCommandService commandService;
+
+    // Test a 404 error code — status comes from ErrorCode.httpStatus(), not hardcoded
+    @Test
+    void domainException_shouldReturn404_whenEntityNotFound() throws Exception {
+        given(commandService.someMethod(any()))
+            .willThrow(new DomainException(SomeErrorCode.SOME_NOT_FOUND)); // httpStatus() == 404
+
+        mockMvc.perform(post("/api/v1/some-endpoint")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"field": "value"}"""))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errorCode").value("SOME_NOT_FOUND"));
+    }
+
+    // Test a 400 error code — business rule violation
+    @Test
+    void domainException_shouldReturn400_whenBusinessRuleViolated() throws Exception {
+        given(commandService.someMethod(any()))
+            .willThrow(new DomainException(SomeErrorCode.SOME_VALIDATION_ERROR)); // httpStatus() == 400
+
+        mockMvc.perform(post("/api/v1/some-endpoint")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"field": "value"}"""))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errorCode").value("SOME_VALIDATION_ERROR"));
+    }
+
+    // Test validation failure (separate from DomainException)
+    @Test
+    void validationException_shouldReturn422_whenRequiredFieldIsMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/some-endpoint")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.success").value(false));
+    }
+}
+```
+
+Rule: write one `GlobalExceptionHandlerTest` per HTTP status code variant your domain introduces, not one per domain. It is a cross-cutting concern — keep it in one class.
+
+### 6.5 Fixture Class Convention
 
 Every domain has a `<Domain>Fixture.java` in `src/test/java/.../domain/<domain-name>/`. This class provides pre-built valid and invalid domain objects so tests never duplicate construction logic.
 
