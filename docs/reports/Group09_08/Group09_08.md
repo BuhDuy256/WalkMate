@@ -104,22 +104,8 @@ Hiện tại thì /intents/ đang trả về user valid. Cân nhắc 2 options l
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
-
 ---
 
 ## Tasks Planned for Next Week
 
 - Finish uncompleted feature and prepare for mid-term report.
-
----
-
-## Issues
-
-| #   | Issue                  | Raised By       | Status             | Resolution / Reason Not Resolved          |
-| --- | ---------------------- | --------------- | ------------------ | ----------------------------------------- |
-| 1   | _(Describe the issue)_ | _(Member name)_ | Resolved / Pending | _(How it was resolved, or why it wasn't)_ |
-| 2   |                        |                 |                    |                                           |
-
-_(Remove this table if there are no issues this week)_
