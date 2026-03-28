@@ -217,13 +217,16 @@ Manual complete: user calls complete() after >= 5 minutes in ACTIVE state
 
 ## 3.5 Chat Access Rules
 
+"Closed" in this table maps to ChatRoom status `CLOSED` (read-only archive — no new messages, but history is still readable). All terminal session states → ChatRoom `CLOSED`.
+
 | Session State | Chat Access         |
 | ------------- | ------------------- |
 | `PENDING`     | Open (read + write) |
 | `ACTIVE`      | Open (read + write) |
-| `COMPLETED`   | Read-only           |
+| `COMPLETED`   | Closed              |
 | `CANCELLED`   | Closed              |
 | `NO_SHOW`     | Closed              |
+| `ABORTED`     | Closed              |
 
 `isChatWritable()` must return true only for PENDING and ACTIVE.
 
@@ -597,7 +600,135 @@ ChatRoom is created atomically when a WalkSession is created. It enables in-app 
 ### `ChatRoom.close()`
 - Called only by Domain Service when the associated WalkSession reaches a terminal state
 - Guards: status must be `OPEN` (idempotent — already CLOSED is a no-op)
-- Sets status to `CLOSED`
+- Sets `status` to `CLOSED` and records `close_at = now()`
+
+---
+
+## 9.5 CQRS Architecture Invariants
+
+The Chat feature uses a **Network-Level CQRS** pattern. These rules are binding on both the backend and the Android client.
+
+```
+WRITE PATH: Android Client → HTTP POST → Spring Boot Backend → JDBC → Supabase PostgreSQL
+READ  PATH: Android Client → Supabase Realtime WebSocket (INSERT/UPDATE on chat_message, chat_room)
+```
+
+### Write Path
+
+```
+W1. The Android client MUST NOT write to chat_message or chat_room directly via any Supabase client.
+    All inserts must go through the Spring Boot HTTP API.
+
+W2. The backend MUST evaluate all domain guards (ChatRoom status, participant check, blank content)
+    inside the same JDBC transaction as the INSERT — not before it.
+    Reason: session/room state can change between HTTP request receipt and DB commit.
+
+W3. If the ChatRoom is CLOSED at the moment of the JDBC commit, the backend MUST reject with
+    CHAT_ROOM_CLOSED (409), even if the room appeared OPEN when the request arrived.
+```
+
+### Read Path
+
+```
+R1. The Android client subscribes to INSERT and UPDATE events on chat_message via Supabase Realtime.
+
+R2. The Android client MUST also subscribe to UPDATE events on chat_room to detect CLOSED transitions.
+    This is the only mechanism for the client to learn the room was closed in real time.
+    ► Migration note: ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_room; (V6)
+
+R3. Supabase RLS SELECT policy is the sole access-control gate for the Realtime stream.
+    A user receives events only for rows in ChatRooms they participate in.
+
+R4. The Realtime stream does NOT guarantee delivery of missed events after a disconnection.
+    The client MUST perform a catch-up HTTP GET after every reconnect (see §9.7).
+```
+
+## 9.6 Session Closure → ChatRoom Closure Atomicity
+
+The Domain Service is responsible for closing the ChatRoom when a WalkSession reaches a terminal state.
+
+```
+1. ChatRoom.close() and the session terminal transition MUST commit in the same JDBC transaction.
+   There must never be a state in the DB where the WalkSession is terminal but ChatRoom is OPEN.
+
+2. All five terminal session transitions trigger ChatRoom.close():
+     WalkSession.complete()   → ChatRoom.close()
+     WalkSession.cancel()     → ChatRoom.close()
+     WalkSession.markNoShow() → ChatRoom.close()
+     WalkSession.abort()      → ChatRoom.close()
+     [system] expire/cancel() → ChatRoom.close()
+
+3. ChatRoom.close() is idempotent — CLOSED → CLOSED is a silent no-op.
+
+4. close_at must be set to the current timestamp on the CLOSED transition.
+```
+
+**Race condition: message in-transit vs. session closure**
+
+Two outcomes are both acceptable; a third is forbidden:
+
+| Scenario | Outcome | Acceptable? |
+| --- | --- | --- |
+| `ChatRoom.close()` commits **before** the message INSERT | INSERT observes CLOSED → throws `CHAT_ROOM_CLOSED` (409) | ✅ |
+| Message INSERT commits **before** `ChatRoom.close()` | Message is persisted; room closes afterward | ✅ |
+| Backend reads ChatRoom status at request start and caches it through the transaction | Stale read may allow a message into a just-closed room without DB-level guard | ❌ FORBIDDEN |
+
+The backend MUST re-check ChatRoom status inside the write transaction (e.g. `SELECT ... FOR UPDATE` on the ChatRoom row, or equivalent pessimistic lock), not rely on an in-memory cached state.
+
+## 9.7 Read Receipt (`read_at`) Contract
+
+### Invariants
+
+```
+1. read_at may only be set by the RECIPIENT (the participant who is not the sender).
+   The sender cannot mark their own outgoing message as read.
+
+2. read_at is set once and is immutable — it cannot be cleared or overwritten.
+
+3. read_at is NOT used for access control or any domain invariant. It is display metadata only.
+
+4. The client triggers read_at via: POST /chat/rooms/{roomId}/read  (body: { lastReadMessageId })
+   The backend marks all messages in the room up to and including lastReadMessageId as read,
+   where the caller is the recipient. The Android client MUST NOT update read_at via Supabase client.
+```
+
+### Realtime behavior
+
+```
+- A read_at update is an UPDATE event on chat_message.
+- Both participants receive this event via the Realtime stream (both have SELECT RLS access).
+- The sender uses this event to render a "read" indicator.
+```
+
+### Error Codes (additions to §9.3)
+
+| Code | Thrown When | HTTP |
+| --- | --- | --- |
+| `CHAT_READ_RECEIPT_FORBIDDEN` | Caller is the message sender, not the recipient | 403 |
+| `CHAT_MESSAGE_NOT_FOUND` | The referenced message_id does not exist in this room | 404 |
+
+## 9.8 Reconnection / Message Catch-up Protocol
+
+Supabase Realtime does **not** replay missed events after a disconnection. The Android client MUST follow this protocol on every connect and reconnect:
+
+```
+Step 1 — Re-subscribe: Establish the Realtime WebSocket and register the channel.
+
+Step 2 — Catch-up fetch: Before trusting the live stream, call:
+          GET /chat/rooms/{roomId}/messages?after={lastKnownMessageId}
+          to fetch all messages missed during the offline window.
+          The response is paginated; fetch all pages before proceeding.
+
+Step 3 — Merge: Deduplicate the HTTP response into local state by message_id.
+
+Step 4 — Go live: Begin trusting Realtime events as the authoritative source.
+```
+
+**Ordering rule:** Messages MUST be displayed in ascending order of `(created_at ASC, message_id ASC)`.
+- `created_at` is the primary sort key.
+- `message_id` (UUID, lexicographic) is the stable tiebreaker for identical timestamps.
+
+The backend catch-up endpoint must support `?after={messageId}` pagination and must be available for the lifetime of the ChatRoom (including CLOSED rooms, which are read-only archives).
 
 ---
 
