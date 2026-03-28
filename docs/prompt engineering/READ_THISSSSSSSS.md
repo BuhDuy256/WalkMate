@@ -1,3 +1,5 @@
+0. Vibe check: I want to implement the [FEATURE]. Please read [SECTION] in @DOMAIN_CONTRACTS.md and make a specific plan and write in tasks/todo.md. Wait for my confirmation and go to the next step.
+
 1. Write contract in DOMAIN_CONTRACTS.md  (A0 from TEST_PROMPTS)
          ↓
 2. TEST_PROMPTS A1 → generate Fixture + domain tests (they will be RED — entity doesn't exist yet)

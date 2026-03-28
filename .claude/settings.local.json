@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.presentation.controller.chatroom.ChatRoomControllerTest\" --info)",
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.presentation.controller.chatroom.ChatRoomControllerTest\")"
+    ]
+  }
+}
