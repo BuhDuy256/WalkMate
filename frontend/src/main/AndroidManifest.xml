@@ -19,12 +19,6 @@
             android:name="com.walkmate.ui.auth.AuthActivity"
             android:exported="false" />
 
-        <!--
-            Phase A: MainActivity is the new launcher shell.
-            CoordinationActivity remains registered (not exported) so it can
-            still be referenced during Phase B migration; it will be removed
-            from the manifest entirely once Phase B is complete.
-        -->
         <activity
             android:name="com.walkmate.ui.main.MainActivity"
             android:exported="true"
@@ -34,11 +28,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name="com.walkmate.ui.coordination.CoordinationActivity"
-            android:exported="false"
-            android:theme="@style/Theme.WalkMate" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

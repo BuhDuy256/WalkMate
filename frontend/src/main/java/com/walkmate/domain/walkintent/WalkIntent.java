@@ -1,5 +1,7 @@
 package com.walkmate.domain.walkintent;
 
+import java.util.List;
+
 public class WalkIntent {
     private final String id;
     private final String hotspotId;
@@ -8,13 +10,15 @@ public class WalkIntent {
     private final float timeEnd;
     private final int ageMin;
     private final int ageMax;
-    private final String status;     // "PENDING" | "MATCHED" | "EXPIRED"
+    private final String status;     // "OPEN" | "WAITLIST" | "MATCHED" | "EXPIRED"
     private final String createdAt;
+    private final List<String> tags; // empty list until API contract includes it
 
     public WalkIntent(String id, String hotspotId, String userId,
                       float timeStart, float timeEnd,
                       int ageMin, int ageMax,
-                      String status, String createdAt) {
+                      String status, String createdAt,
+                      List<String> tags) {
         this.id = id;
         this.hotspotId = hotspotId;
         this.userId = userId;
@@ -24,6 +28,7 @@ public class WalkIntent {
         this.ageMax = ageMax;
         this.status = status;
         this.createdAt = createdAt;
+        this.tags = tags;
     }
 
     public String getId() { return id; }
@@ -35,4 +40,5 @@ public class WalkIntent {
     public int getAgeMax() { return ageMax; }
     public String getStatus() { return status; }
     public String getCreatedAt() { return createdAt; }
+    public List<String> getTags() { return tags; }
 }

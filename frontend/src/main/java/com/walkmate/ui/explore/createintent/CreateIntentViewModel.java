@@ -10,7 +10,6 @@ import com.walkmate.domain.walkintent.WalkIntentRepository;
 
 /**
  * Owns the Create Intent form submission logic.
- * Migrated from ui.coordination.createintent — package only.
  * Observed by ExploreFragment (not a sub-Fragment).
  */
 public class CreateIntentViewModel extends ViewModel {

@@ -52,9 +52,34 @@
     <string name="tab_matches">Matches</string>
     <string name="tab_profile">Profile</string>
 
-    <!-- Stub labels (removed in Phase B / C) -->
-    <string name="explore_stub_label">Explore — Phase B</string>
-    <string name="matches_stub_label">Matches — Phase C</string>
+    <!-- Matches sub-tabs -->
+    <string name="tab_finding">Finding</string>
+    <string name="tab_proposal">Proposal</string>
+    <string name="tab_session">Session</string>
+
+    <!-- Finding sub-tab -->
+    <string name="btn_cancel_intent">Cancel Intent</string>
+    <string name="finding_empty">No active intents.\nHead to Explore to find a hotspot!</string>
+    <string name="age_range_format">%1$d – %2$d y/o</string>
+
+    <!-- Session sub-tab -->
+    <string name="session_empty">No active sessions.\nAccept a proposal to start walking!</string>
+    <string name="session_map_placeholder">Map Preview · Coming Soon</string>
+    <string name="btn_chat">Chat</string>
+    <string name="btn_cancel_session">Cancel Session</string>
+    <string name="session_chat_coming_soon">Chat — Coming Soon</string>
+    <string name="cancel_session_title">Cancel Session</string>
+    <string name="cancel_reason_busy">Unexpectedly busy</string>
+    <string name="cancel_reason_no_contact">Unable to contact partner</string>
+    <string name="cancel_reason_other">Other</string>
+    <string name="btn_keep_session">Keep</string>
+
+    <!-- Proposal sub-tab -->
+    <string name="proposal_empty">No new proposals right now.\nHang tight — we\'re finding your match!</string>
+    <string name="proposal_common_time">Common time window</string>
+    <string name="proposal_common_interests">Common interests</string>
+    <string name="proposal_trust_format">⭐ %1$d · Trusted</string>
+
     <string name="profile_coming_soon">Coming Soon</string>
 
     <!-- Hotspots -->

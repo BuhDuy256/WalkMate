@@ -21,6 +21,9 @@
     <color name="text_muted">#FF9E8D7F</color>
     <color name="text_label">#FF7A6657</color>
 
+    <!-- Semantic -->
+    <color name="color_danger">#FFE53935</color>
+
     <!-- Misc -->
     <color name="handle_bar">#FFD4CBBF</color>
     <color name="slider_track_inactive">#FFF5EDE4</color>

@@ -4,7 +4,6 @@ import com.walkmate.domain.walkintent.WalkIntent;
 
 /**
  * Immutable state for the embedded Create Intent form inside ExploreFragment.
- * Migrated from ui.coordination.createintent — package only.
  */
 public class CreateIntentUiState {
 

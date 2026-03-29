@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.viewpager2)
+    implementation(libs.swiperefreshlayout)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

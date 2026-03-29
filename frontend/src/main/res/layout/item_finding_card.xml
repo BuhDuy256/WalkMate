@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="@color/bg_white"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/handle_bar"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Row 1: Hotspot name + Status badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtHotspotName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/text_dark"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:chipMinHeight="28dp"
+                app:chipStartPadding="10dp"
+                app:chipEndPadding="10dp"
+                app:chipCornerRadius="999dp"
+                app:chipStrokeWidth="0dp"
+                app:chipIconVisible="false"
+                app:checkedIconVisible="false"
+                android:clickable="false"
+                android:focusable="false" />
+
+        </LinearLayout>
+
+        <!-- Time window -->
+        <TextView
+            android:id="@+id/txtTimeWindow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/text_muted"
+            android:textSize="13sp" />
+
+        <!-- Chips row: Duration + Age range -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDuration"
+                style="@style/Widget.WalkMate.Chip.Active"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAgeRange"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textSize="13sp"
+                android:textColor="@color/text_label"
+                app:chipBackgroundColor="@color/bg_tag_inactive"
+                app:chipMinHeight="36dp"
+                app:chipStartPadding="12dp"
+                app:chipEndPadding="12dp"
+                app:chipCornerRadius="999dp"
+                app:chipStrokeWidth="0dp"
+                app:chipIconVisible="false"
+                app:checkedIconVisible="false"
+                android:clickable="false"
+                android:focusable="false" />
+
+        </LinearLayout>
+
+        <!-- Tags (hidden when empty) -->
+        <TextView
+            android:id="@+id/txtTags"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_label"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <!-- Cancel button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelIntent"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="14dp"
+            android:text="@string/btn_cancel_intent"
+            android:textColor="@color/orange_end"
+            android:textSize="14sp"
+            app:strokeColor="@color/orange_end"
+            app:strokeWidth="1.5dp"
+            app:cornerRadius="999dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

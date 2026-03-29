@@ -37,6 +37,7 @@ androidMapsUtils = { group = "com.google.maps.android", name = "android-maps-uti
 lifecycleViewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycleLivedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
 securityCrypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version = "1.1.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
