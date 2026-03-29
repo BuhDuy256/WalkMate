@@ -1,17 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- STUB: Full map + intent-creation implementation replaces this in Phase B. -->
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Tab 1: Explore — full-screen map host.
+
+    Layer order (bottom → top):
+      1. mapContainer  — Google Map fills the entire screen edge-to-edge
+      2. dimOverlay    — reserved for future use; always GONE in the new design
+      3. topBar        — Logo pill + Profile avatar float above the map
+      ── hotspotCtaCard REMOVED (Phase B3) ──
+      4. Bottom-sheet slot added in Phase B4 (Welcome) and Phase B5 (Setup)
+      5. Scanning floating card added in Phase B6
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/exploreRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_cream">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- ================================================================ -->
+    <!-- LAYER 1: Google Map Background                                    -->
+    <!-- ================================================================ -->
+    <FrameLayout
+        android:id="@+id/mapContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!--
+        Dim overlay — kept for potential use in edge-case overlays.
+        Intentionally kept GONE; the new design uses no map dim.
+    -->
+    <View
+        android:id="@+id/dimOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/overlay_dim"
+        android:visibility="gone"
+        android:elevation="4dp" />
+
+    <!-- ================================================================ -->
+    <!-- LAYER 2: Top Bar (logo pill + profile avatar)                    -->
+    <!-- ================================================================ -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/explore_stub_label"
-        android:textColor="@color/text_muted"
-        android:textSize="16sp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="48dp"
+        android:elevation="8dp">
+
+        <!-- Logo pill -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_white_pill"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:elevation="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🚶"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/text_dark"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Profile avatar button -->
+        <FrameLayout
+            android:id="@+id/btnProfile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_white_circle"
+            android:elevation="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="👤"
+                android:textSize="16sp" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!--
+        LAYER 3 placeholder: Welcome Bottom Sheet (Phase B4)
+        LAYER 4 placeholder: Create Intent form (Phase B5)
+        LAYER 5 placeholder: Scanning floating card (Phase B6)
+        These will be added as child views / BottomSheetBehavior in their
+        respective phases. No code or views needed here in Phase B1–B3.
+    -->
 
 </FrameLayout>
