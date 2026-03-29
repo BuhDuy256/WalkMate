@@ -36,25 +36,59 @@ Following §3 of DOMAIN_CONTRACTS.md exactly.
 
 - [ ] 1.2 — `WalkSession` domain entity
   - Fields: `id`, `proposalId`, `participantA`, `participantB`,
-    `scheduledStart`, `scheduledEnd`, `status`, `createdAt`, `version`
+    `scheduledStart`, `scheduledEnd`, `actualStartTime`, `status`, `createdAt`, `version`
+    > `actualStartTime` is nullable — set when session transitions to ACTIVE.
+    > Required by `complete(completionTime)` to compute the 5-minute duration guard.
   - Factory: `WalkSession.create(proposalId, participantA, participantB, start, end)`
   - `isTerminal()` — true for COMPLETED, NO_SHOW, CANCELLED, **ABORTED**
   - `isChatWritable()` — true only for PENDING and ACTIVE (§3.5)
   - State mutations needed for wiring tests:
-    - `complete()` — guards against non-ACTIVE state, throws `SESSION_NOT_ACTIVE`
-    - `cancel(requestingUserId, cancellationTime)` — guards PENDING only, throws `SESSION_NOT_PENDING`
-    - `markNoShow()` — system job only, guards PENDING only, throws `SESSION_NOT_PENDING`
-    - `abort(requestingUserId, abortReason)` — guards ACTIVE only, throws `SESSION_NOT_ACTIVE`;
-      `abortReason` must be one of `INJURY | SAFETY | ENVIRONMENT | OTHER`,
-      throws `SESSION_INVALID_ABORT_REASON` otherwise
-    - Each method throws `SESSION_ALREADY_TERMINAL` if called on any terminal state
+    - `complete(completionTime)` — per §3.8:
+      - Guard: status must be `ACTIVE` → throws `SESSION_NOT_ACTIVE`
+      - Guard: `completionTime - actualStartTime >= 5 minutes` → throws `SESSION_MINIMUM_DURATION_NOT_MET`
+        > `actualStartTime` is the field set when both users activated (session → ACTIVE).
+        > It is never null when status is ACTIVE — safe to read without null check here.
+      - Sets status to `COMPLETED`, records `completionTime` as end time
+    - `cancel(requestingUserId, cancellationTime)` — per §3.9:
+      - Guard: status must be `PENDING` → throws `SESSION_NOT_PENDING`
+      - Guard: `requestingUserId` must be participantA or participantB → throws `SESSION_USER_NOT_PARTICIPANT`
+      - Computes penalty tier from `(scheduledStart - cancellationTime)`
+      - Sets status to `CANCELLED`
+      - **Returns `CancellationResult`** containing `requestingUserId` and resolved `penaltyTier`
+        (0, 1, or 2) — does NOT return void. Penalty tier is carried in the `SessionCancelled`
+        domain event payload; `WalkSession` never touches `TrustScore` directly.
+    - `markNoShow()` — system job only, no userId check:
+      - Guard: status must be `PENDING` → throws `SESSION_NOT_PENDING` for ANY non-PENDING
+        state, including terminal states (COMPLETED, CANCELLED, ABORTED)
+      > `markNoShow()` does NOT throw `SESSION_ALREADY_TERMINAL`. Per §3.7, `SESSION_NOT_PENDING`
+      > is the single guard — it covers all non-PENDING states uniformly including terminals.
+      - Sets status to `NO_SHOW`
+    - `abort(requestingUserId, abortReason)` — per §3.8:
+      - Guard: status must be `ACTIVE` → throws `SESSION_NOT_ACTIVE` for ANY non-ACTIVE state,
+        including terminal states
+      > Same pattern: `SESSION_NOT_ACTIVE` is the single guard for `abort()` — no separate
+      > terminal check. Do NOT add a redundant `SESSION_ALREADY_TERMINAL` throw here.
+      - Guard: `requestingUserId` must be participantA or participantB → throws `SESSION_USER_NOT_PARTICIPANT`
+      - Guard: `abortReason` must be one of `INJURY | SAFETY | ENVIRONMENT | OTHER` → throws `SESSION_INVALID_ABORT_REASON`
+      - Sets status to `ABORTED`, records the abort reason
+      - Returns void — no penalty tier (ABORTED is a non-penalised emergency stop)
+    - `SESSION_ALREADY_TERMINAL` is thrown by `complete()` and `cancel()` only — those are the
+      two methods where the contract names terminal state as a distinct guard case (§3.7, §3.8)
+  - `CancellationResult` value object — fields: `requestingUserId`, `penaltyTier` (int 0/1/2)
   - Rehydration constructor
 
 - [ ] 1.3 — `WalkSessionErrorCode` enum (implements `ErrorCode`)
+  > Declare all 10 codes from §3.7. The full set is needed so all entity guards compile correctly,
+  > even though only a subset is exercised by the ChatRoom wiring tests in this delivery.
   - `SESSION_NOT_FOUND` → 404
   - `SESSION_ALREADY_TERMINAL` → 409
+  - `SESSION_ACTIVATION_WINDOW_EXPIRED` → 400
+  - `SESSION_ACTIVATION_WINDOW_NOT_OPEN` → 400
+  - `SESSION_ALREADY_ACTIVATED_BY_USER` → 409
+  - `SESSION_MINIMUM_DURATION_NOT_MET` → 400
   - `SESSION_NOT_ACTIVE` → 409
   - `SESSION_NOT_PENDING` → 409
+  - `SESSION_USER_NOT_PARTICIPANT` → 403
   - `SESSION_INVALID_ABORT_REASON` → 400
   - Override `httpStatus()` per entry
 
@@ -64,10 +98,15 @@ Following §3 of DOMAIN_CONTRACTS.md exactly.
 
 - [ ] 1.5 — DB migration: `V5__create_walk_session.sql`
   > **Scope note:** This migration is intentionally minimal for the ChatRoom feature scope.
-  > Remaining columns (`abort_reason`, `cancelled_by`, activation timestamps, `total_distance`,
-  > `total_duration`, `source_intent_id_a/b`, etc.) will be added in V7+ when those
-  > WalkSession methods are fully implemented. This avoids coupling ChatRoom delivery
-  > to the full WalkSession feature scope.
+  > Most deferred columns (`abort_reason`, `cancelled_by`, `total_distance`, `total_duration`,
+  > `source_intent_id_a/b`, individual activation timestamps `user1_activated_at/user2_activated_at`)
+  > will be added in V7+ when those WalkSession methods are fully implemented.
+  >
+  > **Exception — `actual_start_time` is included in V5:** `complete(completionTime)` requires
+  > `completionTime - activationTime >= 5 minutes` (§3.8). `actual_start_time` is the activation
+  > time (set when both users activate → session goes ACTIVE). Without it in the schema,
+  > `complete()` cannot enforce its duration guard at all. This column must be in V5 or
+  > `complete()` would be a silent no-op stub — which violates the contract.
 
   - CREATE TYPE `session_status` AS ENUM('PENDING','ACTIVE','COMPLETED','NO_SHOW','CANCELLED','ABORTED')
   - `walk_session` table:
@@ -77,6 +116,7 @@ Following §3 of DOMAIN_CONTRACTS.md exactly.
     - `participant_b UUID NOT NULL REFERENCES user_account(user_id)`
     - `scheduled_start TIMESTAMP NOT NULL`
     - `scheduled_end TIMESTAMP NOT NULL`
+    - `actual_start_time TIMESTAMP` — nullable; set when session transitions to ACTIVE
     - `status session_status NOT NULL DEFAULT 'PENDING'`
     - `created_at TIMESTAMP NOT NULL DEFAULT NOW()`
     - `version BIGINT NOT NULL DEFAULT 0`
@@ -94,13 +134,22 @@ Following §3 of DOMAIN_CONTRACTS.md exactly.
 
 - [ ] 1.7b — `CreateWalkSessionCommand` record + `WalkSessionCommandService`
   - `createSession(command)`:
+    > **Atomicity requirement (§2.3 invariant 3):** This method must be called inside the same
+    > `@Transactional` boundary as the `MatchProposal` CONFIRMED transition. There must never
+    > be a moment where `proposal.status == CONFIRMED` exists in the DB without an associated
+    > WalkSession. The service that calls `proposal.acceptByUser()` and observes CONFIRMED must
+    > immediately call `createSession()` in the same transaction — not as a separate downstream call.
     1. Fetch `MatchProposal` by `proposalId` — throw `PROPOSAL_NOT_FOUND` if absent
     2. Assert `proposal.status == CONFIRMED` — throw `PROPOSAL_NOT_CONFIRMED` (409) if not
        > Enforces §6 rule 1a: WalkSession can only be created if MatchProposal is CONFIRMED.
     3. Assert both referenced WalkIntents are still `OPEN` — throw `INTENT_NOT_OPEN` if not (§6 rule 1b)
-    4. Call `WalkSession.create(...)` factory
-    5. Persist session via `walkSessionRepository.save()`
-    6. Create `ChatRoom` atomically (call `chatRoomCommandService.createChatRoom()` in the same `@Transactional`)
+    4. Assert no schedule conflict between the two intents (§6 rule 1c):
+       - Check that the two intents' time windows do not overlap with any other CONSUMED/PENDING session
+         for either participant — throw `SESSION_SCHEDULE_CONFLICT` (409) if conflict found
+       > Add `SESSION_SCHEDULE_CONFLICT → 409` to `WalkSessionErrorCode`
+    5. Call `WalkSession.create(...)` factory
+    6. Persist session via `walkSessionRepository.save()`
+    7. Create `ChatRoom` atomically (call `chatRoomCommandService.createChatRoom()` in the same `@Transactional`)
   - `transitionToTerminal(String sessionId, SessionStatus target)`:
     - Fetches the session, calls the appropriate domain method based on `target`:
       - `COMPLETED` → `session.complete(completionTime)`
@@ -266,9 +315,14 @@ Following §3 of DOMAIN_CONTRACTS.md exactly.
     2. Check requesterId is participantA or participantB → throw `CHAT_NOT_PARTICIPANT` if not
     3. Return `chatMessageRepository.findByRoomId(room.getId())`
     > **No status check here — intentional product decision:**
-    > All CLOSED rooms (COMPLETED, CANCELLED, NO_SHOW, ABORTED) remain readable forever.
-    > This overrides the "Closed" entries in §3.5 of DOMAIN_CONTRACTS.md for read access.
-    > DOMAIN_CONTRACTS.md §3.5 should be updated to reflect this.
+    > All CLOSED rooms remain readable forever regardless of why the session ended.
+    > Note: §9.1 of DOMAIN_CONTRACTS.md defines CLOSED as "Read-only archive" — this is
+    > consistent with the plan. However §3.5 lists CANCELLED and NO_SHOW chat as "Closed"
+    > (implying no read access). These two sections are in internal conflict inside the contract.
+    > This plan follows §9.1 (the ChatRoom aggregate's own spec) as the authoritative rule,
+    > since §9 is the aggregate-level contract and §3.5 is a session-level summary table.
+    > DOMAIN_CONTRACTS.md §3.5 should be updated to say "Read-only" for CANCELLED and NO_SHOW
+    > to resolve this internal inconsistency.
     > Write access is still blocked by the domain guard in `ChatRoom.sendMessage()`.
     >
     > **Pagination deferred:** `getMessages()` currently returns all messages for a room
@@ -397,18 +451,24 @@ Following §3 of DOMAIN_CONTRACTS.md exactly.
 
 ## HTTP Status Mapping Summary
 
-| Error Code                     | HTTP | Source           |
-| ------------------------------ | ---- | ---------------- |
-| `CHAT_ROOM_NOT_FOUND`          | 404  | Phase 0 + 2.4    |
-| `CHAT_ROOM_CLOSED`             | 409  | Phase 0 + 2.4    |
-| `CHAT_NOT_PARTICIPANT`         | 403  | Phase 0 + 2.4    |
-| `CHAT_MESSAGE_BLANK`           | 400  | 2.4 (default)    |
-| `SESSION_NOT_FOUND`            | 404  | Phase 0 + 1.3    |
-| `SESSION_ALREADY_TERMINAL`     | 409  | Phase 0 + 1.3    |
-| `SESSION_NOT_ACTIVE`           | 409  | Phase 0 + 1.3    |
-| `SESSION_NOT_PENDING`          | 409  | Phase 0 + 1.3    |
-| `SESSION_INVALID_ABORT_REASON` | 400  | 1.3 (default)    |
-| `PROPOSAL_NOT_CONFIRMED`       | 409  | Phase 1.7a (new) |
+| Error Code                           | HTTP | Source           |
+| ------------------------------------ | ---- | ---------------- |
+| `CHAT_ROOM_NOT_FOUND`                | 404  | Phase 0 + 2.4    |
+| `CHAT_ROOM_CLOSED`                   | 409  | Phase 0 + 2.4    |
+| `CHAT_NOT_PARTICIPANT`               | 403  | Phase 0 + 2.4    |
+| `CHAT_MESSAGE_BLANK`                 | 400  | 2.4 (default)    |
+| `SESSION_NOT_FOUND`                  | 404  | Phase 0 + 1.3    |
+| `SESSION_ALREADY_TERMINAL`           | 409  | Phase 0 + 1.3    |
+| `SESSION_ACTIVATION_WINDOW_EXPIRED`  | 400  | Phase 0 + 1.3    |
+| `SESSION_ACTIVATION_WINDOW_NOT_OPEN` | 400  | Phase 0 + 1.3    |
+| `SESSION_ALREADY_ACTIVATED_BY_USER`  | 409  | Phase 0 + 1.3    |
+| `SESSION_MINIMUM_DURATION_NOT_MET`   | 400  | Phase 0 + 1.3    |
+| `SESSION_NOT_ACTIVE`                 | 409  | Phase 0 + 1.3    |
+| `SESSION_NOT_PENDING`                | 409  | Phase 0 + 1.3    |
+| `SESSION_USER_NOT_PARTICIPANT`       | 403  | Phase 0 + 1.3    |
+| `SESSION_INVALID_ABORT_REASON`       | 400  | 1.3 (default)    |
+| `SESSION_SCHEDULE_CONFLICT`          | 409  | Phase 1.7b (new) |
+| `PROPOSAL_NOT_CONFIRMED`             | 409  | Phase 1.7a (new) |
 
 ---
 
@@ -453,28 +513,44 @@ domain/shared/exception/ErrorCode.java             — add default httpStatus()
 presentation/exception/GlobalExceptionHandler.java — use error code httpStatus()
 infrastructure/config/SecurityConfig.java          — add /api/v1/sessions/** as authenticated
 domain/matchproposal/MatchProposalErrorCode.java   — add PROPOSAL_NOT_CONFIRMED → 409 (Phase 1.7a)
-DOMAIN_CONTRACTS.md §3.5                           — update read access table to reflect
-                                                     read-always policy for CLOSED rooms
+DOMAIN_CONTRACTS.md §3.5                           — update CANCELLED and NO_SHOW chat access
+                                                     from "Closed" to "Read-only" to resolve
+                                                     internal conflict with §9.1
+DOMAIN_CONTRACTS.md §3.7                           — add SESSION_SCHEDULE_CONFLICT → 409
+                                                     (required by §6 rule 1c, not yet in contract)
 ```
 
 ---
 
 ## Changelog (2026-03-30 revision)
 
-| #   | Issue Fixed                                                              | Location                              |
-| --- | ------------------------------------------------------------------------ | ------------------------------------- |
-| 1   | ABORTED made explicit in all terminal state coverage                     | Phase 1.2, 1.3, 6.1, T4               |
-| 2   | V5 scope note added — intentionally minimal, deferred columns documented | Phase 1.5                             |
-| 3   | `abort()` method added to WalkSession entity contract                    | Phase 1.2                             |
-| 4   | MatchProposal CONFIRMED guard added to `createSession()`                 | Phase 1.7                             |
-| 5   | `CHECK (content <> '')` corrected to `CHECK (TRIM(content) <> '')`       | Phase 3.1                             |
-| 6   | RLS INSERT policy corrected with explicit JOIN to chat_room              | Phase 3.2 → V7                        |
-| 7   | Android terminal signal source specified (Realtime on walk_session)      | Phase 9.2                             |
-| 8   | V7 RLS migration file added to New Files list                            | New Files                             |
-| 9   | T4 ABORTED wiring test added                                             | Phase 8 T4                            |
-| 10  | Pagination deferred note added to getMessages and ChatRoomResponse       | Phase 5.3, 7.3                        |
-| 11  | Read-always policy documented explicitly in getMessages                  | Phase 5.3                             |
-| 12  | `chat_status` ENUM name fixed (was `chat_room_status`)                   | Phase 3.1                             |
-| 13  | participant columns called out explicitly in row mapper                  | Phase 4.1                             |
-| 14  | `createChatRoom()` added to ChatRoomCommandService                       | Phase 5.2                             |
-| 16  | `PROPOSAL_NOT_CONFIRMED` split into explicit prerequisite task 1.7a      | Phase 1.7, HTTP table, Modified Files |
+| #   | Issue Fixed                                                                                                                                                            | Location                              |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 1   | ABORTED made explicit in all terminal state coverage                                                                                                                   | Phase 1.2, 1.3, 6.1, T4               |
+| 2   | V5 scope note added — intentionally minimal, deferred columns documented                                                                                               | Phase 1.5                             |
+| 3   | `abort()` method added to WalkSession entity contract                                                                                                                  | Phase 1.2                             |
+| 4   | MatchProposal CONFIRMED guard added to `createSession()`                                                                                                               | Phase 1.7                             |
+| 5   | `CHECK (content <> '')` corrected to `CHECK (TRIM(content) <> '')`                                                                                                     | Phase 3.1                             |
+| 6   | RLS INSERT policy corrected with explicit JOIN to chat_room                                                                                                            | Phase 3.2 → V7                        |
+| 7   | Android terminal signal source specified (Realtime on walk_session)                                                                                                    | Phase 9.2                             |
+| 8   | V7 RLS migration file added to New Files list                                                                                                                          | New Files                             |
+| 9   | T4 ABORTED wiring test added                                                                                                                                           | Phase 8 T4                            |
+| 10  | Pagination deferred note added to getMessages and ChatRoomResponse                                                                                                     | Phase 5.3, 7.3                        |
+| 11  | Read-always policy documented explicitly in getMessages                                                                                                                | Phase 5.3                             |
+| 12  | `chat_status` ENUM name fixed (was `chat_room_status`)                                                                                                                 | Phase 3.1                             |
+| 13  | participant columns called out explicitly in row mapper                                                                                                                | Phase 4.1                             |
+| 14  | `createChatRoom()` added to ChatRoomCommandService                                                                                                                     | Phase 5.2                             |
+| 15  | T3 read-always policy tests added                                                                                                                                      | Phase 8 T3                            |
+| 16  | `PROPOSAL_NOT_CONFIRMED` split into explicit prerequisite task 1.7a                                                                                                    | Phase 1.7, HTTP table, Modified Files |
+| 17  | `complete()` corrected to `complete(completionTime)` — parameter required for 5-min guard (§3.8)                                                                       | Phase 1.2                             |
+| 18  | `cancel()` corrected to return `CancellationResult`, not void — penalty tier required (§3.9)                                                                           | Phase 1.2                             |
+| 19  | `CancellationResult` value object added to Phase 1.2                                                                                                                   | Phase 1.2                             |
+| 20  | `SESSION_USER_NOT_PARTICIPANT` guard added to `cancel()` and `abort()` (§3.8)                                                                                          | Phase 1.2                             |
+| 21  | All 10 `WalkSessionErrorCode` entries declared — full set required for compile (§3.7)                                                                                  | Phase 1.3, HTTP table                 |
+| 22  | §6 rule 1c schedule conflict check added to `createSession()` + `SESSION_SCHEDULE_CONFLICT` error code                                                                 | Phase 1.7b, HTTP table                |
+| 23  | Atomicity requirement (§2.3 inv. 3) documented explicitly in `createSession()`                                                                                         | Phase 1.7b                            |
+| 24  | Phase 5.3 note corrected — §3.5 vs §9.1 is an internal contract conflict, not an override                                                                              | Phase 5.3                             |
+| 25  | Modified Files note updated — §3.5 fix described as resolving internal conflict with §9.1                                                                              | Modified Files                        |
+| 26  | `markNoShow()` and `abort()` blanket `SESSION_ALREADY_TERMINAL` note removed — correct guard is `SESSION_NOT_PENDING` / `SESSION_NOT_ACTIVE` respectively (§3.7, §3.8) | Phase 1.2                             |
+| 27  | `actual_start_time` column added to V5 migration — required by `complete()` 5-min guard; without it the duration check cannot be computed (§3.8)                       | Phase 1.2, 1.5                        |
+| 28  | `SESSION_SCHEDULE_CONFLICT → 409` added to DOMAIN_CONTRACTS.md §3.7 in Modified Files — it is a new code mandated by §6 rule 1c but absent from the contract           | Modified Files                        |
