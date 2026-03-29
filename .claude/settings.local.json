@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:/Users/Duy/Desktop/WalkMate -name build.gradle* -o -name *.gradle.kts)"
+    ]
+  }
+}

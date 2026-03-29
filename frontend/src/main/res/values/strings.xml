@@ -36,6 +36,16 @@
     <string name="tag_slow_walk">Đi bộ chậm</string>
     <string name="tag_photography">Chụp ảnh</string>
 
+    <!-- Bottom Navigation tabs -->
+    <string name="tab_explore">Explore</string>
+    <string name="tab_matches">Matches</string>
+    <string name="tab_profile">Profile</string>
+
+    <!-- Stub labels (removed in Phase B / C) -->
+    <string name="explore_stub_label">Explore — Phase B</string>
+    <string name="matches_stub_label">Matches — Phase C</string>
+    <string name="profile_coming_soon">Coming Soon</string>
+
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>
     <string name="hotspot_2">Hồ Con Rùa</string>
