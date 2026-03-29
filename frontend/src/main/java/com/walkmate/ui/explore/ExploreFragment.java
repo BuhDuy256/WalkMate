@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,45 +27,80 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.slider.RangeSlider;
 import com.walkmate.R;
 import com.walkmate.domain.hotspot.Hotspot;
+import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.ui.explore.ExploreUiState.AppState;
+import com.walkmate.ui.explore.createintent.CreateIntentUiState;
+import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
+import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
  * Tab 1: Explore.
  *
- * Responsibilities (B1–B3):
- *   - Host a SupportMapFragment via getChildFragmentManager()
- *   - Load and display Hotspot markers on the map
- *   - Observe ExploreViewModel.uiState and react to WELCOME / SETUP / SCANNING
- *   - Forward marker-tap and back-press events to the ViewModel
+ * State machine:
+ *   WELCOME  → Welcome bottom sheet + hotspot chips
+ *   SETUP    → Embedded Create Intent form, sheet EXPANDED, camera zoomed to hotspot
+ *   SCANNING → Scanning bottom sheet + PulseOverlayView on map, markers locked
  *
- * Phases B4–B6 will add the Welcome bottom sheet, the Create Intent form,
- * and the Scanning floating card respectively. Each phase only extends
- * this class — no existing logic here needs to be altered.
+ * Phase B6 (Scanning floating card / pulse) and B7 (cancel flow) are complete.
  */
 public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     public static final String TAG = "ExploreFragment";
 
-    private static final String TAG_MAP = "explore_map_fragment";
+    private static final String TAG_MAP           = "explore_map_fragment";
+    private static final int    MAX_HOTSPOT_CHIPS = 5;
 
     // ── Views ────────────────────────────────────────────────────────────
-    // dimOverlay is bound but intentionally unused in B1–B3.
-    // It is kept here so B5/B6 can reference it without additional binding.
-    private View dimOverlay;
+    private View       dimOverlay;
+    private FrameLayout mapContainer;      // needed to host PulseOverlayView
+
+    // Bottom sheet ────────────────────────────────────────────────────────
+    private View                    bottomSheet;
+    private BottomSheetBehavior<View> sheetBehavior;
+    private View                    welcomeContent;
+    private View                    setupContent;
+    private View                    scanningContent;
+
+    // Welcome content ─────────────────────────────────────────────────────
+    private ChipGroup chipGroupHotspots;
+
+    // Setup (Create Intent) form ──────────────────────────────────────────
+    private TextView       txtSetupHotspotName;
+    private RangeSlider    sliderTime;
+    private RangeSlider    sliderAge;
+    private TextView       txtTimeStart;
+    private TextView       txtTimeEnd;
+    private TextView       txtAgeMin;
+    private TextView       txtAgeMax;
+    private MaterialButton btnFindMatch;
+
+    // Scanning sheet ──────────────────────────────────────────────────────
+    private TextView       txtScanningHotspotName;
+    private MaterialButton btnStopSearching;
 
     // ── Map ──────────────────────────────────────────────────────────────
     private GoogleMap googleMap;
-    private final Map<String, Marker> markerByHotspotId = new HashMap<>();
-    private final Map<String, Hotspot> hotspotById      = new HashMap<>();
+    private final Map<String, Marker>  markerByHotspotId = new HashMap<>();
+    private final Map<String, Hotspot> hotspotById       = new HashMap<>();
 
-    // ── ViewModel ────────────────────────────────────────────────────────
-    private ExploreViewModel viewModel;
+    // ── Pulse animation ──────────────────────────────────────────────────
+    private PulseOverlayView pulseOverlay;
+
+    // ── ViewModels ───────────────────────────────────────────────────────
+    private ExploreViewModel      viewModel;
+    private CreateIntentViewModel createIntentViewModel;
 
     // ════════════════════════════════════════════════════════════════════
     // LIFECYCLE
@@ -83,8 +119,17 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         bindViews(view);
         setupViewModel();
         setupMap();
+        setupBottomSheet();
+        setupCreateIntentListeners();
         setupListeners();
         setupBackPressHandling();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Cancel the ValueAnimator before the view is detached to prevent leaks.
+        stopPulseAnimation();
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -92,19 +137,43 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void bindViews(View root) {
-        dimOverlay = root.findViewById(R.id.dimOverlay);
+        dimOverlay             = root.findViewById(R.id.dimOverlay);
+        mapContainer           = root.findViewById(R.id.mapContainer);
+
+        bottomSheet            = root.findViewById(R.id.bottomSheet);
+        welcomeContent         = root.findViewById(R.id.welcomeContent);
+        setupContent           = root.findViewById(R.id.setupContent);
+        scanningContent        = root.findViewById(R.id.scanningContent);
+
+        chipGroupHotspots      = root.findViewById(R.id.chipGroupHotspots);
+
+        txtSetupHotspotName    = root.findViewById(R.id.txtSetupHotspotName);
+        sliderTime             = root.findViewById(R.id.sliderTime);
+        sliderAge              = root.findViewById(R.id.sliderAge);
+        txtTimeStart           = root.findViewById(R.id.txtTimeStart);
+        txtTimeEnd             = root.findViewById(R.id.txtTimeEnd);
+        txtAgeMin              = root.findViewById(R.id.txtAgeMin);
+        txtAgeMax              = root.findViewById(R.id.txtAgeMax);
+        btnFindMatch           = root.findViewById(R.id.btnFindMatch);
+
+        txtScanningHotspotName = root.findViewById(R.id.txtScanningHotspotName);
+        btnStopSearching       = root.findViewById(R.id.btnStopSearching);
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // VIEWMODEL — observe and render
+    // VIEWMODEL — setup and observation
     // ════════════════════════════════════════════════════════════════════
 
     private void setupViewModel() {
         viewModel = new ViewModelProvider(this, new ExploreViewModelFactory(requireContext()))
                 .get(ExploreViewModel.class);
-
-        // Use getViewLifecycleOwner() — correct for Fragment LiveData observation.
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+
+        createIntentViewModel = new ViewModelProvider(
+                this, new CreateIntentViewModelFactory(requireContext()))
+                .get(CreateIntentViewModel.class);
+        createIntentViewModel.getUiState().observe(
+                getViewLifecycleOwner(), this::renderCreateIntentState);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -131,12 +200,17 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
         googleMap.setOnMapClickListener(latLng -> {
             ExploreUiState state = viewModel.getUiState().getValue();
-            if (state != null && state.getAppState() == AppState.SETUP) {
+            if (state == null || state.getAppState() == AppState.SCANNING) return;
+            if (state.getAppState() == AppState.SETUP) {
                 viewModel.closeSetup();
             }
         });
 
         googleMap.setOnMarkerClickListener(marker -> {
+            // Block interaction while a scan is in progress.
+            ExploreUiState state = viewModel.getUiState().getValue();
+            if (state != null && state.getAppState() == AppState.SCANNING) return true;
+
             if (!(marker.getTag() instanceof String)) return false;
             viewModel.selectHotspot((String) marker.getTag());
             return true;
@@ -146,6 +220,113 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         ExploreUiState current = viewModel.getUiState().getValue();
         if (current != null && !current.getHotspots().isEmpty()) {
             drawHotspotMarkers(current.getHotspots());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // BOTTOM SHEET SETUP
+    // ════════════════════════════════════════════════════════════════════
+
+    private void setupBottomSheet() {
+        sheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        sheetBehavior.setDraggable(false);
+        sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+        sheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View sheet, int newState) {
+                // Drag-down to collapsed in SETUP → return to WELCOME.
+                if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                    ExploreUiState state = viewModel.getUiState().getValue();
+                    if (state != null && state.getAppState() == AppState.SETUP) {
+                        viewModel.closeSetup();
+                    }
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View sheet, float slideOffset) {}
+        });
+
+        // Set initial slider values to match the XML placeholder text.
+        sliderTime.setValues(16f, 22f);
+        sliderAge.setValues(18f, 40f);
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // WELCOME CHIPS — populated dynamically from hotspot list
+    // ════════════════════════════════════════════════════════════════════
+
+    private void populateHotspotChips(List<Hotspot> hotspots) {
+        chipGroupHotspots.removeAllViews();
+        int count = Math.min(hotspots.size(), MAX_HOTSPOT_CHIPS);
+        for (int i = 0; i < count; i++) {
+            Hotspot h = hotspots.get(i);
+            Chip chip = (Chip) LayoutInflater.from(requireContext())
+                    .inflate(R.layout.item_hotspot_chip, chipGroupHotspots, false);
+            chip.setText(h.getName());
+            chip.setOnClickListener(v -> viewModel.selectHotspot(h.getId()));
+            chipGroupHotspots.addView(chip);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // CREATE INTENT FORM — listeners and submission
+    // ════════════════════════════════════════════════════════════════════
+
+    private void setupCreateIntentListeners() {
+        sliderTime.addOnChangeListener((slider, value, fromUser) -> {
+            List<Float> v = slider.getValues();
+            txtTimeStart.setText(formatTime(v.get(0)));
+            txtTimeEnd.setText(formatTime(v.get(1)));
+        });
+
+        sliderAge.addOnChangeListener((slider, value, fromUser) -> {
+            List<Float> v = slider.getValues();
+            txtAgeMin.setText(String.valueOf(v.get(0).intValue()));
+            txtAgeMax.setText(String.valueOf(v.get(1).intValue()));
+        });
+
+        btnFindMatch.setOnClickListener(v -> submitCreateIntent());
+    }
+
+    private void submitCreateIntent() {
+        ExploreUiState exploreState = viewModel.getUiState().getValue();
+        if (exploreState == null || exploreState.getSelectedHotspot() == null) return;
+
+        String hotspotId = exploreState.getSelectedHotspot().getId();
+
+        List<Float> timeValues = sliderTime.getValues();
+        float timeStart = timeValues.get(0);
+        float timeEnd   = timeValues.get(1);
+
+        List<Float> ageValues = sliderAge.getValues();
+        int ageMin = ageValues.get(0).intValue();
+        int ageMax = ageValues.get(1).intValue();
+
+        createIntentViewModel.submit(hotspotId, timeStart, timeEnd, ageMin, ageMax);
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // PULSE ANIMATION — helpers
+    // ════════════════════════════════════════════════════════════════════
+
+    private void startPulseAnimation() {
+        if (pulseOverlay == null) {
+            pulseOverlay = new PulseOverlayView(requireContext());
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            mapContainer.addView(pulseOverlay, lp);
+        }
+        pulseOverlay.setVisibility(View.VISIBLE);
+        pulseOverlay.startPulse();
+    }
+
+    private void stopPulseAnimation() {
+        if (pulseOverlay != null) {
+            pulseOverlay.stopPulse();
+            pulseOverlay.setVisibility(View.GONE);
         }
     }
 
@@ -167,19 +348,40 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
         switch (state.getAppState()) {
             case WELCOME:
-                // Phase B4: show the Welcome bottom sheet here.
+                stopPulseAnimation();
+                welcomeContent.setVisibility(View.VISIBLE);
+                setupContent.setVisibility(View.GONE);
+                scanningContent.setVisibility(View.GONE);
+                sheetBehavior.setDraggable(false);
+                sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                if (!state.getHotspots().isEmpty()) {
+                    populateHotspotChips(state.getHotspots());
+                }
                 break;
 
             case SETUP:
-                // Zoom the camera to the chosen hotspot immediately.
+                stopPulseAnimation();
+                welcomeContent.setVisibility(View.GONE);
+                setupContent.setVisibility(View.VISIBLE);
+                scanningContent.setVisibility(View.GONE);
                 if (state.getSelectedHotspot() != null) {
+                    txtSetupHotspotName.setText(state.getSelectedHotspot().getName());
                     zoomToHotspot(state.getSelectedHotspot());
                 }
-                // Phase B5: show the embedded Create Intent form here.
+                sheetBehavior.setDraggable(true);
+                sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 break;
 
             case SCANNING:
-                // Phase B6: show the scanning floating card here.
+                welcomeContent.setVisibility(View.GONE);
+                setupContent.setVisibility(View.GONE);
+                scanningContent.setVisibility(View.VISIBLE);
+                if (state.getSelectedHotspot() != null) {
+                    txtScanningHotspotName.setText(state.getSelectedHotspot().getName());
+                }
+                sheetBehavior.setDraggable(false);
+                sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                startPulseAnimation();
                 break;
         }
 
@@ -187,6 +389,20 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (state.getError() != null) {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
             viewModel.consumeError();
+        }
+    }
+
+    private void renderCreateIntentState(CreateIntentUiState state) {
+        btnFindMatch.setEnabled(!state.isLoading());
+
+        if (state.getSubmittedIntent() != null) {
+            viewModel.onIntentCreated(state.getSubmittedIntent());
+            return;
+        }
+
+        if (state.getError() != null) {
+            Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+            createIntentViewModel.consumeError();
         }
     }
 
@@ -285,14 +501,16 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupListeners() {
-        // dimOverlay: dismiss the create-intent form when the user taps outside.
-        // Used by Phase B5; harmless here since dimOverlay is always GONE.
+        // dimOverlay: always GONE in the new design; kept for potential future use.
         dimOverlay.setOnClickListener(v -> {
             ExploreUiState state = viewModel.getUiState().getValue();
             if (state != null && state.getAppState() == AppState.SETUP) {
                 viewModel.closeSetup();
             }
         });
+
+        // Cancel the active scan and return to WELCOME.
+        btnStopSearching.setOnClickListener(v -> viewModel.resetToWelcome());
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -328,7 +546,18 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // ANIMATION HELPERS — available for B4–B6 phases
+    // FORMAT HELPERS
+    // ════════════════════════════════════════════════════════════════════
+
+    /** Converts a float hour value (e.g. 16.5) to "HH:MM" (e.g. "16:30"). */
+    private String formatTime(float val) {
+        int hours   = (int) val;
+        int minutes = Math.round((val - hours) * 60);
+        return String.format(Locale.getDefault(), "%02d:%02d", hours, minutes);
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // ANIMATION HELPERS — available for future phases
     // ════════════════════════════════════════════════════════════════════
 
     protected void showWithAnim(View view, int animResId) {

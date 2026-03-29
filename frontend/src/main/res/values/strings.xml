@@ -36,6 +36,17 @@
     <string name="tag_slow_walk">Đi bộ chậm</string>
     <string name="tag_photography">Chụp ảnh</string>
 
+    <!-- Explore: Scanning sheet -->
+    <string name="scanning_status">Searching for walking mates…</string>
+    <string name="scanning_subtitle">You\'ll be notified when a match is found</string>
+    <string name="btn_stop_searching">Stop Searching</string>
+
+    <!-- Explore: Welcome sheet -->
+    <string name="welcome_greeting">Ready to walk? 🚶</string>
+    <string name="welcome_subtitle">Pick a hotspot to get started</string>
+    <string name="search_place_hint">Search a place…</string>
+    <string name="popular_spots">Popular spots</string>
+
     <!-- Bottom Navigation tabs -->
     <string name="tab_explore">Explore</string>
     <string name="tab_matches">Matches</string>
