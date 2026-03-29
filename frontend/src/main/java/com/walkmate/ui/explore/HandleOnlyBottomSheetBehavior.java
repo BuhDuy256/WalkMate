@@ -64,6 +64,9 @@ public class HandleOnlyBottomSheetBehavior<
     /** True while a PATH B (NestedScroll) sequence that originated on the handle. */
     private boolean nestedScrollFromHandle = false;
 
+    private boolean startedAtTop = false;
+    private boolean startedAtBottom = false;
+
     // ── Constructors ─────────────────────────────────────────────────────
 
     public HandleOnlyBottomSheetBehavior() {}
@@ -142,7 +145,9 @@ public class HandleOnlyBottomSheetBehavior<
     ) {
         // Capture whether this scroll sequence started on the handle
         // BEFORE calling super (super may reset internal state).
-        nestedScrollFromHandle = lastDownOnHandle;
+        startedAtTop = !target.canScrollVertically(-1);
+        startedAtBottom = !target.canScrollVertically(1);
+
         return super.onStartNestedScroll(
             coordinatorLayout,
             child,
@@ -174,8 +179,6 @@ public class HandleOnlyBottomSheetBehavior<
         );
     }
 
-    // Path: frontend/src/main/java/com/walkmate/ui/explore/HandleOnlyBottomSheetBehavior.java
-
     @Override
     public void onNestedPreScroll(
         @NonNull CoordinatorLayout coordinatorLayout,
@@ -186,11 +189,21 @@ public class HandleOnlyBottomSheetBehavior<
         @NonNull int[] consumed,
         int type
     ) {
-        // dy < 0: Người dùng vuốt ngón tay XUỐNG (kéo sheet xuống).
-        // dy > 0: Người dùng vuốt ngón tay LÊN (kéo sheet lên).
+        if (dy > 0) {
+            // NGƯỜI DÙNG VUỐT LÊN (Muốn mở rộng sheet)
+            if (!nestedScrollFromHandle) {
+                // Nếu lúc chạm tay vào mà content CHƯA ở đáy (chưa thấy Find Match)
+                // thì khóa sheet lại, chỉ cho phép cuộn nội dung trong suốt lần vuốt này.
+                if (!startedAtBottom) {
+                    return; // Chặn super, sheet đứng im
+                }
 
-        if (dy < 0 || nestedScrollFromHandle) {
-            // Cho phép super xử lý nếu là kéo xuống (mọi nơi) HOẶC kéo lên từ handle.
+                // Nếu đã ở đáy rồi nhưng content vẫn còn nhích được thêm (do padding/margin)
+                if (target.canScrollVertically(1)) {
+                    return;
+                }
+            }
+            // Thỏa mãn: Kéo bằng Handle HOẶC Đã chạm đáy từ đầu -> Cho sheet đi lên
             super.onNestedPreScroll(
                 coordinatorLayout,
                 child,
@@ -200,9 +213,29 @@ public class HandleOnlyBottomSheetBehavior<
                 consumed,
                 type
             );
-        } else {
-            // Kéo lên từ vùng trống: consume nothing để NestedScrollView tự scroll nội dung.
-            consumed[1] = 0;
+        } else if (dy < 0) {
+            // NGƯỜI DÙNG VUỐT XUỐNG (Muốn thu nhỏ sheet)
+            if (!nestedScrollFromHandle) {
+                // Nếu lúc chạm tay vào mà content CHƯA ở đỉnh
+                // thì khóa sheet lại, bắt cuộn nội dung lên đầu đã.
+                if (!startedAtTop) {
+                    return; // Chặn super, sheet đứng im
+                }
+
+                if (target.canScrollVertically(-1)) {
+                    return;
+                }
+            }
+            // Thỏa mãn: Kéo bằng Handle HOẶC Đã ở đỉnh từ đầu -> Cho sheet đi xuống
+            super.onNestedPreScroll(
+                coordinatorLayout,
+                child,
+                target,
+                dx,
+                dy,
+                consumed,
+                type
+            );
         }
     }
 
@@ -218,7 +251,13 @@ public class HandleOnlyBottomSheetBehavior<
         int type,
         @NonNull int[] consumed
     ) {
-        // Tương tự, cho phép super xử lý overflow nếu kéo xuống hoặc từ handle.
+        // dyUnconsumed > 0: Người dùng đang cố cuộn xuống thêm nhưng nội dung đã hết (chạm đáy)
+        if (dyUnconsumed > 0 && getState() == STATE_COLLAPSED) {
+            // TỰ ĐỘNG NHẢY LÊN TOP: Không cần dùng Handle
+            setState(STATE_EXPANDED);
+        }
+
+        // Giữ nguyên logic cũ cho việc kéo xuống
         if (dyUnconsumed < 0 || nestedScrollFromHandle) {
             super.onNestedScroll(
                 coordinatorLayout,

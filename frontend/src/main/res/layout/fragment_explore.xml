@@ -150,7 +150,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/dragHandleArea"
             android:layout_width="match_parent"
-            android:layout_height="58dp"
+            android:layout_height="50dp"
             android:layout_marginTop="8dp"
             android:background="@android:color/transparent"
         >
@@ -185,6 +185,9 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:elevation="0dp"
+            android:fillViewport="true"
+            android:clipToPadding="false"
+            android:paddingBottom="20dp"
             android:overScrollMode="never"
         >
             <LinearLayout
@@ -214,7 +217,6 @@
                     android:paddingStart="24dp"
                     android:paddingEnd="24dp"
                     android:paddingTop="8dp"
-                    android:paddingBottom="24dp"
                     android:visibility="visible"
                 >
 
@@ -298,7 +300,7 @@
                     android:paddingStart="24dp"
                     android:paddingEnd="24dp"
                     android:paddingTop="8dp"
-                    android:paddingBottom="80dp"
+                    android:paddingBottom="26dp"
                     android:visibility="gone"
                 >
 

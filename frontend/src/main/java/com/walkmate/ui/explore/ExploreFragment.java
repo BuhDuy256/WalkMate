@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -68,6 +69,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // Bottom sheet ────────────────────────────────────────────────────────
     private View bottomSheetContainer;
     private HandleOnlyBottomSheetBehavior<View> sheetBehavior;
+    private NestedScrollView bottomSheetScrollContent;
     // Full-width touch area whose rect gates whether a drag gesture is allowed.
     private View dragHandleArea;
     private View welcomeContent;
@@ -148,6 +150,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         btnBackToWelcome = root.findViewById(R.id.btnBackToWelcome);
 
         bottomSheetContainer = root.findViewById(R.id.bottomSheetContainer);
+        bottomSheetScrollContent = root.findViewById(
+            R.id.bottomSheetScrollContent
+        );
         dragHandleArea = root.findViewById(R.id.dragHandleArea);
         welcomeContent = root.findViewById(R.id.welcomeContent);
         setupContent = root.findViewById(R.id.setupContent);
@@ -483,6 +488,14 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 welcomeContent.setVisibility(View.GONE);
                 setupContent.setVisibility(View.VISIBLE);
                 scanningContent.setVisibility(View.GONE);
+
+                bottomSheetContainer.post(() -> {
+                    // Ép Container tính toán lại kích thước để nhận diện đầy đủ nội dung mới của SETUP
+                    bottomSheetContainer.requestLayout();
+
+                    // Luôn cuộn về đỉnh để người dùng thấy tiêu đề và không bị "trôi" nội dung
+                    bottomSheetScrollContent.scrollTo(0, 0);
+                });
 
                 if (state.getSelectedHotspot() != null) {
                     txtSetupHotspotName.setText(
