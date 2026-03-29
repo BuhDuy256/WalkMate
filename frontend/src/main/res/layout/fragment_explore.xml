@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
     Tab 1: Explore.
 
@@ -17,7 +17,8 @@
     android:id="@+id/exploreRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_cream">
+    android:background="@color/bg_cream"
+>
 
     <!-- ================================================================ -->
     <!-- LAYER 1: Google Map                                               -->
@@ -25,7 +26,8 @@
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+    />
 
     <!-- Dim overlay — always GONE; kept for potential future use -->
     <View
@@ -34,7 +36,8 @@
         android:layout_height="match_parent"
         android:background="@color/overlay_dim"
         android:elevation="4dp"
-        android:visibility="gone" />
+        android:visibility="gone"
+    />
 
     <!-- ================================================================ -->
     <!-- LAYER 2: Top Bar                                                  -->
@@ -48,9 +51,10 @@
         android:orientation="horizontal"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="48dp">
+        android:paddingTop="48dp"
+    >
 
-        <LinearLayout
+        <!-- <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_white_pill"
@@ -76,28 +80,49 @@
                 android:textColor="@color/text_dark"
                 android:textSize="16sp"
                 android:textStyle="bold" />
-        </LinearLayout>
+        </LinearLayout> -->
 
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+        />
 
         <FrameLayout
             android:id="@+id/btnProfile"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/bg_white_circle"
-            android:elevation="4dp">
+            android:elevation="4dp"
+        >
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="👤"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+            />
         </FrameLayout>
     </LinearLayout>
+
+    <!-- ================================================================ -->
+    <!-- LAYER 2b: Back button — GONE in WELCOME/SCANNING, VISIBLE in SETUP -->
+    <!-- Floats at top-left above the map; elevation matches topBar.       -->
+    <!-- ================================================================ -->
+    <ImageButton
+        android:id="@+id/btnBackToWelcome"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_white_circle"
+        android:contentDescription="Back"
+        android:elevation="8dp"
+        android:src="@drawable/ic_back"
+        android:visibility="gone"
+    />
 
     <!-- ================================================================ -->
     <!-- LAYER 3: Unified Bottom Sheet                                     -->
@@ -108,523 +133,621 @@
     <!--   skipCollapsed= false  → drag from EXPANDED returns to COLLAPSED  -->
     <!--   fitToContents= true   → EXPANDED fills available screen height  -->
     <!-- ================================================================ -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/bottomSheet"
+    <LinearLayout
+        android:id="@+id/bottomSheetContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         android:background="@drawable/bg_sheet_top_rounded"
         android:elevation="6dp"
         app:behavior_fitToContents="true"
         app:behavior_hideable="false"
         app:behavior_peekHeight="280dp"
         app:behavior_skipCollapsed="false"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+        app:layout_behavior="com.walkmate.ui.explore.HandleOnlyBottomSheetBehavior"
+    >
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/dragHandleArea"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Shared drag handle -->
+            android:layout_height="58dp"
+            android:layout_marginTop="8dp"
+            android:background="@android:color/transparent"
+        >
             <View
-                android:layout_width="@dimen/handle_width"
-                android:layout_height="@dimen/handle_height"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="4dp"
-                android:background="@drawable/bg_handle_bar" />
+                android:id="@+id/handleBackground"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_handle_target"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth_percent="0.9"
+            />
 
-            <!-- ============================================================ -->
-            <!-- 4a. WELCOME CONTENT                                          -->
-            <!-- Visible in WELCOME state; hidden in SETUP / SCANNING         -->
-            <!-- ============================================================ -->
+            <View
+                android:layout_width="40dp"
+                android:layout_height="4dp"
+                android:background="@drawable/bg_handle_bar"
+                android:alpha="0.5"
+                app:layout_constraintBottom_toBottomOf="@id/handleBackground"
+                app:layout_constraintEnd_toEndOf="@id/handleBackground"
+                app:layout_constraintStart_toStartOf="@id/handleBackground"
+                app:layout_constraintTop_toTopOf="@id/handleBackground"
+            />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/bottomSheetScrollContent"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:elevation="0dp"
+            android:overScrollMode="never"
+        >
             <LinearLayout
-                android:id="@+id/welcomeContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="24dp"
-                android:visibility="visible">
+                android:paddingTop="0dp"
+            >
 
-                <TextView
-                    android:id="@+id/txtWelcomeGreeting"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/welcome_greeting"
-                    android:textColor="@color/text_dark"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                <!--
+                    Drag-handle touch area.
+                    The FrameLayout provides a generous 36 dp tap / drag target
+                    while the visual bar remains the small 40×4 dp pill.
+                    HandleOnlyBottomSheetBehavior checks this view's rect, so
+                    dragging the sheet is only possible when the finger starts here.
+                -->
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/welcome_subtitle"
-                    android:textColor="@color/text_muted"
-                    android:textSize="14sp" />
-
-                <!-- Search bar (UI only; search logic is a future enhancement) -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/searchInputLayout"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                <!-- ============================================================ -->
+                <!-- 4a. WELCOME CONTENT                                          -->
+                <!-- Visible in WELCOME state; hidden in SETUP / SCANNING         -->
+                <!-- ============================================================ -->
+                <LinearLayout
+                    android:id="@+id/welcomeContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:hint="@string/search_place_hint">
+                    android:orientation="vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="24dp"
+                    android:visibility="visible"
+                >
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/searchInputEdit"
+                    <TextView
+                        android:id="@+id/txtWelcomeGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/welcome_greeting"
+                        android:textColor="@color/text_dark"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                    />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/welcome_subtitle"
+                        android:textColor="@color/text_muted"
+                        android:textSize="14sp"
+                    />
+
+                    <!-- Search bar (UI only; search logic is a future enhancement) -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/searchInputLayout"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_marginTop="16dp"
+                        android:hint="@string/search_place_hint"
+                    >
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/popular_spots"
-                    android:textColor="@color/text_label"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/searchInputEdit"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:maxLines="1"
+                        />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Hotspot chips — populated dynamically from ViewModel state -->
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:scrollbars="none">
-
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/chipGroupHotspots"
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:chipSpacingHorizontal="8dp"
-                        app:singleLine="true" />
-                </HorizontalScrollView>
-            </LinearLayout>
+                        android:layout_marginTop="16dp"
+                        android:text="@string/popular_spots"
+                        android:textColor="@color/text_label"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                    />
 
-            <!-- ============================================================ -->
-            <!-- 4b. SETUP CONTENT — Create Intent Form                       -->
-            <!-- Visible in SETUP state; hidden in WELCOME / SCANNING         -->
-            <!-- Form fields match fragment_create_intent.xml IDs so existing -->
-            <!-- Java helper logic transfers without changes.                  -->
-            <!-- ============================================================ -->
-            <LinearLayout
-                android:id="@+id/setupContent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="80dp"
-                android:visibility="gone">
+                    <!-- Hotspot chips — populated dynamically from ViewModel state -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:scrollbars="none"
+                    >
 
-                <!-- Header: selected hotspot name -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/section_gap"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="@dimen/hotspot_icon_size"
-                        android:layout_height="@dimen/hotspot_icon_size"
-                        android:background="@drawable/bg_warm_circle">
-
-                        <TextView
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroupHotspots"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="📍"
-                            android:textSize="18sp" />
-                    </FrameLayout>
+                            app:chipSpacingHorizontal="8dp"
+                            app:singleLine="true"
+                        />
+                    </HorizontalScrollView>
+                </LinearLayout>
+
+                <!-- ============================================================ -->
+                <!-- 4b. SETUP CONTENT — Create Intent Form                       -->
+                <!-- Visible in SETUP state; hidden in WELCOME / SCANNING         -->
+                <!-- Form fields match fragment_create_intent.xml IDs so existing -->
+                <!-- Java helper logic transfers without changes.                  -->
+                <!-- ============================================================ -->
+                <LinearLayout
+                    android:id="@+id/setupContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="80dp"
+                    android:visibility="gone"
+                >
+
+                    <!-- Header: selected hotspot name -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/section_gap"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                    >
+
+                        <FrameLayout
+                            android:layout_width="@dimen/hotspot_icon_size"
+                            android:layout_height="@dimen/hotspot_icon_size"
+                            android:background="@drawable/bg_warm_circle"
+                        >
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="📍"
+                                android:textSize="18sp"
+                            />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                        >
+
+                            <TextView
+                                android:id="@+id/txtSetupHotspotName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_dark"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                            />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/set_preferences_title"
+                                android:textColor="@color/text_muted"
+                                android:textSize="12sp"
+                            />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- SECTION: When (Time) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/label_when_time"
+                        android:textColor="@color/text_label"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                    />
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_marginTop="4dp"
+                        android:orientation="horizontal"
+                    >
 
                         <TextView
-                            android:id="@+id/txtSetupHotspotName"
+                            android:id="@+id/txtTimeStart"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="16:00"
+                            android:textColor="@color/text_muted"
+                            android:textSize="12sp"
+                        />
+
+                        <TextView
+                            android:id="@+id/txtTimeEnd"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:text="22:00"
+                            android:textColor="@color/text_muted"
+                            android:textSize="12sp"
+                        />
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.RangeSlider
+                        android:id="@+id/sliderTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stepSize="0.5"
+                        android:valueFrom="6.0"
+                        android:valueTo="24.0"
+                        app:haloColor="#40FF9E67"
+                        app:thumbColor="@color/white"
+                        app:thumbRadius="10dp"
+                        app:thumbStrokeColor="@color/orange_primary"
+                        app:thumbStrokeWidth="2dp"
+                        app:trackColorActive="@color/orange_primary"
+                        app:trackColorInactive="@color/slider_track_inactive"
+                        app:trackHeight="6dp"
+                    />
+
+                    <!-- SECTION: When (Duration) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/section_gap"
+                        android:text="@string/label_when_duration"
+                        android:textColor="@color/text_label"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                    />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupDuration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:chipSpacingHorizontal="8dp"
+                        app:singleSelection="true"
+                    >
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipDur15"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dur_15"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipDur30"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="@string/dur_30"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipDur60"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dur_60"
+                        />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- SECTION: Who (Age) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/section_gap"
+                        android:text="@string/label_who_age"
+                        android:textColor="@color/text_label"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                    />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:orientation="horizontal"
+                    >
+
+                        <TextView
+                            android:id="@+id/txtAgeMin"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="18"
+                            android:textColor="@color/text_muted"
+                            android:textSize="12sp"
+                        />
+
+                        <TextView
+                            android:id="@+id/txtAgeMax"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="40"
+                            android:textColor="@color/text_muted"
+                            android:textSize="12sp"
+                        />
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.RangeSlider
+                        android:id="@+id/sliderAge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stepSize="1.0"
+                        android:valueFrom="16.0"
+                        android:valueTo="65.0"
+                        app:haloColor="#40FF9E67"
+                        app:thumbColor="@color/white"
+                        app:thumbRadius="10dp"
+                        app:thumbStrokeColor="@color/orange_primary"
+                        app:thumbStrokeWidth="2dp"
+                        app:trackColorActive="@color/orange_primary"
+                        app:trackColorInactive="@color/slider_track_inactive"
+                        app:trackHeight="6dp"
+                    />
+
+                    <!-- SECTION: Who (Gender) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/section_gap"
+                        android:text="@string/label_who_gender"
+                        android:textColor="@color/text_label"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                    />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupGender"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:chipSpacingHorizontal="8dp"
+                        app:singleSelection="true"
+                    >
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMale"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/gender_male"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipFemale"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/gender_female"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipAny"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="@string/gender_any"
+                        />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- SECTION: What (Tags) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/section_gap"
+                        android:text="@string/label_what_tags"
+                        android:textColor="@color/text_label"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                    />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupTags"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:chipSpacingHorizontal="8dp"
+                        app:chipSpacingVertical="8dp"
+                        app:singleSelection="false"
+                    >
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipRunning"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="@string/tag_running"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipPodcast"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tag_podcast"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipDog"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tag_dog"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMeditation"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tag_meditation"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipSlowWalk"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tag_slow_walk"
+                        />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipPhotography"
+                            style="@style/Widget.WalkMate.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tag_photography"
+                        />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- CTA -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFindMatch"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/button_height_large"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_gradient_orange_pill"
+                        android:stateListAnimator="@null"
+                        android:text="@string/find_match"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="999dp"
+                    />
+
+                </LinearLayout>
+
+                <!-- ============================================================ -->
+                <!-- 4c. SCANNING CONTENT                                         -->
+                <!-- Visible in SCANNING state; hidden in WELCOME / SETUP         -->
+                <!-- ============================================================ -->
+                <LinearLayout
+                    android:id="@+id/scanningContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="80dp"
+                    android:visibility="gone"
+                >
+
+                    <!-- Header: hotspot being scanned -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                    >
+
+                        <FrameLayout
+                            android:layout_width="@dimen/hotspot_icon_size"
+                            android:layout_height="@dimen/hotspot_icon_size"
+                            android:background="@drawable/bg_warm_circle"
+                        >
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="📍"
+                                android:textSize="18sp"
+                            />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/txtScanningHotspotName"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
                             android:textColor="@color/text_dark"
                             android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/set_preferences_title"
-                            android:textColor="@color/text_muted"
-                            android:textSize="12sp" />
+                            android:textStyle="bold"
+                        />
                     </LinearLayout>
-                </LinearLayout>
 
-                <!-- SECTION: When (Time) -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/label_when_time"
-                    android:textColor="@color/text_label"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    <!-- Spinner -->
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:indeterminate="true"
+                        app:indicatorColor="@color/orange_primary"
+                        app:indicatorSize="56dp"
+                        app:trackColor="@color/slider_track_inactive"
+                    />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
-
+                    <!-- Status text -->
                     <TextView
-                        android:id="@+id/txtTimeStart"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="16:00"
-                        android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/txtTimeEnd"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="22:00"
-                        android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <com.google.android.material.slider.RangeSlider
-                    android:id="@+id/sliderTime"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:stepSize="0.5"
-                    android:valueFrom="6.0"
-                    android:valueTo="24.0"
-                    app:haloColor="#40FF9E67"
-                    app:thumbColor="@color/white"
-                    app:thumbRadius="10dp"
-                    app:thumbStrokeColor="@color/orange_primary"
-                    app:thumbStrokeWidth="2dp"
-                    app:trackColorActive="@color/orange_primary"
-                    app:trackColorInactive="@color/slider_track_inactive"
-                    app:trackHeight="6dp" />
-
-                <!-- SECTION: When (Duration) -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/section_gap"
-                    android:text="@string/label_when_duration"
-                    android:textColor="@color/text_label"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupDuration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipDur15"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dur_15" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipDur30"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="@string/dur_30" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipDur60"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dur_60" />
-                </com.google.android.material.chip.ChipGroup>
-
-                <!-- SECTION: Who (Age) -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/section_gap"
-                    android:text="@string/label_who_age"
-                    android:textColor="@color/text_label"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/txtAgeMin"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="18"
-                        android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/txtAgeMax"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="40"
-                        android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <com.google.android.material.slider.RangeSlider
-                    android:id="@+id/sliderAge"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:stepSize="1.0"
-                    android:valueFrom="16.0"
-                    android:valueTo="65.0"
-                    app:haloColor="#40FF9E67"
-                    app:thumbColor="@color/white"
-                    app:thumbRadius="10dp"
-                    app:thumbStrokeColor="@color/orange_primary"
-                    app:thumbStrokeWidth="2dp"
-                    app:trackColorActive="@color/orange_primary"
-                    app:trackColorInactive="@color/slider_track_inactive"
-                    app:trackHeight="6dp" />
-
-                <!-- SECTION: Who (Gender) -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/section_gap"
-                    android:text="@string/label_who_gender"
-                    android:textColor="@color/text_label"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupGender"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipMale"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/gender_male" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFemale"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/gender_female" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAny"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="@string/gender_any" />
-                </com.google.android.material.chip.ChipGroup>
-
-                <!-- SECTION: What (Tags) -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/section_gap"
-                    android:text="@string/label_what_tags"
-                    android:textColor="@color/text_label"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupTags"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp"
-                    app:singleSelection="false">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipRunning"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="@string/tag_running" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipPodcast"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tag_podcast" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipDog"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tag_dog" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipMeditation"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tag_meditation" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipSlowWalk"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tag_slow_walk" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipPhotography"
-                        style="@style/Widget.WalkMate.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tag_photography" />
-                </com.google.android.material.chip.ChipGroup>
-
-                <!-- CTA -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnFindMatch"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/button_height_large"
-                    android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_gradient_orange_pill"
-                    android:stateListAnimator="@null"
-                    android:text="@string/find_match"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null"
-                    app:cornerRadius="999dp" />
-
-            </LinearLayout>
-
-            <!-- ============================================================ -->
-            <!-- 4c. SCANNING CONTENT                                         -->
-            <!-- Visible in SCANNING state; hidden in WELCOME / SETUP         -->
-            <!-- ============================================================ -->
-            <LinearLayout
-                android:id="@+id/scanningContent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="80dp"
-                android:visibility="gone">
-
-                <!-- Header: hotspot being scanned -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="@dimen/hotspot_icon_size"
-                        android:layout_height="@dimen/hotspot_icon_size"
-                        android:background="@drawable/bg_warm_circle">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="📍"
-                            android:textSize="18sp" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/txtScanningHotspotName"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
+                        android:layout_marginTop="20dp"
+                        android:text="@string/scanning_status"
                         android:textColor="@color/text_dark"
                         android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                    />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/scanning_subtitle"
+                        android:textColor="@color/text_muted"
+                        android:textSize="13sp"
+                    />
+
+                    <!-- CTA: Stop Searching -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStopSearching"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/button_height_large"
+                        android:layout_marginTop="24dp"
+                        android:text="@string/btn_stop_searching"
+                        android:textAllCaps="false"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="15sp"
+                        app:cornerRadius="999dp"
+                        app:strokeColor="@color/orange_primary"
+                    />
+
                 </LinearLayout>
 
-                <!-- Spinner -->
-                <com.google.android.material.progressindicator.CircularProgressIndicator
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:indeterminate="true"
-                    app:indicatorColor="@color/orange_primary"
-                    app:indicatorSize="56dp"
-                    app:trackColor="@color/slider_track_inactive" />
-
-                <!-- Status text -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/scanning_status"
-                    android:textColor="@color/text_dark"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/scanning_subtitle"
-                    android:textColor="@color/text_muted"
-                    android:textSize="13sp" />
-
-                <!-- CTA: Stop Searching -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStopSearching"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/button_height_large"
-                    android:layout_marginTop="24dp"
-                    android:text="@string/btn_stop_searching"
-                    android:textAllCaps="false"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="15sp"
-                    app:cornerRadius="999dp"
-                    app:strokeColor="@color/orange_primary" />
-
             </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

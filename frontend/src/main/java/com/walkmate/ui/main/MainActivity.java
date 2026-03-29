@@ -1,6 +1,7 @@
 package com.walkmate.ui.main;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
@@ -23,6 +24,7 @@ import com.walkmate.ui.profile.ProfileFragment;
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
+    private int cachedBottomNavHeight = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,5 +109,42 @@ public class MainActivity extends AppCompatActivity {
      */
     public void switchToMatchesTab() {
         bottomNav.setSelectedItemId(R.id.tab_matches);
+    }
+
+    /**
+     * Slides the bottom nav bar in or out with a 180 ms translate animation.
+     *
+     * Called by ExploreFragment when the state machine transitions between
+     * WELCOME (nav visible) and SETUP / SCANNING (nav hidden so the bottom
+     * sheet can expand full-height without the nav bar in the way).
+     */
+    public void setBottomNavVisibility(boolean visible) {
+        // Cancel any in-flight animation to avoid conflicts on rapid state changes.
+        bottomNav.animate().cancel();
+
+        if (visible) {
+            // Restore translationY to 0 before making visible so the slide-up
+            // starts from off-screen rather than from the current (possibly mid-)position.
+            if (bottomNav.getVisibility() != View.VISIBLE) {
+                if (cachedBottomNavHeight > 0) {
+                    bottomNav.setTranslationY(cachedBottomNavHeight);
+                }
+                bottomNav.setVisibility(View.VISIBLE);
+            }
+            bottomNav.animate().translationY(0).setDuration(180).start();
+        } else {
+            // Cache the height while the view is still laid-out and visible.
+            if (cachedBottomNavHeight == 0) {
+                cachedBottomNavHeight = bottomNav.getHeight();
+            }
+            float slideBy = cachedBottomNavHeight > 0
+                    ? cachedBottomNavHeight
+                    : bottomNav.getMeasuredHeight();
+            bottomNav.animate()
+                    .translationY(slideBy)
+                    .setDuration(180)
+                    .withEndAction(() -> bottomNav.setVisibility(View.GONE))
+                    .start();
+        }
     }
 }

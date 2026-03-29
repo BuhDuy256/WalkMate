@@ -9,15 +9,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -34,12 +33,11 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.slider.RangeSlider;
 import com.walkmate.R;
 import com.walkmate.domain.hotspot.Hotspot;
-import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.ui.explore.ExploreUiState.AppState;
 import com.walkmate.ui.explore.createintent.CreateIntentUiState;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
-
+import com.walkmate.ui.main.MainActivity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -49,57 +47,60 @@ import java.util.Map;
  * Tab 1: Explore.
  *
  * State machine:
- *   WELCOME  → Welcome bottom sheet + hotspot chips
- *   SETUP    → Embedded Create Intent form, sheet EXPANDED, camera zoomed to hotspot
- *   SCANNING → Scanning bottom sheet + PulseOverlayView on map, markers locked
- *
- * Phase B6 (Scanning floating card / pulse) and B7 (cancel flow) are complete.
+ *   WELCOME  → Welcome bottom sheet (STATE_COLLAPSED, nav bar VISIBLE, back button GONE)
+ *   SETUP    → Create Intent form (STATE_EXPANDED, nav bar HIDDEN, back button VISIBLE)
+ *   SCANNING → Scanning status (STATE_COLLAPSED, nav bar HIDDEN, back button GONE)
  */
 public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     public static final String TAG = "ExploreFragment";
 
-    private static final String TAG_MAP           = "explore_map_fragment";
-    private static final int    MAX_HOTSPOT_CHIPS = 5;
+    private static final String TAG_MAP = "explore_map_fragment";
+    private static final int MAX_HOTSPOT_CHIPS = 5;
 
     // ── Views ────────────────────────────────────────────────────────────
-    private View       dimOverlay;
-    private FrameLayout mapContainer;      // needed to host PulseOverlayView
+    private View dimOverlay;
+    private FrameLayout mapContainer;
+
+    // Top-left back button — VISIBLE only in SETUP
+    private ImageButton btnBackToWelcome;
 
     // Bottom sheet ────────────────────────────────────────────────────────
-    private View                    bottomSheet;
-    private BottomSheetBehavior<View> sheetBehavior;
-    private View                    welcomeContent;
-    private View                    setupContent;
-    private View                    scanningContent;
+    private View bottomSheetContainer;
+    private HandleOnlyBottomSheetBehavior<View> sheetBehavior;
+    // Full-width touch area whose rect gates whether a drag gesture is allowed.
+    private View dragHandleArea;
+    private View welcomeContent;
+    private View setupContent;
+    private View scanningContent;
 
     // Welcome content ─────────────────────────────────────────────────────
     private ChipGroup chipGroupHotspots;
 
     // Setup (Create Intent) form ──────────────────────────────────────────
-    private TextView       txtSetupHotspotName;
-    private RangeSlider    sliderTime;
-    private RangeSlider    sliderAge;
-    private TextView       txtTimeStart;
-    private TextView       txtTimeEnd;
-    private TextView       txtAgeMin;
-    private TextView       txtAgeMax;
+    private TextView txtSetupHotspotName;
+    private RangeSlider sliderTime;
+    private RangeSlider sliderAge;
+    private TextView txtTimeStart;
+    private TextView txtTimeEnd;
+    private TextView txtAgeMin;
+    private TextView txtAgeMax;
     private MaterialButton btnFindMatch;
 
     // Scanning sheet ──────────────────────────────────────────────────────
-    private TextView       txtScanningHotspotName;
+    private TextView txtScanningHotspotName;
     private MaterialButton btnStopSearching;
 
     // ── Map ──────────────────────────────────────────────────────────────
     private GoogleMap googleMap;
-    private final Map<String, Marker>  markerByHotspotId = new HashMap<>();
-    private final Map<String, Hotspot> hotspotById       = new HashMap<>();
+    private final Map<String, Marker> markerByHotspotId = new HashMap<>();
+    private final Map<String, Hotspot> hotspotById = new HashMap<>();
 
     // ── Pulse animation ──────────────────────────────────────────────────
     private PulseOverlayView pulseOverlay;
 
     // ── ViewModels ───────────────────────────────────────────────────────
-    private ExploreViewModel      viewModel;
+    private ExploreViewModel viewModel;
     private CreateIntentViewModel createIntentViewModel;
 
     // ════════════════════════════════════════════════════════════════════
@@ -108,13 +109,19 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+        @NonNull LayoutInflater inflater,
+        @Nullable ViewGroup container,
+        @Nullable Bundle savedInstanceState
+    ) {
         return inflater.inflate(R.layout.fragment_explore, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+        @NonNull View view,
+        @Nullable Bundle savedInstanceState
+    ) {
         super.onViewCreated(view, savedInstanceState);
         bindViews(view);
         setupViewModel();
@@ -128,7 +135,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Cancel the ValueAnimator before the view is detached to prevent leaks.
         stopPulseAnimation();
     }
 
@@ -137,27 +143,29 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void bindViews(View root) {
-        dimOverlay             = root.findViewById(R.id.dimOverlay);
-        mapContainer           = root.findViewById(R.id.mapContainer);
+        dimOverlay = root.findViewById(R.id.dimOverlay);
+        mapContainer = root.findViewById(R.id.mapContainer);
+        btnBackToWelcome = root.findViewById(R.id.btnBackToWelcome);
 
-        bottomSheet            = root.findViewById(R.id.bottomSheet);
-        welcomeContent         = root.findViewById(R.id.welcomeContent);
-        setupContent           = root.findViewById(R.id.setupContent);
-        scanningContent        = root.findViewById(R.id.scanningContent);
+        bottomSheetContainer = root.findViewById(R.id.bottomSheetContainer);
+        dragHandleArea = root.findViewById(R.id.dragHandleArea);
+        welcomeContent = root.findViewById(R.id.welcomeContent);
+        setupContent = root.findViewById(R.id.setupContent);
+        scanningContent = root.findViewById(R.id.scanningContent);
 
-        chipGroupHotspots      = root.findViewById(R.id.chipGroupHotspots);
+        chipGroupHotspots = root.findViewById(R.id.chipGroupHotspots);
 
-        txtSetupHotspotName    = root.findViewById(R.id.txtSetupHotspotName);
-        sliderTime             = root.findViewById(R.id.sliderTime);
-        sliderAge              = root.findViewById(R.id.sliderAge);
-        txtTimeStart           = root.findViewById(R.id.txtTimeStart);
-        txtTimeEnd             = root.findViewById(R.id.txtTimeEnd);
-        txtAgeMin              = root.findViewById(R.id.txtAgeMin);
-        txtAgeMax              = root.findViewById(R.id.txtAgeMax);
-        btnFindMatch           = root.findViewById(R.id.btnFindMatch);
+        txtSetupHotspotName = root.findViewById(R.id.txtSetupHotspotName);
+        sliderTime = root.findViewById(R.id.sliderTime);
+        sliderAge = root.findViewById(R.id.sliderAge);
+        txtTimeStart = root.findViewById(R.id.txtTimeStart);
+        txtTimeEnd = root.findViewById(R.id.txtTimeEnd);
+        txtAgeMin = root.findViewById(R.id.txtAgeMin);
+        txtAgeMax = root.findViewById(R.id.txtAgeMax);
+        btnFindMatch = root.findViewById(R.id.btnFindMatch);
 
         txtScanningHotspotName = root.findViewById(R.id.txtScanningHotspotName);
-        btnStopSearching       = root.findViewById(R.id.btnStopSearching);
+        btnStopSearching = root.findViewById(R.id.btnStopSearching);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -165,15 +173,21 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupViewModel() {
-        viewModel = new ViewModelProvider(this, new ExploreViewModelFactory(requireContext()))
-                .get(ExploreViewModel.class);
-        viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+        viewModel = new ViewModelProvider(
+            this,
+            new ExploreViewModelFactory(requireContext())
+        ).get(ExploreViewModel.class);
+        viewModel
+            .getUiState()
+            .observe(getViewLifecycleOwner(), this::renderState);
 
         createIntentViewModel = new ViewModelProvider(
-                this, new CreateIntentViewModelFactory(requireContext()))
-                .get(CreateIntentViewModel.class);
-        createIntentViewModel.getUiState().observe(
-                getViewLifecycleOwner(), this::renderCreateIntentState);
+            this,
+            new CreateIntentViewModelFactory(requireContext())
+        ).get(CreateIntentViewModel.class);
+        createIntentViewModel
+            .getUiState()
+            .observe(getViewLifecycleOwner(), this::renderCreateIntentState);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -181,13 +195,16 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment)
-                getChildFragmentManager().findFragmentByTag(TAG_MAP);
+        SupportMapFragment mapFragment =
+            (SupportMapFragment) getChildFragmentManager().findFragmentByTag(
+                TAG_MAP
+            );
         if (mapFragment == null) {
             mapFragment = SupportMapFragment.newInstance();
-            getChildFragmentManager().beginTransaction()
-                    .replace(R.id.mapContainer, mapFragment, TAG_MAP)
-                    .commitNow();
+            getChildFragmentManager()
+                .beginTransaction()
+                .replace(R.id.mapContainer, mapFragment, TAG_MAP)
+                .commitNow();
         }
         mapFragment.getMapAsync(this);
     }
@@ -200,17 +217,19 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
         googleMap.setOnMapClickListener(latLng -> {
             ExploreUiState state = viewModel.getUiState().getValue();
-            if (state == null || state.getAppState() == AppState.SCANNING) return;
+            if (
+                state == null || state.getAppState() == AppState.SCANNING
+            ) return;
             if (state.getAppState() == AppState.SETUP) {
                 viewModel.closeSetup();
             }
         });
 
         googleMap.setOnMarkerClickListener(marker -> {
-            // Block interaction while a scan is in progress.
             ExploreUiState state = viewModel.getUiState().getValue();
-            if (state != null && state.getAppState() == AppState.SCANNING) return true;
-
+            if (
+                state != null && state.getAppState() == AppState.SCANNING
+            ) return true;
             if (!(marker.getTag() instanceof String)) return false;
             viewModel.selectHotspot((String) marker.getTag());
             return true;
@@ -227,30 +246,94 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // BOTTOM SHEET SETUP
     // ════════════════════════════════════════════════════════════════════
 
+    @SuppressWarnings("unchecked")
     private void setupBottomSheet() {
-        sheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        sheetBehavior.setDraggable(false);
+        sheetBehavior = (HandleOnlyBottomSheetBehavior<
+            View
+        >) BottomSheetBehavior.from(bottomSheetContainer);
+        // Tell the behavior which view is the valid drag-start zone.
+        sheetBehavior.setHandleView(dragHandleArea);
+        // Draggable from the start; the custom behavior restricts it to the handle.
+        sheetBehavior.setDraggable(true);
         sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-        sheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View sheet, int newState) {
-                // Drag-down to collapsed in SETUP → return to WELCOME.
-                if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+        // Tap the handle (no drag) to toggle the sheet in WELCOME state.
+        dragHandleArea.setOnClickListener(v -> {
+            ExploreUiState state = viewModel.getUiState().getValue();
+            if (
+                state == null || state.getAppState() != AppState.WELCOME
+            ) return;
+            int current = sheetBehavior.getState();
+            if (current == BottomSheetBehavior.STATE_COLLAPSED) {
+                sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else if (current == BottomSheetBehavior.STATE_EXPANDED) {
+                sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        });
+
+        sheetBehavior.addBottomSheetCallback(
+            new BottomSheetBehavior.BottomSheetCallback() {
+                @Override
+                public void onStateChanged(@NonNull View sheet, int newState) {
                     ExploreUiState state = viewModel.getUiState().getValue();
-                    if (state != null && state.getAppState() == AppState.SETUP) {
-                        viewModel.closeSetup();
+                    if (state == null) return;
+
+                    if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                        if (state.getAppState() == AppState.SETUP) {
+                            viewModel.closeSetup();
+                        }
+                    }
+
+                    // RESET: Nếu sheet quay lại nấc 1/3, khóa tính năng ẩn lại để tránh "nhạy" cho lần sau
+                    if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                        sheetBehavior.setHideable(false);
+                    }
+                }
+
+                @Override
+                public void onSlide(@NonNull View sheet, float slideOffset) {
+                    // slideOffset: 1.0 (Full), 0.0 (1/3), -1.0 (Biến mất)
+                    // Ta chỉ cho phép "ẩn" khi người dùng đã kéo xuống cực sâu (ví dụ -0.8)
+                    if (slideOffset < -0.8f) {
+                        if (!sheetBehavior.isHideable()) {
+                            sheetBehavior.setHideable(true);
+                        }
+                    } else if (slideOffset > -0.5f) {
+                        // Nếu họ lỡ tay kéo nhẹ rồi rụt lại, ta khóa hideable ngay để nó "đập" lại nấc 1/3
+                        sheetBehavior.setHideable(false);
                     }
                 }
             }
+        );
 
-            @Override
-            public void onSlide(@NonNull View sheet, float slideOffset) {}
-        });
-
-        // Set initial slider values to match the XML placeholder text.
+        // Initialise slider labels to match the XML default values.
         sliderTime.setValues(16f, 22f);
         sliderAge.setValues(18f, 40f);
+    }
+
+    /**
+     * Sets the BottomSheetBehavior expandedOffset so that, when fully expanded,
+     * the top edge of the sheet sits just below the Back button (+ 16 dp gap).
+     * Called once each time we enter SETUP, after the button has been laid out.
+     */
+    private void applySheetExpandedOffset() {
+        btnBackToWelcome.post(() -> {
+            if (getView() == null) return;
+            int[] rootLoc = new int[2];
+            requireView().getLocationOnScreen(rootLoc);
+
+            int[] btnLoc = new int[2];
+            btnBackToWelcome.getLocationOnScreen(btnLoc);
+
+            // Distance from top of the CoordinatorLayout to the bottom edge of the button.
+            int btnBottomRelativeToRoot =
+                (btnLoc[1] + btnBackToWelcome.getHeight()) - rootLoc[1];
+            int padding16dp = (int) (16 *
+                getResources().getDisplayMetrics().density);
+            sheetBehavior.setExpandedOffset(
+                btnBottomRelativeToRoot + padding16dp
+            );
+        });
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -262,8 +345,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         int count = Math.min(hotspots.size(), MAX_HOTSPOT_CHIPS);
         for (int i = 0; i < count; i++) {
             Hotspot h = hotspots.get(i);
-            Chip chip = (Chip) LayoutInflater.from(requireContext())
-                    .inflate(R.layout.item_hotspot_chip, chipGroupHotspots, false);
+            Chip chip = (Chip) LayoutInflater.from(requireContext()).inflate(
+                R.layout.item_hotspot_chip,
+                chipGroupHotspots,
+                false
+            );
             chip.setText(h.getName());
             chip.setOnClickListener(v -> viewModel.selectHotspot(h.getId()));
             chipGroupHotspots.addView(chip);
@@ -292,19 +378,27 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     private void submitCreateIntent() {
         ExploreUiState exploreState = viewModel.getUiState().getValue();
-        if (exploreState == null || exploreState.getSelectedHotspot() == null) return;
+        if (
+            exploreState == null || exploreState.getSelectedHotspot() == null
+        ) return;
 
         String hotspotId = exploreState.getSelectedHotspot().getId();
 
         List<Float> timeValues = sliderTime.getValues();
         float timeStart = timeValues.get(0);
-        float timeEnd   = timeValues.get(1);
+        float timeEnd = timeValues.get(1);
 
         List<Float> ageValues = sliderAge.getValues();
         int ageMin = ageValues.get(0).intValue();
         int ageMax = ageValues.get(1).intValue();
 
-        createIntentViewModel.submit(hotspotId, timeStart, timeEnd, ageMin, ageMax);
+        createIntentViewModel.submit(
+            hotspotId,
+            timeStart,
+            timeEnd,
+            ageMin,
+            ageMax
+        );
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -315,8 +409,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (pulseOverlay == null) {
             pulseOverlay = new PulseOverlayView(requireContext());
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            );
             mapContainer.addView(pulseOverlay, lp);
         }
         pulseOverlay.setVisibility(View.VISIBLE);
@@ -335,50 +430,87 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void renderState(ExploreUiState state) {
-        // Draw markers once when the first hotspot batch arrives and map is ready.
-        if (googleMap != null && markerByHotspotId.isEmpty() && !state.getHotspots().isEmpty()) {
+        // Draw markers once when the first hotspot batch arrives and the map is ready.
+        if (
+            googleMap != null &&
+            markerByHotspotId.isEmpty() &&
+            !state.getHotspots().isEmpty()
+        ) {
             drawHotspotMarkers(state.getHotspots());
         }
 
-        // Always sync the selected-marker highlight regardless of state.
+        // Sync selected-marker highlight for every state transition.
         if (googleMap != null) {
             Hotspot sel = state.getSelectedHotspot();
             updateMarkerSelection(sel != null ? sel.getId() : null);
         }
 
+        MainActivity activity = (MainActivity) requireActivity();
+
         switch (state.getAppState()) {
             case WELCOME:
                 stopPulseAnimation();
+
+                // Nav bar — slide back in.
+                activity.setBottomNavVisibility(true);
+                // Back button — hidden; only used in SETUP.
+                btnBackToWelcome.setVisibility(View.GONE);
+
                 welcomeContent.setVisibility(View.VISIBLE);
                 setupContent.setVisibility(View.GONE);
                 scanningContent.setVisibility(View.GONE);
-                sheetBehavior.setDraggable(false);
+
+                sheetBehavior.setDraggable(true);
+                sheetBehavior.setHideable(false);
                 sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
                 if (!state.getHotspots().isEmpty()) {
                     populateHotspotChips(state.getHotspots());
                 }
                 break;
-
             case SETUP:
+                activity.setBottomNavVisibility(false);
                 stopPulseAnimation();
+
+                // Nav bar — slide out so the sheet can expand full-height.
+                activity.setBottomNavVisibility(false);
+                // Back button — visible so the user can return to WELCOME.
+                btnBackToWelcome.setVisibility(View.VISIBLE);
+
+                // Calculate the expanded offset so the sheet top clears the back button.
+                applySheetExpandedOffset();
+
                 welcomeContent.setVisibility(View.GONE);
                 setupContent.setVisibility(View.VISIBLE);
                 scanningContent.setVisibility(View.GONE);
+
                 if (state.getSelectedHotspot() != null) {
-                    txtSetupHotspotName.setText(state.getSelectedHotspot().getName());
+                    txtSetupHotspotName.setText(
+                        state.getSelectedHotspot().getName()
+                    );
                     zoomToHotspot(state.getSelectedHotspot());
                 }
+
                 sheetBehavior.setDraggable(true);
                 sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                sheetBehavior.setHideable(true);
                 break;
-
             case SCANNING:
+                // Nav bar stays hidden during an active scan.
+                activity.setBottomNavVisibility(false);
+                // Back button — hidden; use btnStopSearching to cancel.
+                btnBackToWelcome.setVisibility(View.GONE);
+
                 welcomeContent.setVisibility(View.GONE);
                 setupContent.setVisibility(View.GONE);
                 scanningContent.setVisibility(View.VISIBLE);
+
                 if (state.getSelectedHotspot() != null) {
-                    txtScanningHotspotName.setText(state.getSelectedHotspot().getName());
+                    txtScanningHotspotName.setText(
+                        state.getSelectedHotspot().getName()
+                    );
                 }
+
                 sheetBehavior.setDraggable(false);
                 sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 startPulseAnimation();
@@ -387,7 +519,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
         // One-shot error toast.
         if (state.getError() != null) {
-            Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                requireContext(),
+                state.getError(),
+                Toast.LENGTH_SHORT
+            ).show();
             viewModel.consumeError();
         }
     }
@@ -401,7 +537,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         }
 
         if (state.getError() != null) {
-            Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                requireContext(),
+                state.getError(),
+                Toast.LENGTH_SHORT
+            ).show();
             createIntentViewModel.consumeError();
         }
     }
@@ -421,11 +561,13 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             LatLng position = new LatLng(hotspot.getLat(), hotspot.getLng());
             boundsBuilder.include(position);
 
-            Marker marker = googleMap.addMarker(new MarkerOptions()
+            Marker marker = googleMap.addMarker(
+                new MarkerOptions()
                     .position(position)
                     .title(hotspot.getName())
                     .anchor(0.5f, 1f)
-                    .icon(createMarkerIcon(hotspot.getName(), false)));
+                    .icon(createMarkerIcon(hotspot.getName(), false))
+            );
 
             if (marker != null) {
                 marker.setTag(hotspot.getId());
@@ -434,7 +576,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         }
 
         if (!hotspots.isEmpty()) {
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 180));
+            googleMap.moveCamera(
+                CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 180)
+            );
         }
     }
 
@@ -442,34 +586,46 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (googleMap == null) return;
         LatLng target = new LatLng(hotspot.getLat(), hotspot.getLng());
         googleMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(target, 15f),
-                400,
-                null);
+            CameraUpdateFactory.newLatLngZoom(target, 15f),
+            400,
+            null
+        );
     }
 
     private void updateMarkerSelection(String selectedId) {
         for (Map.Entry<String, Marker> entry : markerByHotspotId.entrySet()) {
             boolean isSelected = entry.getKey().equals(selectedId);
-            Hotspot hotspot    = hotspotById.get(entry.getKey());
+            Hotspot hotspot = hotspotById.get(entry.getKey());
             if (hotspot == null) continue;
-            Marker marker = entry.getValue();
-            marker.setIcon(createMarkerIcon(hotspot.getName(), isSelected));
-            marker.setZIndex(isSelected ? 20f : 10f);
+            entry
+                .getValue()
+                .setIcon(createMarkerIcon(hotspot.getName(), isSelected));
+            entry.getValue().setZIndex(isSelected ? 20f : 10f);
         }
     }
 
     private com.google.android.gms.maps.model.BitmapDescriptor createMarkerIcon(
-            String labelText, boolean isSelected) {
-        View markerView = LayoutInflater.from(requireContext())
-                .inflate(R.layout.item_map_marker, null, false);
-        View pill      = markerView.findViewById(R.id.markerPill);
+        String labelText,
+        boolean isSelected
+    ) {
+        View markerView = LayoutInflater.from(requireContext()).inflate(
+            R.layout.item_map_marker,
+            null,
+            false
+        );
+        View pill = markerView.findViewById(R.id.markerPill);
         TextView label = markerView.findViewById(R.id.markerLabel);
-        View tail      = markerView.findViewById(R.id.markerTail);
+        View tail = markerView.findViewById(R.id.markerTail);
 
         label.setText(labelText);
-        pill.setBackgroundResource(isSelected
-                ? R.drawable.bg_marker_selected : R.drawable.bg_marker_unselected);
-        label.setTextColor(isSelected ? Color.WHITE : Color.parseColor("#332218"));
+        pill.setBackgroundResource(
+            isSelected
+                ? R.drawable.bg_marker_selected
+                : R.drawable.bg_marker_unselected
+        );
+        label.setTextColor(
+            isSelected ? Color.WHITE : Color.parseColor("#332218")
+        );
 
         GradientDrawable tailBg = new GradientDrawable();
         tailBg.setShape(GradientDrawable.RECTANGLE);
@@ -477,17 +633,22 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         tail.setBackground(tailBg);
 
         int widthSpec = View.MeasureSpec.makeMeasureSpec(
-                requireContext().getResources().getDisplayMetrics().widthPixels,
-                View.MeasureSpec.AT_MOST);
-        markerView.measure(widthSpec,
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            requireContext().getResources().getDisplayMetrics().widthPixels,
+            View.MeasureSpec.AT_MOST
+        );
+        markerView.measure(
+            widthSpec,
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        );
 
         int w = markerView.getMeasuredWidth();
         int h = markerView.getMeasuredHeight();
         if (w <= 0 || h <= 0) {
             return BitmapDescriptorFactory.defaultMarker(
-                    isSelected ? BitmapDescriptorFactory.HUE_ORANGE
-                               : BitmapDescriptorFactory.HUE_RED);
+                isSelected
+                    ? BitmapDescriptorFactory.HUE_ORANGE
+                    : BitmapDescriptorFactory.HUE_RED
+            );
         }
 
         markerView.layout(0, 0, w, h);
@@ -501,7 +662,10 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupListeners() {
-        // dimOverlay: always GONE in the new design; kept for potential future use.
+        // Back button — returns from SETUP to WELCOME.
+        btnBackToWelcome.setOnClickListener(v -> viewModel.closeSetup());
+
+        // Tapping the map while in SETUP closes the form.
         dimOverlay.setOnClickListener(v -> {
             ExploreUiState state = viewModel.getUiState().getValue();
             if (state != null && state.getAppState() == AppState.SETUP) {
@@ -518,17 +682,23 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupBackPressHandling() {
-        requireActivity().getOnBackPressedDispatcher()
-                .addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+        requireActivity()
+            .getOnBackPressedDispatcher()
+            .addCallback(
+                getViewLifecycleOwner(),
+                new OnBackPressedCallback(true) {
                     @Override
                     public void handleOnBackPressed() {
                         if (!handleBackPressed()) {
                             setEnabled(false);
-                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                            requireActivity()
+                                .getOnBackPressedDispatcher()
+                                .onBackPressed();
                             setEnabled(true);
                         }
                     }
-                });
+                }
+            );
     }
 
     private boolean handleBackPressed() {
@@ -536,10 +706,12 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (state == null) return false;
         switch (state.getAppState()) {
             case SETUP:
+                // Delegate to ViewModel — this triggers WELCOME which re-shows the nav bar.
                 viewModel.closeSetup();
                 return true;
             case SCANNING:
-                return true; // Back is blocked while a scan is in progress.
+                // Block back press while a scan is in progress; use btnStopSearching.
+                return true;
             default:
                 return false;
         }
@@ -551,7 +723,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     /** Converts a float hour value (e.g. 16.5) to "HH:MM" (e.g. "16:30"). */
     private String formatTime(float val) {
-        int hours   = (int) val;
+        int hours = (int) val;
         int minutes = Math.round((val - hours) * 60);
         return String.format(Locale.getDefault(), "%02d:%02d", hours, minutes);
     }
@@ -564,20 +736,38 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (view.getVisibility() == View.VISIBLE) return;
         view.setVisibility(View.VISIBLE);
         view.startAnimation(
-                android.view.animation.AnimationUtils.loadAnimation(requireContext(), animResId));
+            android.view.animation.AnimationUtils.loadAnimation(
+                requireContext(),
+                animResId
+            )
+        );
     }
 
     protected void hideWithAnim(View view, int animResId) {
         if (view.getVisibility() != View.VISIBLE) return;
         android.view.animation.Animation anim =
-                android.view.animation.AnimationUtils.loadAnimation(requireContext(), animResId);
-        anim.setAnimationListener(new android.view.animation.Animation.AnimationListener() {
-            @Override public void onAnimationStart(android.view.animation.Animation a) {}
-            @Override public void onAnimationRepeat(android.view.animation.Animation a) {}
-            @Override public void onAnimationEnd(android.view.animation.Animation a) {
-                view.setVisibility(View.GONE);
+            android.view.animation.AnimationUtils.loadAnimation(
+                requireContext(),
+                animResId
+            );
+        anim.setAnimationListener(
+            new android.view.animation.Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(
+                    android.view.animation.Animation a
+                ) {}
+
+                @Override
+                public void onAnimationRepeat(
+                    android.view.animation.Animation a
+                ) {}
+
+                @Override
+                public void onAnimationEnd(android.view.animation.Animation a) {
+                    view.setVisibility(View.GONE);
+                }
             }
-        });
+        );
         view.startAnimation(anim);
     }
 
