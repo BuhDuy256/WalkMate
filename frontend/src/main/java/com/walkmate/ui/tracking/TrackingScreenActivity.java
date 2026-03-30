@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,7 +25,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.RoundCap;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.walkmate.R;
@@ -62,8 +60,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private static final String TAG = "TrackingScreenActivity";
     private static final int    REQUEST_LOCATION_PERMISSION = 100;
-    private static final float  MAP_DEFAULT_ZOOM   = 15f; // meeting-point overview
-    private static final float  MAP_TRACKING_ZOOM  = 17f; // close follow during walk
+    private static final float  MAP_DEFAULT_ZOOM   = 16.5f; // meeting-point overview
+    private static final float  MAP_TRACKING_ZOOM  = 18.5f; // close follow during walk
     private static final int    POLYLINE_COLOR      = 0xFFFF7B3A; // orange_end
 
     // ── Session contract ──────────────────────────────────────────────────────
@@ -96,12 +94,12 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private MaterialButton        btnPause;
     private MaterialButton        btnStop;
     private FloatingActionButton  fabRecenter;
-    private LinearLayout          bottomSheet;
-    private BottomSheetBehavior<LinearLayout> sheetBehavior;
+    private LinearLayout          bottomPanel;
 
     // ── Flags ─────────────────────────────────────────────────────────────────
 
     private boolean finishDialogShown = false;
+    private int     bottomPanelHeightPx = 0;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -114,7 +112,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         if (sessionId == null) return; // guard already called finish()
 
         bindViews();
-        setupBottomSheet();
+        setupBottomPanel();
         setupMap();
         setupClickListeners();
 
@@ -151,6 +149,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         this.googleMap = map;
+        applyMapBottomPaddingIfReady();
 
         // Disable default controls — we supply our own back button and re-center FAB.
         map.getUiSettings().setMyLocationButtonEnabled(false);
@@ -170,26 +169,22 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         }
     }
 
-    // ── Bottom Sheet ──────────────────────────────────────────────────────────
+    // ── Bottom Panel ──────────────────────────────────────────────────────────
 
-    private void setupBottomSheet() {
-        sheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        sheetBehavior.setHideable(false);
-        sheetBehavior.setDraggable(false);
-
-        // After the first layout pass, lock the peek height to the sheet's full
-        // content height and reposition the FAB so it floats 16 dp above the sheet.
-        bottomSheet.post(() -> {
-            int sheetH = bottomSheet.getHeight();
-            if (sheetH > 0) {
-                sheetBehavior.setPeekHeight(sheetH, false);
-
-                ViewGroup.MarginLayoutParams fabParams =
-                        (ViewGroup.MarginLayoutParams) fabRecenter.getLayoutParams();
-                fabParams.bottomMargin = sheetH + dpToPx(16);
-                fabRecenter.requestLayout();
+    private void setupBottomPanel() {
+        bottomPanel.post(() -> {
+            int panelHeight = bottomPanel.getHeight();
+            if (panelHeight > 0) {
+                bottomPanelHeightPx = panelHeight;
+                applyMapBottomPaddingIfReady();
             }
         });
+    }
+
+    private void applyMapBottomPaddingIfReady() {
+        if (googleMap != null && bottomPanelHeightPx > 0) {
+            googleMap.setPadding(0, 0, 0, bottomPanelHeightPx);
+        }
     }
 
     // ── Click listeners ───────────────────────────────────────────────────────
@@ -436,7 +431,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         btnPause            = findViewById(R.id.btnPause);
         btnStop             = findViewById(R.id.btnStop);
         fabRecenter         = findViewById(R.id.fabRecenter);
-        bottomSheet         = findViewById(R.id.bottomSheet);
+        bottomPanel         = findViewById(R.id.bottomPanel);
     }
 
     /**
@@ -464,8 +459,4 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 + "\n  meetingLng  = " + meetingLng);
     }
 
-    /** Converts dp to px using the display density. */
-    private int dpToPx(int dp) {
-        return Math.round(dp * getResources().getDisplayMetrics().density);
-    }
 }
