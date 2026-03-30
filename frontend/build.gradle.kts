@@ -80,4 +80,8 @@ dependencies {
 
     // Secure local token storage
     implementation(libs.securityCrypto)
+
+    // Room (local GPS point storage)
+    implementation(libs.roomRuntime)
+    annotationProcessor(libs.roomCompiler)
 }
