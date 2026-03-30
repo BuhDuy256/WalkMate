@@ -67,6 +67,7 @@
     <string name="session_map_placeholder">Map Preview · Coming Soon</string>
     <string name="btn_chat">Chat</string>
     <string name="btn_cancel_session">Cancel Session</string>
+    <string name="btn_start_walk">Start Walk</string>
     <string name="session_chat_coming_soon">Chat — Coming Soon</string>
     <string name="cancel_session_title">Cancel Session</string>
     <string name="cancel_reason_busy">Unexpectedly busy</string>
@@ -81,6 +82,22 @@
     <string name="proposal_trust_format">⭐ %1$d · Trusted</string>
 
     <string name="profile_coming_soon">Coming Soon</string>
+
+    <!-- Tracking screen -->
+    <string name="btn_pause">Pause</string>
+    <string name="btn_resume">Resume</string>
+    <string name="btn_finish_walk">Finish</string>
+    <string name="tracking_partner_subtitle">Walking with you</string>
+    <string name="label_distance_unit">km</string>
+    <string name="label_duration">duration</string>
+    <string name="label_pace_unit">min / km</string>
+    <string name="pace_placeholder">--\'--\"</string>
+    <string name="tracking_permission_denied">Location permission is required to track your walk.</string>
+    <string name="walk_completed_title">Walk Complete!</string>
+    <string name="walk_completed_message">Distance: %1$s km\nTime: %2$s\nPace: %3$s</string>
+    <string name="btn_done">Done</string>
+    <string name="cd_back">Go back</string>
+    <string name="cd_recenter_map">Re-center map on my location</string>
 
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>

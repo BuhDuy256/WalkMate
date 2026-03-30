@@ -1,5 +1,6 @@
 package com.walkmate.ui.matches.session;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.walkmate.R;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
+import com.walkmate.ui.tracking.TrackingScreenActivity;
 
 public class SessionFragment extends Fragment {
 
@@ -53,6 +55,14 @@ public class SessionFragment extends Fragment {
                         R.string.session_chat_coming_soon, Toast.LENGTH_SHORT).show());
         adapter.setOnCancelClickListener(session ->
                 showCancelReasonDialog(session.getSessionId()));
+        adapter.setOnStartWalkClickListener(session -> {
+            Intent intent = new Intent(requireContext(), TrackingScreenActivity.class);
+            intent.putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   session.getSessionId());
+            intent.putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, session.getPartnerName());
+            intent.putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  session.getMeetingPointLat());
+            intent.putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  session.getMeetingPointLng());
+            startActivity(intent);
+        });
         recyclerView.setAdapter(adapter);
 
         swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());

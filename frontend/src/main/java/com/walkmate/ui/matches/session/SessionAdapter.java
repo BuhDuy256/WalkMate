@@ -30,11 +30,16 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         void onCancelClick(WalkSession session);
     }
 
+    public interface OnStartWalkClickListener {
+        void onStartWalkClick(WalkSession session);
+    }
+
     // -------------------------------------------------------------------------
 
     private final List<WalkSession> items = new ArrayList<>();
     private OnChatClickListener chatListener;
     private OnCancelClickListener cancelListener;
+    private OnStartWalkClickListener startWalkListener;
 
     public void setOnChatClickListener(OnChatClickListener listener) {
         this.chatListener = listener;
@@ -42,6 +47,10 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     public void setOnCancelClickListener(OnCancelClickListener listener) {
         this.cancelListener = listener;
+    }
+
+    public void setOnStartWalkClickListener(OnStartWalkClickListener listener) {
+        this.startWalkListener = listener;
     }
 
     public void setItems(List<WalkSession> newItems) {
@@ -78,6 +87,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         private final TextView txtMeetingTime;
         private final MaterialButton btnChat;
         private final MaterialButton btnCancelSession;
+        private final MaterialButton btnStartWalk;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -87,6 +97,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             txtMeetingTime   = itemView.findViewById(R.id.txtMeetingTime);
             btnChat          = itemView.findViewById(R.id.btnChat);
             btnCancelSession = itemView.findViewById(R.id.btnCancelSession);
+            btnStartWalk     = itemView.findViewById(R.id.btnStartWalk);
         }
 
         void bind(WalkSession session) {
@@ -106,6 +117,13 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             });
             btnCancelSession.setOnClickListener(v -> {
                 if (cancelListener != null) cancelListener.onCancelClick(session);
+            });
+
+            // "Start Walk" is only available when the partner has been met at the meeting point
+            boolean isPendingMeet = session.getStatus() == WalkSession.Status.PENDING_MEET;
+            btnStartWalk.setVisibility(isPendingMeet ? View.VISIBLE : View.GONE);
+            btnStartWalk.setOnClickListener(v -> {
+                if (startWalkListener != null) startWalkListener.onStartWalkClick(session);
             });
         }
 

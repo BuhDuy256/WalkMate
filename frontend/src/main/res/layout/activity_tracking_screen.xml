@@ -1,20 +1,355 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    PHASE 2 PLACEHOLDER — Replace entirely in Phase 5.
-    Full layout: CoordinatorLayout + MapFragment + stats bottom sheet + control buttons.
--->
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/black">
+    GPS Walk Tracking Screen — Phase 5 full layout.
 
-    <TextView
+    Layer order (bottom → top):
+      1. SupportMapFragment    — full-screen map background
+      2. bottomSheet           — stats + controls panel anchored at bottom
+      3. fabRecenter           — white circle FAB; margin set programmatically above sheet
+      4. btnBack               — top-left overlay; drawn last so it's always on top
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- ── 1. Full-screen Google Map ── -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/mapContainer"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- ── 2. Stats / Control Bottom Sheet ── -->
+    <!--
+        peekHeight is set programmatically to match the sheet's full measured
+        height so the sheet is always fully visible and non-collapsible.
+        The 480dp here is an oversize fallback to prevent flicker before
+        the first layout pass completes.
+    -->
+    <LinearLayout
+        android:id="@+id/bottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_sheet_top_rounded"
+        android:elevation="8dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        app:behavior_peekHeight="480dp"
+        app:behavior_hideable="false"
+        app:behavior_skipCollapsed="false"
+        app:behavior_draggable="false">
+
+        <!-- ── Handle bar ── -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp"
+            android:background="@color/handle_bar" />
+
+        <!-- ── Partner row: avatar + name ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp">
+
+            <!-- Warm circle avatar -->
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_warm_circle">
+
+                <TextView
+                    android:id="@+id/txtPartnerInitial"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:textColor="@color/orange_end"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </FrameLayout>
+
+            <!-- Name + subtitle -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtPartnerNameSheet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_dark"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/tracking_partner_subtitle"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ── Divider ── -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@color/handle_bar" />
+
+        <!-- ── Stats row: Distance | Duration | Pace ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <!-- Distance -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/txtDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.00"
+                    android:textColor="@color/text_dark"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/label_distance_unit"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08" />
+
+            </LinearLayout>
+
+            <!-- Vertical separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/handle_bar" />
+
+            <!-- Duration -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/txtDuration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/text_dark"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/label_duration"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08" />
+
+            </LinearLayout>
+
+            <!-- Vertical separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/handle_bar" />
+
+            <!-- Pace -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/txtPace"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pace_placeholder"
+                    android:textColor="@color/text_dark"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/label_pace_unit"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ── Divider ── -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@color/handle_bar" />
+
+        <!-- ── Action buttons ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="28dp">
+
+            <!--
+                Start button — READY state only.
+                Full-width orange gradient pill.
+            -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStart"
+                style="@style/Widget.Material3.Button.UnelevatedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_gradient_orange_pill"
+                android:text="@string/btn_start_walk"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="visible"
+                app:backgroundTint="@null"
+                app:cornerRadius="999dp" />
+
+            <!--
+                Pause + Stop row — ACTIVE and PAUSED states.
+                Hidden in READY; btnPause text alternates "Pause" / "Resume".
+            -->
+            <LinearLayout
+                android:id="@+id/btnRowPauseStop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <!-- Pause / Resume — outlined orange pill -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPause"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_pause"
+                    android:textColor="@color/orange_end"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:strokeColor="@color/orange_end"
+                    app:strokeWidth="1.5dp"
+                    app:cornerRadius="999dp"
+                    app:rippleColor="@color/bg_warm_light" />
+
+                <!-- Finish — solid orange gradient pill -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStop"
+                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/bg_gradient_orange_pill"
+                    android:text="@string/btn_finish_walk"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="999dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ── 3. Map Re-center FAB ── -->
+    <!--
+        layout_marginBottom is a generous initial value.
+        Activity adjusts it programmatically to (sheet.height + 16dp)
+        after the first layout pass so the FAB always floats above the sheet.
+    -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabRecenter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Walk Tracking — UI coming in Phase 5"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="500dp"
+        android:src="@drawable/ic_my_location"
+        android:contentDescription="@string/cd_recenter_map"
+        app:backgroundTint="@color/bg_white"
+        app:tint="@color/text_dark"
+        app:fabSize="mini"
+        app:elevation="4dp"
+        app:maxImageSize="20dp" />
 
-</FrameLayout>
+    <!-- ── 4. Back button (always rendered last → always on top) ── -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|start"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_white_circle"
+        android:src="@drawable/ic_back"
+        android:padding="10dp"
+        android:elevation="4dp"
+        android:contentDescription="@string/cd_back"
+        android:tint="@color/text_dark" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -164,6 +164,22 @@
 
             </LinearLayout>
 
+            <!-- Start Walk CTA — only visible for PENDING_MEET sessions -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStartWalk"
+                style="@style/Widget.Material3.Button.UnelevatedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_gradient_orange_pill"
+                android:text="@string/btn_start_walk"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:cornerRadius="999dp"
+                app:backgroundTint="@null" />
+
         </LinearLayout>
 
     </LinearLayout>
