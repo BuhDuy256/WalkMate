@@ -2,13 +2,16 @@ package com.walkmate.presentation.controller.walkintent;
 
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.application.walkintent.CreateWalkIntentCommand;
-import com.walkmate.application.walkintent.MatchResult;
+import com.walkmate.application.proposal.MatchingCommandService;
 import com.walkmate.application.walkintent.WalkIntentCommandService;
 import com.walkmate.application.walkintent.WalkIntentQueryService;
+import com.walkmate.domain.proposal.MatchProposal;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.presentation.dto.request.walkintent.CreateWalkIntentRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.presentation.dto.response.walkintent.WalkIntentResponse;
+import com.walkmate.presentation.mapper.proposal.ProposalMapper;
 import com.walkmate.presentation.mapper.walkintent.WalkIntentMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,8 +37,10 @@ public class WalkIntentController {
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final WalkIntentCommandService walkIntentCommandService;
-    private final WalkIntentQueryService walkIntentQueryService;
-    private final WalkIntentMapper walkIntentMapper;
+        private final WalkIntentQueryService   walkIntentQueryService;
+    private final MatchingCommandService   matchingCommandService;
+    private final WalkIntentMapper         walkIntentMapper;
+    private final ProposalMapper           proposalMapper;
 
     /**
      * POST /api/v1/intents
@@ -82,17 +87,22 @@ public class WalkIntentController {
 
     /**
      * GET /api/v1/intents/{intentId}/match
-     * Polls for a matched intent. Returns 204 No Content if no match found yet.
+     * Runs the matching engine for the given intent.
+     * Returns the proposal if a candidate was found (or an existing PENDING proposal).
+     * Returns 204 No Content if no candidate is available yet.
      */
     @GetMapping("/{intentId}/match")
-    public ResponseEntity<ApiResponse<WalkIntentResponse>> findMatch(
+    public ResponseEntity<ApiResponse<WalkProposalResponse>> findMatch(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String intentId) {
-        MatchResult result = walkIntentQueryService.findMatch(intentId).orElse(null);
-        if (result == null) {
+        MatchProposal proposal = matchingCommandService
+                .findOrCreateProposal(intentId, principal.userId())
+                .orElse(null);
+        if (proposal == null) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(ApiResponse.success(walkIntentMapper.toResponse(result.matched())));
+        return ResponseEntity.ok(ApiResponse.success(
+                proposalMapper.toResponse(proposal, principal.userId(), null)));
     }
 
     /**

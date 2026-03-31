@@ -93,6 +93,32 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
     }
 
     @Override
+    public Optional<WalkIntent> findByIdForUpdate(String id) {
+        final String sql = """
+                SELECT
+                    intent_id::text,
+                    hotspot_id::text,
+                    user_id::text,
+                    time_window_start,
+                    time_window_end,
+                    (matching_constraints->>'age_min')::int AS age_min,
+                    (matching_constraints->>'age_max')::int AS age_max,
+                    status,
+                    created_at,
+                    expires_at,
+                    version
+                FROM walk_intent
+                WHERE intent_id = :intentId
+                FOR UPDATE
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("intentId", UUID.fromString(id))
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
     public void delete(String id) {
         jdbcClient.sql("DELETE FROM walk_intent WHERE intent_id = :intentId")
                 .param("intentId", UUID.fromString(id))

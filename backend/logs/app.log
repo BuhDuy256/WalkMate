@@ -424,3 +424,1691 @@ Caused by: java.lang.NoSuchMethodError: 'void org.springframework.web.method.Con
 2026-04-01 00:45:06.755  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
 2026-04-01 00:45:07.037  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
 2026-04-01 00:45:07.047  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 11.787 seconds (process running for 12.491)
+2026-04-01 01:15:52.945  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 17952 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:15:52.950 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:15:52.952  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:15:57.629  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:15:57.666  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:15:57.666  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:15:57.888  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:15:57.888  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4772 ms
+2026-04-01 01:15:58.721  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:16:01.487  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@1224e1b6
+2026-04-01 01:16:01.489  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:16:01.661  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:16:03.802  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+2026-04-01 01:16:03.802  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:16:04.435  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:16:04.441  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:16:04.481  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:16:04.546 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.api.exception.FlywayValidateException: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:201)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+2026-04-01 01:17:55.133  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 11612 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:17:55.137 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:17:55.137  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:17:59.489  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:17:59.540  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:17:59.542  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:17:59.720  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:17:59.722  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4423 ms
+2026-04-01 01:18:00.593  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:18:02.616  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5d37aa0f
+2026-04-01 01:18:02.620  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:18:02.779  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:18:05.059  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+2026-04-01 01:18:05.059  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:18:05.772  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:18:05.778  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:18:05.804  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:18:05.861 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.api.exception.FlywayValidateException: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 5
+-> Applied to database : -1931867033
+-> Resolved locally    : -1955156340
+Either revert the changes to the migration, or run repair to update the schema history.
+Migration checksum mismatch for migration version 6
+-> Applied to database : 1110710673
+-> Resolved locally    : -2057053601
+Either revert the changes to the migration, or run repair to update the schema history.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:201)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+2026-04-01 01:21:52.442  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 5132 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:21:52.442 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:21:52.442  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:21:54.765  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:21:54.778  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:21:54.778  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:21:54.853  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:21:54.853  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2335 ms
+2026-04-01 01:21:55.326  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:21:57.223  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@71fb8301
+2026-04-01 01:21:57.228  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:21:57.371  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:21:59.233  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Detected applied migration not resolved locally: 5.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Detected applied migration not resolved locally: 6.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+2026-04-01 01:21:59.233  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:21:59.849  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:21:59.863  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:21:59.911  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:21:59.970 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Detected applied migration not resolved locally: 5.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Detected applied migration not resolved locally: 6.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Detected applied migration not resolved locally: 5.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Detected applied migration not resolved locally: 6.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Validate failed: Migrations have failed validation
+Detected applied migration not resolved locally: 5.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Detected applied migration not resolved locally: 6.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.api.exception.FlywayValidateException: Validate failed: Migrations have failed validation
+Detected applied migration not resolved locally: 5.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Detected applied migration not resolved locally: 6.
+If you removed this migration intentionally, run repair to mark the migration as deleted.
+Need more flexibility with validation rules? Learn more: https://rd.gt/3AbJUZE
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:201)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+2026-04-01 01:22:53.787  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 27112 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:22:53.787 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:22:53.791  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:22:55.881  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:22:55.899  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:22:55.899  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:22:56.003  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:22:56.003  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2150 ms
+2026-04-01 01:22:56.503  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:22:58.277  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@16a09809
+2026-04-01 01:22:58.281  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:22:58.426  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:23:00.091  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:00.596s)
+2026-04-01 01:23:01.376  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": << Empty Schema >>
+2026-04-01 01:23:01.381  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 01:23:01.691  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "1 - create hotspot"
+2026-04-01 01:23:01.977 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "1 - create hotspot" failed! Changes successfully rolled back.
+2026-04-01 01:23:02.621  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 01:23:02.621  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:23:03.655  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:23:03.662  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:23:03.674  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:23:03.681 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: relation "hotspot" already exists
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 01:24:31.808  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 8592 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:24:31.813 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:24:31.815  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:24:34.588  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:24:34.601  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:24:34.603  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:24:34.682  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:24:34.682  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2704 ms
+2026-04-01 01:24:35.178  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:24:37.286  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@20faaf77
+2026-04-01 01:24:37.292  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:24:37.836  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:24:46.187  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:03.147s)
+2026-04-01 01:24:58.278  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": << Empty Schema >>
+2026-04-01 01:24:58.278  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 01:25:01.557  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "1 - create hotspot"
+2026-04-01 01:25:02.332 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "1 - create hotspot" failed! Changes successfully rolled back.
+2026-04-01 01:25:06.910  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 01:25:06.910  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:25:15.443  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:25:15.448  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:25:15.459  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:25:15.476 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V1__create_hotspot.sql failed
+------------------------------------
+SQL State  : 42P07
+Error Code : 0
+Message    : ERROR: relation "hotspot" already exists
+Location   : db/migration/V1__create_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V1__create_hotspot.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: relation "hotspot" already exists
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 01:27:36.269  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 12768 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:27:36.274 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:27:36.276  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:27:38.724  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:27:38.742  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:27:38.742  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:27:38.812  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:27:38.812  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2381 ms
+2026-04-01 01:27:39.262  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:27:41.758  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5d37aa0f
+2026-04-01 01:27:41.763  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:27:41.931  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:27:43.462  INFO [traceId=,spanId=] [main] o.f.c.i.schemahistory.JdbcTableSchemaHistory : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-04-01 01:27:43.659  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:00.618s)
+2026-04-01 01:27:44.953  INFO [traceId=,spanId=] [main] o.f.c.i.schemahistory.JdbcTableSchemaHistory : Creating Schema History table "public"."flyway_schema_history" with baseline ...
+2026-04-01 01:27:45.864  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbBaseline : Successfully baselined schema with version: 1
+2026-04-01 01:27:47.157  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 1
+2026-04-01 01:27:47.159  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 01:27:47.655  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "1.1 - create user account"
+2026-04-01 01:27:48.167  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "user_account" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 01:27:48.364  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "idx_user_account_email" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 01:27:49.985  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "1.2 - create refresh token"
+2026-04-01 01:27:50.205  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "refresh_token" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 01:27:50.306  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "idx_refresh_token_user_id" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 01:27:51.675  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "2 - create walk intent"
+2026-04-01 01:27:51.959  INFO [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: drop cascades to 2 other objects
+2026-04-01 01:27:54.405  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "3 - create match proposal"
+2026-04-01 01:27:56.970  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "4 - seed hotspot"
+2026-04-01 01:27:57.487 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "4 - seed hotspot" failed! Changes successfully rolled back.
+2026-04-01 01:27:58.310  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 01:27:58.310  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:27:59.526  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:27:59.531  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:27:59.556  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:27:59.586 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 01:28:48.577  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 24796 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:28:48.582 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:28:48.583  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:28:51.528  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:28:51.568  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:28:51.572  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:28:51.767  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:28:51.767  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3067 ms
+2026-04-01 01:28:52.573  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:28:54.230  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@749d7c01
+2026-04-01 01:28:54.234  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:28:54.397  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:28:56.149  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 9 migrations (execution time 00:00.569s)
+2026-04-01 01:28:57.579  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 3
+2026-04-01 01:28:57.579  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 01:28:58.001  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "4 - seed hotspot"
+2026-04-01 01:28:58.409 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "4 - seed hotspot" failed! Changes successfully rolled back.
+2026-04-01 01:28:59.231  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 01:28:59.231  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:29:00.149  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:29:00.152  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:29:00.159  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:29:00.172 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V4__seed_hotspot.sql failed
+----------------------------------
+SQL State  : 23505
+Error Code : 0
+Message    : ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+Location   : db/migration/V4__seed_hotspot.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V4__seed_hotspot.sql)
+Line       : 7
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint "hotspot_pkey"
+  Detail: Key (id)=(11111111-1111-1111-1111-111111111111) already exists.
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 01:29:43.918  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 22492 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:29:43.923 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:29:43.923  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:29:46.250  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:29:46.265  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:29:46.265  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:29:46.330  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:29:46.330  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2309 ms
+2026-04-01 01:29:46.825  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:29:50.617  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@29b8df5
+2026-04-01 01:29:50.619  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:29:50.778  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:29:51.993  INFO [traceId=,spanId=] [main] o.f.c.i.schemahistory.JdbcTableSchemaHistory : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-04-01 01:29:52.081  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:00.279s)
+2026-04-01 01:29:53.066  INFO [traceId=,spanId=] [main] o.f.c.i.schemahistory.JdbcTableSchemaHistory : Creating Schema History table "public"."flyway_schema_history" with baseline ...
+2026-04-01 01:29:53.923  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbBaseline : Successfully baselined schema with version: 4
+2026-04-01 01:29:55.555  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 4
+2026-04-01 01:29:55.555  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 01:29:55.853  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "5 - seed hotspots phase2"
+2026-04-01 01:29:58.707  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "6 - migrate intent status matched to consumed"
+2026-04-01 01:29:58.881  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: enum label "CONSUMED" already exists, skipping (SQL State: 42710 - Error Code: 0)
+2026-04-01 01:29:59.081 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "6 - migrate intent status matched to consumed" failed! Changes successfully rolled back.
+2026-04-01 01:29:59.723  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V6__migrate_intent_status_matched_to_consumed.sql failed
+---------------------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+Location   : db/migration/V6__migrate_intent_status_matched_to_consumed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V6__migrate_intent_status_matched_to_consumed.sql)
+Line       : 10
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 01:29:59.725  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 01:30:00.876  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 01:30:00.884  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 01:30:00.904  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 01:30:00.916 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V6__migrate_intent_status_matched_to_consumed.sql failed
+---------------------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+Location   : db/migration/V6__migrate_intent_status_matched_to_consumed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V6__migrate_intent_status_matched_to_consumed.sql)
+Line       : 10
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V6__migrate_intent_status_matched_to_consumed.sql failed
+---------------------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+Location   : db/migration/V6__migrate_intent_status_matched_to_consumed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V6__migrate_intent_status_matched_to_consumed.sql)
+Line       : 10
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V6__migrate_intent_status_matched_to_consumed.sql failed
+---------------------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+Location   : db/migration/V6__migrate_intent_status_matched_to_consumed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V6__migrate_intent_status_matched_to_consumed.sql)
+Line       : 10
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V6__migrate_intent_status_matched_to_consumed.sql failed
+---------------------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+Location   : db/migration/V6__migrate_intent_status_matched_to_consumed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V6__migrate_intent_status_matched_to_consumed.sql)
+Line       : 10
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V6__migrate_intent_status_matched_to_consumed.sql failed
+---------------------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+Location   : db/migration/V6__migrate_intent_status_matched_to_consumed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V6__migrate_intent_status_matched_to_consumed.sql)
+Line       : 10
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: invalid input value for enum intent_status: "MATCHED"
+  Position: 124
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 01:34:31.647  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 11784 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 01:34:31.652 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 01:34:31.652  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 01:34:33.922  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 01:34:33.932  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 01:34:33.932  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 01:34:33.997  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 01:34:34.002  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2228 ms
+2026-04-01 01:34:34.487  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 01:34:36.257  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@f48a080
+2026-04-01 01:34:36.261  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 01:34:36.410  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 01:34:38.008  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 9 migrations (execution time 00:00.402s)
+2026-04-01 01:34:39.195  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 5
+2026-04-01 01:34:39.196  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 01:34:39.510  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "6 - migrate intent status matched to consumed"
+2026-04-01 01:34:39.745  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: enum label "CONSUMED" already exists, skipping (SQL State: 42710 - Error Code: 0)
+2026-04-01 01:34:39.952  INFO [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: enum label CONSUMED already exists, skipping
+2026-04-01 01:34:41.243  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Successfully applied 1 migration to schema "public", now at version v6 (execution time 00:00.725s)
+2026-04-01 01:34:43.342  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-04-01 01:34:44.578  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-04-01 01:34:44.608  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 13.776 seconds (process running for 14.382)
+2026-04-01 02:17:26.671  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 9480 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 02:17:26.671 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 02:17:26.671  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 02:17:29.641  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 02:17:29.673  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 02:17:29.673  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 02:17:29.800  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 02:17:29.800  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3020 ms
+2026-04-01 02:17:30.339  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 02:17:32.535  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@16a09809
+2026-04-01 02:17:32.535  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 02:17:32.678  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 02:17:34.577  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 11 migrations (execution time 00:00.411s)
+2026-04-01 02:17:36.003  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-04-01 02:17:36.003  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 02:17:36.430  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "7 - add proposal status confirmed"
+2026-04-01 02:17:36.746  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: enum label "CONFIRMED" already exists, skipping (SQL State: 42710 - Error Code: 0)
+2026-04-01 02:17:37.127 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "7 - add proposal status confirmed" failed! Changes successfully rolled back.
+2026-04-01 02:17:37.956  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V7__add_proposal_status_confirmed.sql failed
+---------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+Location   : db/migration/V7__add_proposal_status_confirmed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V7__add_proposal_status_confirmed.sql)
+Line       : 11
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 02:17:37.956  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 02:17:39.078  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 02:17:39.086  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 02:17:39.118  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 02:17:39.149 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V7__add_proposal_status_confirmed.sql failed
+---------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+Location   : db/migration/V7__add_proposal_status_confirmed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V7__add_proposal_status_confirmed.sql)
+Line       : 11
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V7__add_proposal_status_confirmed.sql failed
+---------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+Location   : db/migration/V7__add_proposal_status_confirmed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V7__add_proposal_status_confirmed.sql)
+Line       : 11
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V7__add_proposal_status_confirmed.sql failed
+---------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+Location   : db/migration/V7__add_proposal_status_confirmed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V7__add_proposal_status_confirmed.sql)
+Line       : 11
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V7__add_proposal_status_confirmed.sql failed
+---------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+Location   : db/migration/V7__add_proposal_status_confirmed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V7__add_proposal_status_confirmed.sql)
+Line       : 11
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V7__add_proposal_status_confirmed.sql failed
+---------------------------------------------------
+SQL State  : 22P02
+Error Code : 0
+Message    : ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+Location   : db/migration/V7__add_proposal_status_confirmed.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V7__add_proposal_status_confirmed.sql)
+Line       : 11
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: invalid input value for enum proposal_status: "ACCEPTED"
+  Position: 99
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 02:18:52.255  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 26320 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 02:18:52.255 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 02:18:52.255  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 02:18:55.973  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 02:18:55.993  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 02:18:55.993  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 02:18:56.151  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 02:18:56.151  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3777 ms
+2026-04-01 02:18:56.983  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 02:18:58.931  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@1857fe6c
+2026-04-01 02:18:58.933  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 02:18:59.110  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 02:19:00.530  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 11 migrations (execution time 00:00.440s)
+2026-04-01 02:19:01.870  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-04-01 02:19:01.870  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 02:19:02.187  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "7 - add proposal status confirmed"
+2026-04-01 02:19:02.401  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: enum label "CONFIRMED" already exists, skipping (SQL State: 42710 - Error Code: 0)
+2026-04-01 02:19:04.174  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "8 - create walk session"
+2026-04-01 02:19:04.599  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "walk_session" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 02:19:04.884 ERROR [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migration of schema "public" to version "8 - create walk session" failed! Changes successfully rolled back.
+2026-04-01 02:19:05.707  WARN [traceId=,spanId=] [main] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V8__create_walk_session.sql failed
+-----------------------------------------
+SQL State  : 42703
+Error Code : 0
+Message    : ERROR: column "proposal_id" does not exist
+Location   : db/migration/V8__create_walk_session.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V8__create_walk_session.sql)
+Line       : 38
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+2026-04-01 02:19:05.707  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown initiated...
+2026-04-01 02:19:06.836  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Shutdown completed.
+2026-04-01 02:19:06.847  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Stopping service [Tomcat]
+2026-04-01 02:19:06.898  INFO [traceId=,spanId=] [main] o.s.b.a.logging.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-01 02:19:06.956 ERROR [traceId=,spanId=] [main] org.springframework.boot.SpringApplication : Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotQueryService' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\application\hotspot\HotspotQueryService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V8__create_walk_session.sql failed
+-----------------------------------------
+SQL State  : 42703
+Error Code : 0
+Message    : ERROR: column "proposal_id" does not exist
+Location   : db/migration/V8__create_walk_session.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V8__create_walk_session.sql)
+Line       : 38
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.walkmate.Application.main(Application.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'hotspotJdbcRepository' defined in file [C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main\com\walkmate\infrastructure\repository\hotspot\HotspotJdbcRepository.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V8__create_walk_session.sql failed
+-----------------------------------------
+SQL State  : 42703
+Error Code : 0
+Message    : ERROR: column "proposal_id" does not exist
+Location   : db/migration/V8__create_walk_session.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V8__create_walk_session.sql)
+Line       : 38
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Script V8__create_walk_session.sql failed
+-----------------------------------------
+SQL State  : 42703
+Error Code : 0
+Message    : ERROR: column "proposal_id" does not exist
+Location   : db/migration/V8__create_walk_session.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V8__create_walk_session.sql)
+Line       : 38
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 35 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Script V8__create_walk_session.sql failed
+-----------------------------------------
+SQL State  : 42703
+Error Code : 0
+Message    : ERROR: column "proposal_id" does not exist
+Location   : db/migration/V8__create_walk_session.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V8__create_walk_session.sql)
+Line       : 38
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:164)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$1(Flyway.java:247)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:210)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:188)
+	at org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 47 common frames omitted
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Script V8__create_walk_session.sql failed
+-----------------------------------------
+SQL State  : 42703
+Error Code : 0
+Message    : ERROR: column "proposal_id" does not exist
+Location   : db/migration/V8__create_walk_session.sql (C:\Users\Duy\Desktop\WalkMate\backend\build\resources\main\db\migration\V8__create_walk_session.sql)
+Line       : 38
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:256)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:217)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:137)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 66 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: column "proposal_id" does not exist
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2875)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2560)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:429)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:526)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:436)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:358)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:343)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:319)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:314)
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95)
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:215)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	... 72 common frames omitted
+2026-04-01 02:19:45.057  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 26608 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 02:19:45.061 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 02:19:45.062  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 02:19:48.625  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 02:19:48.654  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 02:19:48.655  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 02:19:48.835  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 02:19:48.836  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3641 ms
+2026-04-01 02:19:49.604  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 02:19:51.909  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@7e1d8d41
+2026-04-01 02:19:51.911  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 02:19:52.042  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 02:19:53.740  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 11 migrations (execution time 00:00.595s)
+2026-04-01 02:19:55.388  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 7
+2026-04-01 02:19:55.389  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 02:19:55.967  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "8 - create walk session"
+2026-04-01 02:19:56.370  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "walk_session" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 02:20:05.323  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Successfully applied 1 migration to schema "public", now at version v8 (execution time 00:01.261s)
+2026-04-01 02:20:10.659  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-04-01 02:20:11.673  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-04-01 02:20:11.708  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 27.702 seconds (process running for 28.681)

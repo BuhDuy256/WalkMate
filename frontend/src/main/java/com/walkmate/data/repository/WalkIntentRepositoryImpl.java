@@ -8,11 +8,14 @@ import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.WalkIntentApiService;
 import com.walkmate.data.datasource.remote.dto.request.walkintent.CreateWalkIntentRequest;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.data.datasource.remote.dto.response.walkintent.WalkIntentResponse;
 import com.walkmate.data.mapper.WalkIntentMapper;
+import com.walkmate.data.mapper.WalkProposalMapper;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
+import com.walkmate.domain.walkproposal.WalkProposal;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -85,9 +88,27 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
     }
 
     @Override
-    public void findMatch(String intentId, DomainCallback<WalkIntent> callback) {
-        // Intentionally mocked — real implementation deferred to Phase 4
-        executor.execute(() -> callback.onError(new Exception("No match found yet")));
+    public void findMatch(String intentId, DomainCallback<WalkProposal> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<WalkProposalResponse>> resp =
+                        apiService.findMatch(intentId).execute();
+
+                if (resp.code() == 204) {
+                    // No candidate available yet — signal with null
+                    callback.onSuccess(null);
+                    return;
+                }
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(WalkProposalMapper.toDomain(resp.body().getData()));
+                } else {
+                    callback.onError(new Exception(extractErrorCode(resp.body(), "MATCH_NOT_FOUND")));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "findMatch network error", e);
+                callback.onError(e);
+            }
+        });
     }
 
     @Override

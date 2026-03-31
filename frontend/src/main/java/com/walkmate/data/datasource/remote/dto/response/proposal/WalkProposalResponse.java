@@ -1,0 +1,55 @@
+package com.walkmate.data.datasource.remote.dto.response.proposal;
+
+import com.google.gson.annotations.SerializedName;
+
+public class WalkProposalResponse {
+
+    @SerializedName("proposal_id")
+    private String proposalId;
+
+    @SerializedName("callers_intent_id")
+    private String callersIntentId;
+
+    @SerializedName("matched_intent_id")
+    private String matchedIntentId;
+
+    @SerializedName("callers_user_id")
+    private String callersUserId;
+
+    @SerializedName("matched_user_id")
+    private String matchedUserId;
+
+    @SerializedName("proposed_time_start")
+    private String proposedTimeStart;   // ISO-8601
+
+    @SerializedName("proposed_time_end")
+    private String proposedTimeEnd;     // ISO-8601
+
+    @SerializedName("proposed_lat")
+    private double proposedLat;
+
+    @SerializedName("proposed_lng")
+    private double proposedLng;
+
+    @SerializedName("status")
+    private String status;
+
+    @SerializedName("expires_at")
+    private String expiresAt;
+
+    @SerializedName("session_id")
+    private String sessionId;           // null until CONFIRMED
+
+    public String getProposalId()       { return proposalId; }
+    public String getCallersIntentId()  { return callersIntentId; }
+    public String getMatchedIntentId()  { return matchedIntentId; }
+    public String getCallersUserId()    { return callersUserId; }
+    public String getMatchedUserId()    { return matchedUserId; }
+    public String getProposedTimeStart(){ return proposedTimeStart; }
+    public String getProposedTimeEnd()  { return proposedTimeEnd; }
+    public double getProposedLat()      { return proposedLat; }
+    public double getProposedLng()      { return proposedLng; }
+    public String getStatus()           { return status; }
+    public String getExpiresAt()        { return expiresAt; }
+    public String getSessionId()        { return sessionId; }
+}

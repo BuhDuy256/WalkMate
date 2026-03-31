@@ -8,6 +8,14 @@ import java.util.Optional;
 public interface WalkIntentRepository {
     WalkIntent save(WalkIntent intent);
     Optional<WalkIntent> findById(String id);
+
+    /**
+     * Loads the intent with a pessimistic write lock (SELECT ... FOR UPDATE).
+     * MUST be called inside an active @Transactional boundary.
+     * Use this before consuming an intent to prevent concurrent double-consumption.
+     */
+    Optional<WalkIntent> findByIdForUpdate(String id);
+
     void delete(String id);
 
     /** Returns all OPEN intents owned by the given user, ordered newest-first. */
