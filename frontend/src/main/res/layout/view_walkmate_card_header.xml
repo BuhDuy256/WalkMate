@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  WalkMateCardHeader — compound view layout.
+  Root is <merge> because the host class extends ConstraintLayout.
+
+  Layout (left → right):
+    [emoji] [title ──── fills remaining space ──── ] [chevron?]
+
+  This replaces the legacy pattern:
+    LinearLayout horizontal {
+      TextView emoji (marginEnd="8dp")
+      TextView title (layout_weight="1")   ← triggers double measure pass
+      ImageView chevron (20dp)
+    }
+
+  The ConstraintLayout version resolves in a single measure pass:
+    - emoji: start=parent, top/bottom=parent
+    - title: start=end(emoji), end=start(chevron), 0dp width (fills space)
+    - chevron: end=parent, top/bottom=parent
+
+  setNavigable(false) sets chevron to GONE, and the title constraint
+  updates to end=parent automatically because chevron is packed-end.
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Emoji / icon character at the header start -->
+    <TextView
+        android:id="@+id/tv_header_emoji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="🔥" />
+
+    <!--
+      Title — 0dp width so it fills from the end of the emoji to the start
+      of the chevron. When chevron is GONE, its barrier collapses and the title
+      extends to parent end automatically.
+    -->
+    <TextView
+        android:id="@+id/tv_header_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_dark"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/tv_header_emoji"
+        app:layout_constraintEnd_toStartOf="@+id/iv_header_chevron"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="Walking Streak" />
+
+    <!--
+      Trailing chevron — VISIBLE by default (navigable=true).
+      Set to GONE via setNavigable(false) for non-tappable section headers.
+      When GONE, tv_header_title's end constraint collapses to parent end.
+    -->
+    <ImageView
+        android:id="@+id/iv_header_chevron"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_chevron_right"
+        android:contentDescription="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</merge>

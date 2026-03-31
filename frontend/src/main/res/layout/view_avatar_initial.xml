@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AvatarInitialView — compound view layout.
+  Root is <merge> because the host class extends FrameLayout.
+
+  Layer order (bottom → top):
+  1. tv_initial  — fallback initial letter; always drawn first (background layer)
+  2. img_avatar  — photo via Glide; INVISIBLE by default, becomes VISIBLE on load
+  3. view_online_dot — status indicator; GONE by default, toggled by setOnlineStatus()
+
+  The FrameLayout itself receives bg_warm_circle background programmatically
+  in AvatarInitialView.init() so it is always the circle canvas regardless of
+  whether a photo is present.
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Initial letter — centered, orange bold.
+      Text size defaults to 20sp; override via app:wm_initialTextSize or
+      setInitialTextSizeSp() for non-standard avatar sizes.
+    -->
+    <TextView
+        android:id="@+id/tv_initial"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="@color/orange_end"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="A" />
+
+    <!--
+      Photo overlay — circleCrop loaded by Glide.
+      Starts INVISIBLE so the initial shows while there is no URL or while
+      Glide is resolving. Set to VISIBLE only after bind() confirms a URL.
+      The transparent placeholder keeps the initial visible during network load.
+    -->
+    <ImageView
+        android:id="@+id/img_avatar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="invisible"
+        android:contentDescription="@null"
+        tools:src="@drawable/ic_user"
+        tools:visibility="visible" />
+
+    <!--
+      Online status dot — 14dp green circle anchored bottom|end.
+      GONE by default; made VISIBLE by setOnlineStatus(true) or bind() overload.
+      14dp matches the visual weight at the 48dp avatar size; scale up via
+      a size attribute if needed at 88dp.
+    -->
+    <View
+        android:id="@+id/view_online_dot"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_gravity="bottom|end"
+        android:background="@drawable/bg_green_dot"
+        android:visibility="gone" />
+
+</merge>

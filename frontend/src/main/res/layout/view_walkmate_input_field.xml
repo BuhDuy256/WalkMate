@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  WalkMateInputField — compound view layout.
+  Root tag is <merge> because the host class (WalkMateInputField) already
+  extends LinearLayout (vertical). Using <merge> removes one redundant
+  ViewGroup from the tree, keeping the field at 3 views deep (label + container + error).
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Field label — 13sp bold, warm label colour matching form conventions -->
+    <TextView
+        android:id="@+id/tv_field_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_label"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        tools:text="Email Address" />
+
+    <!--
+      Input container — flat ConstraintLayout.
+      Holds the EditText and the password-toggle icon side-by-side with no
+      nesting. paddingHorizontal="20dp" matches the login/register field spec.
+    -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_input_container"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_input_field"
+        android:paddingHorizontal="20dp">
+
+        <EditText
+            android:id="@+id/et_field_input"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:drawablePadding="12dp"
+            android:textColorHint="#C6B5A6"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/iv_password_toggle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:hint="Enter text..." />
+
+        <!--
+          Password toggle — GONE by default; made VISIBLE only when
+          wm_passwordToggle="true" is declared in XML or setPasswordToggleEnabled(true)
+          is called programmatically.
+        -->
+        <ImageView
+            android:id="@+id/iv_password_toggle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_eye_hide"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#C6B5A6" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!--
+      Inline error label — GONE until setError(msg) is called.
+      marginStart="20dp" aligns the error text with the EditText text start
+      (which has 20dp padding inside the container).
+    -->
+    <TextView
+        android:id="@+id/tv_field_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="20dp"
+        android:textColor="@color/color_danger"
+        android:textSize="12sp"
+        android:visibility="gone"
+        tools:text="This field is required"
+        tools:visibility="visible" />
+
+</merge>

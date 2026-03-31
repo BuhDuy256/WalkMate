@@ -126,3 +126,104 @@ A `SingleLiveEvent` navigation approach is valid and commonly used in MVI archit
 - The interface is visible and enforced at compile-link time via the `implements` declaration on `MainActivity`.
 
 **Key Takeaway:** Fragments should communicate with their host via an interface contract defined inside the Fragment itself. Acquire in `onAttach`, null in `onDetach`, and throw `IllegalStateException` — not `ClassCastException` — to surface missing implementations at the earliest possible moment.
+
+---
+
+## 8. Custom Views vs. XML `<include>` — Why Logic-Heavy Patterns Need a Class
+
+**Decision Date:** 2026-03-31  
+**Branch:** `improve/coordination-flow`
+
+**Problem:** The input field pattern (label + EditText + password toggle + error display) appears in at least 6 locations across `LoginFragment`, `RegisterFragment`, and future form screens. The naive approach is `<include layout="@layout/partial_input_field" />` with each Fragment managing toggle state and error clearing itself.
+
+This produces three concrete defects:
+
+1. **Duplicated state:** Each Fragment reimplements an `isPasswordVisible` boolean, a `togglePasswordVisibility()` helper, and a `setSelection()` cursor fix. Any bug (e.g., cursor jumping to position 0 after toggling) must be fixed in N places.
+2. **Fragile binding:** `<include>` requires the Fragment to `findViewById` all inner views by ID. Adding a sub-view to the partial layout silently breaks every Fragment that forgot to bind it.
+3. **Untestable:** Password toggle logic lives in `onViewCreated()` — impossible to unit-test without a rooted Fragment.
+
+**Decision:** Promote to `WalkMateInputField extends LinearLayout` (Custom View) with `<merge>` root layout.
+
+| Criterion              | XML `<include>`                               | `WalkMateInputField` Custom View                    |
+| ---------------------- | --------------------------------------------- | --------------------------------------------------- |
+| Internal state         | Fragment holds `isPasswordVisible` per field  | Encapsulated — Fragment never sees it               |
+| Error display          | Fragment calls `tvError.setVisibility()`      | `field.setError(msg)` — 1 line, null clears it      |
+| Custom XML attributes  | None — all config is hardcoded in the partial | `app:wm_label`, `app:wm_hint`, `app:wm_icon`, etc. |
+| Bug fix propagation    | Must fix in every Fragment                    | Fix once in `WalkMateInputField.java`               |
+| Cursor-end fix on toggle | Each Fragment reimplements `setSelection()` | Owned by `togglePasswordVisibility()` internally    |
+| Testability            | Requires Fragment instrumentation test        | Unit-testable in isolation                          |
+
+**Implementation Details:**
+- Layout: `res/layout/view_walkmate_input_field.xml` — `<merge>` root, flat `ConstraintLayout` container (EditText + toggle icon side-by-side, no nesting).
+- Class: `core/designsystem/view/WalkMateInputField.java` — reads `TypedArray` attributes in `init()`, exposes `getText()`, `setError(@Nullable String)`, `clearError()`, `addTextChangedListener()`.
+- Attributes: `res/values/attrs.xml` → `declare-styleable name="WalkMateInputField"`.
+
+**When `<include>` is still appropriate:**
+Use `<include>` only for **pure layout reuse** — e.g., a static divider, a fixed header graphic, or a layout sub-tree that never changes at runtime and has no logic. As soon as a view needs to show/hide, change color, or hold a boolean flag, it earns a Custom View class.
+
+**Key Takeaway:** `<include>` is a copy-paste mechanism with a filename. Custom Views are encapsulation units. Use `<include>` for static partials; use Custom Views the moment state or logic enters the picture. The boundary is sharp: if a Fragment needs to `setVisibility()` on anything inside an included layout, that layout should be a Custom View instead.
+
+---
+
+## 9. WalkMateButton — Why a FrameLayout Wrapper Beats Subclassing MaterialButton
+
+**Decision Date:** 2026-03-31
+
+**Problem:** The app has two button variants (gradient-filled orange pill, outlined orange stroke) that both need a loading state (ProgressBar overlay). The naive options are:
+
+1. Subclass `MaterialButton` → `MaterialButton` has an internal background tinting pipeline that intercepts `setBackgroundResource()` and always applies a solid `backgroundTint` on top of the drawable. Getting a gradient drawable to render correctly requires nulling the tint programmatically — brittle and version-sensitive.
+
+2. Use `FrameLayout` containing `AppCompatButton` + `ProgressBar` → `AppCompatButton` has no `backgroundTint` interference. `setBackgroundResource()` works cleanly. The `ProgressBar` floats centered via `FrameLayout`'s default gravity system.
+
+**Decision:** `WalkMateButton extends FrameLayout` with a `<merge>` root layout. The inner `AppCompatButton` fills the FrameLayout, and `ProgressBar` (24dp, `layout_gravity="center"`) overlays it.
+
+**Loading state implementation:**
+- `setLoading(true)`: `btnAction.setText("")` (stores original first), `btnAction.setEnabled(false)`, `pbLoading.setVisibility(VISIBLE)`.
+- `setLoading(false)`: restores stored text, re-enables, hides spinner.
+- Spinner tint: white for FILLED (readable on orange gradient), orange for OUTLINED (readable on transparent).
+
+**Key Takeaway:** When a Material component's own theming pipeline conflicts with your custom drawable requirements, wrap it in a FrameLayout rather than fighting the internal tinting system.
+
+---
+
+## 10. TagChipGroup — Extending ChipGroup vs. Wrapping It
+
+**Decision Date:** 2026-03-31
+
+**Problem:** Should `TagChipGroup` extend `ChipGroup` directly (making it IS-A ChipGroup) or extend `LinearLayout` / `FrameLayout` and contain a `ChipGroup` (HAS-A)?
+
+**Decision:** Extend `ChipGroup` directly.
+
+**Why IS-A wins here:**
+1. All standard ChipGroup XML attributes (`app:chipSpacingHorizontal`, `app:singleSelection`, etc.) work without any delegation boilerplate.
+2. The view IS functionally a ChipGroup with a smarter `setTags()` method — adding a wrapper layer would break the Liskov substitution principle (anywhere a `ChipGroup` reference is accepted, a `TagChipGroup` should work).
+3. No layout file is needed — one fewer file to maintain.
+
+**The exception to the "layout required" rule:** Custom Views need a `view_*.xml` only when they compose multiple child views. A single-concern subclass of an existing ViewGroup (like `TagChipGroup extends ChipGroup`) has no composition to describe.
+
+**Chip creation via `ContextThemeWrapper`:**
+```java
+Chip chip = new Chip(new ContextThemeWrapper(getContext(), R.style.Widget_WalkMate_Chip_Active));
+```
+This is the canonical pattern for applying an XML `<style>` to a View created programmatically. It avoids manually setting each property (corner radius, text size, padding, stroke, etc.) and means future style changes propagate automatically.
+
+**Key Takeaway:** IS-A (extend) is correct when the custom class is semantically the same type with added behaviour. HAS-A (wrap) is correct when the custom class composes multiple sub-views. Don't wrap single-concern subclasses — you only create delegation boilerplate.
+
+---
+
+## 11. GlideHelper — Centralising the Image Loading Boundary
+
+**Decision Date:** 2026-03-31
+
+**Problem:** Six call sites (HomeFragment, ProfileFragment, QuickInviteAdapter, SessionAdapter, FindingAdapter, ProposalAdapter) each duplicate the same 5-line Glide null-guard + chain. Any Glide configuration change (timeout, cache strategy, error drawable, migration to Coil) requires touching all 6.
+
+**Decision:** `GlideHelper` in `core/util/` — a `final` utility class with a private constructor, exposing only static methods (`loadCircle`, `loadRounded`, `load`, `cancel`).
+
+**Why `core/util/` not `core/designsystem/view/`:** It's not a View — it's a stateless function. The `designsystem/view/` package is reserved for `View` subclasses. Utility functions that don't produce a UI element belong in `core/util/`.
+
+**Architectural contract enforced:**
+- Only `GlideHelper` and `AvatarInitialView` may import `com.bumptech.glide.*`.
+- `AvatarInitialView` is exempted because it owns its own Glide lifecycle (cancellation on `INVISIBLE`, transparent placeholder for the initial-letter fallback).
+- All other `ImageView` loads go through `GlideHelper`.
+
+**Key Takeaway:** The "one file to touch on migration" principle. Isolate every third-party library call behind a project-owned façade so a future library swap is a refactor of one file, not a grep-and-replace across the entire codebase.

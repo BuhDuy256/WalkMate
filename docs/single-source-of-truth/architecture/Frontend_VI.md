@@ -177,6 +177,87 @@ Lưu ý cho flow dạng Container + Sub-feature khi scale:
 | **Repository phải chặt DTO boundary?**      | ⚙️ BẮT BUỘC   | Repository bắt buộc map DTO -> Domain bằng Mapper trước khi trả về `DomainCallback<T>`. Tuyệt đối không trả `ApiResponse`/DTO ra ngoài tầng `data`.                                                           |
 | **Fragment được reuse layout Activity?**    | ❌ CẤM DÙNG   | Fragment không được `include` layout activity legacy. Mỗi fragment/sub-feature phải sở hữu layout riêng để tách biệt container và UI business.                                                                |
 
+## 8. Custom View Standards (Mandatory)
+
+### 8.1 Mục đích
+
+Fragment và Adapter phải là "thin" — chỉ bind data và forward click. Mọi UI logic phức tạp (validation, animation, state toggling) phải được đóng gói trong **Custom View** nằm tại `core/designsystem/view/`.
+
+### 8.2 Khi nào bắt buộc tạo Custom View
+
+| Điều kiện                                                     | Quyết định       |
+| ------------------------------------------------------------- | ---------------- |
+| Pattern lặp lại **≥ 3 lần** trên các màn hình khác nhau      | ✅ Tạo Custom View |
+| View chứa **state nội bộ** (visibility toggle, error display) | ✅ Tạo Custom View |
+| Thay thế bằng XML `<include>` là đủ (không có logic)          | ⚠️ Dùng `<include>` |
+| Render một lần, không tái sử dụng                             | ❌ Không cần tách |
+
+### 8.3 Custom View vs. XML `<include>`
+
+| Tiêu chí               | XML `<include>`                           | Custom View (`View` subclass)                         |
+| ---------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| Logic nội bộ           | ❌ Không thể — Fragment phải tự xử lý    | ✅ Đóng gói hoàn toàn                                |
+| Reuse API              | Phải bind lại mọi `findViewById` mỗi lần | `view.setError(msg)`, `view.getText()` — 1 dòng       |
+| Thuộc tính XML custom  | ❌ Không hỗ trợ `declare-styleable`      | ✅ `app:wm_label`, `app:wm_hint`, `app:wm_icon`      |
+| Tách biệt trách nhiệm  | Fragment vẫn biết về cấu trúc bên trong  | Fragment không biết gì về internals                   |
+| Kiểm thử độc lập       | ❌ Phải test qua Fragment                | ✅ Unit-testable độc lập                              |
+
+**Kết luận:** Dùng `<include>` cho pure-layout reuse (static, không logic). Dùng Custom View cho bất kỳ pattern nào có **state** hoặc **xử lý sự kiện nội bộ**.
+
+### 8.4 Quy Ước Tạo Custom View
+
+```text
+core/designsystem/view/
+└── <ComponentName>.java          ← Custom View class
+
+res/layout/
+└── view_<component_name>.xml     ← Layout dùng <merge> root
+
+res/values/
+└── attrs.xml                     ← declare-styleable cho tất cả Custom Views
+```
+
+**Quy tắc layout XML:**
+1. Root phải là `<merge>` — tránh thêm ViewGroup thừa khi inflate vào parent.
+2. Dùng `ConstraintLayout` phẳng bên trong nếu có nhiều hơn 2 view ngang hàng.
+3. Tất cả dynamic views phải có `tools:text` / `tools:visibility` để preview đúng.
+
+**Quy tắc Java class:**
+1. Extend `LinearLayout` (vertical) cho compound view dạng stack (label + field + error).
+2. Extend `ConstraintLayout` cho compound view dạng flat (avatar + text + badge).
+3. Đọc attributes qua `TypedArray` trong `init()`, luôn gọi `a.recycle()` trong `finally`.
+4. Public API chỉ expose những gì Fragment cần — không expose inner views.
+5. Xử lý toggle/state nội bộ — Fragment không được viết logic liên quan đến internals.
+
+### 8.5 Catalogue Custom Views Hiện Có
+
+| Class                 | Package                  | Mô tả                                                    | Thuộc tính XML chính                                                   |
+| --------------------- | ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `WalkMateInputField`  | `core.designsystem.view` | Label + EditText + password toggle + error line          | `wm_label`, `wm_hint`, `wm_icon`, `wm_inputType`, `wm_passwordToggle` |
+| `WalkMateButton`      | `core.designsystem.view` | Orange pill button — FILLED/OUTLINED + loading state     | `wm_buttonStyle`, `wm_text`                                            |
+| `AvatarInitialView`   | `core.designsystem.view` | Circular avatar: Glide photo → initials fallback + dot   | `wm_avatarName`, `wm_showOnlineStatus`, `wm_initialTextSize`           |
+| `WalkMateStatColumn`  | `core.designsystem.view` | Vertical icon/emoji → value (bold) → label (muted)       | `wm_statIcon`, `wm_statEmoji`, `wm_statValue`, `wm_statLabel`, `wm_statValueSize` |
+| `TagChipGroup`        | `core.designsystem.view` | ChipGroup subclass: `setTags(List<String>)` single call  | `wm_chipStyle` (display / selectable)                                  |
+| `WalkMateCardHeader`  | `core.designsystem.view` | Flat ConstraintLayout header: emoji + title + chevron?   | `wm_headerEmoji`, `wm_headerTitle`, `wm_navigable`                     |
+| `GlideHelper`         | `core.util`              | Utility: all Glide calls centralised (no layout file)    | N/A — static methods only                                              |
+
+**Note:** `TagChipGroup` and `GlideHelper` are documented exceptions to the "view_name.xml layout required" rule:
+- `TagChipGroup` extends `ChipGroup` directly — no extra ViewGroup layer needed.
+- `GlideHelper` is a static utility class, not a view.
+
+*Cập nhật bảng này mỗi khi thêm Custom View mới.*
+
+### 8.6 Checklist Trước Khi Tạo Custom View Mới
+
+- [ ] Pattern xuất hiện ≥ 3 nơi hoặc chứa state nội bộ?
+- [ ] Đã tạo `declare-styleable` trong `attrs.xml`?
+- [ ] Layout dùng `<merge>` root?
+- [ ] Class đọc attrs trong `finally { a.recycle(); }`?
+- [ ] Public API không leak inner `View` references?
+- [ ] Đã thêm vào bảng catalogue ở mục 8.5?
+
+---
+
 ## 7. Checklist Reuse Khi Tạo Feature Mới
 
 1. Tạo package theo chuẩn: `ui/<feature>/` và tách `ui/<feature>/<sub-feature>/` nếu có nhiều luồng UI.

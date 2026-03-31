@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WalkMateInputField
+         Label + EditText + optional password toggle + inline error display.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="WalkMateInputField">
+        <!-- Label text shown above the input field -->
+        <attr name="wm_label" format="string" />
+        <!-- Placeholder hint inside the EditText -->
+        <attr name="wm_hint" format="string" />
+        <!-- Drawable icon placed at the start of the EditText -->
+        <attr name="wm_icon" format="reference" />
+        <!-- android:inputType forwarded to the inner EditText -->
+        <attr name="wm_inputType" format="integer" />
+        <!-- Show password visibility toggle button (for password fields) -->
+        <attr name="wm_passwordToggle" format="boolean" />
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WalkMateButton
+         Orange pill button with FILLED (gradient) or OUTLINED (stroke) variant.
+         Supports setLoading(boolean) to show an indeterminate ProgressBar.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="WalkMateButton">
+        <!-- Visual variant: filled = gradient orange pill; outlined = stroke only -->
+        <attr name="wm_buttonStyle" format="enum">
+            <enum name="filled" value="0" />
+            <enum name="outlined" value="1" />
+        </attr>
+        <!-- Button label text -->
+        <attr name="wm_text" format="string" />
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         AvatarInitialView
+         Circle avatar showing photo (Glide) with fallback to first-letter initial.
+         Optionally renders a green online-status dot at the bottom-right.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="AvatarInitialView">
+        <!-- Static name used to derive the fallback initial letter -->
+        <attr name="wm_avatarName" format="string" />
+        <!-- Show the green online-status indicator dot -->
+        <attr name="wm_showOnlineStatus" format="boolean" />
+        <!-- Font size (sp) of the initial letter — defaults to 20sp -->
+        <attr name="wm_initialTextSize" format="dimension" />
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WalkMateStatColumn
+         Vertical icon/emoji → value (bold) → label (muted) stat column.
+         Used in Home stats cards, Profile stats row, Tracking screen columns.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="WalkMateStatColumn">
+        <!-- Static value text (use bind() at runtime for ViewModel-driven values) -->
+        <attr name="wm_statValue" format="string" />
+        <!-- Static label text -->
+        <attr name="wm_statLabel" format="string" />
+        <!-- Drawable icon above the value (mutually exclusive with wm_statEmoji) -->
+        <attr name="wm_statIcon" format="reference" />
+        <!-- Emoji string above the value (mutually exclusive with wm_statIcon) -->
+        <attr name="wm_statEmoji" format="string" />
+        <!-- Font size (sp) for the value text — defaults to 18sp -->
+        <attr name="wm_statValueSize" format="dimension" />
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TagChipGroup
+         ChipGroup subclass that creates chips from List<String> with a single
+         setTags() call. Handles all removeAllViews() + programmatic chip
+         creation internally. Style is controlled by wm_chipStyle.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="TagChipGroup">
+        <!-- Chip visual style: display = non-clickable orange (default); selectable = toggleable -->
+        <attr name="wm_chipStyle" format="enum">
+            <enum name="display" value="0" />
+            <enum name="selectable" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WalkMateCardHeader
+         Single-row card header: [emoji] [title ──── spacer ──── ] [chevron?]
+         Replaces the layout_weight=1 spacer antipattern with a flat
+         ConstraintLayout (start-constrained emoji + 0dp title + end chevron).
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="WalkMateCardHeader">
+        <!-- Emoji character (or short text) shown at the start of the header -->
+        <attr name="wm_headerEmoji" format="string" />
+        <!-- Header title text -->
+        <attr name="wm_headerTitle" format="string" />
+        <!-- Show the trailing chevron (right-arrow) — set false for non-tappable headers -->
+        <attr name="wm_navigable" format="boolean" />
+    </declare-styleable>
+
+</resources>
