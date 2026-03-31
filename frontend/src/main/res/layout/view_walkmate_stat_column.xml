@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  WalkMateStatColumn — compound view layout.
+  Root is <merge> because the host class extends LinearLayout (vertical,
+  gravity: center_horizontal).
+
+  Visual stack (top → bottom):
+    [icon ImageView OR emoji TextView]  ← exactly one is VISIBLE at a time
+    [value TextView]                    ← 18sp bold, dynamically updated
+    [label TextView]                    ← 10sp muted, centered
+
+  Usage:
+    bind("12.5", "km this week")          ← value + label only
+    bind("12.5", "km this week", R.drawable.ic_distance)   ← with icon
+    bind("5", "day streak", "🔥")         ← with emoji
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Icon drawable — 24dp, GONE by default.
+      Made VISIBLE by setIcon(@DrawableRes int) or bind(value, label, iconRes).
+      Mutually exclusive with tv_stat_emoji.
+    -->
+    <ImageView
+        android:id="@+id/img_stat_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:visibility="gone"
+        android:contentDescription="@null"
+        tools:src="@drawable/ic_distance"
+        tools:visibility="visible" />
+
+    <!--
+      Emoji text — GONE by default.
+      Made VISIBLE by setEmoji(String) or bind(value, label, emoji).
+      Mutually exclusive with img_stat_icon.
+    -->
+    <TextView
+        android:id="@+id/tv_stat_emoji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:visibility="gone"
+        tools:text="🔥"
+        tools:visibility="visible" />
+
+    <!--
+      Value text — bold, prominent.
+      Default 18sp; override via app:wm_statValueSize for tracking-screen
+      columns that use 26sp.
+    -->
+    <TextView
+        android:id="@+id/tv_stat_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/text_dark"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        tools:text="12.5" />
+
+    <!--
+      Label text — muted, centered (for multi-word labels like "km this week").
+    -->
+    <TextView
+        android:id="@+id/tv_stat_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:gravity="center"
+        android:textColor="@color/text_muted"
+        android:textSize="10sp"
+        tools:text="KM THIS WEEK" />
+
+</merge>

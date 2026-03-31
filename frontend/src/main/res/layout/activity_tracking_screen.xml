@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    GPS Walk Tracking Screen — Static Sports Dashboard layout.
+
+    Layer order (bottom → top):
+      1. SupportMapFragment    — full-screen map background
+      2. bottomPanel           — static stats + controls panel anchored at bottom
+      3. fabRecenter           — white circle FAB anchored above bottom panel
+      4. btnBack               — top-left overlay; drawn last so it's always on top
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- ── 1. Full-screen Google Map ── -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/mapContainer"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- ── 2. Static Stats / Control Bottom Panel ── -->
+    <LinearLayout
+        android:id="@+id/bottomPanel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_white"
+        android:elevation="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- ── Partner row: avatar + name ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp">
+
+            <com.walkmate.core.designsystem.view.AvatarInitialView
+                android:id="@+id/avatarPartner"
+                android:layout_width="44dp"
+                android:layout_height="44dp" />
+
+            <!-- Name + subtitle -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtPartnerNameSheet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_dark"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/tracking_partner_subtitle"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ── Divider ── -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@color/handle_bar" />
+
+        <!-- ── Stats row: Distance | Duration | Pace ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                android:id="@+id/statDistance"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:wm_statValue="0.00"
+                app:wm_statLabel="@string/label_distance_unit"
+                app:wm_statValueSize="26sp" />
+
+            <!-- Vertical separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/handle_bar" />
+
+            <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                android:id="@+id/statDuration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:wm_statValue="00:00"
+                app:wm_statLabel="@string/label_duration"
+                app:wm_statValueSize="26sp" />
+
+            <!-- Vertical separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/handle_bar" />
+
+            <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                android:id="@+id/statPace"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:wm_statValue="@string/pace_placeholder"
+                app:wm_statLabel="@string/label_pace_unit"
+                app:wm_statValueSize="26sp" />
+
+        </LinearLayout>
+
+        <!-- ── Divider ── -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@color/handle_bar" />
+
+        <!-- ── Action buttons ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="28dp">
+
+            <!--
+                Start button — READY state only.
+                Full-width orange gradient pill.
+            -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStart"
+                style="@style/Widget.Material3.Button.UnelevatedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_gradient_orange_pill"
+                android:text="@string/btn_start_walk"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="visible"
+                app:backgroundTint="@null"
+                app:cornerRadius="999dp" />
+
+            <!--
+                Pause + Stop row — ACTIVE and PAUSED states.
+                Hidden in READY; btnPause text alternates "Pause" / "Resume".
+            -->
+            <LinearLayout
+                android:id="@+id/btnRowPauseStop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <!-- Pause / Resume — outlined orange pill -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPause"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_pause"
+                    android:textColor="@color/orange_end"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:strokeColor="@color/orange_end"
+                    app:strokeWidth="1.5dp"
+                    app:cornerRadius="999dp"
+                    app:rippleColor="@color/bg_warm_light" />
+
+                <!-- Finish — solid orange gradient pill -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStop"
+                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/bg_gradient_orange_pill"
+                    android:text="@string/btn_finish_walk"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="999dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ── 3. Map Re-center FAB ── -->
+    <!-- Anchored to the top of the static panel with a fixed 16dp gap. -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabRecenter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_my_location"
+        android:contentDescription="@string/cd_recenter_map"
+        app:backgroundTint="@color/bg_white"
+        app:layout_constraintBottom_toTopOf="@id/bottomPanel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/text_dark"
+        app:fabSize="mini"
+        app:elevation="4dp"
+        app:maxImageSize="20dp" />
+
+    <!-- ── 4. Back button (always rendered last → always on top) ── -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_white_circle"
+        android:src="@drawable/ic_back"
+        android:padding="10dp"
+        android:elevation="4dp"
+        android:contentDescription="@string/cd_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:tint="@color/text_dark" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>

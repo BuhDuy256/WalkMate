@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Single-chip template inflated dynamically for each hotspot
+    in the Welcome bottom sheet. Reuses the project's chip style.
+-->
+<com.google.android.material.chip.Chip
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.WalkMate.Chip"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" />

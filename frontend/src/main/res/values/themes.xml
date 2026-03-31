@@ -3,4 +3,10 @@
         Theme.WalkMate is now defined in styles.xml with full theming.
         This file is kept empty to avoid duplicate resource errors.
     -->
+    <style
+        name="Theme.WalkMate.BottomNavIndicator"
+        parent="Widget.Material3.BottomNavigationView.ActiveIndicator"
+    >
+        <item name="android:color">@android:color/transparent</item>
+    </style>
 </resources>

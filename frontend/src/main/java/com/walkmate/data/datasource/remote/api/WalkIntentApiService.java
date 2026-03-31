@@ -4,6 +4,8 @@ import com.walkmate.data.datasource.remote.dto.request.walkintent.CreateWalkInte
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.walkintent.WalkIntentResponse;
 
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -15,6 +17,9 @@ public interface WalkIntentApiService {
 
     @POST("api/v1/intents")
     Call<ApiResponse<WalkIntentResponse>> createIntent(@Body CreateWalkIntentRequest request);
+
+    @GET("api/v1/intents")
+    Call<ApiResponse<List<WalkIntentResponse>>> listActiveIntents();
 
     @GET("api/v1/intents/{intentId}/match")
     Call<ApiResponse<WalkIntentResponse>> findMatch(@Path("intentId") String intentId);

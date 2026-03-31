@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.viewpager2)
+    implementation(libs.swiperefreshlayout)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
@@ -79,4 +80,11 @@ dependencies {
 
     // Secure local token storage
     implementation(libs.securityCrypto)
+
+    // Room (local GPS point storage)
+    implementation(libs.roomRuntime)
+    annotationProcessor(libs.roomCompiler)
+
+    // Image loading
+    implementation(libs.glide)
 }

@@ -55,6 +55,11 @@
         <item name="android:backgroundDimAmount">0.5</item>
     </style>
 
+    <!-- SwipeRefreshLayout spinner color — referenced by fragment_finding.xml / fragment_proposal.xml -->
+    <style name="SwipeRefreshTheme" parent="Theme.WalkMate">
+        <item name="colorPrimary">@color/orange_end</item>
+    </style>
+
     <!-- Chip: Always active style (for match result tags) -->
     <style name="Widget.WalkMate.Chip.Active" parent="Widget.Material3.Chip.Assist">
         <item name="chipBackgroundColor">@color/orange_end</item>

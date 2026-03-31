@@ -16,6 +16,8 @@ playServicesMaps = "20.0.0"
 androidMapsUtils = "4.1.1"
 lifecycle = "2.10.0"
 securityCrypto = "1.1.0-alpha06"
+room = "2.7.0"
+glide = "4.16.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -37,6 +39,10 @@ androidMapsUtils = { group = "com.google.maps.android", name = "android-maps-uti
 lifecycleViewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycleLivedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
 securityCrypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version = "1.1.0" }
+roomRuntime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -36,6 +36,111 @@
     <string name="tag_slow_walk">Đi bộ chậm</string>
     <string name="tag_photography">Chụp ảnh</string>
 
+    <!-- Explore: Scanning sheet -->
+    <string name="scanning_status">Searching for walking mates…</string>
+    <string name="scanning_subtitle">You\'ll be notified when a match is found</string>
+    <string name="btn_stop_searching">Stop Searching</string>
+
+    <!-- Explore: Welcome sheet -->
+    <string name="welcome_greeting">Ready to walk? 🚶</string>
+    <string name="welcome_subtitle">Pick a hotspot to get started</string>
+    <string name="search_place_hint">Search a place…</string>
+    <string name="popular_spots">Popular spots</string>
+
+    <!-- Bottom Navigation tabs -->
+    <string name="tab_explore">Explore</string>
+    <string name="tab_matches">Matches</string>
+    <string name="tab_profile">Profile</string>
+
+    <!-- Matches sub-tabs -->
+    <string name="tab_finding">Finding</string>
+    <string name="tab_proposal">Proposal</string>
+    <string name="tab_session">Session</string>
+
+    <!-- Finding sub-tab -->
+    <string name="btn_cancel_intent">Cancel Intent</string>
+    <string name="finding_empty">No active intents.\nHead to Explore to find a hotspot!</string>
+    <string name="age_range_format">%1$d – %2$d y/o</string>
+
+    <!-- Session sub-tab -->
+    <string name="session_empty">No active sessions.\nAccept a proposal to start walking!</string>
+    <string name="session_map_placeholder">Map Preview · Coming Soon</string>
+    <string name="btn_chat">Chat</string>
+    <string name="btn_cancel_session">Cancel Session</string>
+    <string name="btn_start_walk">Start Walk</string>
+    <string name="session_chat_coming_soon">Chat — Coming Soon</string>
+    <string name="cancel_session_title">Cancel Session</string>
+    <string name="cancel_reason_busy">Unexpectedly busy</string>
+    <string name="cancel_reason_no_contact">Unable to contact partner</string>
+    <string name="cancel_reason_other">Other</string>
+    <string name="btn_keep_session">Keep</string>
+
+    <!-- Proposal sub-tab -->
+    <string name="proposal_empty">No new proposals right now.\nHang tight — we\'re finding your match!</string>
+    <string name="proposal_common_time">Common time window</string>
+    <string name="proposal_common_interests">Common interests</string>
+    <string name="proposal_trust_format">⭐ %1$d · Trusted</string>
+
+    <string name="profile_coming_soon">Coming Soon</string>
+
+    <!-- Tracking screen -->
+    <string name="btn_pause">Pause</string>
+    <string name="btn_resume">Resume</string>
+    <string name="btn_finish_walk">Finish</string>
+    <string name="tracking_partner_subtitle">Walking with you</string>
+    <string name="label_distance_unit">km</string>
+    <string name="label_duration">duration</string>
+    <string name="label_pace_unit">min / km</string>
+    <string name="pace_placeholder">--\'--\"</string>
+    <string name="tracking_permission_denied">Location permission is required to track your walk.</string>
+    <string name="walk_completed_title">Walk Complete!</string>
+    <string name="walk_completed_message">Distance: %1$s km\nTime: %2$s\nPace: %3$s</string>
+    <string name="btn_done">Done</string>
+    <string name="cd_back">Go back</string>
+    <string name="cd_recenter_map">Re-center map on my location</string>
+
+    <!-- HOME DASHBOARD -->
+    <string name="home_greeting_format">Hi, %1$s! 👋</string>
+    <string name="home_streak_title">Walking Streak</string>
+    <string name="home_notification_cd">Notifications</string>
+    <string name="home_streak_days_format">%1$d / %2$d days</string>
+    <string name="home_streak_details_cd">View streak details</string>
+    <string name="home_hero_subtitle_format">%1$d Hotspots are bustling nearby.</string>
+    <string name="home_find_walkmate_cta">Find a WalkMate Now ✨</string>
+    <string name="home_next_walk_label">Next Walk</string>
+    <string name="home_session_status_confirmed">Confirmed</string>
+    <string name="home_message_partner">Message</string>
+    <string name="home_quick_invite_header">Rủ rê nhanh</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_stat_this_week">This Week</string>
+    <string name="home_stat_day_streak">Day Streak</string>
+    <string name="home_stat_distance_cd">Distance</string>
+    <string name="home_stat_sessions_cd">Sessions</string>
+    <string name="home_avatar_cd">Partner avatar</string>
+    <string name="home_add_badge_cd">Invite</string>
+
+    <!-- PROFILE -->
+    <string name="profile_screen_title">Profile</string>
+    <string name="profile_settings_cd">Settings</string>
+    <string name="profile_view_public">👁️ View as Public Profile</string>
+    <string name="profile_trust_score_format">⭐ %1$.1f / 5.0</string>
+    <string name="profile_tag_chatty">Chatty</string>
+    <string name="profile_tag_dog_friendly">Dog Friendly</string>
+    <string name="profile_stat_total_km">Total KM</string>
+    <string name="profile_stat_sessions">Sessions</string>
+    <string name="profile_stat_streak">Day Streak</string>
+    <string name="profile_stat_km_cd">Distance</string>
+    <string name="profile_stat_sessions_cd">Sessions</string>
+    <string name="profile_badges_section_title">Badges</string>
+    <string name="profile_badge_first_walk">First Walk</string>
+    <string name="profile_badge_social">Social Star</string>
+    <string name="profile_badge_streak">Streak King</string>
+    <string name="profile_menu_walk_history">Walk History &amp; Disputes</string>
+    <string name="profile_menu_my_badges">My Badges</string>
+    <string name="profile_menu_settings">Settings</string>
+    <string name="profile_menu_navigate_cd">Navigate</string>
+    <string name="profile_avatar_cd">Profile avatar</string>
+
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>
     <string name="hotspot_2">Hồ Con Rùa</string>

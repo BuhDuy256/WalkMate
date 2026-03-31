@@ -1,13 +1,9 @@
 package com.walkmate.ui.auth.login;
 
 import android.os.Bundle;
-import android.text.method.HideReturnsTransformationMethod;
-import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,15 +14,15 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.WalkMateButton;
+import com.walkmate.core.designsystem.view.WalkMateInputField;
 import com.walkmate.ui.auth.AuthActivity;
 
 public class LoginFragment extends Fragment {
 
-    private EditText etEmail;
-    private EditText etPassword;
-    private ImageView ivTogglePassword;
-    private AppCompatButton btnSignInAction;
-    private boolean isPasswordVisible = false;
+    private WalkMateInputField fieldEmail;
+    private WalkMateInputField fieldPassword;
+    private WalkMateButton btnSignIn;
 
     private LoginViewModel loginViewModel;
 
@@ -46,31 +42,13 @@ public class LoginFragment extends Fragment {
 
         initViews(view);
         initClickListeners(view);
-        setupPasswordToggle();
         observeUiState();
     }
 
     private void initViews(View root) {
-        etEmail = root.findViewById(R.id.et_email_login);
-        etPassword = root.findViewById(R.id.et_password_login);
-        ivTogglePassword = root.findViewById(R.id.iv_toggle_password);
-        btnSignInAction = root.findViewById(R.id.btn_signin_action);
-    }
-
-    private void setupPasswordToggle() {
-        if (ivTogglePassword != null) {
-            ivTogglePassword.setOnClickListener(v -> {
-                isPasswordVisible = !isPasswordVisible;
-                if (isPasswordVisible) {
-                    etPassword.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
-                    ivTogglePassword.setImageResource(R.drawable.ic_eye_show);
-                } else {
-                    etPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
-                    ivTogglePassword.setImageResource(R.drawable.ic_eye_hide);
-                }
-                etPassword.setSelection(etPassword.getText().length());
-            });
-        }
+        fieldEmail    = root.findViewById(R.id.field_email);
+        fieldPassword = root.findViewById(R.id.field_password);
+        btnSignIn     = root.findViewById(R.id.btn_signin_action);
     }
 
     private void initClickListeners(View root) {
@@ -83,32 +61,18 @@ public class LoginFragment extends Fragment {
             }
         };
 
-        if (btnTabSignUp != null) {
-            btnTabSignUp.setOnClickListener(switchToRegister);
-        }
-        if (tvFooterSignUp != null) {
-            tvFooterSignUp.setOnClickListener(switchToRegister);
-        }
+        if (btnTabSignUp != null) btnTabSignUp.setOnClickListener(switchToRegister);
+        if (tvFooterSignUp != null) tvFooterSignUp.setOnClickListener(switchToRegister);
 
-        if (btnSignInAction != null) {
-            btnSignInAction.setOnClickListener(v -> {
-                String email = etEmail.getText().toString();
-                String password = etPassword.getText().toString();
-                loginViewModel.login(email, password);
-            });
-        }
+        btnSignIn.setOnClickListener(v ->
+                loginViewModel.login(fieldEmail.getText(), fieldPassword.getText()));
     }
 
     private void observeUiState() {
         loginViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
-            if (state == null) {
-                return;
-            }
+            if (state == null) return;
 
-            if (btnSignInAction != null) {
-                btnSignInAction.setEnabled(!state.isLoading());
-                btnSignInAction.setText(state.isLoading() ? "Signing in..." : "Sign In ✦");
-            }
+            btnSignIn.setLoading(state.isLoading());
 
             if (state.getError() != null) {
                 Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_LONG).show();

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+>
+
+    <!--
+        Tab content container fills the entire screen, including behind the nav bar.
+        This allows the Explore map (Phase B) to render edge-to-edge, while
+        Matches and Profile fragments will add their own bottom padding via
+        getPeekHeight / WindowInsetsCompat in their respective phases.
+    -->
+    <FrameLayout
+        android:id="@+id/tabContentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+    />
+
+    <!--
+        Bottom Navigation Bar.
+        - background matches the global bg_cream so it blends with the system nav bar
+          (which is also tinted bg_cream via the app theme's android:navigationBarColor).
+        - itemActiveIndicatorColor is transparent to keep the visual affordance minimal:
+          only icon + text tint change to orange_end on selection.
+        - elevation creates a subtle shadow separating the bar from content.
+    -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/bg_cream"
+        app:elevation="8dp"
+        app:itemIconTint="@color/nav_icon_color"
+        app:itemTextColor="@color/nav_icon_color"
+        app:itemActiveIndicatorStyle="@style/Theme.WalkMate.BottomNavIndicator"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_bottom_nav"
+    />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

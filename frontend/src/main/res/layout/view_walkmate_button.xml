@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  WalkMateButton — compound view layout.
+  Root is <merge> because the host class extends FrameLayout (vertical stack
+  isn't needed; both children fill the same space with ProgressBar floating
+  centered on top of the button via FrameLayout's default gravity).
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      The action button fills the entire FrameLayout (match_parent × match_parent).
+      Background and text color are set programmatically in WalkMateButton.init()
+      based on the wm_buttonStyle attribute (FILLED or OUTLINED).
+    -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_action"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        tools:text="Sign In ✦"
+        tools:background="@drawable/bg_gradient_orange_pill" />
+
+    <!--
+      Loading spinner — GONE by default, VISIBLE when setLoading(true) is called.
+      layout_gravity="center" floats it over the button.
+      Tint (white for FILLED, orange for OUTLINED) is set programmatically.
+    -->
+    <ProgressBar
+        android:id="@+id/pb_loading"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+</merge>

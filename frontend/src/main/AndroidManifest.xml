@@ -4,7 +4,14 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Required to call startForeground() from a Service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- Required for targetSdk >= 34 when foregroundServiceType="location" -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <!-- Required for API 33+ to post the persistent tracking notification -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
+        android:name=".WalkMateApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -20,7 +27,7 @@
             android:exported="false" />
 
         <activity
-            android:name="com.walkmate.ui.coordination.CoordinationActivity"
+            android:name="com.walkmate.ui.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.WalkMate">
             <intent-filter>
@@ -28,6 +35,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Registered here; fully wired in Phase 3 (Entry-Point) -->
+        <activity
+            android:name="com.walkmate.ui.tracking.TrackingScreenActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WalkMate" />
+
+        <!-- GPS foreground service; foregroundServiceType required for targetSdk >= 34 -->
+        <service
+            android:name="com.walkmate.service.WalkTrackerService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

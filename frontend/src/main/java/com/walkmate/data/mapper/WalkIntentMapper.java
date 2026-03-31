@@ -4,6 +4,10 @@ import com.walkmate.data.datasource.remote.dto.request.walkintent.CreateWalkInte
 import com.walkmate.data.datasource.remote.dto.response.walkintent.WalkIntentResponse;
 import com.walkmate.domain.walkintent.WalkIntent;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,8 +26,17 @@ public class WalkIntentMapper {
                 response.getAgeMin(),
                 response.getAgeMax(),
                 response.getStatus(),
-                response.getCreatedAt()
+                response.getCreatedAt(),
+                Collections.emptyList()  // tags not yet in API contract
         );
+    }
+
+    public static List<WalkIntent> toDomainList(List<WalkIntentResponse> responses) {
+        List<WalkIntent> result = new ArrayList<>(responses.size());
+        for (WalkIntentResponse r : responses) {
+            result.add(toDomain(r));
+        }
+        return result;
     }
 
     public static CreateWalkIntentRequest toRequest(String hotspotId,
