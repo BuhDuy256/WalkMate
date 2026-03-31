@@ -1,16 +1,658 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_cream">
+    android:background="@color/bg_cream"
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    tools:context=".ui.profile.ProfileFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/profile_coming_soon"
-        android:textColor="@color/text_muted"
-        android:textSize="16sp" />
+        android:orientation="vertical"
+        android:paddingBottom="88dp">
 
-</FrameLayout>
+        <!-- ── TOP APP BAR ──────────────────────────────────────────────────── -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="52dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:id="@+id/txtProfileScreenTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_screen_title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_dark"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <ImageView
+                android:id="@+id/btnSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_settings"
+                android:contentDescription="@string/profile_settings_cd"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- ── IDENTITY ──────────────────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="20dp">
+
+            <!-- Avatar + online status dot -->
+            <FrameLayout
+                android:layout_width="88dp"
+                android:layout_height="88dp">
+
+                <ImageView
+                    android:id="@+id/imgProfileAvatar"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:background="@drawable/bg_white_circle"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="@string/profile_avatar_cd"
+                    tools:src="@drawable/ic_user" />
+
+                <View
+                    android:id="@+id/viewOnlineStatus"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_green_dot"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+            <!-- Full name -->
+            <TextView
+                android:id="@+id/txtProfileName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_dark"
+                android:gravity="center"
+                tools:text="Nguyễn Bảo Duy" />
+
+            <!-- Public profile link -->
+            <TextView
+                android:id="@+id/btnViewPublicProfile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/profile_view_public"
+                android:textSize="13sp"
+                android:textColor="@color/text_muted"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless" />
+
+            <!-- Trust score chip -->
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTrustScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/orange_primary"
+                android:textSize="13sp"
+                app:chipBackgroundColor="@color/bg_white"
+                app:chipStrokeColor="@color/orange_primary"
+                app:chipStrokeWidth="1.5dp"
+                tools:text="⭐ 4.9 / 5.0" />
+
+            <!-- Personality tag chips -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTags"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:chipSpacingHorizontal="6dp"
+                app:singleLine="false">
+
+                <!-- Chips populated at runtime by ProfileFragment.renderState() -->
+                <!-- tools: chips below are design-time placeholders only -->
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTag1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:chipBackgroundColor="@color/bg_warm_light"
+                    app:chipStrokeWidth="0dp"
+                    tools:text="Chatty"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTag2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:chipBackgroundColor="@color/bg_warm_light"
+                    app:chipStrokeWidth="0dp"
+                    tools:text="Dog Friendly"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTag3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:chipBackgroundColor="@color/bg_warm_light"
+                    app:chipStrokeWidth="0dp"
+                    tools:text="Early Bird"
+                    tools:visibility="visible" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+        </LinearLayout>
+
+        <!-- ── MILESTONES ─────────────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardMilestones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/bg_white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <!-- 3-column stats — FLAT ConstraintLayout with Guidelines (never nested LinearLayouts) -->
+                <!--
+                    Architectural reason: LinearLayout + layout_weight forces a double-measure pass
+                    on every weighted child. ConstraintLayout + Guidelines resolves in a single pass.
+                    See implementation_proposal.md § "Architectural Problem 4" for full rationale.
+                -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/statsRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp">
+
+                    <!-- Column boundary guides at 33.3% and 66.7% of width -->
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guidelineCol1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.333" />
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guidelineCol2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.667" />
+
+                    <!-- ── Column 1: Total KM — vertical packed chain ── -->
+                    <ImageView
+                        android:id="@+id/icStatKm"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_distance"
+                        android:contentDescription="@string/profile_stat_km_cd"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/guidelineCol1"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@id/txtStatKmValue"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <TextView
+                        android:id="@+id/txtStatKmValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:textColor="@color/text_dark"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        tools:text="248"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/guidelineCol1"
+                        app:layout_constraintTop_toBottomOf="@id/icStatKm"
+                        app:layout_constraintBottom_toTopOf="@id/txtStatKmLabel" />
+
+                    <TextView
+                        android:id="@+id/txtStatKmLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center"
+                        android:text="@string/profile_stat_total_km"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/guidelineCol1"
+                        app:layout_constraintTop_toBottomOf="@id/txtStatKmValue"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <!-- Vertical divider 1 -->
+                    <View
+                        android:id="@+id/dividerStats1"
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:background="@color/bg_tag_inactive"
+                        app:layout_constraintStart_toStartOf="@id/guidelineCol1"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <!-- ── Column 2: Sessions — vertical packed chain ── -->
+                    <ImageView
+                        android:id="@+id/icStatSessions"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_session"
+                        android:contentDescription="@string/profile_stat_sessions_cd"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCol1"
+                        app:layout_constraintEnd_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@id/txtStatSessionsValue"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <TextView
+                        android:id="@+id/txtStatSessionsValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:textColor="@color/text_dark"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        tools:text="32"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCol1"
+                        app:layout_constraintEnd_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintTop_toBottomOf="@id/icStatSessions"
+                        app:layout_constraintBottom_toTopOf="@id/txtStatSessionsLabel" />
+
+                    <TextView
+                        android:id="@+id/txtStatSessionsLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center"
+                        android:text="@string/profile_stat_sessions"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCol1"
+                        app:layout_constraintEnd_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintTop_toBottomOf="@id/txtStatSessionsValue"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <!-- Vertical divider 2 -->
+                    <View
+                        android:id="@+id/dividerStats2"
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:background="@color/bg_tag_inactive"
+                        app:layout_constraintStart_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <!-- ── Column 3: Day Streak — vertical packed chain ── -->
+                    <TextView
+                        android:id="@+id/icStatStreakEmoji"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔥"
+                        android:textSize="22sp"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCol2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@id/txtStatStreakValue"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <TextView
+                        android:id="@+id/txtStatStreakValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:textColor="@color/text_dark"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        tools:text="5"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCol2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/icStatStreakEmoji"
+                        app:layout_constraintBottom_toTopOf="@id/txtStatStreakLabel" />
+
+                    <TextView
+                        android:id="@+id/txtStatStreakLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center"
+                        android:text="@string/profile_stat_streak"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCol2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/txtStatStreakValue"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Section divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@color/bg_tag_inactive" />
+
+                <!-- Badges — 3 equal columns; static count so layout_weight is acceptable here -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:weightSum="3">
+
+                    <!-- Badge 1 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:id="@+id/imgBadge1"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:scaleType="fitCenter"
+                            tools:src="@drawable/ic_badge_first_walk" />
+
+                        <TextView
+                            android:id="@+id/lblBadge1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:textColor="@color/text_dark"
+                            android:textSize="11sp"
+                            tools:text="First Walk" />
+
+                    </LinearLayout>
+
+                    <!-- Badge 2 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:id="@+id/imgBadge2"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:scaleType="fitCenter"
+                            tools:src="@drawable/ic_badge_social" />
+
+                        <TextView
+                            android:id="@+id/lblBadge2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:textColor="@color/text_dark"
+                            android:textSize="11sp"
+                            tools:text="Social Star" />
+
+                    </LinearLayout>
+
+                    <!-- Badge 3 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:id="@+id/imgBadge3"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:scaleType="fitCenter"
+                            tools:src="@drawable/ic_badge_streak" />
+
+                        <TextView
+                            android:id="@+id/lblBadge3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:textColor="@color/text_dark"
+                            android:textSize="11sp"
+                            tools:text="Streak King" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── MENU LIST ──────────────────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/bg_white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Row 1: Walk History & Disputes -->
+                <LinearLayout
+                    android:id="@+id/menuWalkHistory"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_warm_circle"
+                        android:layout_marginEnd="14dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_history"
+                            android:contentDescription="@string/profile_menu_walk_history" />
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/profile_menu_walk_history"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_dark" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/profile_menu_navigate_cd" />
+
+                </LinearLayout>
+
+                <!-- Row divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="66dp"
+                    android:background="@color/bg_tag_inactive" />
+
+                <!-- Row 2: My Badges -->
+                <LinearLayout
+                    android:id="@+id/menuMyBadges"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_warm_circle"
+                        android:layout_marginEnd="14dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_badge_first_walk"
+                            android:contentDescription="@string/profile_menu_my_badges" />
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/profile_menu_my_badges"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_dark" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/profile_menu_navigate_cd" />
+
+                </LinearLayout>
+
+                <!-- Row divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="66dp"
+                    android:background="@color/bg_tag_inactive" />
+
+                <!-- Row 3: Settings -->
+                <LinearLayout
+                    android:id="@+id/menuSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_warm_circle"
+                        android:layout_marginEnd="14dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_settings"
+                            android:contentDescription="@string/profile_menu_settings" />
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/profile_menu_settings"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_dark" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/profile_menu_navigate_cd" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>
