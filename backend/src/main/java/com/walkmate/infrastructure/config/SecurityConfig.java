@@ -39,7 +39,8 @@ public class SecurityConfig {
                         // Auth endpoints are public
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        // Hotspot reads are public (map loads for everyone)
+                        // Phase 2: hotspot catalogue is public for map browsing
+                        .requestMatchers(HttpMethod.GET, "/api/v1/hotspots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/hotspots/**").permitAll()
                         // Swagger / OpenAPI UI (development)
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()

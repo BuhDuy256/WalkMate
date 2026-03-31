@@ -1,51 +1,40 @@
 package com.walkmate.data.repository;
 
 import android.content.Context;
+import android.util.Log;
 
+import com.walkmate.data.datasource.remote.api.ApiClient;
+import com.walkmate.data.datasource.remote.api.HotspotApiService;
+import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.hotspot.HotspotResponse;
+import com.walkmate.data.mapper.HotspotMapper;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.shared.DomainCallback;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import retrofit2.Response;
+
 /**
- * MOCK implementation — bypasses Retrofit and returns hardcoded Ho Chi Minh City
- * hotspot data with a simulated 1-second network delay.
- * Replace each method body with real Retrofit calls when the backend is ready.
+ * Real implementation backed by Retrofit.
  */
 public class HotspotRepositoryImpl implements HotspotRepository {
 
+    private static final String TAG = "HotspotRepositoryImpl";
+
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final HotspotApiService hotspotApiService;
 
     public HotspotRepositoryImpl(Context context) {
-        // Context retained for future real implementation
-    }
-
-    // ---------------------------------------------------------------------------
-    // Mock data — Ho Chi Minh City hotspots with real GPS coordinates
-    // ---------------------------------------------------------------------------
-
-    private static final List<Hotspot> MOCK_HOTSPOTS = Collections.unmodifiableList(Arrays.asList(
-            new Hotspot("hs-tao-dan",     "Công viên Tao Đàn",          10.77413, 106.68863, 12),
-            new Hotspot("hs-nguyen-hue",  "Phố đi bộ Nguyễn Huệ",       10.77256, 106.70262, 28),
-            new Hotspot("hs-ho-con-rua",  "Hồ Con Rùa",                  10.77352, 106.69327, 15),
-            new Hotspot("hs-gia-dinh",    "Công viên Gia Định",           10.81348, 106.68372,  9),
-            new Hotspot("hs-le-van-tam",  "Công viên Lê Văn Tám",         10.78670, 106.69680,  6)
-    ));
-
-    private static final Map<String, Hotspot> MOCK_HOTSPOT_MAP;
-    static {
-        Map<String, Hotspot> map = new HashMap<>();
-        for (Hotspot h : MOCK_HOTSPOTS) {
-            map.put(h.getId(), h);
-        }
-        MOCK_HOTSPOT_MAP = Collections.unmodifiableMap(map);
+        SessionManager sessionManager = new SessionManager(context);
+        this.hotspotApiService = ApiClient
+                .buildAuthenticatedRetrofit(sessionManager)
+                .create(HotspotApiService.class);
     }
 
     // ---------------------------------------------------------------------------
@@ -55,33 +44,51 @@ public class HotspotRepositoryImpl implements HotspotRepository {
     @Override
     public void getHotspots(DomainCallback<List<Hotspot>> callback) {
         executor.execute(() -> {
-            sleep();
-            callback.onSuccess(MOCK_HOTSPOTS);
+            try {
+                Response<ApiResponse<List<HotspotResponse>>> response = hotspotApiService.getHotspots().execute();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<HotspotResponse> payload = response.body().getData();
+                    if (payload == null) {
+                        callback.onError(new Exception("HOTSPOT_EMPTY_RESPONSE"));
+                        return;
+                    }
+                    callback.onSuccess(HotspotMapper.toDomainList(payload));
+                } else {
+                    callback.onError(new Exception(extractErrorCode(response.body(), "HOTSPOT_FETCH_FAILED")));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getHotspots network error", e);
+                callback.onError(e);
+            }
         });
     }
 
     @Override
     public void getHotspotById(String id, DomainCallback<Hotspot> callback) {
         executor.execute(() -> {
-            sleep();
-            Hotspot hotspot = MOCK_HOTSPOT_MAP.get(id);
-            if (hotspot != null) {
-                callback.onSuccess(hotspot);
-            } else {
-                callback.onError(new Exception("Hotspot not found: " + id));
+            try {
+                Response<ApiResponse<HotspotResponse>> response = hotspotApiService.getHotspotById(id).execute();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    HotspotResponse payload = response.body().getData();
+                    if (payload == null) {
+                        callback.onError(new Exception("HOTSPOT_NOT_FOUND"));
+                        return;
+                    }
+                    callback.onSuccess(HotspotMapper.toDomain(payload));
+                } else {
+                    callback.onError(new Exception(extractErrorCode(response.body(), "HOTSPOT_NOT_FOUND")));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getHotspotById network error", e);
+                callback.onError(e);
             }
         });
     }
 
-    // ---------------------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------------------
-
-    private static void sleep() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
+        if (body != null && body.getError() != null && body.getError().getCode() != null) {
+            return body.getError().getCode();
         }
+        return fallback;
     }
 }

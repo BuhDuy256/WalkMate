@@ -9,17 +9,17 @@ public class Hotspot {
     private String name;
     private double lat;
     private double lng;
-    private int activeIntentCount;
+    private int activeWalkerCount;
 
     protected Hotspot() {
     }
 
     // Rehydration constructor
-    public Hotspot(String id, String name, double lat, double lng, int activeIntentCount) {
+    public Hotspot(String id, String name, double lat, double lng, int activeWalkerCount) {
         this.id = id;
         this.name = name;
         this.lat = lat;
         this.lng = lng;
-        this.activeIntentCount = activeIntentCount;
+        this.activeWalkerCount = activeWalkerCount;
     }
 }

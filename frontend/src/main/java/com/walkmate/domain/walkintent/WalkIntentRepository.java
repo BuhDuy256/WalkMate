@@ -5,8 +5,10 @@ import com.walkmate.domain.shared.DomainCallback;
 import java.util.List;
 
 public interface WalkIntentRepository {
-    void createIntent(String hotspotId, float timeStart, float timeEnd,
-                      int ageMin, int ageMax, DomainCallback<WalkIntent> callback);
+
+    void createIntent(String hotspotId, String date, float timeStart, float timeEnd,
+                      int ageMin, int ageMax, List<String> tags,
+                      DomainCallback<WalkIntent> callback);
 
     void listActiveIntents(DomainCallback<List<WalkIntent>> callback);
 

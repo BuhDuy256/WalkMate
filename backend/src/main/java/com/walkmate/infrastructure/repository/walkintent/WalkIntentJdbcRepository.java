@@ -99,6 +99,53 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                 .update();
     }
 
+    @Override
+    public List<WalkIntent> findOpenByUserId(String userId) {
+        final String sql = """
+                SELECT
+                    intent_id::text,
+                    hotspot_id::text,
+                    user_id::text,
+                    time_window_start,
+                    time_window_end,
+                    (matching_constraints->>'age_min')::int AS age_min,
+                    (matching_constraints->>'age_max')::int AS age_max,
+                    status,
+                    created_at,
+                    expires_at,
+                    version
+                FROM walk_intent
+                WHERE user_id = :userId
+                  AND status = 'OPEN'
+                ORDER BY created_at DESC
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("userId", UUID.fromString(userId))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public boolean hasOverlappingActiveIntent(String userId, Instant start, Instant end) {
+        final String sql = """
+                SELECT COUNT(*) FROM walk_intent
+                WHERE user_id = :userId
+                  AND status IN ('OPEN', 'CONSUMED')
+                  AND time_window_start < :end
+                  AND time_window_end   > :start
+                """;
+
+        Integer count = jdbcClient.sql(sql)
+                .param("userId", UUID.fromString(userId))
+                .param("start",  Timestamp.from(start))
+                .param("end",    Timestamp.from(end))
+                .query(Integer.class)
+                .single();
+
+        return count != null && count > 0;
+    }
+
     /**
      * Stage 1 of matching: DB-level hard filter.
      *

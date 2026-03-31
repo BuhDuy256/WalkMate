@@ -18,25 +18,24 @@ public class WalkIntentQueryService {
     private final WalkIntentRepository walkIntentRepository;
     private final MatchingStrategy matchingStrategy;
 
+    /** Returns all OPEN intents for the authenticated user. */
+    @Transactional(readOnly = true)
+    public List<WalkIntent> listActiveIntents(String userId) {
+        return walkIntentRepository.findOpenByUserId(userId);
+    }
+
     /**
      * Polls for the best match for a given intent.
      *
-     * Returns empty if the intent is still PENDING and no suitable candidate
-     * exists yet. The frontend polls this endpoint periodically.
-     *
-     * Returns the MatchResult (containing the matched WalkIntent and overlap
-     * window) when a candidate is found.
+     * Returns empty if no suitable candidate exists yet.
+     * Returns the MatchResult when a candidate is found.
      */
     @Transactional(readOnly = true)
     public Optional<MatchResult> findMatch(String intentId) {
-        // 1. Load and validate the intent exists
         WalkIntent intent = walkIntentRepository.findById(intentId)
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
 
-        // 2. Stage 1: DB-level hard filter (same hotspot, valid time overlap, age range)
         List<WalkIntent> candidates = matchingStrategy.findCandidates(intent);
-
-        // 3. Stage 2: In-memory scoring — picks the highest-scoring candidate
         return matchingStrategy.match(intent, candidates);
     }
 }

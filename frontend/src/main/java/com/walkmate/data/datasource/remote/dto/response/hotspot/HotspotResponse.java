@@ -17,7 +17,7 @@ public class HotspotResponse {
     @SerializedName("lng")
     private double lng;
 
-    @SerializedName("active_walker_count")
+    @SerializedName(value = "activeWalkerCount", alternate = {"active_walker_count", "active_intent_count"})
     private int activeWalkerCount;
 
     public String getId() { return id; }
