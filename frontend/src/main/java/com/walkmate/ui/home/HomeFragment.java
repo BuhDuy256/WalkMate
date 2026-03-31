@@ -17,12 +17,13 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.designsystem.view.WalkMateStatColumn;
+import com.walkmate.core.util.GlideHelper;
 import com.walkmate.ui.home.quickinvite.QuickInviteAdapter;
 
 /**
@@ -67,7 +68,6 @@ public class HomeFragment extends Fragment {
     private TextView txtGreeting;
     private TextView txtLocation;
     private View viewNotificationBadge;
-    private TextView txtStreakTitle;
     private ProgressBar streakProgress;
     private TextView txtStreakDays;
     private TextView txtHeroSubtitle;
@@ -78,9 +78,9 @@ public class HomeFragment extends Fragment {
     private TextView txtSessionPartner;
     private TextView txtSessionTime;
     private RecyclerView rvQuickInvite;
-    private TextView txtStatDistance;
-    private TextView txtStatSessions;
-    private TextView txtStatStreak;
+    private WalkMateStatColumn statDistance;
+    private WalkMateStatColumn statSessions;
+    private WalkMateStatColumn statStreak;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -135,20 +135,19 @@ public class HomeFragment extends Fragment {
         txtGreeting           = root.findViewById(R.id.txtGreeting);
         txtLocation           = root.findViewById(R.id.txtLocation);
         viewNotificationBadge = root.findViewById(R.id.viewNotificationBadge);
-        txtStreakTitle         = root.findViewById(R.id.txtStreakTitle);
-        streakProgress         = root.findViewById(R.id.streakProgress);
-        txtStreakDays          = root.findViewById(R.id.txtStreakDays);
-        txtHeroSubtitle        = root.findViewById(R.id.txtHeroSubtitle);
-        btnFindWalkMate        = root.findViewById(R.id.btnFindWalkMate);
-        cardUpcomingSession    = root.findViewById(R.id.cardUpcomingSession);
-        chipSessionStatus      = root.findViewById(R.id.chipSessionStatus);
-        imgSessionAvatar       = root.findViewById(R.id.imgSessionAvatar);
-        txtSessionPartner      = root.findViewById(R.id.txtSessionPartner);
-        txtSessionTime         = root.findViewById(R.id.txtSessionTime);
-        rvQuickInvite          = root.findViewById(R.id.rvQuickInvite);
-        txtStatDistance        = root.findViewById(R.id.txtStatDistance);
-        txtStatSessions        = root.findViewById(R.id.txtStatSessions);
-        txtStatStreak          = root.findViewById(R.id.txtStatStreak);
+        streakProgress        = root.findViewById(R.id.streakProgress);
+        txtStreakDays         = root.findViewById(R.id.txtStreakDays);
+        txtHeroSubtitle       = root.findViewById(R.id.txtHeroSubtitle);
+        btnFindWalkMate       = root.findViewById(R.id.btnFindWalkMate);
+        cardUpcomingSession   = root.findViewById(R.id.cardUpcomingSession);
+        chipSessionStatus     = root.findViewById(R.id.chipSessionStatus);
+        imgSessionAvatar      = root.findViewById(R.id.imgSessionAvatar);
+        txtSessionPartner     = root.findViewById(R.id.txtSessionPartner);
+        txtSessionTime        = root.findViewById(R.id.txtSessionTime);
+        rvQuickInvite         = root.findViewById(R.id.rvQuickInvite);
+        statDistance          = root.findViewById(R.id.statDistance);
+        statSessions          = root.findViewById(R.id.statSessions);
+        statStreak            = root.findViewById(R.id.statStreak);
     }
 
     private void setupRecyclerView() {
@@ -202,7 +201,6 @@ public class HomeFragment extends Fragment {
                 state.hasUnreadNotification() ? View.VISIBLE : View.GONE);
 
         // ── Streak widget ──
-        txtStreakTitle.setText(getString(R.string.home_streak_title));
         streakProgress.setMax(state.getStreakGoal());
         streakProgress.setProgress(state.getStreakDays());
         txtStreakDays.setText(getString(
@@ -220,15 +218,7 @@ public class HomeFragment extends Fragment {
             txtSessionPartner.setText(session.partnerName);
             txtSessionTime.setText(session.timeAndPlace);
 
-            if (session.partnerAvatarUrl != null && !session.partnerAvatarUrl.isEmpty()) {
-                Glide.with(this)
-                        .load(session.partnerAvatarUrl)
-                        .circleCrop()
-                        .placeholder(R.drawable.ic_user)
-                        .into(imgSessionAvatar);
-            } else {
-                imgSessionAvatar.setImageResource(R.drawable.ic_user);
-            }
+            GlideHelper.loadCircle(imgSessionAvatar, session.partnerAvatarUrl);
         } else {
             cardUpcomingSession.setVisibility(View.GONE);
         }
@@ -237,8 +227,8 @@ public class HomeFragment extends Fragment {
         quickInviteAdapter.submitList(state.getQuickInviteList());
 
         // ── Quick stats ──
-        txtStatDistance.setText(String.format("%.1f", state.getWeeklyDistanceKm()));
-        txtStatSessions.setText(String.valueOf(state.getWeeklySessionCount()));
-        txtStatStreak.setText(String.valueOf(state.getStreakDays()));
+        statDistance.setValue(String.format("%.1f", state.getWeeklyDistanceKm()));
+        statSessions.setValue(String.valueOf(state.getWeeklySessionCount()));
+        statStreak.setValue(String.valueOf(state.getStreakDays()));
     }
 }

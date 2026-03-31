@@ -1,19 +1,17 @@
 package com.walkmate.ui.matches.proposal;
 
-import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.AvatarInitialView;
+import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkproposal.WalkProposal;
 
 import java.util.ArrayList;
@@ -76,33 +74,30 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final TextView txtAvatarInitial;
+        private final AvatarInitialView avatarPartner;
         private final TextView txtName;
         private final TextView txtAge;
         private final TextView txtTrustScore;
         private final TextView txtTimeWindow;
-        private final ChipGroup chipGroupTags;
+        private final TagChipGroup chipGroupTags;
         private final MaterialButton btnPass;
         private final MaterialButton btnAccept;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            txtAvatarInitial = itemView.findViewById(R.id.txtAvatarInitial);
-            txtName          = itemView.findViewById(R.id.txtName);
-            txtAge           = itemView.findViewById(R.id.txtAge);
-            txtTrustScore    = itemView.findViewById(R.id.txtTrustScore);
-            txtTimeWindow    = itemView.findViewById(R.id.txtTimeWindow);
-            chipGroupTags    = itemView.findViewById(R.id.chipGroupTags);
-            btnPass          = itemView.findViewById(R.id.btnPass);
-            btnAccept        = itemView.findViewById(R.id.btnAccept);
+            avatarPartner = itemView.findViewById(R.id.avatarPartner);
+            txtName       = itemView.findViewById(R.id.txtName);
+            txtAge        = itemView.findViewById(R.id.txtAge);
+            txtTrustScore = itemView.findViewById(R.id.txtTrustScore);
+            txtTimeWindow = itemView.findViewById(R.id.txtTimeWindow);
+            chipGroupTags = itemView.findViewById(R.id.chipGroupTags);
+            btnPass       = itemView.findViewById(R.id.btnPass);
+            btnAccept     = itemView.findViewById(R.id.btnAccept);
         }
 
         void bind(WalkProposal proposal) {
-            // Avatar initial (first letter of matched user's name)
             String name = proposal.getMatchedUserName();
-            txtAvatarInitial.setText(name != null && !name.isEmpty()
-                    ? String.valueOf(name.charAt(0)).toUpperCase(Locale.getDefault())
-                    : "?");
+            avatarPartner.bind(name, null);
 
             txtName.setText(name);
             txtAge.setText("· " + proposal.getMatchedUserAge() + " tuổi");
@@ -115,8 +110,7 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
                     + "  –  "
                     + formatTime(proposal.getOverlappingTimeEnd()));
 
-            // Common interest chips
-            bindTagChips(proposal.getOverlappingTags());
+            chipGroupTags.setTags(proposal.getOverlappingTags());
 
             // Buttons
             btnPass.setOnClickListener(v -> {
@@ -125,29 +119,6 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
             btnAccept.setOnClickListener(v -> {
                 if (acceptListener != null) acceptListener.onAcceptClick(proposal);
             });
-        }
-
-        private void bindTagChips(List<String> tags) {
-            chipGroupTags.removeAllViews();
-            if (tags == null || tags.isEmpty()) return;
-
-            int bgColor   = ContextCompat.getColor(chipGroupTags.getContext(), R.color.bg_tag_inactive);
-            int textColor = ContextCompat.getColor(chipGroupTags.getContext(), R.color.text_label);
-
-            for (String tag : tags) {
-                Chip chip = new Chip(chipGroupTags.getContext());
-                chip.setText(tag);
-                chip.setClickable(false);
-                chip.setFocusable(false);
-                chip.setChipBackgroundColor(ColorStateList.valueOf(bgColor));
-                chip.setTextColor(textColor);
-                chip.setTextSize(12f);
-                chip.setChipStrokeWidth(0f);
-                chip.setEnsureMinTouchTargetSize(false);
-                chip.setCheckedIconVisible(false);
-                chip.setChipIconVisible(false);
-                chipGroupTags.addView(chip);
-            }
         }
 
         private String formatTime(float hourFloat) {

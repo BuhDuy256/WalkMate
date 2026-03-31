@@ -99,14 +99,13 @@
         </LinearLayout>
 
         <!-- Tags (hidden when empty) -->
-        <TextView
-            android:id="@+id/txtTags"
-            android:layout_width="wrap_content"
+        <com.walkmate.core.designsystem.view.TagChipGroup
+            android:id="@+id/chipGroupTags"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textColor="@color/text_label"
-            android:textSize="13sp"
-            android:visibility="gone" />
+            app:chipSpacingHorizontal="6dp"
+            app:chipSpacingVertical="4dp" />
 
         <!-- Cancel button -->
         <com.google.android.material.button.MaterialButton

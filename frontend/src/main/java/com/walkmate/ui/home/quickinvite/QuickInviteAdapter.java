@@ -9,7 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
+import com.walkmate.core.util.GlideHelper;
 import com.walkmate.R;
 import com.walkmate.ui.home.HomeDashboardUiState.QuickInviteUser;
 
@@ -68,16 +68,7 @@ public class QuickInviteAdapter extends RecyclerView.Adapter<QuickInviteAdapter.
         void bind(QuickInviteUser user) {
             txtName.setText(user.displayName);
 
-            if (user.avatarUrl != null && !user.avatarUrl.isEmpty()) {
-                Glide.with(imgAvatar.getContext())
-                        .load(user.avatarUrl)
-                        .circleCrop()
-                        .placeholder(R.drawable.ic_user)
-                        .into(imgAvatar);
-            } else {
-                // No URL — show the placeholder directly; skip Glide to avoid flicker.
-                imgAvatar.setImageResource(R.drawable.ic_user);
-            }
+            GlideHelper.loadCircle(imgAvatar, user.avatarUrl);
         }
     }
 }

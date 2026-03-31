@@ -1,13 +1,9 @@
 package com.walkmate.ui.auth.register;
 
 import android.os.Bundle;
-import android.text.method.HideReturnsTransformationMethod;
-import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,16 +14,16 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.WalkMateButton;
+import com.walkmate.core.designsystem.view.WalkMateInputField;
 import com.walkmate.ui.auth.AuthActivity;
 
 public class RegisterFragment extends Fragment {
 
-    private EditText etFullName;
-    private EditText etEmail;
-    private EditText etPassword;
-    private ImageView ivTogglePassword;
-    private AppCompatButton btnRegisterAction;
-    private boolean isPasswordVisible = false;
+    private WalkMateInputField fieldFullName;
+    private WalkMateInputField fieldEmail;
+    private WalkMateInputField fieldPassword;
+    private WalkMateButton btnRegister;
 
     private RegisterViewModel registerViewModel;
 
@@ -47,32 +43,14 @@ public class RegisterFragment extends Fragment {
 
         initViews(view);
         initClickListeners(view);
-        setupPasswordToggle();
         observeUiState();
     }
 
     private void initViews(View root) {
-        etFullName = root.findViewById(R.id.et_fullname);
-        etEmail = root.findViewById(R.id.et_email);
-        etPassword = root.findViewById(R.id.et_password);
-        ivTogglePassword = root.findViewById(R.id.iv_toggle_password_reg);
-        btnRegisterAction = root.findViewById(R.id.btn_register_action);
-    }
-
-    private void setupPasswordToggle() {
-        if (ivTogglePassword != null) {
-            ivTogglePassword.setOnClickListener(v -> {
-                isPasswordVisible = !isPasswordVisible;
-                if (isPasswordVisible) {
-                    etPassword.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
-                    ivTogglePassword.setImageResource(R.drawable.ic_eye_show);
-                } else {
-                    etPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
-                    ivTogglePassword.setImageResource(R.drawable.ic_eye_hide);
-                }
-                etPassword.setSelection(etPassword.getText().length());
-            });
-        }
+        fieldFullName = root.findViewById(R.id.field_fullname);
+        fieldEmail    = root.findViewById(R.id.field_email);
+        fieldPassword = root.findViewById(R.id.field_password);
+        btnRegister   = root.findViewById(R.id.btn_register_action);
     }
 
     private void initClickListeners(View root) {
@@ -85,43 +63,23 @@ public class RegisterFragment extends Fragment {
             }
         };
 
-        if (btnTabSignIn != null) {
-            btnTabSignIn.setOnClickListener(switchToLogin);
-        }
-        if (tvFooterSignIn != null) {
-            tvFooterSignIn.setOnClickListener(switchToLogin);
-        }
+        if (btnTabSignIn != null) btnTabSignIn.setOnClickListener(switchToLogin);
+        if (tvFooterSignIn != null) tvFooterSignIn.setOnClickListener(switchToLogin);
 
-        if (btnRegisterAction != null) {
-            btnRegisterAction.setOnClickListener(v -> {
-                String fullName = etFullName.getText().toString();
-                String email = etEmail.getText().toString();
-                String password = etPassword.getText().toString();
-                registerViewModel.register(fullName, email, password);
-            });
-        }
+        btnRegister.setOnClickListener(v ->
+                registerViewModel.register(
+                        fieldFullName.getText(), fieldEmail.getText(), fieldPassword.getText()));
     }
 
     private void observeUiState() {
         registerViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
-            if (state == null) {
-                return;
-            }
+            if (state == null) return;
 
-            if (btnRegisterAction != null) {
-                btnRegisterAction.setEnabled(!state.isLoading());
-                btnRegisterAction.setText(state.isLoading() ? "Creating..." : "Create Account ✦");
-            }
+            btnRegister.setLoading(state.isLoading());
 
-            if (state.getFullNameError() != null) {
-                etFullName.setError(state.getFullNameError());
-            }
-            if (state.getEmailError() != null) {
-                etEmail.setError(state.getEmailError());
-            }
-            if (state.getPasswordError() != null) {
-                etPassword.setError(state.getPasswordError());
-            }
+            fieldFullName.setError(state.getFullNameError());
+            fieldEmail.setError(state.getEmailError());
+            fieldPassword.setError(state.getPasswordError());
 
             if (state.getError() != null) {
                 Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_LONG).show();

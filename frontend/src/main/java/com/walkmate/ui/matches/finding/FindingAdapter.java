@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkintent.WalkIntent;
 
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
         private final TextView txtTimeWindow;
         private final Chip chipDuration;
         private final Chip chipAgeRange;
-        private final TextView txtTags;
+        private final TagChipGroup chipGroupTags;
         private final Chip chipStatus;
         private final MaterialButton btnCancelIntent;
 
@@ -74,7 +75,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
             txtTimeWindow   = itemView.findViewById(R.id.txtTimeWindow);
             chipDuration    = itemView.findViewById(R.id.chipDuration);
             chipAgeRange    = itemView.findViewById(R.id.chipAgeRange);
-            txtTags         = itemView.findViewById(R.id.txtTags);
+            chipGroupTags   = itemView.findViewById(R.id.chipGroupTags);
             chipStatus      = itemView.findViewById(R.id.chipStatus);
             btnCancelIntent = itemView.findViewById(R.id.btnCancelIntent);
         }
@@ -90,13 +91,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
             chipAgeRange.setText(itemView.getContext().getString(
                     R.string.age_range_format, intent.getAgeMin(), intent.getAgeMax()));
 
-            List<String> tags = intent.getTags();
-            if (tags != null && !tags.isEmpty()) {
-                txtTags.setText(String.join("  ·  ", tags));
-                txtTags.setVisibility(View.VISIBLE);
-            } else {
-                txtTags.setVisibility(View.GONE);
-            }
+            chipGroupTags.setTags(intent.getTags());
 
             bindStatusChip(intent.getStatus());
 

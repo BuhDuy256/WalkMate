@@ -103,36 +103,13 @@
                 android:padding="16dp">
 
                 <!-- Header row: fire emoji + title + chevron -->
-                <LinearLayout
+                <com.walkmate.core.designsystem.view.WalkMateCardHeader
+                    android:id="@+id/headerStreak"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔥"
-                        android:textSize="16sp"
-                        android:layout_marginEnd="8dp" />
-
-                    <TextView
-                        android:id="@+id/txtStreakTitle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_dark"
-                        tools:text="Walking Streak" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right"
-                        android:contentDescription="@string/home_streak_details_cd" />
-
-                </LinearLayout>
+                    app:wm_headerEmoji="🔥"
+                    app:wm_headerTitle="@string/home_streak_title"
+                    app:wm_navigable="true" />
 
                 <ProgressBar
                     android:id="@+id/streakProgress"
@@ -375,39 +352,14 @@
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/bg_white">
 
-                <LinearLayout
+                <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                    android:id="@+id/statDistance"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
                     android:padding="12dp"
-                    android:gravity="center_horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_distance"
-                        android:contentDescription="@string/home_stat_distance_cd" />
-
-                    <TextView
-                        android:id="@+id/txtStatDistance"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_dark"
-                        tools:text="12.5" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/home_stat_this_week"
-                        android:textSize="10sp"
-                        android:textColor="@color/text_muted"
-                        android:gravity="center" />
-
-                </LinearLayout>
+                    app:wm_statIcon="@drawable/ic_distance"
+                    app:wm_statValue="—"
+                    app:wm_statLabel="@string/home_stat_this_week" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -422,39 +374,14 @@
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/bg_white">
 
-                <LinearLayout
+                <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                    android:id="@+id/statSessions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
                     android:padding="12dp"
-                    android:gravity="center_horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_session"
-                        android:contentDescription="@string/home_stat_sessions_cd" />
-
-                    <TextView
-                        android:id="@+id/txtStatSessions"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_dark"
-                        tools:text="3" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/home_stat_this_week"
-                        android:textSize="10sp"
-                        android:textColor="@color/text_muted"
-                        android:gravity="center" />
-
-                </LinearLayout>
+                    app:wm_statIcon="@drawable/ic_session"
+                    app:wm_statValue="—"
+                    app:wm_statLabel="@string/home_stat_this_week" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -468,39 +395,14 @@
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/bg_white">
 
-                <LinearLayout
+                <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                    android:id="@+id/statStreak"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
                     android:padding="12dp"
-                    android:gravity="center_horizontal">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔥"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:id="@+id/txtStatStreak"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_dark"
-                        tools:text="5" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/home_stat_day_streak"
-                        android:textSize="10sp"
-                        android:textColor="@color/text_muted"
-                        android:gravity="center" />
-
-                </LinearLayout>
+                    app:wm_statEmoji="🔥"
+                    app:wm_statValue="—"
+                    app:wm_statLabel="@string/home_stat_day_streak" />
 
             </com.google.android.material.card.MaterialCardView>
 

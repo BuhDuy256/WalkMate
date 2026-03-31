@@ -71,65 +71,25 @@
                     android:textColor="#9E8D7F"
                     android:textSize="14sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <com.walkmate.core.designsystem.view.WalkMateInputField
+                    android:id="@+id/field_email"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="Email Address"
-                    android:textColor="#7A6657"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    app:wm_label="Email Address"
+                    app:wm_hint="hello@example.com"
+                    app:wm_icon="@drawable/ic_mail"
+                    app:wm_inputType="textEmailAddress" />
 
-                <EditText
-                    android:id="@+id/et_email_login"
+                <com.walkmate.core.designsystem.view.WalkMateInputField
+                    android:id="@+id/field_password"
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_input_field"
-                    android:drawableStart="@drawable/ic_mail"
-                    android:drawablePadding="12dp"
-                    android:hint="hello@example.com"
-                    android:inputType="textEmailAddress"
-                    android:paddingHorizontal="20dp"
-                    android:textColorHint="#C6B5A6"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Password"
-                    android:textColor="#7A6657"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_input_field"
-                    android:paddingHorizontal="20dp">
-                    <EditText
-                        android:id="@+id/et_password_login"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_toStartOf="@+id/iv_toggle_password"
-                        android:background="@android:color/transparent"
-                        android:drawableStart="@drawable/ic_lock"
-                        android:drawablePadding="12dp"
-                        android:hint="Enter your password"
-                        android:inputType="textPassword"
-                        android:textColorHint="#C6B5A6"
-                        android:textSize="14sp" />
-                    <ImageView
-                        android:id="@+id/iv_toggle_password"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:src="@drawable/ic_eye_hide"
-                        app:tint="#C6B5A6" />
-                </RelativeLayout>
+                    app:wm_label="Password"
+                    app:wm_hint="Enter your password"
+                    app:wm_icon="@drawable/ic_lock"
+                    app:wm_passwordToggle="true" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -141,17 +101,13 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <androidx.appcompat.widget.AppCompatButton
+                <com.walkmate.core.designsystem.view.WalkMateButton
                     android:id="@+id/btn_signin_action"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="24dp"
-                    android:background="@drawable/bg_gradient_button"
-                    android:text="Sign In ✦"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    app:wm_buttonStyle="filled"
+                    app:wm_text="Sign In ✦" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

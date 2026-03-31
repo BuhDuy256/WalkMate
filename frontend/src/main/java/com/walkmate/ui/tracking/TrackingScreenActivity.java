@@ -28,6 +28,8 @@ import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.AvatarInitialView;
+import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.domain.tracking.WalkState;
 import com.walkmate.service.WalkTrackerService;
 
@@ -84,12 +86,12 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private TextView              txtPartnerInitial;
-    private TextView              txtPartnerNameSheet;
-    private TextView              txtDistance;
-    private TextView              txtDuration;
-    private TextView              txtPace;
-    private MaterialButton        btnStart;
+    private AvatarInitialView      avatarPartner;
+    private TextView               txtPartnerNameSheet;
+    private WalkMateStatColumn     statDistance;
+    private WalkMateStatColumn     statDuration;
+    private WalkMateStatColumn     statPace;
+    private MaterialButton         btnStart;
     private LinearLayout          btnRowPauseStop;
     private MaterialButton        btnPause;
     private MaterialButton        btnStop;
@@ -266,16 +268,13 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private void updatePartnerHeader(String name) {
         txtPartnerNameSheet.setText(name);
-        if (name != null && !name.isEmpty()) {
-            txtPartnerInitial.setText(
-                    String.valueOf(name.charAt(0)).toUpperCase(Locale.getDefault()));
-        }
+        avatarPartner.bind(name, null);
     }
 
     private void updateStats(TrackingUiState state) {
-        txtDistance.setText(formatDistance(state.getDistanceKm()));
-        txtDuration.setText(formatDuration(state.getElapsedSeconds()));
-        txtPace.setText(formatPace(state.getPaceMinPerKm()));
+        statDistance.setValue(formatDistance(state.getDistanceKm()));
+        statDuration.setValue(formatDuration(state.getElapsedSeconds()));
+        statPace.setValue(formatPace(state.getPaceMinPerKm()));
     }
 
     /**
@@ -421,11 +420,11 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void bindViews() {
-        txtPartnerInitial   = findViewById(R.id.txtPartnerInitial);
+        avatarPartner       = findViewById(R.id.avatarPartner);
         txtPartnerNameSheet = findViewById(R.id.txtPartnerNameSheet);
-        txtDistance         = findViewById(R.id.txtDistance);
-        txtDuration         = findViewById(R.id.txtDuration);
-        txtPace             = findViewById(R.id.txtPace);
+        statDistance        = findViewById(R.id.statDistance);
+        statDuration        = findViewById(R.id.statDuration);
+        statPace            = findViewById(R.id.statPace);
         btnStart            = findViewById(R.id.btnStart);
         btnRowPauseStop     = findViewById(R.id.btnRowPauseStop);
         btnPause            = findViewById(R.id.btnPause);

@@ -61,22 +61,10 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
-                <!-- Avatar placeholder circle -->
-                <FrameLayout
+                <com.walkmate.core.designsystem.view.AvatarInitialView
+                    android:id="@+id/avatarPartner"
                     android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_warm_circle">
-
-                    <TextView
-                        android:id="@+id/txtAvatarInitial"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:textColor="@color/orange_end"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                </FrameLayout>
+                    android:layout_height="48dp" />
 
                 <!-- Name + meeting point -->
                 <LinearLayout

@@ -13,7 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.bumptech.glide.Glide;
+import com.walkmate.core.util.GlideHelper;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
@@ -147,15 +147,7 @@ public class ProfileFragment extends Fragment {
         }
 
         // ── Avatar ──
-        if (state.getAvatarUrl() != null && !state.getAvatarUrl().isEmpty()) {
-            Glide.with(this)
-                    .load(state.getAvatarUrl())
-                    .circleCrop()
-                    .placeholder(R.drawable.ic_user)
-                    .into(imgProfileAvatar);
-        } else {
-            imgProfileAvatar.setImageResource(R.drawable.ic_user);
-        }
+        GlideHelper.loadCircle(imgProfileAvatar, state.getAvatarUrl());
 
         // ── Online dot ──
         viewOnlineStatus.setVisibility(state.isOnline() ? View.VISIBLE : View.GONE);

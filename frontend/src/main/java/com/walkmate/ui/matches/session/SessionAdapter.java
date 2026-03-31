@@ -5,6 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.walkmate.core.designsystem.view.AvatarInitialView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -81,7 +83,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final TextView txtAvatarInitial;
+        private final AvatarInitialView avatarPartner;
         private final TextView txtPartnerName;
         private final TextView txtMeetingPoint;
         private final TextView txtMeetingTime;
@@ -91,7 +93,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            txtAvatarInitial = itemView.findViewById(R.id.txtAvatarInitial);
+            avatarPartner = itemView.findViewById(R.id.avatarPartner);
             txtPartnerName   = itemView.findViewById(R.id.txtPartnerName);
             txtMeetingPoint  = itemView.findViewById(R.id.txtMeetingPoint);
             txtMeetingTime   = itemView.findViewById(R.id.txtMeetingTime);
@@ -101,11 +103,8 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         }
 
         void bind(WalkSession session) {
-            // Avatar initial
             String name = session.getPartnerName();
-            txtAvatarInitial.setText(name != null && !name.isEmpty()
-                    ? String.valueOf(name.charAt(0)).toUpperCase(Locale.getDefault())
-                    : "?");
+            avatarPartner.bind(name, null);
 
             txtPartnerName.setText(name);
             txtMeetingPoint.setText(formatMeetingPoint(
