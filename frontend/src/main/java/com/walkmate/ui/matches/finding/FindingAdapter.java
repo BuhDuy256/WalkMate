@@ -104,7 +104,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
             chipStatus.setText(status);
             int bgColor;
             int textColor;
-            if ("WAITLIST".equals(status)) {
+            if ("CONSUMED".equals(status)) {
                 bgColor   = ContextCompat.getColor(itemView.getContext(), R.color.bg_tag_inactive);
                 textColor = ContextCompat.getColor(itemView.getContext(), R.color.text_label);
             } else {
