@@ -1,38 +1,42 @@
 package com.walkmate.data.datasource.remote.dto.request.walkintent;
 
-import com.google.gson.annotations.SerializedName;
+import java.util.List;
 
-// Request body for POST /api/v1/intents
 public class CreateWalkIntentRequest {
 
-    @SerializedName("hotspot_id")
-    private final String hotspotId;
+    private String hotspotId;
+    private String date;
+    private float timeStart;
+    private float timeEnd;
+    private int ageMin;
+    private int ageMax;
+    private List<String> tags;
 
-    @SerializedName("time_window_start")
-    private final String timeWindowStart;
-
-    @SerializedName("time_window_end")
-    private final String timeWindowEnd;
-
-    @SerializedName("age_min")
-    private final int ageMin;
-
-    @SerializedName("age_max")
-    private final int ageMax;
+    public CreateWalkIntentRequest() {
+        // Empty constructor for Gson
+    }
 
     public CreateWalkIntentRequest(String hotspotId,
-                                   String timeWindowStart, String timeWindowEnd,
-                                   int ageMin, int ageMax) {
+                                   String date,
+                                   float timeStart,
+                                   float timeEnd,
+                                   int ageMin,
+                                   int ageMax,
+                                   List<String> tags) {
         this.hotspotId = hotspotId;
-        this.timeWindowStart = timeWindowStart;
-        this.timeWindowEnd = timeWindowEnd;
+        this.date = date;
+        this.timeStart = timeStart;
+        this.timeEnd = timeEnd;
         this.ageMin = ageMin;
         this.ageMax = ageMax;
+        this.tags = tags;
     }
 
     public String getHotspotId() { return hotspotId; }
-    public String getTimeWindowStart() { return timeWindowStart; }
-    public String getTimeWindowEnd() { return timeWindowEnd; }
+    public String getDate() { return date; }
+    public float getTimeStart() { return timeStart; }
+    public float getTimeEnd() { return timeEnd; }
     public int getAgeMin() { return ageMin; }
     public int getAgeMax() { return ageMax; }
+    public List<String> getTags() { return tags; }
 }

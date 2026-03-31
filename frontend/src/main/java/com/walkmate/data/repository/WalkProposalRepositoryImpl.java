@@ -71,7 +71,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                     null,
                     10.7769, 106.7009,
                     "2026-03-29T17:00:00Z",
-                    WalkSession.Status.PENDING_MEET));
+                    WalkSession.Status.PENDING));
         });
     }
 

@@ -46,7 +46,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                         "mock-user-1",
                         8.0f, 9.5f,
                         18, 40,
-                        "WAITLIST",
+                        "OPEN",
                         "2026-03-29T09:00:00Z",
                         Arrays.asList("Chạy bộ", "Chụp ảnh")),
                 new WalkIntent(

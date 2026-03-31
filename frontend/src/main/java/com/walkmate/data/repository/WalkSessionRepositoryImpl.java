@@ -31,7 +31,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                         null,
                         10.7769, 106.7009,
                         "2026-03-29T14:00:00Z",
-                        WalkSession.Status.PENDING_MEET)
+                        WalkSession.Status.PENDING)
         );
     }
 
@@ -52,6 +52,23 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
         executor.execute(() -> {
             sleep();
             callback.onSuccess(null);
+        });
+    }
+
+    @Override
+    public void activateSession(String sessionId, DomainCallback<WalkSession> callback) {
+        executor.execute(() -> {
+            sleep();
+            callback.onSuccess(new WalkSession(
+                    sessionId,
+                    "proposal-003",
+                    "Thu Hà",
+                    null,
+                    10.7769,
+                    106.7009,
+                    "2026-03-29T14:00:00Z",
+                    WalkSession.Status.ACTIVE
+            ));
         });
     }
 

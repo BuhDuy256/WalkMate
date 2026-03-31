@@ -7,4 +7,5 @@ import java.util.List;
 public interface WalkSessionRepository {
     void getActiveSessions(DomainCallback<List<WalkSession>> callback);
     void cancelSession(String sessionId, String reason, DomainCallback<Void> callback);
+    void activateSession(String sessionId, DomainCallback<WalkSession> callback);
 }
