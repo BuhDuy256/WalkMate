@@ -1,0 +1,66 @@
+2026-03-29 14:53:08.678  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 23040 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-03-29 14:53:08.678 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-03-29 14:53:08.678  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-03-29 14:53:11.794  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-03-29 14:53:11.810  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-03-29 14:53:11.810  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-03-29 14:53:11.905  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-03-29 14:53:11.905  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3103 ms
+2026-03-29 14:53:12.413  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-03-29 14:53:14.707  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2b936b04
+2026-03-29 14:53:14.707  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-03-29 14:53:14.835  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-03-29 14:53:17.167  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 6 migrations (execution time 00:00.699s)
+2026-03-29 14:53:19.281  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-03-29 14:53:19.281  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (4) !
+2026-03-29 14:53:19.393  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
+2026-03-29 14:53:20.649  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-03-29 14:53:20.919  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-03-29 14:53:20.935  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 13.142 seconds (process running for 13.72)
+2026-03-29 14:53:37.674  INFO [traceId=,spanId=] [http-nio-8080-exec-2] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-29 14:53:37.690  INFO [traceId=,spanId=] [http-nio-8080-exec-2] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
+2026-03-29 14:53:37.690  INFO [traceId=,spanId=] [http-nio-8080-exec-2] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 0 ms
+2026-03-29 16:32:27.509  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 30996 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-03-29 16:32:27.512 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-03-29 16:32:27.512  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-03-29 16:32:31.094  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-03-29 16:32:31.114  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-03-29 16:32:31.114  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-03-29 16:32:31.177  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-03-29 16:32:31.177  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3586 ms
+2026-03-29 16:32:31.781  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-03-29 16:32:34.077  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2b936b04
+2026-03-29 16:32:34.077  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-03-29 16:32:34.214  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-03-29 16:32:36.931  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 6 migrations (execution time 00:00.815s)
+2026-03-29 16:32:39.294  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-03-29 16:32:39.294  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (4) !
+2026-03-29 16:32:39.497  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
+2026-03-29 16:32:41.102  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-03-29 16:32:41.467  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-03-29 16:32:41.477  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 14.804 seconds (process running for 15.476)
+2026-03-29 16:40:44.064  INFO [traceId=,spanId=] [http-nio-8080-exec-1] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-29 16:40:44.064  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
+2026-03-29 16:40:44.066  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 2 ms
+2026-03-29 19:10:27.974  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 18328 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-03-29 19:10:27.975 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-03-29 19:10:27.976  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-03-29 19:10:34.267  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-03-29 19:10:34.316  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-03-29 19:10:34.317  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-03-29 19:10:34.538  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-03-29 19:10:34.540  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6515 ms
+2026-03-29 19:10:35.905  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-03-29 19:10:38.342  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2bb0e277
+2026-03-29 19:10:38.343  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-03-29 19:10:38.500  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-03-29 19:10:40.654  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 6 migrations (execution time 00:00.503s)
+2026-03-29 19:10:42.037  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-03-29 19:10:42.038  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (4) !
+2026-03-29 19:10:42.153  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
+2026-03-29 19:10:46.796  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-03-29 19:10:48.670  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-03-29 19:10:48.708  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 21.539 seconds (process running for 21.91)
+2026-03-29 19:12:03.522  INFO [traceId=,spanId=] [http-nio-8080-exec-1] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-29 19:12:03.522  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
+2026-03-29 19:12:03.525  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 3 ms

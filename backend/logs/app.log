@@ -1,66 +1,426 @@
-2026-03-29 14:53:08.678  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 23040 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
-2026-03-29 14:53:08.678 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
-2026-03-29 14:53:08.678  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
-2026-03-29 14:53:11.794  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
-2026-03-29 14:53:11.810  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
-2026-03-29 14:53:11.810  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
-2026-03-29 14:53:11.905  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
-2026-03-29 14:53:11.905  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3103 ms
-2026-03-29 14:53:12.413  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
-2026-03-29 14:53:14.707  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2b936b04
-2026-03-29 14:53:14.707  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
-2026-03-29 14:53:14.835  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
-2026-03-29 14:53:17.167  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 6 migrations (execution time 00:00.699s)
-2026-03-29 14:53:19.281  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
-2026-03-29 14:53:19.281  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (4) !
-2026-03-29 14:53:19.393  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
-2026-03-29 14:53:20.649  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
-2026-03-29 14:53:20.919  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
-2026-03-29 14:53:20.935  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 13.142 seconds (process running for 13.72)
-2026-03-29 14:53:37.674  INFO [traceId=,spanId=] [http-nio-8080-exec-2] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-03-29 14:53:37.690  INFO [traceId=,spanId=] [http-nio-8080-exec-2] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
-2026-03-29 14:53:37.690  INFO [traceId=,spanId=] [http-nio-8080-exec-2] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 0 ms
-2026-03-29 16:32:27.509  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 30996 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
-2026-03-29 16:32:27.512 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
-2026-03-29 16:32:27.512  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
-2026-03-29 16:32:31.094  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
-2026-03-29 16:32:31.114  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
-2026-03-29 16:32:31.114  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
-2026-03-29 16:32:31.177  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
-2026-03-29 16:32:31.177  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3586 ms
-2026-03-29 16:32:31.781  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
-2026-03-29 16:32:34.077  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2b936b04
-2026-03-29 16:32:34.077  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
-2026-03-29 16:32:34.214  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
-2026-03-29 16:32:36.931  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 6 migrations (execution time 00:00.815s)
-2026-03-29 16:32:39.294  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
-2026-03-29 16:32:39.294  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (4) !
-2026-03-29 16:32:39.497  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
-2026-03-29 16:32:41.102  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
-2026-03-29 16:32:41.467  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
-2026-03-29 16:32:41.477  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 14.804 seconds (process running for 15.476)
-2026-03-29 16:40:44.064  INFO [traceId=,spanId=] [http-nio-8080-exec-1] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-03-29 16:40:44.064  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
-2026-03-29 16:40:44.066  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 2 ms
-2026-03-29 19:10:27.974  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 18328 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
-2026-03-29 19:10:27.975 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
-2026-03-29 19:10:27.976  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
-2026-03-29 19:10:34.267  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
-2026-03-29 19:10:34.316  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
-2026-03-29 19:10:34.317  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
-2026-03-29 19:10:34.538  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
-2026-03-29 19:10:34.540  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6515 ms
-2026-03-29 19:10:35.905  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
-2026-03-29 19:10:38.342  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2bb0e277
-2026-03-29 19:10:38.343  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
-2026-03-29 19:10:38.500  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
-2026-03-29 19:10:40.654  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 6 migrations (execution time 00:00.503s)
-2026-03-29 19:10:42.037  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
-2026-03-29 19:10:42.038  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (4) !
-2026-03-29 19:10:42.153  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
-2026-03-29 19:10:46.796  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
-2026-03-29 19:10:48.670  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
-2026-03-29 19:10:48.708  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 21.539 seconds (process running for 21.91)
-2026-03-29 19:12:03.522  INFO [traceId=,spanId=] [http-nio-8080-exec-1] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-03-29 19:12:03.522  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
-2026-03-29 19:12:03.525  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 3 ms
+2026-04-01 00:19:40.220  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 7108 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 00:19:40.226 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 00:19:40.226  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 00:19:43.487  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 00:19:43.507  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 00:19:43.507  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 00:19:43.599  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 00:19:43.599  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3222 ms
+2026-04-01 00:19:44.137  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 00:19:45.966  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@48d44b46
+2026-04-01 00:19:45.968  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 00:19:46.118  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 00:19:47.608  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:00.453s)
+2026-04-01 00:19:48.920  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-04-01 00:19:48.920  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 00:19:48.922  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (1.2) !
+2026-04-01 00:19:49.358  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "1.1 - create user account" [out of order]
+2026-04-01 00:19:50.049  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "user_account" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 00:19:50.252  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "idx_user_account_email" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 00:19:51.988  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (1.2) !
+2026-04-01 00:19:52.307  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Migrating schema "public" to version "1.2 - create refresh token" [out of order]
+2026-04-01 00:19:52.513  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "refresh_token" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 00:19:52.709  WARN [traceId=,spanId=] [main] o.f.c.internal.sqlscript.DefaultSqlScriptExecutor : DB: relation "idx_refresh_token_user_id" already exists, skipping (SQL State: 42P07 - Error Code: 0)
+2026-04-01 00:19:54.359  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (1.2) !
+2026-04-01 00:19:54.460  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Successfully applied 2 migrations to schema "public", now at version v1.2 (execution time 00:02.026s)
+2026-04-01 00:19:55.555  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-04-01 00:19:56.015  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-04-01 00:19:56.027  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 17.169 seconds (process running for 18.222)
+2026-04-01 00:22:40.723  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 2308 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 00:22:40.723 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 00:22:40.723  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 00:22:42.835  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 00:22:42.853  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 00:22:42.853  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 00:22:42.927  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 00:22:42.927  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2118 ms
+2026-04-01 00:22:43.465  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 00:22:46.214  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5c4714ef
+2026-04-01 00:22:46.220  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 00:22:46.369  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 00:22:48.254  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:00.725s)
+2026-04-01 00:22:49.574  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-04-01 00:22:49.574  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 00:22:49.574  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (1.2) !
+2026-04-01 00:22:49.659  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
+2026-04-01 00:22:50.654  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-04-01 00:22:50.974  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-04-01 00:22:50.984  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 11.182 seconds (process running for 11.864)
+2026-04-01 00:23:40.825  INFO [traceId=,spanId=] [http-nio-8080-exec-1] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-01 00:23:40.826  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
+2026-04-01 00:23:40.831  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 4 ms
+2026-04-01 00:23:51.270 ERROR [traceId=69cc03269d6f6e66d1b2525addba3e06,spanId=5cb1fd9c300a132b] [http-nio-8080-exec-8] c.w.presentation.exception.GlobalExceptionHandler : Unexpected exception occurred
+jakarta.servlet.ServletException: Handler dispatch failed: java.lang.NoSuchMethodError: 'void org.springframework.web.method.ControllerAdviceBean.<init>(java.lang.Object)'
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1104)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:490)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:351)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:83)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:129)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:125)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.authentication.AuthenticationFilter.doFilterInternal(AuthenticationFilter.java:177)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.doFilterInternal(BearerTokenAuthenticationFilter.java:135)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:334)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:225)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:319)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$4(HandlerMappingIntrospector.java:267)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:240)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1775)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NoSuchMethodError: 'void org.springframework.web.method.ControllerAdviceBean.<init>(java.lang.Object)'
+	at org.springdoc.core.service.GenericResponseService.lambda$getGenericMapResponse$8(GenericResponseService.java:706)
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:178)
+	at java.base/java.util.Spliterators$ArraySpliterator.forEachRemaining(Spliterators.java:1024)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575)
+	at java.base/java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622)
+	at java.base/java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627)
+	at org.springdoc.core.service.GenericResponseService.getGenericMapResponse(GenericResponseService.java:708)
+	at org.springdoc.core.service.GenericResponseService.build(GenericResponseService.java:247)
+	at org.springdoc.api.AbstractOpenApiResource.calculatePath(AbstractOpenApiResource.java:499)
+	at org.springdoc.api.AbstractOpenApiResource.calculatePath(AbstractOpenApiResource.java:676)
+	at org.springdoc.webmvc.api.OpenApiResource.lambda$calculatePath$11(OpenApiResource.java:220)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at org.springdoc.webmvc.api.OpenApiResource.calculatePath(OpenApiResource.java:201)
+	at org.springdoc.webmvc.api.OpenApiResource.lambda$getPaths$2(OpenApiResource.java:171)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at org.springdoc.webmvc.api.OpenApiResource.getPaths(OpenApiResource.java:150)
+	at org.springdoc.api.AbstractOpenApiResource.getOpenApi(AbstractOpenApiResource.java:353)
+	at org.springdoc.webmvc.api.OpenApiResource.openapiJson(OpenApiResource.java:125)
+	at org.springdoc.webmvc.api.OpenApiWebMvcResource.openapiJson(OpenApiWebMvcResource.java:114)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	... 129 common frames omitted
+2026-04-01 00:26:58.970  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 22512 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 00:26:58.970 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 00:26:58.970  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 00:27:01.408  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 00:27:01.426  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 00:27:01.426  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 00:27:01.518  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 00:27:01.518  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2448 ms
+2026-04-01 00:27:02.031  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 00:27:03.801  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@70139a81
+2026-04-01 00:27:03.801  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 00:27:03.926  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 00:27:05.637  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:00.517s)
+2026-04-01 00:27:06.942  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-04-01 00:27:06.942  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 00:27:06.942  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (1.2) !
+2026-04-01 00:27:07.031  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
+2026-04-01 00:27:07.937  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-04-01 00:27:08.257  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-04-01 00:27:08.267  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 10.072 seconds (process running for 10.529)
+2026-04-01 00:28:18.272  INFO [traceId=,spanId=] [http-nio-8080-exec-1] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-01 00:28:18.273  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Initializing Servlet 'dispatcherServlet'
+2026-04-01 00:28:18.275  INFO [traceId=,spanId=] [http-nio-8080-exec-1] org.springframework.web.servlet.DispatcherServlet : Completed initialization in 2 ms
+2026-04-01 00:28:19.069 ERROR [traceId=69cc0432a705b1a660d6fb5719764115,spanId=be4ffa7cfd46c370] [http-nio-8080-exec-9] c.w.presentation.exception.GlobalExceptionHandler : Unexpected exception occurred
+jakarta.servlet.ServletException: Handler dispatch failed: java.lang.NoSuchMethodError: 'void org.springframework.web.method.ControllerAdviceBean.<init>(java.lang.Object)'
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1104)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:490)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:351)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:83)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:129)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:125)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.authentication.AuthenticationFilter.doFilterInternal(AuthenticationFilter.java:177)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.doFilterInternal(BearerTokenAuthenticationFilter.java:135)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:334)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:225)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:319)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$4(HandlerMappingIntrospector.java:267)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:240)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1775)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NoSuchMethodError: 'void org.springframework.web.method.ControllerAdviceBean.<init>(java.lang.Object)'
+	at org.springdoc.core.service.GenericResponseService.lambda$getGenericMapResponse$8(GenericResponseService.java:702)
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:178)
+	at java.base/java.util.Spliterators$ArraySpliterator.forEachRemaining(Spliterators.java:1024)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575)
+	at java.base/java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622)
+	at java.base/java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627)
+	at org.springdoc.core.service.GenericResponseService.getGenericMapResponse(GenericResponseService.java:704)
+	at org.springdoc.core.service.GenericResponseService.build(GenericResponseService.java:246)
+	at org.springdoc.api.AbstractOpenApiResource.calculatePath(AbstractOpenApiResource.java:499)
+	at org.springdoc.api.AbstractOpenApiResource.calculatePath(AbstractOpenApiResource.java:676)
+	at org.springdoc.webmvc.api.OpenApiResource.lambda$calculatePath$11(OpenApiResource.java:219)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at org.springdoc.webmvc.api.OpenApiResource.calculatePath(OpenApiResource.java:200)
+	at org.springdoc.webmvc.api.OpenApiResource.lambda$getPaths$2(OpenApiResource.java:170)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at org.springdoc.webmvc.api.OpenApiResource.getPaths(OpenApiResource.java:149)
+	at org.springdoc.api.AbstractOpenApiResource.getOpenApi(AbstractOpenApiResource.java:353)
+	at org.springdoc.webmvc.api.OpenApiResource.openapiJson(OpenApiResource.java:124)
+	at org.springdoc.webmvc.api.OpenApiWebMvcResource.openapiJson(OpenApiWebMvcResource.java:111)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	... 129 common frames omitted
+2026-04-01 00:44:56.023  INFO [traceId=,spanId=] [main] com.walkmate.Application : Starting Application using Java 21.0.10 with PID 6156 (C:\Users\Duy\Desktop\WalkMate\backend\build\classes\java\main started by Duy in C:\Users\Duy\Desktop\WalkMate\backend)
+2026-04-01 00:44:56.023 DEBUG [traceId=,spanId=] [main] com.walkmate.Application : Running with Spring Boot v3.5.12, Spring v6.2.17
+2026-04-01 00:44:56.023  INFO [traceId=,spanId=] [main] com.walkmate.Application : No active profile set, falling back to 1 default profile: "default"
+2026-04-01 00:44:58.083  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat initialized with port 8080 (http)
+2026-04-01 00:44:58.106  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardService : Starting service [Tomcat]
+2026-04-01 00:44:58.106  INFO [traceId=,spanId=] [main] org.apache.catalina.core.StandardEngine : Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-01 00:44:58.182  INFO [traceId=,spanId=] [main] o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] : Initializing Spring embedded WebApplicationContext
+2026-04-01 00:44:58.182  INFO [traceId=,spanId=] [main] o.s.b.w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2076 ms
+2026-04-01 00:44:58.607  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-04-01 00:45:00.588  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@56b05bd7
+2026-04-01 00:45:00.604  INFO [traceId=,spanId=] [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+2026-04-01 00:45:00.747  INFO [traceId=,spanId=] [main] org.flywaydb.core.FlywayExecutor : Database: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require (PostgreSQL 17.6)
+2026-04-01 00:45:03.439  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbValidate : Successfully validated 8 migrations (execution time 00:01.008s)
+2026-04-01 00:45:05.285  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Current version of schema "public": 6
+2026-04-01 00:45:05.285  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-04-01 00:45:05.285  WARN [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" has a version (6) that is newer than the latest available migration (1.2) !
+2026-04-01 00:45:05.450  INFO [traceId=,spanId=] [main] org.flywaydb.core.internal.command.DbMigrate : Schema "public" is up to date. No migration necessary.
+2026-04-01 00:45:06.755  INFO [traceId=,spanId=] [main] o.s.b.actuate.endpoint.web.EndpointLinksResolver : Exposing 2 endpoints beneath base path '/actuator'
+2026-04-01 00:45:07.037  INFO [traceId=,spanId=] [main] o.s.boot.web.embedded.tomcat.TomcatWebServer : Tomcat started on port 8080 (http) with context path '/'
+2026-04-01 00:45:07.047  INFO [traceId=,spanId=] [main] com.walkmate.Application : Started Application in 11.787 seconds (process running for 12.491)

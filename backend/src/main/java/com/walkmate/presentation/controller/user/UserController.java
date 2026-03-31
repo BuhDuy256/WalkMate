@@ -11,6 +11,7 @@ import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.user.LoginUserResponse;
 import com.walkmate.presentation.dto.response.user.RegisterUserResponse;
 import com.walkmate.presentation.mapper.user.UserMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Auth", description = "Register and login endpoints")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor

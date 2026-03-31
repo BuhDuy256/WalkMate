@@ -41,6 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         // Hotspot reads are public (map loads for everyone)
                         .requestMatchers(HttpMethod.GET, "/api/v1/hotspots/**").permitAll()
+                        // Swagger / OpenAPI UI (development)
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         // Intent endpoints require a valid JWT
                         .requestMatchers("/api/v1/intents/**").authenticated()
                         // Everything else requires authentication by default
