@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Badge circle background -->
+    <path
+        android:fillColor="#FF7C4DFF"
+        android:pathData="M24,4A20,20 0,1 1,24 44A20,20 0,1 1,24 4Z" />
+    <!-- 5-point star -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M24,10l3.6,7.2L36,18.4l-6,5.8 1.4,8.2L24,28l-7.4,4.4 1.4,-8.2 -6,-5.8 8.4,-1.2z" />
+</vector>

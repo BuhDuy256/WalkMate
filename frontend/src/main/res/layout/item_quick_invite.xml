@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:layout_marginEnd="16dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackgroundBorderless">
+
+    <FrameLayout
+        android:layout_width="56dp"
+        android:layout_height="56dp">
+
+        <ImageView
+            android:id="@+id/imgInviteAvatar"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_white_circle"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/home_avatar_cd"
+            tools:src="@drawable/ic_user" />
+
+        <ImageView
+            android:id="@+id/imgAddBadge"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/bg_dot_orange"
+            android:src="@drawable/ic_add_white"
+            android:padding="4dp"
+            android:contentDescription="@string/home_add_badge_cd" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/txtInviteName"
+        android:layout_width="56dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_dark"
+        tools:text="Sarah" />
+
+</LinearLayout>

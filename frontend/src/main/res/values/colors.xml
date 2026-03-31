@@ -23,6 +23,8 @@
 
     <!-- Semantic -->
     <color name="color_danger">#FFE53935</color>
+    <color name="color_confirmed">#FF2E7D32</color>
+    <color name="color_confirmed_bg">#FFE8F5E9</color>
 
     <!-- Misc -->
     <color name="handle_bar">#FFD4CBBF</color>
@@ -30,6 +32,7 @@
     <color name="overlay_dim">#40000000</color>
     <color name="transparent">#00000000</color>
     <color name="shadow_orange">#59FF7B3A</color>
+    <color name="color_orange_halo">#40FF9E67</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
 </resources>

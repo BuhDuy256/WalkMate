@@ -1,0 +1,201 @@
+package com.walkmate.ui.home;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
+import com.walkmate.R;
+import com.walkmate.WalkMateApplication;
+import com.walkmate.ui.home.quickinvite.QuickInviteAdapter;
+
+/**
+ * Thin view for the Home Dashboard tab.
+ *
+ * Responsibilities:
+ *   1. Inflate fragment_home.xml.
+ *   2. Wire click listeners — all delegate straight to the ViewModel.
+ *   3. Observe LiveData<HomeDashboardUiState> and call renderState().
+ *   4. renderState() is the single place that writes to Views.
+ *
+ * Zero business logic lives here; no direct access to repositories or databases.
+ */
+public class HomeFragment extends Fragment {
+
+    public static final String TAG = "home";
+
+    // ── Views ─────────────────────────────────────────────────────────────────
+
+    private TextView txtGreeting;
+    private TextView txtLocation;
+    private View viewNotificationBadge;
+    private TextView txtStreakTitle;
+    private ProgressBar streakProgress;
+    private TextView txtStreakDays;
+    private TextView txtHeroSubtitle;
+    private MaterialButton btnFindWalkMate;
+    private MaterialCardView cardUpcomingSession;
+    private Chip chipSessionStatus;
+    private ImageView imgSessionAvatar;
+    private TextView txtSessionPartner;
+    private TextView txtSessionTime;
+    private RecyclerView rvQuickInvite;
+    private TextView txtStatDistance;
+    private TextView txtStatSessions;
+    private TextView txtStatStreak;
+
+    // ── MVVM ──────────────────────────────────────────────────────────────────
+
+    private HomeViewModel viewModel;
+    private QuickInviteAdapter quickInviteAdapter;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_home, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        bindViews(view);
+        setupRecyclerView();
+        setupViewModel();
+        setupClickListeners();
+
+        viewModel.loadDashboard();
+        viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+    }
+
+    // ── Setup helpers ─────────────────────────────────────────────────────────
+
+    private void bindViews(View root) {
+        txtGreeting           = root.findViewById(R.id.txtGreeting);
+        txtLocation           = root.findViewById(R.id.txtLocation);
+        viewNotificationBadge = root.findViewById(R.id.viewNotificationBadge);
+        txtStreakTitle         = root.findViewById(R.id.txtStreakTitle);
+        streakProgress         = root.findViewById(R.id.streakProgress);
+        txtStreakDays          = root.findViewById(R.id.txtStreakDays);
+        txtHeroSubtitle        = root.findViewById(R.id.txtHeroSubtitle);
+        btnFindWalkMate        = root.findViewById(R.id.btnFindWalkMate);
+        cardUpcomingSession    = root.findViewById(R.id.cardUpcomingSession);
+        chipSessionStatus      = root.findViewById(R.id.chipSessionStatus);
+        imgSessionAvatar       = root.findViewById(R.id.imgSessionAvatar);
+        txtSessionPartner      = root.findViewById(R.id.txtSessionPartner);
+        txtSessionTime         = root.findViewById(R.id.txtSessionTime);
+        rvQuickInvite          = root.findViewById(R.id.rvQuickInvite);
+        txtStatDistance        = root.findViewById(R.id.txtStatDistance);
+        txtStatSessions        = root.findViewById(R.id.txtStatSessions);
+        txtStatStreak          = root.findViewById(R.id.txtStatStreak);
+    }
+
+    private void setupRecyclerView() {
+        quickInviteAdapter = new QuickInviteAdapter();
+        rvQuickInvite.setLayoutManager(
+                new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvQuickInvite.setAdapter(quickInviteAdapter);
+    }
+
+    private void setupViewModel() {
+        WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
+        HomeViewModelFactory factory = new HomeViewModelFactory(
+                app.getWalkSessionRepository(),
+                app.getUserRepository());
+        viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
+    }
+
+    private void setupClickListeners() {
+        btnFindWalkMate.setOnClickListener(v -> viewModel.onFindWalkMateClicked());
+    }
+
+    // ── State rendering ───────────────────────────────────────────────────────
+
+    /**
+     * Single source of truth for all View mutations.
+     * Called every time the LiveData emits a new HomeDashboardUiState.
+     */
+    private void renderState(HomeDashboardUiState state) {
+        if (state.isLoading()) {
+            // Keep existing content visible (or blank) while loading.
+            // A full-screen progress indicator could be added here if desired.
+            return;
+        }
+
+        // Show error toast if present.
+        if (state.getError() != null) {
+            Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+        }
+
+        // ── Greeting / Location ──
+        if (state.getGreetingName() != null) {
+            txtGreeting.setText(getString(R.string.home_greeting_format, state.getGreetingName()));
+        }
+        if (state.getLocationName() != null) {
+            txtLocation.setText(state.getLocationName());
+        }
+
+        // ── Notification badge ──
+        viewNotificationBadge.setVisibility(
+                state.hasUnreadNotification() ? View.VISIBLE : View.GONE);
+
+        // ── Streak widget ──
+        txtStreakTitle.setText(getString(R.string.home_streak_title));
+        streakProgress.setMax(state.getStreakGoal());
+        streakProgress.setProgress(state.getStreakDays());
+        txtStreakDays.setText(getString(
+                R.string.home_streak_days_format, state.getStreakDays(), state.getStreakGoal()));
+
+        // ── Hero subtitle ──
+        txtHeroSubtitle.setText(getString(
+                R.string.home_hero_subtitle_format, state.getNearbyHotspotCount()));
+
+        // ── Upcoming session card ──
+        HomeDashboardUiState.UpcomingSessionSnapshot session = state.getUpcomingSession();
+        if (session != null) {
+            cardUpcomingSession.setVisibility(View.VISIBLE);
+            chipSessionStatus.setText(session.statusLabel);
+            txtSessionPartner.setText(session.partnerName);
+            txtSessionTime.setText(session.timeAndPlace);
+
+            if (session.partnerAvatarUrl != null && !session.partnerAvatarUrl.isEmpty()) {
+                Glide.with(this)
+                        .load(session.partnerAvatarUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_user)
+                        .into(imgSessionAvatar);
+            } else {
+                imgSessionAvatar.setImageResource(R.drawable.ic_user);
+            }
+        } else {
+            cardUpcomingSession.setVisibility(View.GONE);
+        }
+
+        // ── Quick invite list ──
+        quickInviteAdapter.submitList(state.getQuickInviteList());
+
+        // ── Quick stats ──
+        txtStatDistance.setText(String.format("%.1f", state.getWeeklyDistanceKm()));
+        txtStatSessions.setText(String.valueOf(state.getWeeklySessionCount()));
+        txtStatStreak.setText(String.valueOf(state.getStreakDays()));
+    }
+}
