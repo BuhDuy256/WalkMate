@@ -141,6 +141,21 @@
     <string name="profile_menu_navigate_cd">Navigate</string>
     <string name="profile_avatar_cd">Profile avatar</string>
 
+    <!-- Chatroom -->
+    <string name="chatroom_status_online">Online</string>
+    <string name="chatroom_status_offline">Offline</string>
+    <string name="chatroom_banner_meta">Confirmed match · Ready to walk?</string>
+    <string name="chatroom_input_hint">Type a message…</string>
+    <string name="chatroom_room_closed">This chat is now closed</string>
+    <string name="chatroom_empty">No messages yet. Say hello!</string>
+    <string name="chip_hey">👋 Hey!</string>
+    <string name="chip_where">📍 Where are you?</string>
+    <string name="chip_on_my_way">🚶 On my way!</string>
+    <string name="chip_almost">⏰ Almost there!</string>
+    <string name="cd_send_message">Send message</string>
+    <string name="cd_emoji_picker">Emoji picker</string>
+    <string name="cd_decline_banner">Dismiss</string>
+
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>
     <string name="hotspot_2">Hồ Con Rùa</string>

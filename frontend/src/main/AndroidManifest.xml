@@ -42,6 +42,12 @@
             android:exported="false"
             android:theme="@style/Theme.WalkMate" />
 
+        <activity
+            android:name="com.walkmate.ui.chatroom.ChatroomActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WalkMate"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- GPS foreground service; foregroundServiceType required for targetSdk >= 34 -->
         <service
             android:name="com.walkmate.service.WalkTrackerService"

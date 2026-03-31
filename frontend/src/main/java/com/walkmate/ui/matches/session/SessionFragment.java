@@ -8,6 +8,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.walkmate.domain.walksession.WalkSession;
+import com.walkmate.ui.chatroom.ChatroomActivity;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -50,9 +58,17 @@ public class SessionFragment extends Fragment {
         txtEmpty     = view.findViewById(R.id.txtEmpty);
 
         adapter = new SessionAdapter();
-        adapter.setOnChatClickListener(session ->
-                Toast.makeText(requireContext(),
-                        R.string.session_chat_coming_soon, Toast.LENGTH_SHORT).show());
+        adapter.setOnChatClickListener(session -> {
+            Intent chatIntent = ChatroomActivity.createIntent(
+                    requireContext(),
+                    session.getSessionId(),
+                    session.getPartnerName(),
+                    session.getPartnerAvatar(),
+                    session.getStatus() == WalkSession.Status.PENDING_MEET,
+                    parseScheduledTimeMs(session.getScheduledTime())
+            );
+            startActivity(chatIntent);
+        });
         adapter.setOnCancelClickListener(session ->
                 showCancelReasonDialog(session.getSessionId()));
         adapter.setOnStartWalkClickListener(session -> {
@@ -98,6 +114,21 @@ public class SessionFragment extends Fragment {
                         matchesViewModel.cancelSession(sessionId, reasons[which]))
                 .setNegativeButton(R.string.btn_keep_session, null)
                 .show();
+    }
+
+    /**
+     * Parses an ISO-8601 UTC string (e.g. "2026-03-29T14:00:00Z") into epoch milliseconds.
+     * Returns 0 if the string is null, empty, or unparseable.
+     */
+    private static long parseScheduledTimeMs(String isoTime) {
+        if (isoTime == null || isoTime.isEmpty()) return 0L;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return sdf.parse(isoTime).getTime();
+        } catch (ParseException e) {
+            return 0L;
+        }
     }
 
     @Override

@@ -5,7 +5,10 @@
       "Bash(xargs grep:*)",
       "Bash(find C:/Users/Duy/Desktop/WalkMate -name *.gradle -o -name *.gradle.kts)",
       "Bash(find C:/Users/Duy/Desktop/WalkMate/frontend/src/main/java/com/walkmate/ui/coordination -type f -name *.java)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(find '/d/Software Engineer/Android Projects/WalkMate/backend/src' -type f -name *ChatRoom* -o -name *chatroom*)",
+      "Bash(find '/d/Software Engineer/Android Projects/WalkMate' -type f -path */chatroom/*)",
+      "Read(//d//**)"
     ]
   }
 }

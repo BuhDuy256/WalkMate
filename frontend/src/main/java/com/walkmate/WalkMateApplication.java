@@ -3,9 +3,11 @@ package com.walkmate;
 import android.app.Application;
 
 import com.walkmate.data.datasource.local.WalkMateDatabase;
+import com.walkmate.data.repository.ChatRoomRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
+import com.walkmate.domain.chatroom.ChatRoomRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
@@ -27,6 +29,7 @@ public class WalkMateApplication extends Application {
     private TrackingRepository trackingRepository;
     private WalkSessionRepository walkSessionRepository;
     private UserRepository userRepository;
+    private ChatRoomRepository chatRoomRepository;
 
     @Override
     public void onCreate() {
@@ -60,5 +63,12 @@ public class WalkMateApplication extends Application {
             userRepository = new UserRepositoryImpl(this);
         }
         return userRepository;
+    }
+
+    public ChatRoomRepository getChatRoomRepository() {
+        if (chatRoomRepository == null) {
+            chatRoomRepository = new ChatRoomRepositoryImpl();
+        }
+        return chatRoomRepository;
     }
 }
