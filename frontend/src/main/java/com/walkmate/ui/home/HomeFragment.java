@@ -1,5 +1,6 @@
 package com.walkmate.ui.home;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,15 +30,37 @@ import com.walkmate.ui.home.quickinvite.QuickInviteAdapter;
  *
  * Responsibilities:
  *   1. Inflate fragment_home.xml.
- *   2. Wire click listeners — all delegate straight to the ViewModel.
- *   3. Observe LiveData<HomeDashboardUiState> and call renderState().
- *   4. renderState() is the single place that writes to Views.
+ *   2. Acquire the host Activity as an {@link OnHomeActionListener} in onAttach().
+ *   3. Wire click listeners — navigation delegates to the listener; all other
+ *      actions delegate to the ViewModel.
+ *   4. Observe LiveData<HomeDashboardUiState> and call renderState().
+ *   5. renderState() is the single place that writes to Views.
  *
  * Zero business logic lives here; no direct access to repositories or databases.
  */
 public class HomeFragment extends Fragment {
 
     public static final String TAG = "home";
+
+    // ── Navigation contract ───────────────────────────────────────────────────
+
+    /**
+     * Implemented by the host Activity. Keeps the Fragment decoupled from
+     * concrete Activity types — the Fragment never casts getActivity() directly.
+     *
+     * Why an interface instead of direct Activity casting?
+     *   - Testability: the Fragment can be tested in isolation with a mock listener.
+     *   - Safety: a missing implementation throws a clear IllegalStateException at
+     *     attach-time rather than a ClassCastException deep inside a click handler.
+     *   - Decoupling: the Fragment expresses intent ("I want to show Explore") without
+     *     knowing how the host achieves it (tab switch, back-stack push, etc.).
+     */
+    public interface OnHomeActionListener {
+        /** Called when the user taps "Find a WalkMate Now". */
+        void switchToExplore();
+    }
+
+    private OnHomeActionListener listener;
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
@@ -65,6 +88,25 @@ public class HomeFragment extends Fragment {
     private QuickInviteAdapter quickInviteAdapter;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (!(context instanceof OnHomeActionListener)) {
+            throw new IllegalStateException(
+                    context.getClass().getSimpleName()
+                            + " must implement HomeFragment.OnHomeActionListener");
+        }
+        listener = (OnHomeActionListener) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        // Null the reference to prevent leaking the Activity after the Fragment
+        // is detached from it (e.g., during a configuration change or back-stack pop).
+        listener = null;
+    }
 
     @Nullable
     @Override
@@ -125,7 +167,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupClickListeners() {
-        btnFindWalkMate.setOnClickListener(v -> viewModel.onFindWalkMateClicked());
+        // Navigation action: delegated to the host Activity via the listener contract.
+        // The Fragment expresses intent; the Activity decides how to fulfil it.
+        btnFindWalkMate.setOnClickListener(v -> {
+            if (listener != null) listener.switchToExplore();
+        });
     }
 
     // ── State rendering ───────────────────────────────────────────────────────
@@ -136,12 +182,9 @@ public class HomeFragment extends Fragment {
      */
     private void renderState(HomeDashboardUiState state) {
         if (state.isLoading()) {
-            // Keep existing content visible (or blank) while loading.
-            // A full-screen progress indicator could be added here if desired.
             return;
         }
 
-        // Show error toast if present.
         if (state.getError() != null) {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
         }

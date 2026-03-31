@@ -1,4 +1,4 @@
-# Optimization Decision Log — Phase C (Profile Rebuild)
+# Optimization Decision Log — Phases C & D (Profile + Navigation)
 
 **Date:** 2026-03-31  
 **Branch:** `improve/coordination-flow`
@@ -73,3 +73,56 @@
 **Optimization:** `renderState()` opens with `if (state.isLoading()) return;`. The method does nothing until a non-loading state arrives. The layout's `tools:` preview values remain visible in the editor; no content is ever visible at runtime from the loading state.
 
 **Key Takeaway:** The return-early pattern in `renderState()` is the idiomatic LiveData guard — pair it with `tools:` placeholders to get a clean, flicker-free first render without a dedicated skeleton/shimmer overlay.
+
+---
+
+## 7. Navigation Decoupling — Listener Interface vs. Direct Activity Cast
+
+**Problem:** `HomeFragment` needs to tell the host (`MainActivity`) to navigate to the Explore screen when the user taps "Find a WalkMate Now". The naive implementation is:
+
+```java
+// WRONG — Fragment is tightly coupled to a concrete Activity class
+((MainActivity) getActivity()).showExplore();
+```
+
+This produces three concrete defects:
+1. **ClassCastException at runtime** if the Fragment is ever hosted in a different Activity (e.g., a test harness, a deep-link entry point, or a future `SingleFragmentActivity`).
+2. **Untestability** — unit-testing `HomeFragment` in isolation requires constructing a full `MainActivity`, making the test scope impossibly large.
+3. **Violation of the Dependency Inversion Principle** — a lower-level module (`HomeFragment`) depends on a higher-level concrete type (`MainActivity`) rather than an abstraction.
+
+**Optimization:** `HomeFragment` defines an inner `OnHomeActionListener` interface with a single method `switchToExplore()`. The host Activity implements it. The Fragment acquires the reference in `onAttach(Context)` and nulls it in `onDetach()`.
+
+```java
+// HomeFragment.java
+public interface OnHomeActionListener {
+    void switchToExplore();
+}
+
+@Override
+public void onAttach(@NonNull Context context) {
+    super.onAttach(context);
+    if (!(context instanceof OnHomeActionListener)) {
+        throw new IllegalStateException(context.getClass().getSimpleName()
+                + " must implement HomeFragment.OnHomeActionListener");
+    }
+    listener = (OnHomeActionListener) context;
+}
+
+@Override
+public void onDetach() {
+    super.onDetach();
+    listener = null;  // prevent Activity leak across config changes
+}
+```
+
+The `onDetach()` null is critical: without it, the `listener` field keeps a strong reference to the Activity after it is destroyed (e.g., on rotation), preventing garbage collection until the Fragment is also destroyed — a classic memory leak.
+
+The `IllegalStateException` in `onAttach()` is a **fail-fast contract**: the crash happens at the earliest possible moment (Fragment attachment) rather than silently at the click site, giving a clear stack trace that points to the missing `implements` declaration.
+
+**Why not `SingleLiveEvent<Void>` in the ViewModel instead?**  
+A `SingleLiveEvent` navigation approach is valid and commonly used in MVI architectures. The listener pattern is preferred here because:
+- Navigation from Home → Explore is a pure UI concern; the ViewModel has no reason to know about it.
+- It avoids the `SingleLiveEvent` vs `StateFlow` debate entirely.
+- The interface is visible and enforced at compile-link time via the `implements` declaration on `MainActivity`.
+
+**Key Takeaway:** Fragments should communicate with their host via an interface contract defined inside the Fragment itself. Acquire in `onAttach`, null in `onDetach`, and throw `IllegalStateException` — not `ClassCastException` — to surface missing implementations at the earliest possible moment.

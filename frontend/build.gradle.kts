@@ -84,4 +84,7 @@ dependencies {
     // Room (local GPS point storage)
     implementation(libs.roomRuntime)
     annotationProcessor(libs.roomCompiler)
+
+    // Image loading
+    implementation(libs.glide)
 }

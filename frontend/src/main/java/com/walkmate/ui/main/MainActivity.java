@@ -21,8 +21,14 @@ import com.walkmate.ui.profile.ProfileFragment;
  *
  * Routing strategy: hide/show (not replace) so each tab preserves its state —
  * map position, list scroll, back stack — across tab switches.
+ *
+ * Implements {@link HomeFragment.OnHomeActionListener} to receive navigation
+ * commands from the Home Dashboard without the Fragment holding a direct
+ * Activity reference. This keeps HomeFragment independently testable and
+ * decoupled from the concrete host.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+        implements HomeFragment.OnHomeActionListener {
 
     private BottomNavigationView bottomNav;
     private int cachedBottomNavHeight = 0;
@@ -103,6 +109,25 @@ public class MainActivity extends AppCompatActivity {
     // -------------------------------------------------------------------------
     // Public helpers — called by child fragments to drive cross-tab navigation
     // -------------------------------------------------------------------------
+
+    // ── HomeFragment.OnHomeActionListener ─────────────────────────────────────
+
+    /**
+     * Called by HomeFragment when the user taps "Find a WalkMate Now".
+     *
+     * Implementation note: we call showTab() directly rather than going through
+     * bottomNav.setSelectedItemId(R.id.tab_explore), because tab_explore is now
+     * mapped to HomeFragment (Phase B). Calling showTab(ExploreFragment.TAG)
+     * directly shows the Explore map without altering the bottom nav selection —
+     * the user is "drilling into" the explore flow from the Home tab, not
+     * switching to a different root tab.
+     */
+    @Override
+    public void switchToExplore() {
+        showTab(ExploreFragment.TAG);
+    }
+
+    // ── Public helpers — called by child fragments ─────────────────────────────
 
     /**
      * Navigates to the Matches tab and selects it in the nav bar.
