@@ -3,6 +3,7 @@ package com.walkmate;
 import android.app.Application;
 
 import com.walkmate.data.datasource.local.WalkMateDatabase;
+import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
@@ -23,16 +24,19 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  */
 public class WalkMateApplication extends Application {
 
-    private WalkMateDatabase database;
+    private WalkMateDatabase   database;
+    private SessionManager     sessionManager;
     private TrackingRepository trackingRepository;
     private WalkSessionRepository walkSessionRepository;
-    private UserRepository userRepository;
+    private UserRepository     userRepository;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        // Eagerly instantiate the DB so the first Room query doesn't block the UI.
-        database = WalkMateDatabase.getInstance(this);
+        // Eagerly instantiate the DB and SessionManager so the first Room query
+        // and any authenticated network call don't pay a cold-start penalty.
+        database       = WalkMateDatabase.getInstance(this);
+        sessionManager = new SessionManager(this);
     }
 
     // ── Singletons ────────────────────────────────────────────────────────────
@@ -41,16 +45,20 @@ public class WalkMateApplication extends Application {
         return database;
     }
 
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
     public TrackingRepository getTrackingRepository() {
         if (trackingRepository == null) {
-            trackingRepository = new TrackingRepositoryImpl(database.routePointDao());
+            trackingRepository = new TrackingRepositoryImpl(database.routePointDao(), sessionManager);
         }
         return trackingRepository;
     }
 
     public WalkSessionRepository getWalkSessionRepository() {
         if (walkSessionRepository == null) {
-            walkSessionRepository = new WalkSessionRepositoryImpl();
+            walkSessionRepository = new WalkSessionRepositoryImpl(this);
         }
         return walkSessionRepository;
     }

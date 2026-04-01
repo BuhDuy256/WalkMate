@@ -1,5 +1,6 @@
 package com.walkmate.infrastructure.repository.session;
 
+import com.walkmate.domain.session.AbortReason;
 import com.walkmate.domain.session.SessionStatus;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +22,8 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
 
     private final JdbcClient jdbcClient;
 
+    // ── Save (upsert) ─────────────────────────────────────────────────────────
+
     @Override
     public WalkSession save(WalkSession session) {
         final String sql = """
@@ -27,44 +31,71 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     session_id, proposal_id, user_id_a, user_id_b,
                     meeting_point_lat, meeting_point_lng,
                     scheduled_start, scheduled_end,
-                    status, created_at, started_at, ended_at
+                    status, created_at, started_at, ended_at,
+                    user_a_activated_at, user_b_activated_at,
+                    cancellation_reason, cancelled_by,
+                    abort_reason, version
                 )
                 VALUES (
                     :sessionId, :proposalId, :userIdA, :userIdB,
                     :meetingPointLat, :meetingPointLng,
                     :scheduledStart, :scheduledEnd,
-                    CAST(:status AS walk_session_status), :createdAt, :startedAt, :endedAt
+                    CAST(:status AS walk_session_status), :createdAt, :startedAt, :endedAt,
+                    :userAActivatedAt, :userBActivatedAt,
+                    :cancellationReason, :cancelledBy,
+                    :abortReason, :version
                 )
                 ON CONFLICT (session_id) DO UPDATE SET
-                    status     = CAST(EXCLUDED.status AS walk_session_status),
-                    started_at = EXCLUDED.started_at,
-                    ended_at   = EXCLUDED.ended_at
+                    status               = CAST(EXCLUDED.status AS walk_session_status),
+                    started_at           = EXCLUDED.started_at,
+                    ended_at             = EXCLUDED.ended_at,
+                    user_a_activated_at  = EXCLUDED.user_a_activated_at,
+                    user_b_activated_at  = EXCLUDED.user_b_activated_at,
+                    cancellation_reason  = EXCLUDED.cancellation_reason,
+                    cancelled_by         = EXCLUDED.cancelled_by,
+                    abort_reason         = EXCLUDED.abort_reason,
+                    version              = EXCLUDED.version
                 """;
 
         jdbcClient.sql(sql)
-                .param("sessionId",        UUID.fromString(session.getSessionId()))
-                .param("proposalId",       UUID.fromString(session.getProposalId()))
-                .param("userIdA",          UUID.fromString(session.getUserIdA()))
-                .param("userIdB",          UUID.fromString(session.getUserIdB()))
-                .param("meetingPointLat",  session.getMeetingPointLat())
-                .param("meetingPointLng",  session.getMeetingPointLng())
-                .param("scheduledStart",   Timestamp.from(session.getScheduledStart()))
-                .param("scheduledEnd",     Timestamp.from(session.getScheduledEnd()))
-                .param("status",           session.getStatus().name())
-                .param("createdAt",        Timestamp.from(session.getCreatedAt()))
-                .param("startedAt",        session.getStartedAt() != null
-                        ? Timestamp.from(session.getStartedAt()) : null)
-                .param("endedAt",          session.getEndedAt() != null
-                        ? Timestamp.from(session.getEndedAt()) : null)
+                .param("sessionId",          UUID.fromString(session.getSessionId()))
+                .param("proposalId",         UUID.fromString(session.getProposalId()))
+                .param("userIdA",            UUID.fromString(session.getUserIdA()))
+                .param("userIdB",            UUID.fromString(session.getUserIdB()))
+                .param("meetingPointLat",    session.getMeetingPointLat())
+                .param("meetingPointLng",    session.getMeetingPointLng())
+                .param("scheduledStart",     Timestamp.from(session.getScheduledStart()))
+                .param("scheduledEnd",       Timestamp.from(session.getScheduledEnd()))
+                .param("status",             session.getStatus().name())
+                .param("createdAt",          Timestamp.from(session.getCreatedAt()))
+                .param("startedAt",          toTs(session.getStartedAt()))
+                .param("endedAt",            toTs(session.getEndedAt()))
+                .param("userAActivatedAt",   toTs(session.getUserAActivatedAt()))
+                .param("userBActivatedAt",   toTs(session.getUserBActivatedAt()))
+                .param("cancellationReason", session.getCancellationReason())
+                .param("cancelledBy",        session.getCancelledBy() != null
+                        ? UUID.fromString(session.getCancelledBy()) : null)
+                .param("abortReason",        session.getAbortReason() != null
+                        ? session.getAbortReason().name() : null)
+                .param("version",            session.getVersion())
                 .update();
 
         return session;
     }
 
+    // ── Reads ─────────────────────────────────────────────────────────────────
+
+    @Override
+    public Optional<WalkSession> findById(String sessionId) {
+        return jdbcClient.sql(selectAll() + "WHERE session_id = :sessionId")
+                .param("sessionId", UUID.fromString(sessionId))
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
     @Override
     public Optional<WalkSession> findByProposalId(String proposalId) {
-        final String sql = selectAll() + "WHERE session_id = :proposalId";
-        return jdbcClient.sql(sql)
+        return jdbcClient.sql(selectAll() + "WHERE proposal_id = :proposalId")
                 .param("proposalId", UUID.fromString(proposalId))
                 .query((rs, rowNum) -> mapRow(rs))
                 .optional();
@@ -83,7 +114,75 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 .list();
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    @Override
+    public boolean hasOverlappingActiveSession(String userId, Instant start, Instant end) {
+        final String sql = """
+                SELECT COUNT(*) FROM walk_session
+                WHERE (user_id_a = :userId OR user_id_b = :userId)
+                  AND status IN ('PENDING', 'ACTIVE')
+                  AND scheduled_start < :end
+                  AND scheduled_end   > :start
+                """;
+        Integer count = jdbcClient.sql(sql)
+                .param("userId", UUID.fromString(userId))
+                .param("start",  Timestamp.from(start))
+                .param("end",    Timestamp.from(end))
+                .query(Integer.class)
+                .single();
+        return count != null && count > 0;
+    }
+
+    @Override
+    public List<WalkSession> findSessionsPastActivationWindow(Instant now) {
+        // PENDING sessions where the full activation window has elapsed:
+        //   scheduledStart + ACTIVATION_WINDOW_AFTER < now
+        final String sql = selectAll() + """
+                WHERE status = 'PENDING'
+                  AND scheduled_start + INTERVAL '30 minutes' < :now
+                """;
+        return jdbcClient.sql(sql)
+                .param("now", Timestamp.from(now))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public List<WalkSession> findSessionsPastEndTime(Instant cutoff) {
+        // ACTIVE sessions whose scheduled_end is before the given cutoff
+        final String sql = selectAll() + """
+                WHERE status = 'ACTIVE'
+                  AND scheduled_end < :cutoff
+                """;
+        return jdbcClient.sql(sql)
+                .param("cutoff", Timestamp.from(cutoff))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    // ── Audit log ─────────────────────────────────────────────────────────────
+
+    @Override
+    public void logStateChange(String sessionId, SessionStatus from, SessionStatus to,
+                               String changedBy, String reason) {
+        final String sql = """
+                INSERT INTO session_state_change_log
+                    (session_id, from_status, to_status, changed_by, reason, changed_at)
+                VALUES
+                    (:sessionId,
+                     CAST(:from AS walk_session_status),
+                     CAST(:to   AS walk_session_status),
+                     :changedBy, :reason, NOW())
+                """;
+        jdbcClient.sql(sql)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("from",      from != null ? from.name() : null)
+                .param("to",        to.name())
+                .param("changedBy", changedBy != null ? UUID.fromString(changedBy) : null)
+                .param("reason",    reason)
+                .update();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private String selectAll() {
         return """
@@ -91,12 +190,18 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                        user_id_a::text, user_id_b::text,
                        meeting_point_lat, meeting_point_lng,
                        scheduled_start, scheduled_end,
-                       status, created_at, started_at, ended_at
+                       status, created_at, started_at, ended_at,
+                       user_a_activated_at, user_b_activated_at,
+                       cancellation_reason, cancelled_by::text,
+                       abort_reason, version
                 FROM walk_session
                 """;
     }
 
     private WalkSession mapRow(ResultSet rs) throws SQLException {
+        String abortReasonRaw = rs.getString("abort_reason");
+        AbortReason abortReason = abortReasonRaw != null ? AbortReason.valueOf(abortReasonRaw) : null;
+
         return new WalkSession(
                 rs.getString("session_id"),
                 rs.getString("proposal_id"),
@@ -108,10 +213,23 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 rs.getTimestamp("scheduled_end").toInstant(),
                 SessionStatus.valueOf(rs.getString("status")),
                 rs.getTimestamp("created_at").toInstant(),
-                rs.getTimestamp("started_at") != null
-                        ? rs.getTimestamp("started_at").toInstant() : null,
-                rs.getTimestamp("ended_at") != null
-                        ? rs.getTimestamp("ended_at").toInstant() : null
+                toInstant(rs, "started_at"),
+                toInstant(rs, "ended_at"),
+                toInstant(rs, "user_a_activated_at"),
+                toInstant(rs, "user_b_activated_at"),
+                rs.getString("cancellation_reason"),
+                rs.getString("cancelled_by"),
+                abortReason,
+                rs.getLong("version")
         );
+    }
+
+    private static Timestamp toTs(Instant instant) {
+        return instant != null ? Timestamp.from(instant) : null;
+    }
+
+    private static Instant toInstant(ResultSet rs, String col) throws SQLException {
+        Timestamp ts = rs.getTimestamp(col);
+        return ts != null ? ts.toInstant() : null;
     }
 }

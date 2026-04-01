@@ -5,7 +5,8 @@
       "Bash(xargs grep:*)",
       "Bash(find C:/Users/Duy/Desktop/WalkMate -name *.gradle -o -name *.gradle.kts)",
       "Bash(find C:/Users/Duy/Desktop/WalkMate/frontend/src/main/java/com/walkmate/ui/coordination -type f -name *.java)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(find /c/Users/Duy/Desktop/walkmate/backend/src/main/resources/db/migration -name *.sql)"
     ]
   }
 }

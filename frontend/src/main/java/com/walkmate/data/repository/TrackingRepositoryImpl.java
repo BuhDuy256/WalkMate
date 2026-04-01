@@ -7,15 +7,24 @@ import androidx.lifecycle.Transformations;
 
 import com.walkmate.data.datasource.local.dao.RoutePointDao;
 import com.walkmate.data.datasource.local.entity.RoutePointEntity;
+import com.walkmate.data.datasource.remote.api.ApiClient;
+import com.walkmate.data.datasource.remote.api.RoutePointSyncApiService;
+import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.datasource.remote.dto.request.tracking.PushRoutePointsRequest;
+import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.tracking.PushRoutePointsResponse;
 import com.walkmate.data.mapper.RoutePointMapper;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.tracking.RoutePoint;
+import com.walkmate.domain.tracking.TrackingErrorCode;
 import com.walkmate.domain.tracking.TrackingRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import retrofit2.Response;
 
 /**
  * Concrete implementation of {@link TrackingRepository}.
@@ -24,36 +33,26 @@ import java.util.concurrent.Executors;
  * All Room writes/reads happen on a single background thread via the executor,
  * consistent with the architecture's ExecutorService mandate.
  *
- * ── Backend Push (MOCK) ────────────────────────────────────────────────────────
- * {@link #pushRoutePoints} simulates a successful POST /api/v1/tracking/sync
- * without making a real network call. It logs the payload that would be sent,
- * waits 800 ms to mimic network latency, then reports success.
- *
- * To wire up the real Retrofit call when the backend is ready:
- *   1. Inject a {@code RoutePointSyncApiService} via the constructor.
- *   2. Replace the mock body in pushRoutePoints() with:
- *        Call<ApiResponse<PushRoutePointsResponse>> call =
- *            syncApiService.pushRoutePoints(request);
- *        Response<ApiResponse<PushRoutePointsResponse>> response = call.execute();
- *        if (response.isSuccessful() && response.body() != null
- *                && response.body().isSuccess()) {
- *            callback.onSuccess(null);
- *        } else {
- *            callback.onError(new Exception(TrackingErrorCode.SYNC_FAILED));
- *        }
+ * ── Backend Push ───────────────────────────────────────────────────────────────
+ * {@link #pushRoutePoints} posts a batch of GPS points to {@code POST /api/v1/tracking/sync}.
+ * On success the caller's {@link #triggerBatchSync} marks the same rows as synced.
+ * On network failure the points remain in Room with {@code isSynced = false} and
+ * will be retried the next time the 50-point threshold is crossed.
  */
 public class TrackingRepositoryImpl implements TrackingRepository {
 
     private static final String TAG = "TrackingRepo";
 
-    /** Threshold: trigger a backend push when this many unsynced points accumulate. */
+    /** Trigger a backend push when this many unsynced points accumulate. */
     private static final int BATCH_SIZE_THRESHOLD = 50;
 
-    private final RoutePointDao dao;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final RoutePointDao          dao;
+    private final SessionManager         sessionManager;
+    private final ExecutorService        executor = Executors.newSingleThreadExecutor();
 
-    public TrackingRepositoryImpl(RoutePointDao dao) {
-        this.dao = dao;
+    public TrackingRepositoryImpl(RoutePointDao dao, SessionManager sessionManager) {
+        this.dao            = dao;
+        this.sessionManager = sessionManager;
     }
 
     // ── Local writes ──────────────────────────────────────────────────────────
@@ -93,7 +92,6 @@ public class TrackingRepositoryImpl implements TrackingRepository {
 
     @Override
     public LiveData<List<RoutePoint>> getPointsForSession(String sessionId) {
-        // Map Room entity LiveData → domain model LiveData in one step.
         return Transformations.map(
                 dao.getPointsBySessionId(sessionId),
                 RoutePointMapper::toDomainList
@@ -112,51 +110,42 @@ public class TrackingRepositoryImpl implements TrackingRepository {
         });
     }
 
-    // ── Remote push (MOCK) ────────────────────────────────────────────────────
+    // ── Remote push ───────────────────────────────────────────────────────────
 
     @Override
     public void pushRoutePoints(String sessionId, List<RoutePoint> points,
                                 DomainCallback<Void> callback) {
         executor.execute(() -> {
             try {
-                // ── MOCK: log what would be sent, then simulate 800 ms network latency ──
-                Log.d(TAG, "[MOCK SYNC] POST /api/v1/tracking/sync"
-                        + " | sessionId=" + sessionId
-                        + " | pointCount=" + points.size());
-
-                Thread.sleep(800);  // simulated network round-trip
-
-                // ── MOCK: always succeeds ────────────────────────────────────────────
-                Log.d(TAG, "[MOCK SYNC] Success — " + points.size() + " points acknowledged");
-                callback.onSuccess(null);
-
-                /* ── REAL Retrofit call (uncomment when backend is ready) ─────────────
-                List<RoutePointEntity> entities = new ArrayList<>();
+                // Convert domain objects → entities → remote payloads
+                List<RoutePointEntity> entities = new ArrayList<>(points.size());
                 for (RoutePoint p : points) entities.add(RoutePointMapper.toEntity(p));
 
-                PushRoutePointsRequest request = new PushRoutePointsRequest(
-                        sessionId, RoutePointMapper.toPayloadList(entities));
+                List<PushRoutePointsRequest.RoutePointPayload> payloads =
+                        RoutePointMapper.toPayloadList(entities);
 
-                Call<ApiResponse<PushRoutePointsResponse>> call =
-                        syncApiService.pushRoutePoints(request);
-                Response<ApiResponse<PushRoutePointsResponse>> response = call.execute();
+                PushRoutePointsRequest request = new PushRoutePointsRequest(sessionId, payloads);
+
+                RoutePointSyncApiService api = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+                        .create(RoutePointSyncApiService.class);
+
+                Response<ApiResponse<PushRoutePointsResponse>> response =
+                        api.pushRoutePoints(request).execute();
 
                 if (response.isSuccessful()
                         && response.body() != null
                         && response.body().isSuccess()) {
+                    Log.d(TAG, "Sync succeeded — " + points.size() + " points acknowledged");
                     callback.onSuccess(null);
                 } else {
-                    String errMsg = response.body() != null && response.body().getError() != null
-                            ? response.body().getError().getMessage()
-                            : "Unknown sync error";
-                    callback.onError(new Exception(errMsg));
+                    String errCode = response.body() != null && response.body().getError() != null
+                            ? response.body().getError().getCode()
+                            : TrackingErrorCode.SYNC_FAILED;
+                    Log.w(TAG, "Sync failed: " + errCode);
+                    callback.onError(new Exception(errCode));
                 }
-                ─────────────────────────────────────────────────────────────────── */
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                callback.onError(e);
             } catch (Exception e) {
+                Log.e(TAG, "pushRoutePoints network error", e);
                 callback.onError(e);
             }
         });
@@ -166,7 +155,9 @@ public class TrackingRepositoryImpl implements TrackingRepository {
 
     /**
      * Fetches all unsynced points for the session and pushes them as a batch.
-     * Called internally from saveRoutePoint when the threshold is crossed.
+     * Called internally from {@link #saveRoutePoint} when the threshold is crossed.
+     * On success marks the same rows as synced. On failure, points remain in Room
+     * for retry on the next threshold crossing.
      */
     private void triggerBatchSync(String sessionId) {
         List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId);
@@ -176,17 +167,16 @@ public class TrackingRepositoryImpl implements TrackingRepository {
         pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                // Extract IDs and mark as synced in the local DB.
                 List<Long> ids = new ArrayList<>(unsyncedEntities.size());
                 for (RoutePointEntity e : unsyncedEntities) ids.add(e.id);
                 dao.markAsSynced(ids);
-                Log.d(TAG, "[MOCK SYNC] Marked " + ids.size() + " points as synced");
+                Log.d(TAG, "Marked " + ids.size() + " points as synced");
             }
 
             @Override
             public void onError(Exception error) {
-                Log.e(TAG, "[MOCK SYNC] Batch sync failed: " + error.getMessage());
                 // Points remain unsynced; next threshold crossing will retry.
+                Log.e(TAG, "Batch sync failed — will retry: " + error.getMessage());
             }
         });
     }

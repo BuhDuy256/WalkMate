@@ -4,12 +4,16 @@ import com.walkmate.domain.user.AccountStatus;
 import com.walkmate.domain.user.AuthProvider;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
-import java.sql.Timestamp;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,30 +23,35 @@ public class UserJdbcRepository implements UserRepository {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        final String sql = """
-                SELECT user_id, email, phone, provider, status, password_hash, created_at, last_login_at
-                FROM user_account
-                WHERE email = :email
-                """;
-
-        return jdbcClient.sql(sql)
+        return jdbcClient.sql(selectAll() + "WHERE email = :email")
                 .param("email", email)
-                .query((rs, rowNum) -> new User(
-                        rs.getObject("user_id", java.util.UUID.class),
-                        rs.getString("email"),
-                        rs.getString("phone"),
-                        AuthProvider.valueOf(rs.getString("provider")),
-                        AccountStatus.valueOf(rs.getString("status")),
-                        rs.getString("password_hash"),
-                        rs.getTimestamp("created_at").toInstant(),
-                        rs.getTimestamp("last_login_at") != null ? rs.getTimestamp("last_login_at").toInstant() : null))
+                .query((rs, rowNum) -> mapRow(rs))
                 .optional();
+    }
+
+    @Override
+    public Optional<User> findById(String userId) {
+        return jdbcClient.sql(selectAll() + "WHERE user_id = :userId")
+                .param("userId", UUID.fromString(userId))
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
+    public List<User> findTopByPoints(int limit) {
+        return jdbcClient.sql(selectAll() + """
+                ORDER BY total_points DESC, trust_score DESC
+                LIMIT :limit
+                """)
+                .param("limit", limit)
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
     }
 
     @Override
     public User save(User user) {
         UUID userId = user.getUserId() != null ? user.getUserId() : UUID.randomUUID();
-        User persistedUser = user.getUserId() != null
+        User persisted = user.getUserId() != null
                 ? user
                 : new User(
                         userId,
@@ -52,50 +61,80 @@ public class UserJdbcRepository implements UserRepository {
                         user.getStatus(),
                         user.getPasswordHash(),
                         user.getCreatedAt(),
-                        user.getLastLoginAt());
+                        user.getLastLoginAt(),
+                        user.getTrustScore(),
+                        user.getTotalPoints(),
+                        user.getTotalDistanceKm(),
+                        user.getCompletedSessions());
 
-        final String sql = """
-                INSERT INTO user_account (
-                    user_id,
-                    email,
-                    phone,
-                    provider,
-                    status,
-                    password_hash,
-                    created_at,
-                    last_login_at
-                )
-                VALUES (
-                    :userId,
-                    :email,
-                    :phone,
-                    CAST(:provider AS auth_provider),
-                    CAST(:status AS account_status),
-                    :passwordHash,
-                    :createdAt,
-                    :lastLoginAt
-                )
-                ON CONFLICT (user_id)
-                DO UPDATE SET
-                    email = EXCLUDED.email,
-                    phone = EXCLUDED.phone,
-                    status = EXCLUDED.status,
-                    password_hash = EXCLUDED.password_hash,
-                    last_login_at = EXCLUDED.last_login_at
-                """;
-
-        jdbcClient.sql(sql)
-                .param("userId", persistedUser.getUserId())
-                .param("email", persistedUser.getEmail())
-                .param("phone", persistedUser.getPhone())
-                .param("provider", persistedUser.getProvider().name())
-                .param("status", persistedUser.getStatus().name())
-                .param("passwordHash", persistedUser.getPasswordHash())
-                .param("createdAt", Timestamp.from(persistedUser.getCreatedAt()))
-                .param("lastLoginAt",
-                        persistedUser.getLastLoginAt() != null ? Timestamp.from(persistedUser.getLastLoginAt()) : null)
+        jdbcClient.sql("""
+                        INSERT INTO user_account (
+                            user_id, email, phone, provider, status, password_hash,
+                            created_at, last_login_at, trust_score,
+                            total_points, total_distance_km, completed_sessions
+                        )
+                        VALUES (
+                            :userId, :email, :phone,
+                            CAST(:provider AS auth_provider),
+                            CAST(:status AS account_status),
+                            :passwordHash, :createdAt, :lastLoginAt, :trustScore,
+                            :totalPoints, :totalDistanceKm, :completedSessions
+                        )
+                        ON CONFLICT (user_id) DO UPDATE SET
+                            email              = EXCLUDED.email,
+                            phone              = EXCLUDED.phone,
+                            status             = EXCLUDED.status,
+                            password_hash      = EXCLUDED.password_hash,
+                            last_login_at      = EXCLUDED.last_login_at,
+                            trust_score        = EXCLUDED.trust_score,
+                            total_points       = EXCLUDED.total_points,
+                            total_distance_km  = EXCLUDED.total_distance_km,
+                            completed_sessions = EXCLUDED.completed_sessions
+                        """)
+                .param("userId",            persisted.getUserId())
+                .param("email",             persisted.getEmail())
+                .param("phone",             persisted.getPhone())
+                .param("provider",          persisted.getProvider().name())
+                .param("status",            persisted.getStatus().name())
+                .param("passwordHash",      persisted.getPasswordHash())
+                .param("createdAt",         Timestamp.from(persisted.getCreatedAt()))
+                .param("lastLoginAt",       persisted.getLastLoginAt() != null
+                        ? Timestamp.from(persisted.getLastLoginAt()) : null)
+                .param("trustScore",        persisted.getTrustScore())
+                .param("totalPoints",       persisted.getTotalPoints())
+                .param("totalDistanceKm",   persisted.getTotalDistanceKm())
+                .param("completedSessions", persisted.getCompletedSessions())
                 .update();
 
-        return persistedUser;
+        return persisted;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private String selectAll() {
+        return """
+                SELECT user_id, email, phone, provider, status, password_hash,
+                       created_at, last_login_at, trust_score,
+                       total_points, total_distance_km, completed_sessions
+                FROM user_account
+                """;
+    }
+
+    private User mapRow(ResultSet rs) throws SQLException {
+        Timestamp lastLogin = rs.getTimestamp("last_login_at");
+        return new User(
+                rs.getObject("user_id", UUID.class),
+                rs.getString("email"),
+                rs.getString("phone"),
+                AuthProvider.valueOf(rs.getString("provider")),
+                AccountStatus.valueOf(rs.getString("status")),
+                rs.getString("password_hash"),
+                rs.getTimestamp("created_at").toInstant(),
+                lastLogin != null ? lastLogin.toInstant() : null,
+                rs.getInt("trust_score"),
+                rs.getInt("total_points"),
+                rs.getDouble("total_distance_km"),
+                rs.getInt("completed_sessions")
+        );
     }
 }

@@ -44,9 +44,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/hotspots/**").permitAll()
                         // Swagger / OpenAPI UI (development)
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        // Intent and proposal endpoints require a valid JWT
+                        // Intent, proposal, and session endpoints require a valid JWT
                         .requestMatchers("/api/v1/intents/**").authenticated()
                         .requestMatchers("/api/v1/proposals/**").authenticated()
+                        .requestMatchers("/api/v1/sessions/**").authenticated()
+                        .requestMatchers("/api/v1/tracking/**").authenticated()
+                        // Review endpoints — POST requires auth; GET /reviews is public
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/reviews").permitAll()
+                        .requestMatchers("/api/v1/sessions/*/review").authenticated()
                         // Everything else requires authentication by default
                         .anyRequest().authenticated()
                 )

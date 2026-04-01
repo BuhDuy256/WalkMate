@@ -1,0 +1,74 @@
+package com.walkmate.presentation.controller.review;
+
+import com.walkmate.application.review.ReviewCommandService;
+import com.walkmate.application.user.UserPrincipal;
+import com.walkmate.domain.review.WalkReview;
+import com.walkmate.presentation.dto.request.review.SubmitReviewRequest;
+import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.review.ReviewResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Tag(name = "Reviews", description = "Post-session review and trust-score management")
+@RestController
+@RequiredArgsConstructor
+public class ReviewController {
+
+    private final ReviewCommandService reviewCommandService;
+
+    /**
+     * POST /api/v1/sessions/{sessionId}/review
+     *
+     * Submits a review for a COMPLETED session. The reviewer must have been a
+     * participant. Each participant may review a session exactly once.
+     * Atomically updates the reviewee's trust score.
+     */
+    @PostMapping("/api/v1/sessions/{sessionId}/review")
+    public ResponseEntity<ApiResponse<ReviewResponse>> submitReview(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String sessionId,
+            @Valid @RequestBody SubmitReviewRequest request) {
+
+        WalkReview review = reviewCommandService.submitReview(
+                sessionId, principal.userId(), request.ratingStars(), request.comment());
+
+        return ResponseEntity.ok(ApiResponse.success(toResponse(review)));
+    }
+
+    /**
+     * GET /api/v1/users/{userId}/reviews
+     *
+     * Returns all reviews written about a user (most recent first).
+     */
+    @GetMapping("/api/v1/users/{userId}/reviews")
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getUserReviews(
+            @PathVariable String userId) {
+
+        List<ReviewResponse> responses = reviewCommandService.getReviewsForUser(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private ReviewResponse toResponse(WalkReview review) {
+        return new ReviewResponse(
+                review.getReviewId(),
+                review.getSessionId(),
+                review.getReviewerId(),
+                review.getRevieweeId(),
+                review.getRatingStars(),
+                review.getComment(),
+                review.getCreatedAt().toString()
+        );
+    }
+}
