@@ -5,12 +5,14 @@ import android.app.Application;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
+import com.walkmate.data.repository.NotificationRepositoryImpl;
 import com.walkmate.data.repository.SocialRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserProfileRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
 import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.user.UserProfileRepository;
@@ -38,6 +40,7 @@ public class WalkMateApplication extends Application {
     private UserProfileRepository   userProfileRepository;
     private GamificationRepository  gamificationRepository;
     private SocialRepository        socialRepository;
+    private NotificationRepository  notificationRepository;
 
     @Override
     public void onCreate() {
@@ -98,5 +101,12 @@ public class WalkMateApplication extends Application {
             socialRepository = new SocialRepositoryImpl(this);
         }
         return socialRepository;
+    }
+
+    public NotificationRepository getNotificationRepository() {
+        if (notificationRepository == null) {
+            notificationRepository = new NotificationRepositoryImpl(this);
+        }
+        return notificationRepository;
     }
 }

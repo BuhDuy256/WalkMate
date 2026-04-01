@@ -5,11 +5,14 @@ import com.walkmate.application.walkintent.MatchResult;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.domain.hotspot.HotspotErrorCode;
 import com.walkmate.domain.hotspot.HotspotRepository;
+import com.walkmate.domain.notification.Notification;
+import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.proposal.MatchProposal;
 import com.walkmate.domain.proposal.MatchProposalRepository;
 import com.walkmate.domain.proposal.ProposalErrorCode;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
+import com.walkmate.domain.shared.NotificationPublisher;
 import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.domain.walkintent.IntentStatus;
 import com.walkmate.domain.walkintent.WalkIntent;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -35,6 +39,7 @@ public class MatchingCommandService {
     private final WalkSessionRepository   walkSessionRepository;
     private final HotspotRepository       hotspotRepository;
     private final MatchingStrategy        matchingStrategy;
+    private final NotificationPublisher   notificationPublisher;
 
     // ── Find or create a proposal ─────────────────────────────────────────────
 
@@ -91,7 +96,17 @@ public class MatchingCommandService {
                 Instant.now().plus(PROPOSAL_TTL_MINUTES, ChronoUnit.MINUTES)
         );
 
-        return Optional.of(matchProposalRepository.save(proposal));
+        MatchProposal saved = matchProposalRepository.save(proposal);
+
+        // Notify the matched user that they have received a new proposal
+        notificationPublisher.publish(Notification.create(
+                matched.getUserId(),
+                NotificationType.PROPOSAL_RECEIVED,
+                Map.of("proposalId", saved.getProposalId(),
+                       "senderUserId", intent.getUserId())
+        ));
+
+        return Optional.of(saved);
     }
 
     // ── Accept proposal ───────────────────────────────────────────────────────
@@ -173,6 +188,20 @@ public class MatchingCommandService {
                 proposal.getProposedEndTime()
         );
         walkSessionRepository.save(session);
+
+        // Notify both participants that their session has been confirmed
+        notificationPublisher.publish(Notification.create(
+                proposal.getUserIdA(),
+                NotificationType.SESSION_CONFIRMED,
+                Map.of("sessionId", session.getSessionId(),
+                       "partnerUserId", proposal.getUserIdB())
+        ));
+        notificationPublisher.publish(Notification.create(
+                proposal.getUserIdB(),
+                NotificationType.SESSION_CONFIRMED,
+                Map.of("sessionId", session.getSessionId(),
+                       "partnerUserId", proposal.getUserIdA())
+        ));
         // ── END CRITICAL SECTION ────────────────────────────────────────────
 
         return proposal;

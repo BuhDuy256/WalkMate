@@ -64,6 +64,8 @@ public class SecurityConfig {
                         // Phase 8: follower / following lists are public; follow & block require JWT
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/following").permitAll()
+                        // Phase 11: notification feed requires a valid JWT
+                        .requestMatchers("/api/v1/notifications/**").authenticated()
                         // Everything else requires authentication by default
                         .anyRequest().authenticated()
                 )

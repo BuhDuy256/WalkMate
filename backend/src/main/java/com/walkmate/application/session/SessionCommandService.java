@@ -1,11 +1,14 @@
 package com.walkmate.application.session;
 
 import com.walkmate.application.gamification.SessionCompletedEvent;
+import com.walkmate.domain.notification.Notification;
+import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.session.AbortReason;
 import com.walkmate.domain.session.SessionErrorCode;
 import com.walkmate.domain.session.SessionStatus;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
+import com.walkmate.domain.shared.NotificationPublisher;
 import com.walkmate.domain.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -32,8 +36,9 @@ public class SessionCommandService {
      */
     private static final Duration MAX_ACTIVE_LIFESPAN = Duration.ofHours(4);
 
-    private final WalkSessionRepository  sessionRepository;
+    private final WalkSessionRepository     sessionRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationPublisher     notificationPublisher;
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -60,6 +65,15 @@ public class SessionCommandService {
         session.recordActivation(callerId, now, windowOpen, windowClose);
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, prevStatus, session.getStatus(), callerId, "User arrived");
+
+        // When both participants have arrived, notify them that the walk is now ACTIVE
+        if (session.getStatus() == SessionStatus.ACTIVE) {
+            String partnerId = session.getUserIdA().equals(callerId)
+                    ? session.getUserIdB() : session.getUserIdA();
+            Map<String, Object> payload = Map.of("sessionId", sessionId);
+            notificationPublisher.publish(Notification.create(callerId,  NotificationType.SESSION_ACTIVE, payload));
+            notificationPublisher.publish(Notification.create(partnerId, NotificationType.SESSION_ACTIVE, payload));
+        }
 
         return session;
     }
@@ -114,6 +128,13 @@ public class SessionCommandService {
                 callerId, "User completed walk");
         eventPublisher.publishEvent(new SessionCompletedEvent(session));
 
+        // Notify both participants to leave a review
+        String partnerId = session.getUserIdA().equals(callerId)
+                ? session.getUserIdB() : session.getUserIdA();
+        Map<String, Object> reviewPayload = Map.of("sessionId", sessionId);
+        notificationPublisher.publish(Notification.create(callerId,  NotificationType.REVIEW_REQUESTED, reviewPayload));
+        notificationPublisher.publish(Notification.create(partnerId, NotificationType.REVIEW_REQUESTED, reviewPayload));
+
         return session;
     }
 
@@ -162,6 +183,12 @@ public class SessionCommandService {
             sessionRepository.logStateChange(session.getSessionId(), SessionStatus.ACTIVE, SessionStatus.COMPLETED,
                     null, "scheduler-auto-complete");
             eventPublisher.publishEvent(new SessionCompletedEvent(session));
+
+            // Notify both participants to leave a review (auto-completed walk)
+            Map<String, Object> reviewPayload = Map.of("sessionId", session.getSessionId());
+            notificationPublisher.publish(Notification.create(session.getUserIdA(), NotificationType.REVIEW_REQUESTED, reviewPayload));
+            notificationPublisher.publish(Notification.create(session.getUserIdB(), NotificationType.REVIEW_REQUESTED, reviewPayload));
+
             log.info("Scheduler: session {} auto-completed", session.getSessionId());
         }
     }
