@@ -1,5 +1,6 @@
 package com.walkmate.application.walkintent;
 
+import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * MVP rule-based implementation of MatchingStrategy.
@@ -42,6 +45,7 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
     // TODO (AI Upgrade — NoShow):  private static final int PENALTY_NOSHOW     = -30;
 
     private final WalkIntentRepository walkIntentRepository;
+    private final SocialRepository     socialRepository;
 
     // ─────────────────────────────────────────────────────────────────────
     // Stage 1: DB-level hard filter
@@ -49,7 +53,8 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
 
     @Override
     public List<WalkIntent> findCandidates(WalkIntent intent) {
-        return walkIntentRepository.findOpenCandidates(
+        // Stage 1: DB-level hard filter (hotspot, time window, age constraints)
+        List<WalkIntent> candidates = walkIntentRepository.findOpenCandidates(
                 intent.getHotspotId(),
                 intent.getTimeWindowStart(),
                 intent.getTimeWindowEnd(),
@@ -58,6 +63,20 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
                 intent.getUserId(),
                 MIN_WALK_DURATION
         );
+
+        // Stage 1b: Block filter — load the caller's full exclusion set in ONE
+        // DB round-trip (UNION query), then discard in-memory.  This keeps the
+        // hot path at O(1) DB queries regardless of candidate list size.
+        // See OPTIMIZATION_DECISION_LOG.md for the full rationale.
+        UUID callerId = UUID.fromString(intent.getUserId());
+        Set<UUID> blocked = socialRepository.getBlockedAndBlockerIds(callerId);
+        if (!blocked.isEmpty()) {
+            candidates = candidates.stream()
+                    .filter(c -> !blocked.contains(UUID.fromString(c.getUserId())))
+                    .toList();
+        }
+
+        return candidates;
     }
 
     // ─────────────────────────────────────────────────────────────────────

@@ -5,11 +5,15 @@ import android.app.Application;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
+import com.walkmate.data.repository.SocialRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
+import com.walkmate.data.repository.UserProfileRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
 import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
+import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
@@ -26,12 +30,14 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  */
 public class WalkMateApplication extends Application {
 
-    private WalkMateDatabase      database;
-    private SessionManager        sessionManager;
-    private TrackingRepository    trackingRepository;
-    private WalkSessionRepository walkSessionRepository;
-    private UserRepository        userRepository;
-    private GamificationRepository gamificationRepository;
+    private WalkMateDatabase        database;
+    private SessionManager          sessionManager;
+    private TrackingRepository      trackingRepository;
+    private WalkSessionRepository   walkSessionRepository;
+    private UserRepository          userRepository;
+    private UserProfileRepository   userProfileRepository;
+    private GamificationRepository  gamificationRepository;
+    private SocialRepository        socialRepository;
 
     @Override
     public void onCreate() {
@@ -73,10 +79,24 @@ public class WalkMateApplication extends Application {
         return userRepository;
     }
 
+    public UserProfileRepository getUserProfileRepository() {
+        if (userProfileRepository == null) {
+            userProfileRepository = new UserProfileRepositoryImpl(this);
+        }
+        return userProfileRepository;
+    }
+
     public GamificationRepository getGamificationRepository() {
         if (gamificationRepository == null) {
             gamificationRepository = new GamificationRepositoryImpl(this);
         }
         return gamificationRepository;
+    }
+
+    public SocialRepository getSocialRepository() {
+        if (socialRepository == null) {
+            socialRepository = new SocialRepositoryImpl(this);
+        }
+        return socialRepository;
     }
 }

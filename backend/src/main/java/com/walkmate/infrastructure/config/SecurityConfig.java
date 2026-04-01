@@ -56,6 +56,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/leaderboard").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/badges").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/stats").permitAll()
+                        // Phase 7: public user profile view + avatar file serving
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
+                        // Phase 7: own-profile read/write requires JWT
+                        .requestMatchers("/api/v1/profile/**").authenticated()
+                        // Phase 8: follower / following lists are public; follow & block require JWT
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/followers").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/following").permitAll()
                         // Everything else requires authentication by default
                         .anyRequest().authenticated()
                 )

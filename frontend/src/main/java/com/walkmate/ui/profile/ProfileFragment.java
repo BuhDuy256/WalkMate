@@ -119,7 +119,7 @@ public class ProfileFragment extends Fragment {
 
     private void setupViewModel() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
-        ProfileViewModelFactory factory = new ProfileViewModelFactory(app.getUserRepository());
+        ProfileViewModelFactory factory = new ProfileViewModelFactory(app.getUserProfileRepository());
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
     }
 
