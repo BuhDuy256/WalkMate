@@ -52,6 +52,10 @@ public class SecurityConfig {
                         // Review endpoints — POST requires auth; GET /reviews is public
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/reviews").permitAll()
                         .requestMatchers("/api/v1/sessions/*/review").authenticated()
+                        // Gamification endpoints — leaderboard/badges/stats are public
+                        .requestMatchers(HttpMethod.GET, "/api/v1/leaderboard").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/badges").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/stats").permitAll()
                         // Everything else requires authentication by default
                         .anyRequest().authenticated()
                 )

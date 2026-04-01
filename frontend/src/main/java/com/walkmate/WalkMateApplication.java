@@ -4,9 +4,11 @@ import android.app.Application;
 
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.repository.GamificationRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
+import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
@@ -24,11 +26,12 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  */
 public class WalkMateApplication extends Application {
 
-    private WalkMateDatabase   database;
-    private SessionManager     sessionManager;
-    private TrackingRepository trackingRepository;
+    private WalkMateDatabase      database;
+    private SessionManager        sessionManager;
+    private TrackingRepository    trackingRepository;
     private WalkSessionRepository walkSessionRepository;
-    private UserRepository     userRepository;
+    private UserRepository        userRepository;
+    private GamificationRepository gamificationRepository;
 
     @Override
     public void onCreate() {
@@ -68,5 +71,12 @@ public class WalkMateApplication extends Application {
             userRepository = new UserRepositoryImpl(this);
         }
         return userRepository;
+    }
+
+    public GamificationRepository getGamificationRepository() {
+        if (gamificationRepository == null) {
+            gamificationRepository = new GamificationRepositoryImpl(this);
+        }
+        return gamificationRepository;
     }
 }
