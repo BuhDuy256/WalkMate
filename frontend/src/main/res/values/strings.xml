@@ -141,6 +141,12 @@
     <string name="profile_menu_navigate_cd">Navigate</string>
     <string name="profile_avatar_cd">Profile avatar</string>
 
+    <!-- Phase 11: Notifications -->
+    <string name="notification_screen_title">Notifications</string>
+    <string name="notification_empty">No notifications yet.\nYou\'re all caught up! 🎉</string>
+    <string name="notification_error">Could not load notifications.\nPlease try again.</string>
+    <string name="notification_back_cd">Go back</string>
+
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>
     <string name="hotspot_2">Hồ Con Rùa</string>

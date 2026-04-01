@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Notification Center screen — Phase 11
+    IDs required by NotificationFragment.java:
+      progress_notifications, rv_notifications,
+      txt_notifications_empty, txt_notifications_error
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:orientation="vertical"
+    tools:context=".ui.notification.NotificationFragment">
+
+    <!-- ── Top App Bar ──────────────────────────────────────────────────────── -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="52dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="20dp"
+        android:background="@color/bg_cream">
+
+        <!-- Back button -->
+        <FrameLayout
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="@string/notification_back_cd"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_back"
+                android:tint="@color/text_dark" />
+
+        </FrameLayout>
+
+        <!-- Screen title -->
+        <TextView
+            android:id="@+id/txtScreenTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="@string/notification_screen_title"
+            android:textColor="@color/text_dark"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/btnBack"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ── Thin divider below toolbar ─────────────────────────────────────── -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/handle_bar" />
+
+    <!-- ── Content area ────────────────────────────────────────────────────── -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Loading spinner — visible while first fetch is in progress -->
+        <ProgressBar
+            android:id="@+id/progress_notifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/orange_primary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- Notification list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_notifications"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="12dp"
+            android:paddingBottom="24dp"
+            android:paddingHorizontal="@dimen/screen_padding_horizontal"
+            android:overScrollMode="never"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_notification" />
+
+        <!-- Empty state — shown when feed is loaded but has zero items -->
+        <TextView
+            android:id="@+id/txt_notifications_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/notification_empty"
+            android:textColor="@color/text_muted"
+            android:textSize="15sp"
+            android:lineSpacingMultiplier="1.4"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- Error state — shown when the network request fails -->
+        <TextView
+            android:id="@+id/txt_notifications_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/notification_error"
+            android:textColor="@color/color_danger"
+            android:textSize="14sp"
+            android:lineSpacingMultiplier="1.4"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </FrameLayout>
+
+</LinearLayout>

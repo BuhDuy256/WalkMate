@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Notification feed row — Phase 11
+    IDs required by NotificationAdapter.java:
+      view_unread_dot, txt_notification_title, txt_notification_body
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="@color/bg_white"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/handle_bar"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
+
+        <!-- ── Unread indicator dot ──────────────────────────────────────── -->
+        <!--
+            Visibility is toggled in NotificationAdapter:
+              VISIBLE = unread (PENDING / SENT)
+              GONE    = already read
+        -->
+        <View
+            android:id="@+id/view_unread_dot"
+            android:layout_width="9dp"
+            android:layout_height="9dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_dot_orange"
+            tools:visibility="visible" />
+
+        <!-- ── Text content ─────────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Notification type label, e.g. "New Walk Proposal" -->
+            <TextView
+                android:id="@+id/txt_notification_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_dark"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Walk Confirmed!" />
+
+            <!-- Human-readable description -->
+            <TextView
+                android:id="@+id/txt_notification_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/text_muted"
+                android:textSize="13sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingMultiplier="1.3"
+                tools:text="Both of you accepted — your walk session is confirmed." />
+
+        </LinearLayout>
+
+        <!-- ── Chevron hint (read state affordance) ─────────────────────── -->
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/ic_chevron_right"
+            android:tint="@color/handle_bar"
+            android:importantForAccessibility="no" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
