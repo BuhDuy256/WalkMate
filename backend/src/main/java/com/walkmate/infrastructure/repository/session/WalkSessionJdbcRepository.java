@@ -34,7 +34,8 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     status, created_at, started_at, ended_at,
                     user_a_activated_at, user_b_activated_at,
                     cancellation_reason, cancelled_by,
-                    abort_reason, version
+                    abort_reason, version,
+                    total_distance_km, total_duration_seconds
                 )
                 VALUES (
                     :sessionId, :proposalId, :userIdA, :userIdB,
@@ -43,18 +44,21 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     CAST(:status AS walk_session_status), :createdAt, :startedAt, :endedAt,
                     :userAActivatedAt, :userBActivatedAt,
                     :cancellationReason, :cancelledBy,
-                    :abortReason, :version
+                    :abortReason, :version,
+                    :totalDistanceKm, :totalDurationSeconds
                 )
                 ON CONFLICT (session_id) DO UPDATE SET
-                    status               = CAST(EXCLUDED.status AS walk_session_status),
-                    started_at           = EXCLUDED.started_at,
-                    ended_at             = EXCLUDED.ended_at,
-                    user_a_activated_at  = EXCLUDED.user_a_activated_at,
-                    user_b_activated_at  = EXCLUDED.user_b_activated_at,
-                    cancellation_reason  = EXCLUDED.cancellation_reason,
-                    cancelled_by         = EXCLUDED.cancelled_by,
-                    abort_reason         = EXCLUDED.abort_reason,
-                    version              = EXCLUDED.version
+                    status                = CAST(EXCLUDED.status AS walk_session_status),
+                    started_at            = EXCLUDED.started_at,
+                    ended_at              = EXCLUDED.ended_at,
+                    user_a_activated_at   = EXCLUDED.user_a_activated_at,
+                    user_b_activated_at   = EXCLUDED.user_b_activated_at,
+                    cancellation_reason   = EXCLUDED.cancellation_reason,
+                    cancelled_by          = EXCLUDED.cancelled_by,
+                    abort_reason          = EXCLUDED.abort_reason,
+                    version               = EXCLUDED.version,
+                    total_distance_km     = EXCLUDED.total_distance_km,
+                    total_duration_seconds = EXCLUDED.total_duration_seconds
                 """;
 
         jdbcClient.sql(sql)
@@ -73,11 +77,13 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 .param("userAActivatedAt",   toTs(session.getUserAActivatedAt()))
                 .param("userBActivatedAt",   toTs(session.getUserBActivatedAt()))
                 .param("cancellationReason", session.getCancellationReason())
-                .param("cancelledBy",        session.getCancelledBy() != null
+                .param("cancelledBy",          session.getCancelledBy() != null
                         ? UUID.fromString(session.getCancelledBy()) : null)
-                .param("abortReason",        session.getAbortReason() != null
+                .param("abortReason",          session.getAbortReason() != null
                         ? session.getAbortReason().name() : null)
-                .param("version",            session.getVersion())
+                .param("version",              session.getVersion())
+                .param("totalDistanceKm",      session.getTotalDistanceKm())
+                .param("totalDurationSeconds", session.getTotalDurationSeconds())
                 .update();
 
         return session;
@@ -193,7 +199,8 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                        status, created_at, started_at, ended_at,
                        user_a_activated_at, user_b_activated_at,
                        cancellation_reason, cancelled_by::text,
-                       abort_reason, version
+                       abort_reason, version,
+                       total_distance_km, total_duration_seconds
                 FROM walk_session
                 """;
     }
@@ -220,7 +227,9 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 rs.getString("cancellation_reason"),
                 rs.getString("cancelled_by"),
                 abortReason,
-                rs.getLong("version")
+                rs.getLong("version"),
+                rs.getDouble("total_distance_km"),
+                rs.getLong("total_duration_seconds")
         );
     }
 

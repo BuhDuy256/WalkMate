@@ -5,6 +5,7 @@ import com.walkmate.domain.gamification.BadgePolicy;
 import com.walkmate.domain.gamification.UserBadgeRepository;
 import com.walkmate.domain.gamification.UserStats;
 import com.walkmate.domain.session.WalkSession;
+import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.tracking.TrackingChunkRepository;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
@@ -36,9 +37,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class GamificationCommandService {
 
-    private final UserRepository         userRepository;
-    private final UserBadgeRepository    badgeRepository;
+    private final UserRepository          userRepository;
+    private final UserBadgeRepository     badgeRepository;
     private final TrackingChunkRepository trackingChunkRepository;
+    private final WalkSessionRepository   sessionRepository;
 
     // ── Event listener ────────────────────────────────────────────────────────
 
@@ -58,12 +60,17 @@ public class GamificationCommandService {
     // ── Core reward logic ─────────────────────────────────────────────────────
 
     private void rewardBothParticipants(WalkSession session) {
-        double distanceKm = calculateTotalDistanceKm(session.getSessionId());
+        double distanceKm  = calculateTotalDistanceKm(session.getSessionId());
         int    durationMin = calculateDurationMinutes(session.getStartedAt(), session.getEndedAt());
         int    points      = (int) (distanceKm * 10) + (durationMin * 2);
 
         log.info("Session {} — dist={}km, dur={}min, points={}",
                 session.getSessionId(), String.format("%.2f", distanceKm), durationMin, points);
+
+        // Persist the GPS-derived distance back to the session record so that
+        // session history queries can surface it without re-aggregating polylines.
+        session.recordFinalDistance(distanceKm);
+        sessionRepository.save(session);
 
         rewardUser(session.getUserIdA(), points, distanceKm);
         rewardUser(session.getUserIdB(), points, distanceKm);
