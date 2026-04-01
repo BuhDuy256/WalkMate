@@ -65,7 +65,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="44dp"
-            android:text="Welcome back 👋"
+            android:text="Create account 🎉"
             android:textColor="@color/text_dark"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -74,16 +74,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Sign in to continue your journey."
+            android:text="Join the WalkMate community today."
             android:textColor="@color/text_muted"
             android:textSize="14sp" />
 
         <!-- ── FIELDS ─────────────────────────────────────────────────────────── -->
         <com.walkmate.core.designsystem.view.WalkMateInputField
-            android:id="@+id/field_email"
+            android:id="@+id/field_fullname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
+            app:wm_hint="Your full name"
+            app:wm_icon="@drawable/ic_user"
+            app:wm_inputType="textPersonName"
+            app:wm_label="Full Name" />
+
+        <com.walkmate.core.designsystem.view.WalkMateInputField
+            android:id="@+id/field_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             app:wm_hint="hello@example.com"
             app:wm_icon="@drawable/ic_mail"
             app:wm_inputType="textEmailAddress"
@@ -94,32 +104,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:wm_hint="Enter your password"
+            app:wm_hint="Min. 8 chars, uppercase &amp; number"
             app:wm_icon="@drawable/ic_lock"
             app:wm_label="Password"
             app:wm_passwordToggle="true" />
 
-        <TextView
-            android:id="@+id/tv_forgot_password"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="10dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="Forgot password?"
-            android:textColor="@color/orange_primary"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
         <!-- ── PRIMARY CTA ──────────────────────────────────────────────────── -->
         <com.walkmate.core.designsystem.view.WalkMateButton
-            android:id="@+id/btn_signin_action"
+            android:id="@+id/btn_register_action"
             android:layout_width="match_parent"
             android:layout_height="54dp"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="32dp"
             app:wm_buttonStyle="filled"
-            app:wm_text="Sign In ✦" />
+            app:wm_text="Create Account ✦" />
 
         <!-- ── DIVIDER ────────────────────────────────────────────────────────── -->
         <LinearLayout
@@ -180,17 +177,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New here? "
+                android:text="Already have an account? "
                 android:textColor="@color/text_muted"
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/tv_create_account"
+                android:id="@+id/tv_signin_link"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
-                android:text="Create an account"
+                android:text="Sign in"
                 android:textColor="@color/orange_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />

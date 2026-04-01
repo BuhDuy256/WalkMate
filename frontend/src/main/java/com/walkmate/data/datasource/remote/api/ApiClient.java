@@ -4,10 +4,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import com.walkmate.BuildConfig;
 
 public final class ApiClient {
 
-    private static final String BASE_URL = "http://192.168.2.103:8080/";
+    private static final String BASE_URL = BuildConfig.BASE_URL;
 
     private static final HttpLoggingInterceptor LOGGING_INTERCEPTOR =
         new HttpLoggingInterceptor().setLevel(

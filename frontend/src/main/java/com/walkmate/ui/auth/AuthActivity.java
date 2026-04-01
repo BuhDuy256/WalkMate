@@ -2,65 +2,75 @@ package com.walkmate.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.WalkMateButton;
+import com.walkmate.core.designsystem.view.WalkMateInputField;
+import com.walkmate.ui.auth.login.LoginViewModel;
+import com.walkmate.ui.auth.login.LoginViewModelFactory;
+import com.walkmate.ui.auth.register.RegisterActivity;
 
 public class AuthActivity extends AppCompatActivity {
 
-    public static final String EXTRA_START_TAB = "extra_start_tab";
-    public static final int TAB_LOGIN = 0;
-    public static final int TAB_REGISTER = 1;
+    private WalkMateInputField fieldEmail;
+    private WalkMateInputField fieldPassword;
+    private WalkMateButton btnSignIn;
 
-    private ViewPager2 viewPager;
+    private LoginViewModel loginViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
-        viewPager = findViewById(R.id.vp_auth_forms);
+        LoginViewModelFactory factory = new LoginViewModelFactory(this);
+        loginViewModel = new ViewModelProvider(this, factory).get(LoginViewModel.class);
 
-        AuthPagerAdapter pagerAdapter = new AuthPagerAdapter(this);
-        viewPager.setAdapter(pagerAdapter);
-        viewPager.setOffscreenPageLimit(1);
+        initViews();
+        initClickListeners();
+        observeUiState();
+    }
 
-        // Keep horizontal slide as primary transition and avoid fade-like effect.
-        viewPager.setPageTransformer((@NonNull android.view.View page, float position) -> {
-            float absPosition = Math.abs(position);
-            page.setAlpha(1f - Math.min(0.08f, absPosition * 0.08f));
-            page.setTranslationX(-position * 12f);
+    private void initViews() {
+        fieldEmail    = findViewById(R.id.field_email);
+        fieldPassword = findViewById(R.id.field_password);
+        btnSignIn     = findViewById(R.id.btn_signin_action);
+    }
+
+    private void initClickListeners() {
+        btnSignIn.setOnClickListener(v ->
+                loginViewModel.login(fieldEmail.getText(), fieldPassword.getText()));
+
+        TextView tvForgotPassword = findViewById(R.id.tv_forgot_password);
+        tvForgotPassword.setOnClickListener(v -> {
+            // TODO: navigate to forgot-password screen
         });
 
-        int startTab = getIntent().getIntExtra(EXTRA_START_TAB, TAB_LOGIN);
-        if (startTab == TAB_REGISTER) {
-            viewPager.setCurrentItem(TAB_REGISTER, false);
-        }
+        TextView tvCreateAccount = findViewById(R.id.tv_create_account);
+        tvCreateAccount.setOnClickListener(v ->
+                startActivity(new Intent(this, RegisterActivity.class)));
     }
 
-    public void showLoginTab() {
-        if (viewPager != null) {
-            viewPager.setCurrentItem(TAB_LOGIN, true);
-        }
-    }
+    private void observeUiState() {
+        loginViewModel.getUiState().observe(this, state -> {
+            if (state == null) return;
 
-    public void showRegisterTab() {
-        if (viewPager != null) {
-            viewPager.setCurrentItem(TAB_REGISTER, true);
-        }
-    }
+            btnSignIn.setLoading(state.isLoading());
 
-    public void onLoginSuccess() {
-        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-    }
+            if (state.getError() != null) {
+                Toast.makeText(this, state.getError(), Toast.LENGTH_LONG).show();
+                loginViewModel.consumeError();
+            }
 
-    public void onRegisterSuccess() {
-        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-        showLoginTab();
+            if (state.isSuccess()) {
+                Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            }
+        });
     }
 }

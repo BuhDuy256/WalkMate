@@ -1,7 +1,12 @@
 import java.util.Properties
+import java.net.InetAddress
 
 plugins {
     alias(libs.plugins.android.application)
+}
+
+fun getLocalIP(): String {
+    return InetAddress.getLocalHost().hostAddress
 }
 
 val envProperties = Properties()
@@ -28,6 +33,7 @@ android {
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+        buildConfigField("String", "BASE_URL", "\"http://${getLocalIP()}:8080/\"")
     }
 
     buildFeatures {
@@ -66,7 +72,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttpLoggingInterceptor)
     implementation(libs.gson)
-    
+
     // GPS Tracking
     implementation(libs.playServicesLocation)
 
