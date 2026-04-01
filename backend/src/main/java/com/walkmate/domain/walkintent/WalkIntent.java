@@ -81,7 +81,7 @@ public class WalkIntent {
         if (this.status == IntentStatus.CANCELLED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CANCELLED);
         }
-        if (this.status == IntentStatus.CONSUMED || this.status == IntentStatus.MATCHED) {
+        if (this.status == IntentStatus.CONSUMED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CONSUMED);
         }
         this.status = IntentStatus.CANCELLED;
@@ -92,7 +92,7 @@ public class WalkIntent {
         if (this.status == IntentStatus.CANCELLED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CANCELLED);
         }
-        if (this.status == IntentStatus.CONSUMED || this.status == IntentStatus.MATCHED) {
+        if (this.status == IntentStatus.CONSUMED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CONSUMED);
         }
         this.status = IntentStatus.CONSUMED;

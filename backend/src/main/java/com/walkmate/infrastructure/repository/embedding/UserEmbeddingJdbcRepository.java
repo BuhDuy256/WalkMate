@@ -5,11 +5,10 @@ import org.postgresql.util.PGobject;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
-import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * JDBC repository for the {@code user_embedding} table.
@@ -108,10 +107,11 @@ public class UserEmbeddingJdbcRepository {
 
     /**
      * Serialises a float array to the pgvector literal format: {@code [x1,x2,...,xn]}.
+     * Uses IntStream because Arrays.stream() has no overload for primitive float[].
      */
     static String toVectorString(float[] vector) {
-        return Arrays.stream(vector)
-                .mapToObj(f -> String.valueOf((float) f))
+        return IntStream.range(0, vector.length)
+                .mapToObj(i -> String.valueOf(vector[i]))
                 .collect(Collectors.joining(",", "[", "]"));
     }
 

@@ -22,12 +22,10 @@ CREATE TYPE account_status AS ENUM ('ACTIVE');
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY');
 
 -- walk_intent
--- MATCHED is a deprecated legacy value; retained so existing rows deserialise without error
-CREATE TYPE intent_status AS ENUM ('OPEN', 'CONSUMED', 'CANCELLED', 'EXPIRED', 'MATCHED');
+CREATE TYPE intent_status AS ENUM ('OPEN', 'CONSUMED', 'CANCELLED', 'EXPIRED');
 
 -- match_proposal
--- ACCEPTED is a deprecated legacy value; superseded by CONFIRMED
-CREATE TYPE proposal_status AS ENUM ('PENDING', 'CONFIRMED', 'REJECTED', 'EXPIRED', 'ACCEPTED');
+CREATE TYPE proposal_status AS ENUM ('PENDING', 'CONFIRMED', 'REJECTED', 'EXPIRED');
 
 -- walk_session + session_state_change_log
 -- FIX: renamed from "session_status" → "walk_session_status" to match

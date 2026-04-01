@@ -77,3 +77,61 @@ Trước khi merge và deploy bản cập nhật này lên Production, vui lòng
 - [ ] Chạy file SQL Migration mới nhất, đảm bảo extension `vector` và `citext` đã được Enable thành công trên Supabase/PostgreSQL.
 - [ ] Kiểm tra class `GamificationCommandService.java`: Đảm bảo hàm listener của `AFTER_COMMIT` được đánh annotation `@Transactional(propagation = Propagation.REQUIRES_NEW)` (hoặc chạy `@Async`) để đảm bảo không dính dáng đến Transaction chính.
 - [ ] Chạy Unit/Integration Test cho class `UserEmbeddingJdbcRepository.java` để xác nhận `PGobject` parse mảng Float thành chuỗi Vector hợp lệ.
+
+
+● Verify lại toàn bộ:
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Sạch hoàn toàn. Đây là tóm tắt:
+
+  ---
+  Tóm tắt 3 fix
+
+  Fix 1 — Swagger @Tag không resolve (build.gradle)
+
+  Nguyên nhân: springdoc-openapi-starter-webmvc-ui:2.6.0 không compatible với Spring Boot 3.5.x (Spring Boot 3.5 yêu cầu Spring Framework 6.2.x, springdoc 2.6 hỗ trợ đến
+  Spring Boot 3.2).
+
+  Fix: Nâng lên 2.8.0 — đây là version tối thiểu hỗ trợ Spring Boot 3.4/3.5. Import path io.swagger.v3.oas.annotations.tags.Tag trong controllers là đúng, không cần đổi.
+
+  ▎ Sau khi sửa: chạy Gradle → Reload All Gradle Projects trong IDE để sync classpath.
+
+  ---
+  Fix 2 — Arrays.stream(float[]) không tồn tại (UserEmbeddingJdbcRepository.java)
+
+  Nguyên nhân: Java chỉ có Arrays.stream(double[]), Arrays.stream(int[]), Arrays.stream(long[]) — không có overload cho float[] (primitive).
+
+  Fix: Dùng IntStream.range(0, vector.length) để iterate theo index, lấy vector[i] từng phần tử:
+  IntStream.range(0, vector.length)
+      .mapToObj(i -> String.valueOf(vector[i]))
+      .collect(Collectors.joining(",", "[", "]"));
+  Đồng thời xóa import Arrays không còn dùng, thêm IntStream.
+
+  ---
+  Fix 3 — Xóa deprecated MATCHED & ACCEPTED khỏi toàn bộ codebase
+
+  3 file Java đã thay đổi:
+
+  ┌─────────────────────┬──────────────────────────────────────────────────────────────────────────┐
+  │        File         │                                 Thay đổi                                 │
+  ├─────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ IntentStatus.java   │ Xóa @Deprecated MATCHED                                                  │
+  ├─────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ WalkIntent.java     │ Xóa || this.status == IntentStatus.MATCHED khỏi cả cancel() và consume() │
+  ├─────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ ProposalStatus.java │ Xóa @Deprecated ACCEPTED (không được dùng ở bất kỳ logic nào)            │
+  └─────────────────────┴──────────────────────────────────────────────────────────────────────────┘
+
+  V0_init.sql — 2 enum type đã được clean:
+  -- Trước (sẽ gây lỗi nếu code gọi IntentStatus.MATCHED):
+  CREATE TYPE intent_status AS ENUM ('OPEN', 'CONSUMED', 'CANCELLED', 'EXPIRED', 'MATCHED');
+
+  -- Sau (sạch, khớp 100% với Java enum):
+  CREATE TYPE intent_status  AS ENUM ('OPEN', 'CONSUMED', 'CANCELLED', 'EXPIRED');
+  CREATE TYPE proposal_status AS ENUM ('PENDING', 'CONFIRMED', 'REJECTED', 'EXPIRED');
+
+  Vì bạn vừa reset DB hoàn toàn, chỉ cần chạy lại từ V0_init.sql — không cần migration ALTER TYPE riêng.
+
+✻ Crunched for 2m 59s
+p
