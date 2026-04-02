@@ -10,6 +10,7 @@ import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.ui.explore.ExploreUiState.AppState;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,6 +75,26 @@ public class ExploreViewModel extends ViewModel {
         }
         if (found == null) return;
         post(new ExploreUiState(false, s.getHotspots(), found, AppState.SETUP, null));
+    }
+
+    /**
+     * Filters the visible hotspot list by name substring (case-insensitive).
+     * Passing null or empty string resets the filter to show all hotspots.
+     * Only updates filteredHotspots — the full hotspots list is never mutated.
+     */
+    public void filterHotspots(String query) {
+        ExploreUiState s = current();
+        List<Hotspot> all = s.getHotspots();
+        if (query == null || query.isEmpty()) {
+            post(s.withFilteredHotspots(all));
+            return;
+        }
+        String lower = query.toLowerCase();
+        List<Hotspot> filtered = new ArrayList<>();
+        for (Hotspot h : all) {
+            if (h.getName().toLowerCase().contains(lower)) filtered.add(h);
+        }
+        post(s.withFilteredHotspots(filtered));
     }
 
     /**

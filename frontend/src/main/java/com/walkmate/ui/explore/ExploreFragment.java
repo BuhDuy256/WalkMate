@@ -5,10 +5,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
@@ -31,6 +34,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.slider.RangeSlider;
+import com.google.android.material.textfield.TextInputEditText;
 import com.walkmate.R;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.ui.explore.ExploreUiState.AppState;
@@ -79,6 +83,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private View scanningContent;
 
     // Welcome content ─────────────────────────────────────────────────────
+    private TextInputEditText searchInputEdit;
+    private LinearLayout searchResultsContainer;
+    private LinearLayout popularSpotsSection;
     private ChipGroup chipGroupHotspots;
 
     // Setup (Create Intent) form ──────────────────────────────────────────
@@ -102,6 +109,10 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
     private final Map<String, Marker> markerByHotspotId = new HashMap<>();
     private final Map<String, Hotspot> hotspotById = new HashMap<>();
+    // Tracks the last list drawn on the map to avoid redundant redraws.
+    private List<Hotspot> lastRenderedFilteredHotspots = null;
+    // Tracks last rendered app state to prevent spurious sheet-state resets.
+    private ExploreUiState.AppState lastRenderedAppState = null;
 
     // ── Pulse animation ──────────────────────────────────────────────────
     private PulseOverlayView pulseOverlay;
@@ -163,6 +174,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         setupContent = root.findViewById(R.id.setupContent);
         scanningContent = root.findViewById(R.id.scanningContent);
 
+        searchInputEdit = root.findViewById(R.id.searchInputEdit);
+        searchResultsContainer = root.findViewById(R.id.searchResultsContainer);
+        popularSpotsSection = root.findViewById(R.id.popularSpotsSection);
         chipGroupHotspots = root.findViewById(R.id.chipGroupHotspots);
 
         txtSetupHotspotName = root.findViewById(R.id.txtSetupHotspotName);
@@ -249,8 +263,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
         // Hotspots may have loaded before the map was ready; draw them now.
         ExploreUiState current = viewModel.getUiState().getValue();
-        if (current != null && !current.getHotspots().isEmpty()) {
-            drawHotspotMarkers(current.getHotspots());
+        if (current != null && !current.getFilteredHotspots().isEmpty()) {
+            drawHotspotMarkers(current.getFilteredHotspots(), true);
+            lastRenderedFilteredHotspots = current.getFilteredHotspots();
         }
     }
 
@@ -365,6 +380,52 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             chip.setText(h.getName());
             chip.setOnClickListener(v -> viewModel.selectHotspot(h.getId()));
             chipGroupHotspots.addView(chip);
+        }
+    }
+
+    /**
+     * Populates the search results dropdown with matching hotspots.
+     * Each row is a tappable item that selects the hotspot (→ SETUP state).
+     */
+    private void populateSearchResults(List<Hotspot> results) {
+        searchResultsContainer.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        int paddingV = (int) (12 * density);
+        int paddingH = (int) (4 * density);
+
+        if (results.isEmpty()) {
+            TextView empty = new TextView(requireContext());
+            empty.setText("No results found");
+            empty.setTextColor(Color.parseColor("#888888"));
+            empty.setPadding(paddingH, paddingV, paddingH, paddingV);
+            searchResultsContainer.addView(empty);
+            return;
+        }
+
+        android.util.TypedValue ripple = new android.util.TypedValue();
+        requireContext().getTheme().resolveAttribute(
+                android.R.attr.selectableItemBackground, ripple, true);
+
+        for (int i = 0; i < results.size(); i++) {
+            Hotspot h = results.get(i);
+
+            TextView row = new TextView(requireContext());
+            row.setText("📍  " + h.getName());
+            row.setTextColor(Color.parseColor("#332218"));
+            row.setTextSize(15f);
+            row.setPadding(paddingH, paddingV, paddingH, paddingV);
+            row.setBackgroundResource(ripple.resourceId);
+            row.setOnClickListener(v -> viewModel.selectHotspot(h.getId()));
+            searchResultsContainer.addView(row);
+
+            // Thin divider between items (skip after last).
+            if (i < results.size() - 1) {
+                View divider = new View(requireContext());
+                divider.setLayoutParams(new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 1));
+                divider.setBackgroundColor(Color.parseColor("#F0ECE7"));
+                searchResultsContainer.addView(divider);
+            }
         }
     }
 
@@ -489,13 +550,14 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void renderState(ExploreUiState state) {
-        // Draw markers once when the first hotspot batch arrives and the map is ready.
-        if (
-            googleMap != null &&
-            markerByHotspotId.isEmpty() &&
-            !state.getHotspots().isEmpty()
-        ) {
-            drawHotspotMarkers(state.getHotspots());
+        // Redraw map markers whenever the filtered list changes.
+        if (googleMap != null) {
+            List<Hotspot> filtered = state.getFilteredHotspots();
+            if (hasFilteredHotspotsChanged(filtered)) {
+                boolean fitCamera = (lastRenderedFilteredHotspots == null);
+                drawHotspotMarkers(filtered, fitCamera);
+                lastRenderedFilteredHotspots = filtered;
+            }
         }
 
         // Sync selected-marker highlight for every state transition.
@@ -505,6 +567,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         }
 
         MainActivity activity = (MainActivity) requireActivity();
+        boolean stateChanged = (state.getAppState() != lastRenderedAppState);
+        lastRenderedAppState = state.getAppState();
 
         switch (state.getAppState()) {
             case WELCOME:
@@ -519,16 +583,33 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 setupContent.setVisibility(View.GONE);
                 scanningContent.setVisibility(View.GONE);
 
-                sheetBehavior.setDraggable(true);
-                sheetBehavior.setHideable(false);
-                sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                // Only touch sheet state when actually transitioning into WELCOME.
+                // Calling setState() on every filterHotspots() update collapses the
+                // sheet while the user is still typing.
+                if (stateChanged) {
+                    sheetBehavior.setDraggable(true);
+                    sheetBehavior.setHideable(false);
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    // Clear stale search text when returning from SETUP / SCANNING.
+                    searchInputEdit.setText("");
+                }
 
-                if (!state.getHotspots().isEmpty()) {
-                    populateHotspotChips(state.getHotspots());
+                // Chips always show the full popular-spots list.
+                populateHotspotChips(state.getHotspots());
+
+                // Below the search bar: show results list OR popular-spots panel.
+                String query = searchInputEdit.getText() != null
+                        ? searchInputEdit.getText().toString() : "";
+                if (query.isEmpty()) {
+                    popularSpotsSection.setVisibility(View.VISIBLE);
+                    searchResultsContainer.setVisibility(View.GONE);
+                } else {
+                    popularSpotsSection.setVisibility(View.GONE);
+                    searchResultsContainer.setVisibility(View.VISIBLE);
+                    populateSearchResults(state.getFilteredHotspots());
                 }
                 break;
             case SETUP:
-                activity.setBottomNavVisibility(false);
                 stopPulseAnimation();
 
                 // Nav bar — slide out so the sheet can expand full-height.
@@ -536,20 +617,25 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 // Single back button remains visible in SETUP; action switches to close setup.
                 btnBackToHome.setVisibility(View.VISIBLE);
 
-                // Calculate the expanded offset so the sheet top clears the back button.
-                applySheetExpandedOffset();
-
                 welcomeContent.setVisibility(View.GONE);
                 setupContent.setVisibility(View.VISIBLE);
                 scanningContent.setVisibility(View.GONE);
 
-                bottomSheetContainer.post(() -> {
-                    // Ép Container tính toán lại kích thước để nhận diện đầy đủ nội dung mới của SETUP
-                    bottomSheetContainer.requestLayout();
+                if (stateChanged) {
+                    applySheetExpandedOffset();
 
-                    // Luôn cuộn về đỉnh để người dùng thấy tiêu đề và không bị "trôi" nội dung
-                    bottomSheetScrollContent.scrollTo(0, 0);
-                });
+                    bottomSheetContainer.post(() -> {
+                        // Ép Container tính toán lại kích thước để nhận diện đầy đủ nội dung mới của SETUP
+                        bottomSheetContainer.requestLayout();
+
+                        // Luôn cuộn về đỉnh để người dùng thấy tiêu đề và không bị "trôi" nội dung
+                        bottomSheetScrollContent.scrollTo(0, 0);
+                    });
+
+                    sheetBehavior.setDraggable(true);
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    sheetBehavior.setHideable(true);
+                }
 
                 if (state.getSelectedHotspot() != null) {
                     txtSetupHotspotName.setText(
@@ -557,10 +643,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                     );
                     zoomToHotspot(state.getSelectedHotspot());
                 }
-
-                sheetBehavior.setDraggable(true);
-                sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                sheetBehavior.setHideable(true);
                 break;
             case SCANNING:
                 // Nav bar stays hidden during an active scan.
@@ -578,8 +660,10 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                     );
                 }
 
-                sheetBehavior.setDraggable(false);
-                sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                if (stateChanged) {
+                    sheetBehavior.setDraggable(false);
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                }
                 startPulseAnimation();
                 break;
         }
@@ -617,7 +701,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // MAP HELPERS
     // ════════════════════════════════════════════════════════════════════
 
-    private void drawHotspotMarkers(List<Hotspot> hotspots) {
+    private void drawHotspotMarkers(List<Hotspot> hotspots, boolean fitCamera) {
         googleMap.clear();
         hotspotById.clear();
         markerByHotspotId.clear();
@@ -642,11 +726,26 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             }
         }
 
-        if (!hotspots.isEmpty()) {
+        if (fitCamera && !hotspots.isEmpty()) {
             googleMap.moveCamera(
                 CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 180)
             );
         }
+    }
+
+    /**
+     * Returns true if {@code current} differs from the last list drawn on the map.
+     * Compares by hotspot ID sequence so order changes also trigger a redraw.
+     */
+    private boolean hasFilteredHotspotsChanged(List<Hotspot> current) {
+        if (lastRenderedFilteredHotspots == null) return !current.isEmpty();
+        if (lastRenderedFilteredHotspots.size() != current.size()) return true;
+        for (int i = 0; i < current.size(); i++) {
+            if (!current.get(i).getId().equals(lastRenderedFilteredHotspots.get(i).getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void zoomToHotspot(Hotspot hotspot) {
@@ -749,6 +848,24 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
         // Cancel the active scan and return to WELCOME.
         btnStopSearching.setOnClickListener(v -> viewModel.resetToWelcome());
+
+        // Expand the sheet when the search field gains focus (Google Maps-like UX).
+        searchInputEdit.setOnFocusChangeListener((v, hasFocus) -> {
+            ExploreUiState s = viewModel.getUiState().getValue();
+            if (s == null || s.getAppState() != AppState.WELCOME) return;
+            if (hasFocus) {
+                sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
+
+        // Search field — filter hotspot list in real-time; results shown as dropdown.
+        searchInputEdit.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                viewModel.filterHotspots(s.toString());
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
     }
 
     // ════════════════════════════════════════════════════════════════════

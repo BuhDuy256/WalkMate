@@ -41,7 +41,8 @@
         <activity
             android:name="com.walkmate.ui.main.MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.WalkMate">
+            android:theme="@style/Theme.WalkMate"
+            android:windowSoftInputMode="adjustPan">
         </activity>
 
         <!-- Registered here; fully wired in Phase 3 (Entry-Point) -->
