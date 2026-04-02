@@ -6,8 +6,10 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.AuthApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.datasource.remote.api.UserApiService;
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
+import com.walkmate.data.datasource.remote.dto.request.user.UpdateFcmTokenRequestDto;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.LoginResponseDto;
 import com.walkmate.data.datasource.remote.dto.response.user.RegisterResponseDto;
@@ -26,11 +28,15 @@ public class UserRepositoryImpl implements UserRepository {
 
     private final SessionManager sessionManager;
     private final AuthApiService authApiService;
+    private final UserApiService userApiService;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public UserRepositoryImpl(Context context) {
         this.sessionManager = new SessionManager(context);
         this.authApiService = ApiClient.getAuthApiService();
+        // FCM token update is an authenticated call — use the authenticated Retrofit client.
+        this.userApiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+                .create(UserApiService.class);
     }
 
     // ---------------------------------------------------------------------------
@@ -91,6 +97,39 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public String getAccessToken() {
         return sessionManager.getAccessToken();
+    }
+
+    /**
+     * Sends the FCM device token to the backend so it can push to this device.
+     *
+     * Guard: if the user has not yet logged in (no access token stored), the call
+     * is skipped entirely. FCM will fire onNewToken() again the next time it
+     * rotates the token, so no data is permanently lost.
+     */
+    @Override
+    public void updateFcmToken(String token, DomainCallback<Void> callback) {
+        if (sessionManager.getAccessToken() == null) {
+            Log.d(TAG, "updateFcmToken skipped — user not authenticated");
+            return;
+        }
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp =
+                        userApiService.updateFcmToken(new UpdateFcmTokenRequestDto(token)).execute();
+
+                if (resp.isSuccessful()) {
+                    Log.d(TAG, "FCM token registered with backend");
+                    callback.onSuccess(null);
+                } else {
+                    String code = extractErrorCode(resp.body(), "FCM_TOKEN_UPDATE_FAILED");
+                    Log.w(TAG, "FCM token update failed: " + code);
+                    callback.onError(new Exception(code));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "FCM token update network error", e);
+                callback.onError(e);
+            }
+        });
     }
 
     /**

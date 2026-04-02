@@ -1,6 +1,8 @@
 package com.walkmate.presentation.controller.user;
 
+import com.walkmate.application.user.UpdateFcmTokenCommand;
 import com.walkmate.application.user.UpdateProfileCommand;
+import com.walkmate.application.user.UserCommandService;
 import com.walkmate.application.user.UserProfileCommandService;
 import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.user.User;
@@ -8,6 +10,7 @@ import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.infrastructure.storage.AvatarStorageService;
+import com.walkmate.presentation.dto.request.user.UpdateFcmTokenRequest;
 import com.walkmate.presentation.dto.request.user.UpdateProfileRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.user.AvatarUploadResponse;
@@ -37,6 +40,7 @@ import java.util.UUID;
 public class UserProfileController {
 
     private final UserQueryService           queryService;
+    private final UserCommandService         userCommandService;
     private final UserProfileCommandService  commandService;
     private final UserProfileRepository      profileRepository;
     private final AvatarStorageService       storageService;
@@ -113,6 +117,23 @@ public class UserProfileController {
         List<String> tags    = profileRepository.findTagsByUserId(uid);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(profile, user, tags)));
+    }
+
+    // ── PATCH /api/v1/users/me/fcm-token ─────────────────────────────────────
+
+    /**
+     * Registers or refreshes the device's FCM push token for the authenticated user.
+     * Called automatically by the Android client whenever Firebase rotates the token.
+     */
+    @PatchMapping("/api/v1/users/me/fcm-token")
+    public ResponseEntity<ApiResponse<Void>> updateFcmToken(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody UpdateFcmTokenRequest request) {
+
+        userCommandService.updateFcmToken(
+                new UpdateFcmTokenCommand(UUID.fromString(principal.userId()), request.fcmToken()));
+
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     // ── GET /api/v1/files/avatars/{filename} ──────────────────────────────────

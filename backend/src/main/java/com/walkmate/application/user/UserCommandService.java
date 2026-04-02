@@ -40,6 +40,11 @@ public class UserCommandService {
     }
 
     @Transactional
+    public void updateFcmToken(UpdateFcmTokenCommand command) {
+        userRepository.updateFcmToken(command.userId(), command.token());
+    }
+
+    @Transactional
     public User registerUser(RegisterUserCommand command) {
         String normalizedEmail = User.normalizeEmail(command.email());
 

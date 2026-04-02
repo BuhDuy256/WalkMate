@@ -5,32 +5,35 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.walkmate.R;
-import com.walkmate.ui.explore.ExploreFragment;
-import com.walkmate.ui.home.HomeFragment;
-import com.walkmate.ui.matches.MatchesFragment;
-import com.walkmate.ui.profile.ProfileFragment;
+import com.walkmate.core.event.AppEvent;
+import com.walkmate.core.event.AppEventBus;
+import com.walkmate.ui.matches.MatchesPagerAdapter;
 
 /**
- * Global shell Activity. Hosts the three top-level tabs via a BottomNavigationView.
+ * Global shell Activity. Hosts the four destinations via a NavHostFragment
+ * wired to a BottomNavigationView.
  *
- * Routing strategy: hide/show (not replace) so each tab preserves its state —
- * map position, list scroll, back stack — across tab switches.
+ * Navigation strategy: Jetpack NavController + NavigationUI.setupWithNavController().
+ * Navigation 2.7.7 automatically saves/restores fragment state when the user
+ * switches between bottom-nav tabs (multiple back-stack support), preserving
+ * the Explore map position, Matches scroll state, etc.
  *
- * Implements {@link HomeFragment.OnHomeActionListener} to receive navigation
- * commands from the Home Dashboard without the Fragment holding a direct
- * Activity reference. This keeps HomeFragment independently testable and
- * decoupled from the concrete host.
+ * The Activity is also responsible for:
+ *   1. Handling bottom-nav visibility requests from ExploreFragment.
+ *   2. Observing AppEventBus for foreground FCM events and routing to the
+ *      correct destination with arguments.
  */
-public class MainActivity extends AppCompatActivity
-        implements HomeFragment.OnHomeActionListener {
+public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
+    private NavController navController;
     private int cachedBottomNavHeight = 0;
 
     @Override
@@ -43,100 +46,61 @@ public class MainActivity extends AppCompatActivity
 
         bottomNav = findViewById(R.id.bottomNav);
 
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.tab_explore) {
-                showTab(HomeFragment.TAG);
-            } else if (id == R.id.tab_matches) {
-                showTab(MatchesFragment.TAG);
-            } else if (id == R.id.tab_profile) {
-                showTab(ProfileFragment.TAG);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        navController = navHostFragment.getNavController();
+
+        // Wire BottomNavigationView ↔ NavController.
+        // Each menu item ID must equal the corresponding destination ID in nav_graph.xml.
+        // NavigationUI handles selection, back-stack management, and state restoration.
+        NavigationUI.setupWithNavController(bottomNav, navController);
+
+        // Restore bottom-nav visibility when navigating away from ExploreFragment
+        // (e.g., the user switches to Matches while the explore flow was active).
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            if (destination.getId() != R.id.exploreFragment) {
+                // Ensure nav bar is always visible on non-explore destinations.
+                setBottomNavVisibility(true);
             }
-            return true;
         });
 
-        // On first launch (not a process-death restore), show the Home Dashboard.
-        // On restore, FragmentManager already has the fragments; the listener
-        // will not fire until the user taps, so we re-select the previously
-        // active item to trigger a show.
-        if (savedInstanceState == null) {
-            showTab(HomeFragment.TAG);
-        } else {
-            // Re-drive visibility to match whichever item the system restored as checked.
-            int checkedId = bottomNav.getSelectedItemId();
-            if (checkedId == R.id.tab_explore)       showTab(HomeFragment.TAG);
-            else if (checkedId == R.id.tab_matches)  showTab(MatchesFragment.TAG);
-            else if (checkedId == R.id.tab_profile)  showTab(ProfileFragment.TAG);
-        }
+        observeAppEventBus();
     }
 
-    // -------------------------------------------------------------------------
-    // Tab routing
-    // -------------------------------------------------------------------------
-
-    private void showTab(String tag) {
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-
-        // Hide every tab fragment that is currently visible.
-        for (String t : new String[]{HomeFragment.TAG, ExploreFragment.TAG, MatchesFragment.TAG, ProfileFragment.TAG}) {
-            Fragment f = fm.findFragmentByTag(t);
-            if (f != null && !f.isHidden()) {
-                ft.hide(f);
-            }
-        }
-
-        // Show or lazily create the requested tab.
-        Fragment target = fm.findFragmentByTag(tag);
-        if (target == null) {
-            target = createFragmentForTag(tag);
-            ft.add(R.id.tabContentContainer, target, tag);
-        } else {
-            ft.show(target);
-        }
-
-        ft.commitNow();
-    }
-
-    private Fragment createFragmentForTag(String tag) {
-        if (HomeFragment.TAG.equals(tag))     return new HomeFragment();
-        if (ExploreFragment.TAG.equals(tag))  return new ExploreFragment();
-        if (MatchesFragment.TAG.equals(tag))  return new MatchesFragment();
-        if (ProfileFragment.TAG.equals(tag))  return new ProfileFragment();
-        throw new IllegalArgumentException("Unknown tab tag: " + tag);
-    }
-
-    // -------------------------------------------------------------------------
-    // Public helpers — called by child fragments to drive cross-tab navigation
-    // -------------------------------------------------------------------------
-
-    // ── HomeFragment.OnHomeActionListener ─────────────────────────────────────
+    // ── FCM foreground event routing ──────────────────────────────────────────
 
     /**
-     * Called by HomeFragment when the user taps "Find a WalkMate Now".
+     * Observes the process-singleton AppEventBus for foreground push events.
      *
-     * Implementation note: we call showTab() directly rather than going through
-     * bottomNav.setSelectedItemId(R.id.tab_explore), because tab_explore is now
-     * mapped to HomeFragment (Phase B). Calling showTab(ExploreFragment.TAG)
-     * directly shows the Explore map without altering the bottom nav selection —
-     * the user is "drilling into" the explore flow from the Home tab, not
-     * switching to a different root tab.
+     * When a MATCH_FOUND push arrives while the app is visible, navigate to
+     * MatchesFragment and scroll directly to the Proposal sub-tab so the user
+     * can see the incoming match without any extra taps.
      */
-    @Override
-    public void switchToExplore() {
-        showTab(ExploreFragment.TAG);
+    private void observeAppEventBus() {
+        AppEventBus.get().observe().observe(this, event -> {
+            if (event == null) return;
+
+            if (event.type == AppEvent.Type.MATCH_FOUND) {
+                Bundle args = new Bundle();
+                args.putInt("scrollToTab", MatchesPagerAdapter.TAB_PROPOSAL);
+
+                // Navigate to matchesFragment, popping the home back-stack to avoid
+                // accumulating duplicate entries.
+                navController.navigate(
+                        R.id.matchesFragment,
+                        args,
+                        new NavOptions.Builder()
+                                .setPopUpTo(R.id.homeFragment, false)
+                                .build()
+                );
+
+                // Consume so a config-change (rotation) doesn't re-trigger the navigation.
+                AppEventBus.get().consumeEvent();
+            }
+        });
     }
 
-    // ── Public helpers — called by child fragments ─────────────────────────────
-
-    /**
-     * Navigates to the Matches tab and selects it in the nav bar.
-     * Called, for example, after a WalkIntent is successfully submitted
-     * so the user can immediately see it appear in the Finding sub-tab.
-     */
-    public void switchToMatchesTab() {
-        bottomNav.setSelectedItemId(R.id.tab_matches);
-    }
+    // ── Public helper — called by ExploreFragment to control bottom-nav UI ─────
 
     /**
      * Slides the bottom nav bar in or out with a 180 ms translate animation.

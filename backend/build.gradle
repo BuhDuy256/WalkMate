@@ -15,6 +15,7 @@ if (envFile.exists()) {
 }
 
 dependencies {
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'

@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
                         // Phase 7: own-profile read/write requires JWT
                         .requestMatchers("/api/v1/profile/**").authenticated()
+                        // FCM token registration requires JWT (device-to-user binding)
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me/fcm-token").authenticated()
                         // Phase 8: follower / following lists are public; follow & block require JWT
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/following").permitAll()

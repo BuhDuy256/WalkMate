@@ -25,6 +25,7 @@ public class User {
     private int           totalPoints;
     private double        totalDistanceKm;
     private int           completedSessions;
+    private String        fcmToken;
 
     protected User() {}
 
@@ -32,7 +33,8 @@ public class User {
 
     public User(UUID userId, String email, String phone, AuthProvider provider, AccountStatus status,
                 String passwordHash, Instant createdAt, Instant lastLoginAt,
-                int trustScore, int totalPoints, double totalDistanceKm, int completedSessions) {
+                int trustScore, int totalPoints, double totalDistanceKm, int completedSessions,
+                String fcmToken) {
         this.userId            = userId;
         this.email             = email;
         this.phone             = phone;
@@ -45,6 +47,7 @@ public class User {
         this.totalPoints       = totalPoints;
         this.totalDistanceKm   = totalDistanceKm;
         this.completedSessions = completedSessions;
+        this.fcmToken          = fcmToken;
     }
 
     // ── Creation factory ──────────────────────────────────────────────────────
@@ -62,6 +65,7 @@ public class User {
         this.totalPoints       = 0;
         this.totalDistanceKm   = 0.0;
         this.completedSessions = 0;
+        this.fcmToken          = null;
     }
 
     public static User register(String fullName, String email, String passwordHash) {
@@ -94,6 +98,11 @@ public class User {
         this.totalPoints       += points;
         this.totalDistanceKm   += distanceKm;
         this.completedSessions += 1;
+    }
+
+    /** Stores the FCM device token used to push notifications to this user's device. */
+    public void updateFcmToken(String token) {
+        this.fcmToken = token;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

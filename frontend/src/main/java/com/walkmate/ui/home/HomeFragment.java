@@ -1,6 +1,5 @@
 package com.walkmate.ui.home;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,37 +31,16 @@ import com.walkmate.ui.home.quickinvite.QuickInviteAdapter;
  *
  * Responsibilities:
  *   1. Inflate fragment_home.xml.
- *   2. Acquire the host Activity as an {@link OnHomeActionListener} in onAttach().
- *   3. Wire click listeners — navigation delegates to the listener; all other
+ *   2. Wire click listeners — navigation uses NavController; all other
  *      actions delegate to the ViewModel.
- *   4. Observe LiveData<HomeDashboardUiState> and call renderState().
- *   5. renderState() is the single place that writes to Views.
+ *   3. Observe LiveData<HomeDashboardUiState> and call renderState().
+ *   4. renderState() is the single place that writes to Views.
  *
  * Zero business logic lives here; no direct access to repositories or databases.
  */
 public class HomeFragment extends Fragment {
 
     public static final String TAG = "home";
-
-    // ── Navigation contract ───────────────────────────────────────────────────
-
-    /**
-     * Implemented by the host Activity. Keeps the Fragment decoupled from
-     * concrete Activity types — the Fragment never casts getActivity() directly.
-     *
-     * Why an interface instead of direct Activity casting?
-     *   - Testability: the Fragment can be tested in isolation with a mock listener.
-     *   - Safety: a missing implementation throws a clear IllegalStateException at
-     *     attach-time rather than a ClassCastException deep inside a click handler.
-     *   - Decoupling: the Fragment expresses intent ("I want to show Explore") without
-     *     knowing how the host achieves it (tab switch, back-stack push, etc.).
-     */
-    public interface OnHomeActionListener {
-        /** Called when the user taps "Find a WalkMate Now". */
-        void switchToExplore();
-    }
-
-    private OnHomeActionListener listener;
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
@@ -89,25 +68,6 @@ public class HomeFragment extends Fragment {
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (!(context instanceof OnHomeActionListener)) {
-            throw new IllegalStateException(
-                    context.getClass().getSimpleName()
-                            + " must implement HomeFragment.OnHomeActionListener");
-        }
-        listener = (OnHomeActionListener) context;
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        // Null the reference to prevent leaking the Activity after the Fragment
-        // is detached from it (e.g., during a configuration change or back-stack pop).
-        listener = null;
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -123,7 +83,7 @@ public class HomeFragment extends Fragment {
         bindViews(view);
         setupRecyclerView();
         setupViewModel();
-        setupClickListeners();
+        setupClickListeners(view);
 
         viewModel.loadDashboard();
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
@@ -165,12 +125,10 @@ public class HomeFragment extends Fragment {
         viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
     }
 
-    private void setupClickListeners() {
-        // Navigation action: delegated to the host Activity via the listener contract.
-        // The Fragment expresses intent; the Activity decides how to fulfil it.
-        btnFindWalkMate.setOnClickListener(v -> {
-            if (listener != null) listener.switchToExplore();
-        });
+    private void setupClickListeners(View root) {
+        // Navigate to ExploreFragment via NavController — no Activity interface needed.
+        btnFindWalkMate.setOnClickListener(v ->
+                Navigation.findNavController(root).navigate(R.id.action_home_to_explore));
     }
 
     // ── State rendering ───────────────────────────────────────────────────────

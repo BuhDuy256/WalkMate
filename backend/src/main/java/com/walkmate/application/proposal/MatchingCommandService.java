@@ -1,5 +1,6 @@
 package com.walkmate.application.proposal;
 
+import com.walkmate.application.notification.PushNotificationProvider;
 import com.walkmate.application.walkintent.MatchingStrategy;
 import com.walkmate.application.walkintent.MatchResult;
 import com.walkmate.domain.hotspot.Hotspot;
@@ -14,6 +15,7 @@ import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.shared.NotificationPublisher;
 import com.walkmate.domain.shared.exception.DomainException;
+import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walkintent.IntentStatus;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentErrorCode;
@@ -38,8 +40,10 @@ public class MatchingCommandService {
     private final MatchProposalRepository matchProposalRepository;
     private final WalkSessionRepository   walkSessionRepository;
     private final HotspotRepository       hotspotRepository;
+    private final UserRepository          userRepository;
     private final MatchingStrategy        matchingStrategy;
     private final NotificationPublisher   notificationPublisher;
+    private final PushNotificationProvider pushNotificationProvider;
 
     // ── Find or create a proposal ─────────────────────────────────────────────
 
@@ -98,13 +102,27 @@ public class MatchingCommandService {
 
         MatchProposal saved = matchProposalRepository.save(proposal);
 
-        // Notify the matched user that they have received a new proposal
+        // 1. Persist an in-app notification for the matched user's notification feed.
         notificationPublisher.publish(Notification.create(
                 matched.getUserId(),
                 NotificationType.PROPOSAL_RECEIVED,
                 Map.of("proposalId", saved.getProposalId(),
                        "senderUserId", intent.getUserId())
         ));
+
+        // 2. Send a real-time FCM push so the matched user's device navigates to
+        //    the Matches → Proposal tab immediately (even if the app is backgrounded).
+        //    The push uses a data-only payload so onMessageReceived() fires in all states.
+        userRepository.findById(matched.getUserId()).ifPresent(matchedUser -> {
+            String token = matchedUser.getFcmToken();
+            if (token != null && !token.isBlank()) {
+                pushNotificationProvider.sendMatchFound(
+                        token,
+                        matched.getId(),          // the matched user's own intent ID
+                        saved.getProposalId()     // the newly created proposal ID
+                );
+            }
+        });
 
         return Optional.of(saved);
     }

@@ -62,6 +62,16 @@ public class MatchesFragment extends Fragment {
                 .get(MatchesViewModel.class);
 
         matchesViewModel.loadAll();
+
+        // Handle navigation argument — NavController passes this when deep-linking
+        // from FCM (via AppEventBus → MainActivity) or from the nav_graph deep link.
+        Bundle args = getArguments();
+        if (args != null) {
+            int scrollToTab = args.getInt("scrollToTab", 0);
+            if (scrollToTab != 0) {
+                scrollToSubTab(scrollToTab);
+            }
+        }
     }
 
     @Override

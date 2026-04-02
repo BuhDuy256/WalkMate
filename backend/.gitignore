@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Firebase ###
+# Service-account key — contains private key material
+# Production: inject via FIREBASE_CREDENTIALS env var, never commit the file
+src/main/resources/firebase-service-account.json

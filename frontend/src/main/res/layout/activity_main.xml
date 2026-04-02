@@ -8,21 +8,24 @@
 >
 
     <!--
-        Tab content container fills the entire screen, including behind the nav bar.
-        This allows the Explore map (Phase B) to render edge-to-edge, while
-        Matches and Profile fragments will add their own bottom padding via
-        getPeekHeight / WindowInsetsCompat in their respective phases.
+        NavHostFragment fills the entire screen, including behind the nav bar.
+        This allows the Explore map to render edge-to-edge, while Matches and
+        Profile fragments add their own bottom padding via WindowInsetsCompat.
+
+        app:defaultNavHost="true" ensures this host intercepts the system Back
+        button so the NavController handles back-stack pops, not the Activity.
     -->
-    <FrameLayout
-        android:id="@+id/tabContentContainer"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-    />
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph" />
 
     <!--
         Bottom Navigation Bar.
-        - background matches the global bg_cream so it blends with the system nav bar
-          (which is also tinted bg_cream via the app theme's android:navigationBarColor).
+        - background matches the global bg_cream so it blends with the system nav bar.
         - itemActiveIndicatorColor is transparent to keep the visual affordance minimal:
           only icon + text tint change to orange_end on selection.
         - elevation creates a subtle shadow separating the bar from content.

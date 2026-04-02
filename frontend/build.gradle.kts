@@ -3,6 +3,7 @@ import java.net.InetAddress
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 fun getLocalIP(): String {
@@ -93,4 +94,12 @@ dependencies {
 
     // Image loading
     implementation(libs.glide)
+
+    // Jetpack Navigation
+    implementation(libs.navigationFragment)
+    implementation(libs.navigationUi)
+
+    // Firebase Cloud Messaging
+    implementation(platform(libs.firebaseBom))
+    implementation(libs.firebaseMessaging)
 }

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.walkmate.ui.home.HomeFragment"
+        android:label="Home">
+
+        <action
+            android:id="@+id/action_home_to_explore"
+            app:destination="@id/exploreFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/exploreFragment"
+        android:name="com.walkmate.ui.explore.ExploreFragment"
+        android:label="Explore" />
+
+    <fragment
+        android:id="@+id/matchesFragment"
+        android:name="com.walkmate.ui.matches.MatchesFragment"
+        android:label="Matches">
+
+        <argument
+            android:name="scrollToTab"
+            app:argType="integer"
+            android:defaultValue="0" />
+
+        <deepLink app:uri="walkmate://matches/proposal/{proposalId}" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.walkmate.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+</navigation>

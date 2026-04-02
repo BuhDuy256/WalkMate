@@ -14,6 +14,7 @@ import com.walkmate.core.designsystem.view.WalkMateInputField;
 import com.walkmate.ui.auth.login.LoginViewModel;
 import com.walkmate.ui.auth.login.LoginViewModelFactory;
 import com.walkmate.ui.auth.register.RegisterActivity;
+import com.walkmate.ui.main.MainActivity;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -68,9 +69,22 @@ public class AuthActivity extends AppCompatActivity {
             }
 
             if (state.isSuccess()) {
-                Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                onLoginSuccess();
             }
         });
+    }
+
+    /**
+     * Launches MainActivity and removes AuthActivity from the back stack entirely.
+     *
+     * FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK together ensure that:
+     * - A new task is started with MainActivity as its root.
+     * - The existing task (containing AuthActivity) is cleared.
+     * Pressing Back from MainActivity will exit the app, not return to login.
+     */
+    private void onLoginSuccess() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }
