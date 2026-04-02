@@ -109,6 +109,24 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
         });
     }
 
+    @Override
+    public void cancelProposal(String proposalId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = apiService.cancelProposal(proposalId).execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(null);
+                } else {
+                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSAL_CANCEL_FAILED")));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "cancelProposal network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
     // ---------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------

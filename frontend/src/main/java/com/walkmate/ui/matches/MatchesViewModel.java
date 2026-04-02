@@ -197,6 +197,32 @@ public class MatchesViewModel extends ViewModel {
     }
 
     /**
+     * Hard cancel: removes the proposal and closes its parent intent on the backend.
+     * A full loadAll() is required because both the Proposal and Finding sub-tabs
+     * may be affected (the intent disappears from Finding when the proposal is cancelled).
+     */
+    public void cancelProposal(String proposalId) {
+        proposalRepository.cancelProposal(proposalId, new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadAll();
+            }
+
+            @Override
+            public void onError(Exception error) {
+                MatchesUiState current = uiState.getValue();
+                if (current == null) return;
+                uiState.postValue(new MatchesUiState(
+                        false,
+                        current.getActiveIntents(),
+                        current.getProposals(),
+                        current.getActiveSessions(),
+                        error.getMessage()));
+            }
+        });
+    }
+
+    /**
      * Full refresh on accept: the backend atomically removes the proposal and
      * creates a new WalkSession, so a full loadAll() gives the most consistent view.
      */

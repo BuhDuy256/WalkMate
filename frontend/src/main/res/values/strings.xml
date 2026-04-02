@@ -24,17 +24,17 @@
     <string name="dur_60">60 min</string>
 
     <!-- Gender options -->
-    <string name="gender_male">Nam</string>
-    <string name="gender_female">Nữ</string>
-    <string name="gender_any">Bất kỳ</string>
+    <string name="gender_male">Male</string>
+    <string name="gender_female">Female</string>
+    <string name="gender_any">Any</string>
 
     <!-- Tag options -->
-    <string name="tag_running">Chạy bộ</string>
-    <string name="tag_podcast">Nghe podcast</string>
-    <string name="tag_dog">Dắt chó</string>
-    <string name="tag_meditation">Thiền</string>
-    <string name="tag_slow_walk">Đi bộ chậm</string>
-    <string name="tag_photography">Chụp ảnh</string>
+    <string name="tag_running">Running</string>
+    <string name="tag_podcast">Podcast</string>
+    <string name="tag_dog">Dog Walk</string>
+    <string name="tag_meditation">Meditation</string>
+    <string name="tag_slow_walk">Slow Walk</string>
+    <string name="tag_photography">Photography</string>
 
     <!-- Explore: Scanning sheet -->
     <string name="scanning_status">Searching for walking mates…</string>
@@ -77,6 +77,7 @@
     <string name="btn_keep_session">Keep</string>
 
     <!-- Proposal sub-tab -->
+    <string name="btn_cancel_proposal">Cancel Proposal</string>
     <string name="proposal_empty">No new proposals right now.\nHang tight — we\'re finding your match!</string>
     <string name="proposal_common_time">Common time window</string>
     <string name="proposal_common_interests">Common interests</string>
@@ -111,7 +112,7 @@
     <string name="home_next_walk_label">Next Walk</string>
     <string name="home_session_status_confirmed">Confirmed</string>
     <string name="home_message_partner">Message</string>
-    <string name="home_quick_invite_header">Rủ rê nhanh</string>
+    <string name="home_quick_invite_header">Quick Invite</string>
     <string name="home_see_all">See all</string>
     <string name="home_stat_this_week">This Week</string>
     <string name="home_stat_day_streak">Day Streak</string>

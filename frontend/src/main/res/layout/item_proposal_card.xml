@@ -164,6 +164,18 @@
 
         </LinearLayout>
 
+        <!-- Cancel (full-width, danger text — destructive secondary action) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelProposal"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="4dp"
+            android:text="@string/btn_cancel_proposal"
+            android:textColor="@color/color_danger"
+            android:textSize="13sp"
+            app:cornerRadius="999dp" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

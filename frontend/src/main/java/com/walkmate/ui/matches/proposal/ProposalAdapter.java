@@ -21,29 +21,22 @@ import java.util.Locale;
 public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHolder> {
 
     // -------------------------------------------------------------------------
-    // Listener interfaces
+    // Listener interface
     // -------------------------------------------------------------------------
 
-    public interface OnPassClickListener {
-        void onPassClick(WalkProposal proposal);
-    }
-
-    public interface OnAcceptClickListener {
-        void onAcceptClick(WalkProposal proposal);
+    public interface ProposalActionListener {
+        void onPass(String proposalId);
+        void onAccept(String proposalId);
+        void onCancel(String proposalId);
     }
 
     // -------------------------------------------------------------------------
 
     private final List<WalkProposal> items = new ArrayList<>();
-    private OnPassClickListener passListener;
-    private OnAcceptClickListener acceptListener;
+    private ProposalActionListener actionListener;
 
-    public void setOnPassClickListener(OnPassClickListener listener) {
-        this.passListener = listener;
-    }
-
-    public void setOnAcceptClickListener(OnAcceptClickListener listener) {
-        this.acceptListener = listener;
+    public void setProposalActionListener(ProposalActionListener listener) {
+        this.actionListener = listener;
     }
 
     public void setItems(List<WalkProposal> newItems) {
@@ -82,17 +75,19 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         private final TagChipGroup chipGroupTags;
         private final MaterialButton btnPass;
         private final MaterialButton btnAccept;
+        private final MaterialButton btnCancelProposal;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            avatarPartner = itemView.findViewById(R.id.avatarPartner);
-            txtName       = itemView.findViewById(R.id.txtName);
-            txtAge        = itemView.findViewById(R.id.txtAge);
-            txtTrustScore = itemView.findViewById(R.id.txtTrustScore);
-            txtTimeWindow = itemView.findViewById(R.id.txtTimeWindow);
-            chipGroupTags = itemView.findViewById(R.id.chipGroupTags);
-            btnPass       = itemView.findViewById(R.id.btnPass);
-            btnAccept     = itemView.findViewById(R.id.btnAccept);
+            avatarPartner      = itemView.findViewById(R.id.avatarPartner);
+            txtName            = itemView.findViewById(R.id.txtName);
+            txtAge             = itemView.findViewById(R.id.txtAge);
+            txtTrustScore      = itemView.findViewById(R.id.txtTrustScore);
+            txtTimeWindow      = itemView.findViewById(R.id.txtTimeWindow);
+            chipGroupTags      = itemView.findViewById(R.id.chipGroupTags);
+            btnPass            = itemView.findViewById(R.id.btnPass);
+            btnAccept          = itemView.findViewById(R.id.btnAccept);
+            btnCancelProposal  = itemView.findViewById(R.id.btnCancelProposal);
         }
 
         void bind(WalkProposal proposal) {
@@ -114,10 +109,13 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
             // Buttons
             btnPass.setOnClickListener(v -> {
-                if (passListener != null) passListener.onPassClick(proposal);
+                if (actionListener != null) actionListener.onPass(proposal.getProposalId());
             });
             btnAccept.setOnClickListener(v -> {
-                if (acceptListener != null) acceptListener.onAcceptClick(proposal);
+                if (actionListener != null) actionListener.onAccept(proposal.getProposalId());
+            });
+            btnCancelProposal.setOnClickListener(v -> {
+                if (actionListener != null) actionListener.onCancel(proposal.getProposalId());
             });
         }
 

@@ -241,6 +241,36 @@ public class MatchingCommandService {
         // Both intents remain OPEN — users can find new matches
     }
 
+    // ── Cancel proposal ───────────────────────────────────────────────────────
+
+    /**
+     * Hard-cancels a PENDING proposal on behalf of the caller.
+     *
+     * Unlike pass (which leaves both intents OPEN), cancel also closes the
+     * caller's own intent — they are explicitly withdrawing from the search.
+     * The partner's intent remains OPEN so they can be matched again.
+     */
+    @Transactional
+    public void cancelProposal(String proposalId, String callerId) {
+        MatchProposal proposal = matchProposalRepository.findById(proposalId)
+                .orElseThrow(() -> new DomainException(ProposalErrorCode.PROPOSAL_NOT_FOUND));
+
+        String callerIntentId = proposal.resolveIntentIdForUser(callerId);
+        if (callerIntentId == null) {
+            throw new DomainException(ProposalErrorCode.PROPOSAL_NOT_PARTICIPANT);
+        }
+
+        // Mark the proposal terminal — reuses the same guard as pass
+        proposal.reject();
+        matchProposalRepository.save(proposal);
+
+        // Close the caller's intent so they leave the matching pool
+        WalkIntent callerIntent = walkIntentRepository.findById(callerIntentId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        callerIntent.cancel();
+        walkIntentRepository.save(callerIntent);
+    }
+
     // ── List proposals ────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)

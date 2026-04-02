@@ -81,4 +81,18 @@ public class ProposalController {
         matchingCommandService.passProposal(proposalId, principal.userId());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    /**
+     * DELETE /api/v1/proposals/{proposalId}
+     * Hard-cancels the proposal and closes the caller's intent.
+     * The partner's intent remains OPEN for further matching.
+     */
+    @DeleteMapping("/{proposalId}")
+    public ResponseEntity<ApiResponse<Void>> cancelProposal(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String proposalId) {
+
+        matchingCommandService.cancelProposal(proposalId, principal.userId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

@@ -311,7 +311,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                         }
                     }
 
-                    // RESET: Nếu sheet quay lại nấc 1/3, khóa tính năng ẩn lại để tránh "nhạy" cho lần sau
+                    // RESET: When sheet returns to collapsed (1/3 peek), lock hideable to prevent accidental dismiss next time
                     if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
                         sheetBehavior.setHideable(false);
                     }
@@ -319,14 +319,14 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
                 @Override
                 public void onSlide(@NonNull View sheet, float slideOffset) {
-                    // slideOffset: 1.0 (Full), 0.0 (1/3), -1.0 (Biến mất)
-                    // Ta chỉ cho phép "ẩn" khi người dùng đã kéo xuống cực sâu (ví dụ -0.8)
+                    // slideOffset: 1.0 (fully expanded), 0.0 (collapsed / 1/3 peek), -1.0 (hidden)
+                    // Only allow "hide" once the user has dragged far enough down (e.g. past -0.8)
                     if (slideOffset < -0.8f) {
                         if (!sheetBehavior.isHideable()) {
                             sheetBehavior.setHideable(true);
                         }
                     } else if (slideOffset > -0.5f) {
-                        // Nếu họ lỡ tay kéo nhẹ rồi rụt lại, ta khóa hideable ngay để nó "đập" lại nấc 1/3
+                        // If user pulled slightly then reversed, lock hideable immediately so it snaps back to 1/3
                         sheetBehavior.setHideable(false);
                     }
                 }
@@ -625,10 +625,10 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                     applySheetExpandedOffset();
 
                     bottomSheetContainer.post(() -> {
-                        // Ép Container tính toán lại kích thước để nhận diện đầy đủ nội dung mới của SETUP
+                        // Force the container to re-measure so it fully recognises the new SETUP content
                         bottomSheetContainer.requestLayout();
 
-                        // Luôn cuộn về đỉnh để người dùng thấy tiêu đề và không bị "trôi" nội dung
+                        // Always scroll to the top so the user sees the title and content isn't drifted
                         bottomSheetScrollContent.scrollTo(0, 0);
                     });
 

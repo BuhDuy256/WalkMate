@@ -47,10 +47,17 @@ public class ProposalFragment extends Fragment {
         txtEmpty     = view.findViewById(R.id.txtEmpty);
 
         adapter = new ProposalAdapter();
-        adapter.setOnPassClickListener(proposal ->
-                matchesViewModel.passProposal(proposal.getProposalId()));
-        adapter.setOnAcceptClickListener(proposal ->
-                matchesViewModel.acceptProposal(proposal.getProposalId()));
+        adapter.setProposalActionListener(new ProposalAdapter.ProposalActionListener() {
+            @Override public void onPass(String proposalId) {
+                matchesViewModel.passProposal(proposalId);
+            }
+            @Override public void onAccept(String proposalId) {
+                matchesViewModel.acceptProposal(proposalId);
+            }
+            @Override public void onCancel(String proposalId) {
+                matchesViewModel.cancelProposal(proposalId);
+            }
+        });
         recyclerView.setAdapter(adapter);
 
         swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());

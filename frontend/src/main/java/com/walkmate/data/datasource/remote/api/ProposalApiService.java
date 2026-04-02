@@ -6,6 +6,7 @@ import com.walkmate.data.datasource.remote.dto.response.proposal.WalkProposalRes
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -20,4 +21,7 @@ public interface ProposalApiService {
 
     @POST("api/v1/proposals/{proposalId}/pass")
     Call<ApiResponse<Void>> passProposal(@Path("proposalId") String proposalId);
+
+    @DELETE("api/v1/proposals/{proposalId}")
+    Call<ApiResponse<Void>> cancelProposal(@Path("proposalId") String proposalId);
 }
