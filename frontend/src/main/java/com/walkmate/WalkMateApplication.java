@@ -1,7 +1,9 @@
 package com.walkmate;
 
 import android.app.Application;
+import android.util.Log;
 
+import com.google.firebase.FirebaseApp;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
@@ -45,6 +47,12 @@ public class WalkMateApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // Initialize Firebase first — required for FCM token generation
+        // and push notifications to function correctly.
+        FirebaseApp.initializeApp(this);
+        Log.d("WalkMateApp", "FirebaseApp initialized");
+
         // Eagerly instantiate the DB and SessionManager so the first Room query
         // and any authenticated network call don't pay a cold-start penalty.
         database       = WalkMateDatabase.getInstance(this);

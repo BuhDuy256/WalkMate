@@ -8,8 +8,8 @@
 
     <item
         android:id="@+id/homeFragment"
-        android:icon="@drawable/ic_tab_explore"
-        android:title="@string/tab_explore" />
+        android:icon="@drawable/ic_tab_home"
+        android:title="@string/tab_home" />
 
     <item
         android:id="@+id/matchesFragment"

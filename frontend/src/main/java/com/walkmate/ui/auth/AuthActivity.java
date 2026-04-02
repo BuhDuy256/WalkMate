@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
+import com.walkmate.WalkMateApplication;
 import com.walkmate.core.designsystem.view.WalkMateButton;
 import com.walkmate.core.designsystem.view.WalkMateInputField;
 import com.walkmate.ui.auth.login.LoginViewModel;
@@ -27,6 +28,14 @@ public class AuthActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ── Login persistence: skip to Home if already authenticated ──
+        WalkMateApplication app = (WalkMateApplication) getApplication();
+        if (app.getSessionManager().getAccessToken() != null) {
+            onLoginSuccess();
+            return;
+        }
+
         setContentView(R.layout.activity_auth);
 
         LoginViewModelFactory factory = new LoginViewModelFactory(this);

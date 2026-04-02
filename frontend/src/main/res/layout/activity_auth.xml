@@ -54,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Your friendly walking space ✨"
+                android:text="Your friendly walking space"
                 android:textColor="@color/text_muted"
                 android:textSize="14sp" />
 
@@ -65,7 +65,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="44dp"
-            android:text="Welcome back 👋"
+            android:text="Welcome back"
             android:textColor="@color/text_dark"
             android:textSize="26sp"
             android:textStyle="bold" />

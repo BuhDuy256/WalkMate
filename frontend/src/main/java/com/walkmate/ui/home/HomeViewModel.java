@@ -5,11 +5,12 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.user.UserProfile;
+import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +23,7 @@ import java.util.concurrent.Executors;
  * quick-invite candidate list, and weekly stats.
  *
  * Data flow:
- *   loadDashboard() → posts loading state → fetches sessions via repo
+ *   loadDashboard() → posts loading state → fetches profile + sessions
  *   → assembles HomeDashboardUiState → postValue() → HomeFragment renders.
  *
  * The ViewModel holds zero Context references and never touches Views.
@@ -34,10 +35,17 @@ public class HomeViewModel extends ViewModel {
 
     private final WalkSessionRepository sessionRepo;
     private final UserRepository userRepo;
+    private final UserProfileRepository profileRepo;
 
-    public HomeViewModel(WalkSessionRepository sessionRepo, UserRepository userRepo) {
+    // Cached profile data so we don't re-fetch on every loadDashboard()
+    private String cachedGreetingName = null;
+
+    public HomeViewModel(WalkSessionRepository sessionRepo,
+                         UserRepository userRepo,
+                         UserProfileRepository profileRepo) {
         this.sessionRepo = sessionRepo;
         this.userRepo = userRepo;
+        this.profileRepo = profileRepo;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -54,22 +62,20 @@ public class HomeViewModel extends ViewModel {
     public void loadDashboard() {
         uiState.postValue(HomeDashboardUiState.loading());
 
-        // Fetch active sessions — the repo's callback fires on its own background
-        // thread, so postValue() is safe here without wrapping in the executor.
-        sessionRepo.getActiveSessions(new DomainCallback<List<WalkSession>>() {
+        // Fetch the user profile to get the greeting name from the API.
+        profileRepo.getMyProfile(new DomainCallback<UserProfile>() {
             @Override
-            public void onSuccess(List<WalkSession> sessions) {
-                HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot =
-                        buildSessionSnapshot(sessions);
-                uiState.postValue(buildReadyState(sessionSnapshot));
+            public void onSuccess(UserProfile profile) {
+                cachedGreetingName = profile.getFullName();
+                loadSessions();
             }
 
             @Override
             public void onError(Exception error) {
-                uiState.postValue(new HomeDashboardUiState(
-                        false, null, null, false,
-                        0, 7, 0, null, null,
-                        0.0, 0, error.getMessage()));
+                // Profile fetch failed — continue loading sessions with a
+                // fallback greeting name. The dashboard is still useful.
+                cachedGreetingName = null;
+                loadSessions();
             }
         });
     }
@@ -92,6 +98,25 @@ public class HomeViewModel extends ViewModel {
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
+    private void loadSessions() {
+        sessionRepo.getActiveSessions(new DomainCallback<List<WalkSession>>() {
+            @Override
+            public void onSuccess(List<WalkSession> sessions) {
+                HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot =
+                        buildSessionSnapshot(sessions);
+                uiState.postValue(buildReadyState(sessionSnapshot));
+            }
+
+            @Override
+            public void onError(Exception error) {
+                uiState.postValue(new HomeDashboardUiState(
+                        false, cachedGreetingName, "Ho Chi Minh City", false,
+                        0, 7, 0, null, null,
+                        0.0, 0, error.getMessage()));
+            }
+        });
+    }
+
     private HomeDashboardUiState.UpcomingSessionSnapshot buildSessionSnapshot(
             List<WalkSession> sessions) {
         if (sessions == null || sessions.isEmpty()) return null;
@@ -106,15 +131,16 @@ public class HomeViewModel extends ViewModel {
     }
 
     /**
-     * Builds the full ready state with mock data for fields that don't yet
-     * have a backend endpoint (profile info, hotspot count, stats, invite list).
+     * Builds the full ready state. Uses the real profile name from the API
+     * for the greeting. Mock data is still used for fields that don't yet
+     * have a backend endpoint (hotspot count, stats, invite list).
      * Replace these with real repo calls as APIs become available.
      */
     private HomeDashboardUiState buildReadyState(
             HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot) {
         return new HomeDashboardUiState(
                 false,
-                "Alex",                 // greetingName — replace with userRepo.getProfile()
+                cachedGreetingName != null ? cachedGreetingName : "WalkMate User",
                 "Ho Chi Minh City",     // locationName — replace with location service
                 true,                   // hasUnreadNotification
                 5,                      // streakDays

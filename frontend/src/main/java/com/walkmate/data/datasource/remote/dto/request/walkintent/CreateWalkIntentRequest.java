@@ -1,15 +1,28 @@
 package com.walkmate.data.datasource.remote.dto.request.walkintent;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class CreateWalkIntentRequest {
 
+    @SerializedName("hotspot_id")
     private String hotspotId;
+
     private String date;
+
+    @SerializedName("time_start")
     private float timeStart;
+
+    @SerializedName("time_end")
     private float timeEnd;
+
+    @SerializedName("age_min")
     private int ageMin;
+
+    @SerializedName("age_max")
     private int ageMax;
+
     private List<String> tags;
 
     public CreateWalkIntentRequest() {

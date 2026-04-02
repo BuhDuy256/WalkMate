@@ -46,6 +46,7 @@ public class HomeFragment extends Fragment {
 
     private TextView txtGreeting;
     private TextView txtLocation;
+    private View btnNotification;
     private View viewNotificationBadge;
     private ProgressBar streakProgress;
     private TextView txtStreakDays;
@@ -94,6 +95,7 @@ public class HomeFragment extends Fragment {
     private void bindViews(View root) {
         txtGreeting           = root.findViewById(R.id.txtGreeting);
         txtLocation           = root.findViewById(R.id.txtLocation);
+        btnNotification       = root.findViewById(R.id.btnNotification);
         viewNotificationBadge = root.findViewById(R.id.viewNotificationBadge);
         streakProgress        = root.findViewById(R.id.streakProgress);
         txtStreakDays         = root.findViewById(R.id.txtStreakDays);
@@ -121,7 +123,8 @@ public class HomeFragment extends Fragment {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
         HomeViewModelFactory factory = new HomeViewModelFactory(
                 app.getWalkSessionRepository(),
-                app.getUserRepository());
+                app.getUserRepository(),
+                app.getUserProfileRepository());
         viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
     }
 
@@ -129,6 +132,10 @@ public class HomeFragment extends Fragment {
         // Navigate to ExploreFragment via NavController — no Activity interface needed.
         btnFindWalkMate.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_explore));
+
+        // Navigate to NotificationFragment when the bell icon is tapped.
+        btnNotification.setOnClickListener(v ->
+                Navigation.findNavController(root).navigate(R.id.action_home_to_notifications));
     }
 
     // ── State rendering ───────────────────────────────────────────────────────

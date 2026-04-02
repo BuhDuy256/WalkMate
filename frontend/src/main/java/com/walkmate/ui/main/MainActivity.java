@@ -58,8 +58,13 @@ public class MainActivity extends AppCompatActivity {
         // Restore bottom-nav visibility when navigating away from ExploreFragment
         // (e.g., the user switches to Matches while the explore flow was active).
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            if (destination.getId() != R.id.exploreFragment) {
-                // Ensure nav bar is always visible on non-explore destinations.
+            int destId = destination.getId();
+            // Hide bottom nav for full-screen sub-pages (Explore form, Notifications).
+            // Explore manages its own visibility via ExploreFragment.renderState().
+            if (destId == R.id.notificationFragment) {
+                setBottomNavVisibility(false);
+            } else if (destId != R.id.exploreFragment) {
+                // Ensure nav bar is always visible on non-explore, non-notification destinations.
                 setBottomNavVisibility(true);
             }
         });

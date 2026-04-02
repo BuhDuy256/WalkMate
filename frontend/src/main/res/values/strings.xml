@@ -48,6 +48,7 @@
     <string name="popular_spots">Popular spots</string>
 
     <!-- Bottom Navigation tabs -->
+    <string name="tab_home">Home</string>
     <string name="tab_explore">Explore</string>
     <string name="tab_matches">Matches</string>
     <string name="tab_profile">Profile</string>
