@@ -3,7 +3,7 @@ package com.walkmate.domain.walksession;
 public class WalkSession {
 
     public enum Status {
-        PENDING_MEET, ACTIVE, CANCELLED, COMPLETED
+        PENDING, ACTIVE, CANCELLED, COMPLETED, NO_SHOW, ABORTED
     }
 
     private final String sessionId;

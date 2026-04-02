@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 
 public class WalkIntentMapper {
 
@@ -44,10 +43,12 @@ public class WalkIntentMapper {
                                                      int ageMin, int ageMax) {
         return new CreateWalkIntentRequest(
                 hotspotId,
-                toInstantString(timeStart),
-                toInstantString(timeEnd),
+            LocalDate.now().toString(),
+            timeStart,
+            timeEnd,
                 ageMin,
-                ageMax);
+            ageMax,
+            Collections.emptyList());
     }
 
     private static float toHourFloat(String instantString) {
@@ -62,30 +63,6 @@ public class WalkIntentMapper {
         } catch (Exception ignored) {
             return 0f;
         }
-    }
-
-    private static String toInstantString(float hourFloat) {
-        int hour = (int) Math.floor(hourFloat);
-        int minute = Math.round((hourFloat - hour) * 60f);
-
-        if (minute >= 60) {
-            hour += 1;
-            minute -= 60;
-        }
-
-        if (hour >= 24) {
-            hour = 23;
-            minute = 59;
-        }
-        if (hour < 0) {
-            hour = 0;
-            minute = 0;
-        }
-
-        return LocalDate.now(ZoneOffset.UTC)
-                .atTime(hour, minute)
-                .toInstant(ZoneOffset.UTC)
-                .toString();
     }
 
     private WalkIntentMapper() {}

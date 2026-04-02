@@ -25,8 +25,8 @@ public class MatchesViewModelFactory implements ViewModelProvider.Factory {
         if (modelClass.isAssignableFrom(MatchesViewModel.class)) {
             return (T) new MatchesViewModel(
                     new WalkIntentRepositoryImpl(application),
-                    new WalkProposalRepositoryImpl(),
-                    new WalkSessionRepositoryImpl());
+                    new WalkProposalRepositoryImpl(application),
+                    new WalkSessionRepositoryImpl(application));
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

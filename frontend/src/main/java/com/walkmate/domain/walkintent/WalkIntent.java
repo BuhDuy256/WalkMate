@@ -10,7 +10,7 @@ public class WalkIntent {
     private final float timeEnd;
     private final int ageMin;
     private final int ageMax;
-    private final String status;     // "OPEN" | "WAITLIST" | "MATCHED" | "EXPIRED"
+    private final String status;     // "OPEN" | "CONSUMED" | "CANCELLED" | "EXPIRED"
     private final String createdAt;
     private final List<String> tags; // empty list until API contract includes it
 

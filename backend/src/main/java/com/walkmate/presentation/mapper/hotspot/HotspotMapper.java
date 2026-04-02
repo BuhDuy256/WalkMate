@@ -15,7 +15,7 @@ public class HotspotMapper {
                 hotspot.getName(),
                 hotspot.getLat(),
                 hotspot.getLng(),
-                hotspot.getActiveIntentCount()
+                hotspot.getActiveWalkerCount()
         );
     }
 

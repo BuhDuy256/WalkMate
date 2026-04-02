@@ -21,19 +21,27 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.WalkMate">
-
         <activity
             android:name="com.walkmate.ui.auth.AuthActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="com.walkmate.ui.main.MainActivity"
+            android:theme="@style/Theme.WalkMate"
             android:exported="true"
-            android:theme="@style/Theme.WalkMate">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.walkmate.ui.auth.register.RegisterActivity"
+            android:theme="@style/Theme.WalkMate"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name="com.walkmate.ui.main.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WalkMate">
         </activity>
 
         <!-- Registered here; fully wired in Phase 3 (Entry-Point) -->

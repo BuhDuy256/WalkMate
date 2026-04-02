@@ -80,6 +80,13 @@ public class ProfileUiState {
                 0f, null, 0.0, 0, 0, null, null);
     }
 
+    /** Returns an error state. */
+    public static ProfileUiState error(String message) {
+        return new ProfileUiState(
+                false, null, null, false,
+                0f, null, 0.0, 0, 0, null, message);
+    }
+
     // ── Getters ───────────────────────────────────────────────────────────────
 
     public boolean isLoading()              { return isLoading; }

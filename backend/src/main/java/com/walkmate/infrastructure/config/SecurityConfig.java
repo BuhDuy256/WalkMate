@@ -39,10 +39,33 @@ public class SecurityConfig {
                         // Auth endpoints are public
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        // Hotspot reads are public (map loads for everyone)
+                        // Phase 2: hotspot catalogue is public for map browsing
+                        .requestMatchers(HttpMethod.GET, "/api/v1/hotspots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/hotspots/**").permitAll()
-                        // Intent endpoints require a valid JWT
+                        // Swagger / OpenAPI UI (development)
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Intent, proposal, and session endpoints require a valid JWT
                         .requestMatchers("/api/v1/intents/**").authenticated()
+                        .requestMatchers("/api/v1/proposals/**").authenticated()
+                        .requestMatchers("/api/v1/sessions/**").authenticated()
+                        .requestMatchers("/api/v1/tracking/**").authenticated()
+                        // Review endpoints — POST requires auth; GET /reviews is public
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/reviews").permitAll()
+                        .requestMatchers("/api/v1/sessions/*/review").authenticated()
+                        // Gamification endpoints — leaderboard/badges/stats are public
+                        .requestMatchers(HttpMethod.GET, "/api/v1/leaderboard").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/badges").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/stats").permitAll()
+                        // Phase 7: public user profile view + avatar file serving
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
+                        // Phase 7: own-profile read/write requires JWT
+                        .requestMatchers("/api/v1/profile/**").authenticated()
+                        // Phase 8: follower / following lists are public; follow & block require JWT
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/followers").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/following").permitAll()
+                        // Phase 11: notification feed requires a valid JWT
+                        .requestMatchers("/api/v1/notifications/**").authenticated()
                         // Everything else requires authentication by default
                         .anyRequest().authenticated()
                 )

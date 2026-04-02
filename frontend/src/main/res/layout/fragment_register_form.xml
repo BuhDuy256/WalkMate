@@ -4,20 +4,23 @@
     android:id="@+id/register"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="24dp">
+    android:paddingHorizontal="20dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:cardBackgroundColor="#FFFFFF"
-        app:cardCornerRadius="48dp"
-        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/bg_white"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="10dp"
         app:strokeWidth="0dp">
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:overScrollMode="never">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -25,12 +28,14 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
+                <!-- ── TAB SWITCHER ── -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
+                    android:layout_height="48dp"
                     android:background="@drawable/bg_tab_layout"
                     android:orientation="horizontal"
                     android:padding="4dp">
+
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btn_tab_signin_reg"
                         android:layout_width="0dp"
@@ -39,8 +44,9 @@
                         android:background="@android:color/transparent"
                         android:text="Sign In"
                         android:textAllCaps="false"
-                        android:textColor="#C09B7A"
-                        android:textSize="15sp" />
+                        android:textColor="@color/text_label"
+                        android:textSize="14sp" />
+
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btn_tab_signup_reg"
                         android:layout_width="0dp"
@@ -49,17 +55,19 @@
                         android:background="@drawable/bg_active_tab"
                         android:text="Sign Up"
                         android:textAllCaps="false"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
+
                 </LinearLayout>
 
+                <!-- ── HEADING ── -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:text="Create account 🎉"
-                    android:textColor="#332218"
+                    android:textColor="@color/text_dark"
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
@@ -68,105 +76,120 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Join the community today."
-                    android:textColor="#9E8D7F"
+                    android:textColor="@color/text_muted"
                     android:textSize="14sp" />
 
+                <!-- ── FIELDS ── -->
                 <com.walkmate.core.designsystem.view.WalkMateInputField
                     android:id="@+id/field_fullname"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    app:wm_label="Full Name"
+                    android:layout_marginTop="24dp"
                     app:wm_hint="Your name"
                     app:wm_icon="@drawable/ic_user"
-                    app:wm_inputType="textPersonName" />
+                    app:wm_inputType="textPersonName"
+                    app:wm_label="Full Name" />
 
                 <com.walkmate.core.designsystem.view.WalkMateInputField
                     android:id="@+id/field_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    app:wm_label="Email Address"
                     app:wm_hint="hello@example.com"
                     app:wm_icon="@drawable/ic_mail"
-                    app:wm_inputType="textEmailAddress" />
+                    app:wm_inputType="textEmailAddress"
+                    app:wm_label="Email Address" />
 
                 <com.walkmate.core.designsystem.view.WalkMateInputField
                     android:id="@+id/field_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    app:wm_label="Password"
                     app:wm_hint="Create a password"
                     app:wm_icon="@drawable/ic_lock"
+                    app:wm_label="Password"
                     app:wm_passwordToggle="true" />
 
+                <!-- ── PRIMARY CTA ── -->
                 <com.walkmate.core.designsystem.view.WalkMateButton
                     android:id="@+id/btn_register_action"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="54dp"
                     android:layout_marginTop="28dp"
                     app:wm_buttonStyle="filled"
                     app:wm_text="Create Account ✦" />
 
+                <!-- ── DIVIDER ── -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:gravity="center"
                     android:orientation="horizontal">
+
                     <View
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1"
-                        android:background="#E8DFD6" />
+                        android:background="@color/bg_tag_inactive" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:paddingHorizontal="12dp"
                         android:text="or continue with"
-                        android:textColor="#BDB2A7"
+                        android:textColor="@color/text_muted"
                         android:textSize="12sp" />
+
                     <View
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1"
-                        android:background="#E8DFD6" />
+                        android:background="@color/bg_tag_inactive" />
+
                 </LinearLayout>
 
+                <!-- ── SOCIAL LOGIN ── -->
                 <com.google.android.material.button.MaterialButton
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="20dp"
-                    android:backgroundTint="#FFFFFF"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="@color/bg_white"
                     android:text="Continue with Google"
                     android:textAllCaps="false"
-                    android:textColor="#4A392F"
-                    app:cornerRadius="27dp"
+                    android:textColor="@color/text_dark"
+                    android:textSize="14sp"
+                    app:cornerRadius="999dp"
                     app:icon="@drawable/ic_google"
                     app:iconGravity="textStart"
                     app:iconTint="@android:color/transparent"
-                    app:strokeColor="#EEE3D8"
-                    app:strokeWidth="1dp" />
+                    app:strokeColor="@color/bg_tag_inactive"
+                    app:strokeWidth="1.5dp" />
 
+                <!-- ── FOOTER LINK ── -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="20dp"
                     android:orientation="horizontal">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Already have an account? "
-                        android:textColor="#8F7A6A" />
+                        android:textColor="@color/text_muted"
+                        android:textSize="13sp" />
+
                     <TextView
                         android:id="@+id/tv_footer_signin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sign In"
-                        android:textColor="#FF8E4E"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
+
                 </LinearLayout>
 
             </LinearLayout>

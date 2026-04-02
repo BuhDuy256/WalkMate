@@ -4,10 +4,17 @@ public class ApiResponse<T> {
 
     private boolean success;
     private T data;
-    private ErrorDetails error;
-    private String timestamp;
+    private ApiError error;
+
+    public ApiResponse() {
+        // Empty constructor for Gson
+    }
 
     public boolean isSuccess() {
+        return success;
+    }
+
+    public boolean getSuccess() {
         return success;
     }
 
@@ -15,17 +22,17 @@ public class ApiResponse<T> {
         return data;
     }
 
-    public ErrorDetails getError() {
+    public ApiError getError() {
         return error;
     }
 
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public static class ErrorDetails {
+    public static class ApiError {
         private String code;
         private String message;
+
+        public ApiError() {
+            // Empty constructor for Gson
+        }
 
         public String getCode() {
             return code;

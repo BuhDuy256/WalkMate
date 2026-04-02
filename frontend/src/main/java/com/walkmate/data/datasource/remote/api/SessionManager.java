@@ -2,11 +2,16 @@ package com.walkmate.data.datasource.remote.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Base64;
+import android.util.Log;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
 /**
@@ -38,6 +43,25 @@ public class SessionManager {
 
     public void clearSession() {
         prefs.edit().clear().apply();
+    }
+
+    /**
+     * Extracts the user ID from the JWT {@code sub} claim by Base64-decoding the
+     * payload section. Returns null if no token is stored or decoding fails.
+     */
+    public String getUserId() {
+        String token = getAccessToken();
+        if (token == null) return null;
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) return null;
+            byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+            JSONObject json = new JSONObject(new String(payloadBytes, StandardCharsets.UTF_8));
+            return json.optString("sub", null);
+        } catch (Exception e) {
+            Log.w("SessionManager", "Failed to decode JWT sub claim", e);
+            return null;
+        }
     }
 
     private static SharedPreferences buildEncryptedPrefs(Context context) {

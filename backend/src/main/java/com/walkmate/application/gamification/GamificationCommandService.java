@@ -1,0 +1,121 @@
+package com.walkmate.application.gamification;
+
+import com.walkmate.domain.gamification.Badge;
+import com.walkmate.domain.gamification.BadgePolicy;
+import com.walkmate.domain.gamification.UserBadgeRepository;
+import com.walkmate.domain.gamification.UserStats;
+import com.walkmate.domain.session.WalkSession;
+import com.walkmate.domain.session.WalkSessionRepository;
+import com.walkmate.domain.tracking.TrackingChunkRepository;
+import com.walkmate.domain.user.User;
+import com.walkmate.domain.user.UserRepository;
+import com.walkmate.infrastructure.util.PolylineDecoder;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Handles all gamification side-effects after a session is marked COMPLETED.
+ *
+ * <p>Listens for {@link SessionCompletedEvent} fired by the session committing
+ * transaction. Uses {@code AFTER_COMMIT} so gamification only runs when the
+ * session state is durably persisted, and {@code REQUIRES_NEW} to open a
+ * completely independent transaction so a gamification failure never rolls back
+ * the already-committed session.</p>
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class GamificationCommandService {
+
+    private final UserRepository          userRepository;
+    private final UserBadgeRepository     badgeRepository;
+    private final TrackingChunkRepository trackingChunkRepository;
+    private final WalkSessionRepository   sessionRepository;
+
+    // ── Event listener ────────────────────────────────────────────────────────
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSessionCompleted(SessionCompletedEvent event) {
+        WalkSession session = event.getSession();
+        try {
+            rewardBothParticipants(session);
+        } catch (Exception ex) {
+            // Log and swallow — gamification must never surface errors to users
+            // or affect the completed session record.
+            log.error("Gamification failed for session {}: {}", session.getSessionId(), ex.getMessage(), ex);
+        }
+    }
+
+    // ── Core reward logic ─────────────────────────────────────────────────────
+
+    private void rewardBothParticipants(WalkSession session) {
+        double distanceKm  = calculateTotalDistanceKm(session.getSessionId());
+        int    durationMin = calculateDurationMinutes(session.getStartedAt(), session.getEndedAt());
+        int    points      = (int) (distanceKm * 10) + (durationMin * 2);
+
+        log.info("Session {} — dist={}km, dur={}min, points={}",
+                session.getSessionId(), String.format("%.2f", distanceKm), durationMin, points);
+
+        // Persist the GPS-derived distance back to the session record so that
+        // session history queries can surface it without re-aggregating polylines.
+        session.recordFinalDistance(distanceKm);
+        sessionRepository.save(session);
+
+        rewardUser(session.getUserIdA(), points, distanceKm);
+        rewardUser(session.getUserIdB(), points, distanceKm);
+    }
+
+    private void rewardUser(String userId, int points, double distanceKm) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            log.warn("Gamification: user {} not found, skipping reward", userId);
+            return;
+        }
+
+        user.applySessionReward(points, distanceKm);
+        userRepository.save(user);
+
+        UserStats stats = new UserStats(
+                userId,
+                user.getCompletedSessions(),
+                user.getTotalDistanceKm(),
+                user.getTotalPoints(),
+                user.getTrustScore()
+        );
+
+        Set<String>  existingBadges = badgeRepository.findBadgeNamesByUserId(userId);
+        List<Badge>  newBadges      = BadgePolicy.evaluateEarned(stats, existingBadges);
+
+        if (!newBadges.isEmpty()) {
+            badgeRepository.saveAll(userId, newBadges);
+            log.info("Awarded {} new badge(s) to user {}: {}", newBadges.size(), userId, newBadges);
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private double calculateTotalDistanceKm(String sessionId) {
+        List<String> polylines = trackingChunkRepository.findPolylinesBySessionId(sessionId);
+        if (polylines.isEmpty()) return 0.0;
+        return polylines.stream()
+                .mapToDouble(PolylineDecoder::calculateDistanceKm)
+                .sum();
+    }
+
+    private int calculateDurationMinutes(Instant startedAt, Instant endedAt) {
+        if (startedAt == null || endedAt == null) return 0;
+        long seconds = Duration.between(startedAt, endedAt).getSeconds();
+        return (int) Math.max(0, seconds / 60);
+    }
+}

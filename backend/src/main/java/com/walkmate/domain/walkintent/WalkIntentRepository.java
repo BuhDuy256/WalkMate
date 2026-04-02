@@ -8,21 +8,32 @@ import java.util.Optional;
 public interface WalkIntentRepository {
     WalkIntent save(WalkIntent intent);
     Optional<WalkIntent> findById(String id);
+
+    /**
+     * Loads the intent with a pessimistic write lock (SELECT ... FOR UPDATE).
+     * MUST be called inside an active @Transactional boundary.
+     * Use this before consuming an intent to prevent concurrent double-consumption.
+     */
+    Optional<WalkIntent> findByIdForUpdate(String id);
+
     void delete(String id);
+
+    /** Returns all OPEN intents owned by the given user, ordered newest-first. */
+    List<WalkIntent> findOpenByUserId(String userId);
+
+    /**
+     * Returns true if the user already has an OPEN or CONSUMED intent whose
+     * time window overlaps [start, end).  Used to enforce the no-double-booking rule.
+     *
+     * Overlap condition: existing.start < end  AND  existing.end > start
+     */
+    boolean hasOverlappingActiveIntent(String userId, Instant start, Instant end);
 
     /**
      * Stage 1 of matching: DB-level hard filter.
      * Returns OPEN intents at the same hotspot whose time window overlaps
      * the given window by at least minDuration, and whose age-preference
      * range intersects with [ageMin, ageMax]. Excludes the requesting user.
-     *
-     * Time-overlap condition (Research.md §4):
-     *   candidate.time_window_start < (timeWindowEnd   - minDuration)
-     *   candidate.time_window_end   > (timeWindowStart + minDuration)
-     *
-     * Age-range overlap:
-     *   candidate.age_min <= ageMax
-     *   candidate.age_max >= ageMin
      */
     List<WalkIntent> findOpenCandidates(
             String hotspotId,

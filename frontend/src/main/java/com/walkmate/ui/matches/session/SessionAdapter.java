@@ -119,7 +119,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             });
 
             // "Start Walk" is only available when the partner has been met at the meeting point
-            boolean isPendingMeet = session.getStatus() == WalkSession.Status.PENDING_MEET;
+            boolean isPendingMeet = session.getStatus() == WalkSession.Status.PENDING;
             btnStartWalk.setVisibility(isPendingMeet ? View.VISIBLE : View.GONE);
             btnStartWalk.setOnClickListener(v -> {
                 if (startWalkListener != null) startWalkListener.onStartWalkClick(session);

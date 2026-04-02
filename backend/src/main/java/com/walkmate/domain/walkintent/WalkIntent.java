@@ -67,7 +67,7 @@ public class WalkIntent {
         this.matchingConstraints = matchingConstraints;
         this.status = IntentStatus.OPEN;
         this.createdAt = Instant.now();
-        this.expiresAt = timeWindowEnd; // Intent expires when the walk window closes
+        this.expiresAt = timeWindowEnd;
         this.version = 0;
     }
 
@@ -81,21 +81,21 @@ public class WalkIntent {
         if (this.status == IntentStatus.CANCELLED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CANCELLED);
         }
-        if (this.status == IntentStatus.MATCHED) {
-            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_MATCHED);
+        if (this.status == IntentStatus.CONSUMED) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CONSUMED);
         }
         this.status = IntentStatus.CANCELLED;
         this.version++;
     }
 
-    public void markAsMatched() {
+    public void consume() {
         if (this.status == IntentStatus.CANCELLED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CANCELLED);
         }
-        if (this.status == IntentStatus.MATCHED) {
-            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_MATCHED);
+        if (this.status == IntentStatus.CONSUMED) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CONSUMED);
         }
-        this.status = IntentStatus.MATCHED;
+        this.status = IntentStatus.CONSUMED;
         this.version++;
     }
 

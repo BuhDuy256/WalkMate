@@ -39,6 +39,9 @@ import com.walkmate.ui.explore.createintent.CreateIntentUiState;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.main.MainActivity;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -81,6 +84,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     // Setup (Create Intent) form ──────────────────────────────────────────
     private TextView txtSetupHotspotName;
+    private TextView txtSelectedDate;
+    private String selectedDateIso = "";
+    private ChipGroup chipGroupTags;
     private RangeSlider sliderTime;
     private RangeSlider sliderAge;
     private TextView txtTimeStart;
@@ -161,6 +167,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         chipGroupHotspots = root.findViewById(R.id.chipGroupHotspots);
 
         txtSetupHotspotName = root.findViewById(R.id.txtSetupHotspotName);
+        txtSelectedDate = root.findViewById(R.id.txtSelectedDate);
         sliderTime = root.findViewById(R.id.sliderTime);
         sliderAge = root.findViewById(R.id.sliderAge);
         txtTimeStart = root.findViewById(R.id.txtTimeStart);
@@ -168,6 +175,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         txtAgeMin = root.findViewById(R.id.txtAgeMin);
         txtAgeMax = root.findViewById(R.id.txtAgeMax);
         btnFindMatch = root.findViewById(R.id.btnFindMatch);
+        chipGroupTags = root.findViewById(R.id.chipGroupTags);
 
         txtScanningHotspotName = root.findViewById(R.id.txtScanningHotspotName);
         btnStopSearching = root.findViewById(R.id.btnStopSearching);
@@ -366,6 +374,24 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupCreateIntentListeners() {
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        selectedDateIso = sdf.format(cal.getTime());
+        if (txtSelectedDate != null) {
+            txtSelectedDate.setText(selectedDateIso);
+            txtSelectedDate.setOnClickListener(v -> {
+                int year = cal.get(Calendar.YEAR);
+                int month = cal.get(Calendar.MONTH);
+                int day = cal.get(Calendar.DAY_OF_MONTH);
+
+                new android.app.DatePickerDialog(requireContext(), (view, y, m, d) -> {
+                    cal.set(y, m, d);
+                    selectedDateIso = sdf.format(cal.getTime());
+                    txtSelectedDate.setText(selectedDateIso);
+                }, year, month, day).show();
+            });
+        }
+
         sliderTime.addOnChangeListener((slider, value, fromUser) -> {
             List<Float> v = slider.getValues();
             txtTimeStart.setText(formatTime(v.get(0)));
@@ -397,12 +423,24 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         int ageMin = ageValues.get(0).intValue();
         int ageMax = ageValues.get(1).intValue();
 
+        List<String> tags = new ArrayList<>();
+        if (chipGroupTags != null) {
+            for (int i = 0; i < chipGroupTags.getChildCount(); i++) {
+                View child = chipGroupTags.getChildAt(i);
+                if (child instanceof Chip && ((Chip) child).isChecked()) {
+                    tags.add(((Chip) child).getText().toString());
+                }
+            }
+        }
+
         createIntentViewModel.submit(
             hotspotId,
+            selectedDateIso,
             timeStart,
             timeEnd,
             ageMin,
-            ageMax
+            ageMax,
+            tags
         );
     }
 

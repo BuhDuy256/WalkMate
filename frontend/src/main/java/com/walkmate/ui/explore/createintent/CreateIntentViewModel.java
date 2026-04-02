@@ -26,11 +26,11 @@ public class CreateIntentViewModel extends ViewModel {
         return uiState;
     }
 
-    public void submit(String hotspotId, float timeStart, float timeEnd,
-                       int ageMin, int ageMax) {
+    public void submit(String hotspotId, String date, float timeStart, float timeEnd,
+                       int ageMin, int ageMax, java.util.List<String> tags) {
         uiState.setValue(new CreateIntentUiState(true, null, null));
 
-        intentRepository.createIntent(hotspotId, timeStart, timeEnd, ageMin, ageMax,
+        intentRepository.createIntent(hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
                 new DomainCallback<WalkIntent>() {
                     @Override
                     public void onSuccess(WalkIntent intent) {
