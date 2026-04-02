@@ -29,20 +29,21 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  * Hilt/Dagger while keeping the DI contract explicit and testable.
  *
  * Usage in a ViewModel factory:
- *   WalkMateApplication app = (WalkMateApplication) context.getApplicationContext();
- *   TrackingRepository repo = app.getTrackingRepository();
+ * WalkMateApplication app = (WalkMateApplication)
+ * context.getApplicationContext();
+ * TrackingRepository repo = app.getTrackingRepository();
  */
 public class WalkMateApplication extends Application {
 
-    private WalkMateDatabase        database;
-    private SessionManager          sessionManager;
-    private TrackingRepository      trackingRepository;
-    private WalkSessionRepository   walkSessionRepository;
-    private UserRepository          userRepository;
-    private UserProfileRepository   userProfileRepository;
-    private GamificationRepository  gamificationRepository;
-    private SocialRepository        socialRepository;
-    private NotificationRepository  notificationRepository;
+    private WalkMateDatabase database;
+    private SessionManager sessionManager;
+    private TrackingRepository trackingRepository;
+    private WalkSessionRepository walkSessionRepository;
+    private UserRepository userRepository;
+    private UserProfileRepository userProfileRepository;
+    private GamificationRepository gamificationRepository;
+    private SocialRepository socialRepository;
+    private NotificationRepository notificationRepository;
 
     @Override
     public void onCreate() {
@@ -55,7 +56,7 @@ public class WalkMateApplication extends Application {
 
         // Eagerly instantiate the DB and SessionManager so the first Room query
         // and any authenticated network call don't pay a cold-start penalty.
-        database       = WalkMateDatabase.getInstance(this);
+        database = WalkMateDatabase.getInstance(this);
         sessionManager = new SessionManager(this);
     }
 

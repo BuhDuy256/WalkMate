@@ -31,9 +31,15 @@ public class AuthActivity extends AppCompatActivity {
 
         // ── Login persistence: skip to Home if already authenticated ──
         WalkMateApplication app = (WalkMateApplication) getApplication();
-        if (app.getSessionManager().getAccessToken() != null) {
+        if (app.getSessionManager().hasUsableAccessToken()) {
             onLoginSuccess();
             return;
+        }
+
+        // Stored token exists but is unusable (blank/expired/invalid) — clear it
+        // so the app does not repeatedly attempt auto-login with stale credentials.
+        if (app.getSessionManager().getAccessToken() != null) {
+            app.getSessionManager().clearSession();
         }
 
         setContentView(R.layout.activity_auth);

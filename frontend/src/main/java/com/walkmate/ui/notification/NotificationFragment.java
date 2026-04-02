@@ -57,6 +57,11 @@ public class NotificationFragment extends Fragment {
         recyclerView  = view.findViewById(R.id.rv_notifications);
         txtEmpty      = view.findViewById(R.id.txt_notifications_empty);
         txtError      = view.findViewById(R.id.txt_notifications_error);
+        View btnBack  = view.findViewById(R.id.btnBack);
+
+        btnBack.setOnClickListener(v -> {
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        });
 
         adapter = new NotificationAdapter();
         adapter.setOnReadListener(notification ->

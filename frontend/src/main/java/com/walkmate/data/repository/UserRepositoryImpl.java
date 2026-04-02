@@ -34,7 +34,8 @@ public class UserRepositoryImpl implements UserRepository {
     public UserRepositoryImpl(Context context) {
         this.sessionManager = new SessionManager(context);
         this.authApiService = ApiClient.getAuthApiService();
-        // FCM token update is an authenticated call — use the authenticated Retrofit client.
+        // FCM token update is an authenticated call — use the authenticated Retrofit
+        // client.
         this.userApiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
                 .create(UserApiService.class);
     }
@@ -47,8 +48,8 @@ public class UserRepositoryImpl implements UserRepository {
     public void login(String email, String password, DomainCallback<String> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<LoginResponseDto>> resp =
-                        authApiService.login(new LoginRequestDto(email, password)).execute();
+                Response<ApiResponse<LoginResponseDto>> resp = authApiService
+                        .login(new LoginRequestDto(email, password)).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     String token = resp.body().getData().getAccessToken();
@@ -71,8 +72,8 @@ public class UserRepositoryImpl implements UserRepository {
     public void register(String fullname, String email, String password, DomainCallback<Void> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<RegisterResponseDto>> resp =
-                        authApiService.register(new RegisterRequestDto(fullname, email, password)).execute();
+                Response<ApiResponse<RegisterResponseDto>> resp = authApiService
+                        .register(new RegisterRequestDto(fullname, email, password)).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     Log.d(TAG, "real register succeeded");
@@ -108,14 +109,14 @@ public class UserRepositoryImpl implements UserRepository {
      */
     @Override
     public void updateFcmToken(String token, DomainCallback<Void> callback) {
-        if (sessionManager.getAccessToken() == null) {
+        if (!sessionManager.hasUsableAccessToken()) {
             Log.d(TAG, "updateFcmToken skipped — user not authenticated");
             return;
         }
         executor.execute(() -> {
             try {
-                Response<ApiResponse<Void>> resp =
-                        userApiService.updateFcmToken(new UpdateFcmTokenRequestDto(token)).execute();
+                Response<ApiResponse<Void>> resp = userApiService.updateFcmToken(new UpdateFcmTokenRequestDto(token))
+                        .execute();
 
                 if (resp.isSuccessful()) {
                     Log.d(TAG, "FCM token registered with backend");

@@ -41,6 +41,17 @@ public class SessionManager {
         return prefs.getString(KEY_ACCESS_TOKEN, null);
     }
 
+    /**
+     * Returns true only when a non-blank, non-expired JWT is available.
+     */
+    public boolean hasUsableAccessToken() {
+        String token = getAccessToken();
+        if (token == null || token.trim().isEmpty()) {
+            return false;
+        }
+        return !isTokenExpired(token);
+    }
+
     public void clearSession() {
         prefs.edit().clear().apply();
     }
@@ -53,15 +64,36 @@ public class SessionManager {
         String token = getAccessToken();
         if (token == null) return null;
         try {
-            String[] parts = token.split("\\.");
-            if (parts.length < 2) return null;
-            byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
-            JSONObject json = new JSONObject(new String(payloadBytes, StandardCharsets.UTF_8));
+            JSONObject json = decodePayload(token);
             return json.optString("sub", null);
         } catch (Exception e) {
             Log.w("SessionManager", "Failed to decode JWT sub claim", e);
             return null;
         }
+    }
+
+    private boolean isTokenExpired(String token) {
+        try {
+            JSONObject json = decodePayload(token);
+            if (!json.has("exp")) {
+                return true;
+            }
+            long expSeconds = json.getLong("exp");
+            long nowSeconds = System.currentTimeMillis() / 1000L;
+            return expSeconds <= nowSeconds;
+        } catch (Exception e) {
+            Log.w("SessionManager", "Failed to decode JWT exp claim", e);
+            return true;
+        }
+    }
+
+    private JSONObject decodePayload(String token) throws Exception {
+        String[] parts = token.split("\\.");
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Invalid JWT format");
+        }
+        byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+        return new JSONObject(new String(payloadBytes, StandardCharsets.UTF_8));
     }
 
     private static SharedPreferences buildEncryptedPrefs(Context context) {

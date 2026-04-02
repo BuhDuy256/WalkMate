@@ -68,6 +68,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     // Top-left back button — VISIBLE only in SETUP
     private ImageButton btnBackToWelcome;
+    // Top-right (or left) back button — global Back to Home
+    private FrameLayout btnBackToHome;
 
     // Bottom sheet ────────────────────────────────────────────────────────
     private View bottomSheetContainer;
@@ -154,6 +156,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         dimOverlay = root.findViewById(R.id.dimOverlay);
         mapContainer = root.findViewById(R.id.mapContainer);
         btnBackToWelcome = root.findViewById(R.id.btnBackToWelcome);
+        btnBackToHome = root.findViewById(R.id.btnBackToHome);
 
         bottomSheetContainer = root.findViewById(R.id.bottomSheetContainer);
         bottomSheetScrollContent = root.findViewById(
@@ -384,11 +387,15 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 int month = cal.get(Calendar.MONTH);
                 int day = cal.get(Calendar.DAY_OF_MONTH);
 
-                new android.app.DatePickerDialog(requireContext(), (view, y, m, d) -> {
+                android.app.DatePickerDialog dialog = new android.app.DatePickerDialog(requireContext(), (view, y, m, d) -> {
                     cal.set(y, m, d);
                     selectedDateIso = sdf.format(cal.getTime());
                     txtSelectedDate.setText(selectedDateIso);
-                }, year, month, day).show();
+                }, year, month, day);
+                
+                // Set explicitly that the user cannot choose past dates.
+                dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+                dialog.show();
             });
         }
 
@@ -418,6 +425,19 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         List<Float> timeValues = sliderTime.getValues();
         float timeStart = timeValues.get(0);
         float timeEnd = timeValues.get(1);
+
+        // Check if the selected time is in the past
+        Calendar today = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayIso = sdf.format(today.getTime());
+
+        if (selectedDateIso.equals(todayIso)) {
+            float currentHourVal = today.get(Calendar.HOUR_OF_DAY) + (today.get(Calendar.MINUTE) / 60f);
+            if (timeStart < currentHourVal) {
+                Toast.makeText(requireContext(), "Start time cannot be in the past", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
 
         List<Float> ageValues = sliderAge.getValues();
         int ageMin = ageValues.get(0).intValue();
@@ -715,6 +735,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private void setupListeners() {
         // Back button — returns from SETUP to WELCOME.
         btnBackToWelcome.setOnClickListener(v -> viewModel.closeSetup());
+
+        // Global Back Button - pop explore fragment and return to Home.
+        btnBackToHome.setOnClickListener(v -> {
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        });
 
         // Tapping the map while in SETUP closes the form.
         dimOverlay.setOnClickListener(v -> {
