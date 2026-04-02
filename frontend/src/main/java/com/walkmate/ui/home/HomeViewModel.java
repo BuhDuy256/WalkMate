@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.domain.notification.Notification;
+import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
@@ -36,16 +38,19 @@ public class HomeViewModel extends ViewModel {
     private final WalkSessionRepository sessionRepo;
     private final UserRepository userRepo;
     private final UserProfileRepository profileRepo;
+    private final NotificationRepository notificationRepo;
 
     // Cached profile data so we don't re-fetch on every loadDashboard()
     private String cachedGreetingName = null;
 
     public HomeViewModel(WalkSessionRepository sessionRepo,
                          UserRepository userRepo,
-                         UserProfileRepository profileRepo) {
+                         UserProfileRepository profileRepo,
+                         NotificationRepository notificationRepo) {
         this.sessionRepo = sessionRepo;
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
+        this.notificationRepo = notificationRepo;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -104,7 +109,7 @@ public class HomeViewModel extends ViewModel {
             public void onSuccess(List<WalkSession> sessions) {
                 HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot =
                         buildSessionSnapshot(sessions);
-                uiState.postValue(buildReadyState(sessionSnapshot));
+                loadNotificationsAndPublish(sessionSnapshot);
             }
 
             @Override
@@ -113,6 +118,31 @@ public class HomeViewModel extends ViewModel {
                         false, cachedGreetingName, "Ho Chi Minh City", false,
                         0, 7, 0, null, null,
                         0.0, 0, error.getMessage()));
+            }
+        });
+    }
+
+    private void loadNotificationsAndPublish(
+            HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot) {
+        notificationRepo.getNotifications(new DomainCallback<List<Notification>>() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                boolean hasUnreadNotification = false;
+                if (notifications != null) {
+                    for (Notification notification : notifications) {
+                        if (notification != null && !notification.isRead()) {
+                            hasUnreadNotification = true;
+                            break;
+                        }
+                    }
+                }
+                uiState.postValue(buildReadyState(sessionSnapshot, hasUnreadNotification));
+            }
+
+            @Override
+            public void onError(Exception error) {
+                // Notification fetch failure should not block dashboard rendering.
+                uiState.postValue(buildReadyState(sessionSnapshot, false));
             }
         });
     }
@@ -137,12 +167,13 @@ public class HomeViewModel extends ViewModel {
      * Replace these with real repo calls as APIs become available.
      */
     private HomeDashboardUiState buildReadyState(
-            HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot) {
+            HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot,
+            boolean hasUnreadNotification) {
         return new HomeDashboardUiState(
                 false,
                 cachedGreetingName != null ? cachedGreetingName : "WalkMate User",
                 "Ho Chi Minh City",     // locationName — replace with location service
-                true,                   // hasUnreadNotification
+                hasUnreadNotification,
                 5,                      // streakDays
                 7,                      // streakGoal
                 5,                      // nearbyHotspotCount — replace with hotspot repo

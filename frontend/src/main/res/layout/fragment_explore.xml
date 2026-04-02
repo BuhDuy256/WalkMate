@@ -96,24 +96,6 @@
     </LinearLayout>
 
     <!-- ================================================================ -->
-    <!-- LAYER 2b: Back button — GONE in WELCOME/SCANNING, VISIBLE in SETUP -->
-    <!-- Floats at top-left above the map; elevation matches topBar.       -->
-    <!-- ================================================================ -->
-    <ImageButton
-        android:id="@+id/btnBackToWelcome"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_gravity="top|start"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_white_circle"
-        android:contentDescription="Back"
-        android:elevation="8dp"
-        android:src="@drawable/ic_back"
-        android:visibility="gone"
-    />
-
-    <!-- ================================================================ -->
     <!-- LAYER 3: Unified Bottom Sheet                                     -->
     <!--                                                                   -->
     <!-- BottomSheetBehavior settings:                                     -->

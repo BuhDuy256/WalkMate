@@ -101,13 +101,13 @@
     <string name="cd_recenter_map">Re-center map on my location</string>
 
     <!-- HOME DASHBOARD -->
-    <string name="home_greeting_format">Hi, %1$s! 👋</string>
+    <string name="home_greeting_format">Hi, %1$s! </string>
     <string name="home_streak_title">Walking Streak</string>
     <string name="home_notification_cd">Notifications</string>
     <string name="home_streak_days_format">%1$d / %2$d days</string>
     <string name="home_streak_details_cd">View streak details</string>
     <string name="home_hero_subtitle_format">%1$d Hotspots are bustling nearby.</string>
-    <string name="home_find_walkmate_cta">Find a WalkMate Now ✨</string>
+    <string name="home_find_walkmate_cta">Find a WalkMate Now </string>
     <string name="home_next_walk_label">Next Walk</string>
     <string name="home_session_status_confirmed">Confirmed</string>
     <string name="home_message_partner">Message</string>

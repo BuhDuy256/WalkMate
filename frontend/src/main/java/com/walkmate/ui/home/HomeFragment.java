@@ -124,7 +124,8 @@ public class HomeFragment extends Fragment {
         HomeViewModelFactory factory = new HomeViewModelFactory(
                 app.getWalkSessionRepository(),
                 app.getUserRepository(),
-                app.getUserProfileRepository());
+            app.getUserProfileRepository(),
+            app.getNotificationRepository());
         viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
     }
 

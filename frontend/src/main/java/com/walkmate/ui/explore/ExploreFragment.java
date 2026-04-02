@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
@@ -66,9 +65,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private View dimOverlay;
     private FrameLayout mapContainer;
 
-    // Top-left back button — VISIBLE only in SETUP
-    private ImageButton btnBackToWelcome;
-    // Top-right (or left) back button — global Back to Home
+    // Single back button used in both WELCOME and SETUP with state-based action.
     private FrameLayout btnBackToHome;
 
     // Bottom sheet ────────────────────────────────────────────────────────
@@ -155,7 +152,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private void bindViews(View root) {
         dimOverlay = root.findViewById(R.id.dimOverlay);
         mapContainer = root.findViewById(R.id.mapContainer);
-        btnBackToWelcome = root.findViewById(R.id.btnBackToWelcome);
         btnBackToHome = root.findViewById(R.id.btnBackToHome);
 
         bottomSheetContainer = root.findViewById(R.id.bottomSheetContainer);
@@ -333,17 +329,17 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
      * Called once each time we enter SETUP, after the button has been laid out.
      */
     private void applySheetExpandedOffset() {
-        btnBackToWelcome.post(() -> {
+        btnBackToHome.post(() -> {
             if (getView() == null) return;
             int[] rootLoc = new int[2];
             requireView().getLocationOnScreen(rootLoc);
 
             int[] btnLoc = new int[2];
-            btnBackToWelcome.getLocationOnScreen(btnLoc);
+            btnBackToHome.getLocationOnScreen(btnLoc);
 
             // Distance from top of the CoordinatorLayout to the bottom edge of the button.
             int btnBottomRelativeToRoot =
-                (btnLoc[1] + btnBackToWelcome.getHeight()) - rootLoc[1];
+                (btnLoc[1] + btnBackToHome.getHeight()) - rootLoc[1];
             int padding16dp = (int) (16 *
                 getResources().getDisplayMetrics().density);
             sheetBehavior.setExpandedOffset(
@@ -516,8 +512,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
                 // Nav bar — slide back in.
                 activity.setBottomNavVisibility(true);
-                // Back button — hidden; only used in SETUP.
-                btnBackToWelcome.setVisibility(View.GONE);
+                // Single back button is visible in WELCOME.
+                btnBackToHome.setVisibility(View.VISIBLE);
 
                 welcomeContent.setVisibility(View.VISIBLE);
                 setupContent.setVisibility(View.GONE);
@@ -537,8 +533,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
                 // Nav bar — slide out so the sheet can expand full-height.
                 activity.setBottomNavVisibility(false);
-                // Back button — visible so the user can return to WELCOME.
-                btnBackToWelcome.setVisibility(View.VISIBLE);
+                // Single back button remains visible in SETUP; action switches to close setup.
+                btnBackToHome.setVisibility(View.VISIBLE);
 
                 // Calculate the expanded offset so the sheet top clears the back button.
                 applySheetExpandedOffset();
@@ -569,8 +565,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             case SCANNING:
                 // Nav bar stays hidden during an active scan.
                 activity.setBottomNavVisibility(false);
-                // Back button — hidden; use btnStopSearching to cancel.
-                btnBackToWelcome.setVisibility(View.GONE);
+                // Hide Home back button while scanning because back navigation is blocked.
+                btnBackToHome.setVisibility(View.GONE);
 
                 welcomeContent.setVisibility(View.GONE);
                 setupContent.setVisibility(View.GONE);
@@ -733,11 +729,13 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void setupListeners() {
-        // Back button — returns from SETUP to WELCOME.
-        btnBackToWelcome.setOnClickListener(v -> viewModel.closeSetup());
-
-        // Global Back Button - pop explore fragment and return to Home.
+        // Single back button with state-based behavior.
         btnBackToHome.setOnClickListener(v -> {
+            ExploreUiState state = viewModel.getUiState().getValue();
+            if (state != null && state.getAppState() == AppState.SETUP) {
+                viewModel.closeSetup();
+                return;
+            }
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         });
 
