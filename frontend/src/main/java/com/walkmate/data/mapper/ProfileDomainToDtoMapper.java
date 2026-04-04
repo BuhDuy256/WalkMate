@@ -21,7 +21,6 @@ public class ProfileDomainToDtoMapper {
                 profile.getAvatarUrl(),
                 profile.getBio(),
                 profile.getProfileMode().name(),
-                profile.getInfoVisibilityMode().name(),
                 tagCodes
         );
     }

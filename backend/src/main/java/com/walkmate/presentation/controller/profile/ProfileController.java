@@ -1,15 +1,11 @@
 package com.walkmate.presentation.controller.profile;
 
-import com.walkmate.application.profile.ProfileCommandService;
 import com.walkmate.application.profile.ProfileQueryService;
-import com.walkmate.domain.profile.InfoVisibilityMode;
 import com.walkmate.domain.profile.Profile;
-import com.walkmate.domain.profile.ProfileErrorCode;
-import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileTag;
-import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.presentation.dto.request.profile.SetupProfileRequest;
 import com.walkmate.presentation.dto.response.ProfileResponse;
+import com.walkmate.presentation.dto.response.ProfileSetupAckResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,19 +25,37 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/profiles")
 public class ProfileController {
-    private final ProfileCommandService profileCommandService;
     private final ProfileQueryService profileQueryService;
 
-    public ProfileController(ProfileCommandService profileCommandService, ProfileQueryService profileQueryService) {
-        this.profileCommandService = profileCommandService;
+    public ProfileController(ProfileQueryService profileQueryService) {
         this.profileQueryService = profileQueryService;
     }
 
     @PutMapping("/setup")
-    public ResponseEntity<ProfileResponse> setupProfile(@Valid @RequestBody SetupProfileRequest request) {
-        Profile profile = mapToDomain(request);
-        Profile saved = profileCommandService.setupProfile(profile);
-        return ResponseEntity.status(HttpStatus.OK).body(mapToResponse(saved));
+    public ResponseEntity<ProfileSetupAckResponse> setupProfile(@Valid @RequestBody SetupProfileRequest request) {
+        // TEMPORARY MODE: only intake/validate payload from FE for Postman testing.
+        // TODO: Persist these fields to DB by mapping request -> domain model and calling
+        // profileCommandService.setupProfile(...) after DB schema is updated with date_of_birth/gender
+        // plus profile visibility flags/avatar and category-based tags
+        // (interests, walk_vibes, best_time_to_walk).
+        ProfileSetupAckResponse response = new ProfileSetupAckResponse(
+                true,
+                "Profile payload received successfully (not persisted yet)",
+                LocalDateTime.now(),
+                request.getName(),
+                request.getCity(),
+                request.getWalkBio(),
+                request.getAvatar(),
+                request.getDateOfBirth(),
+                request.getGender(),
+                request.getPublicProfile(),
+                request.getPublicInfo(),
+                request.getInterests(),
+                request.getWalkVibes(),
+                request.getBestTimeToWalk()
+        );
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{userId}")
@@ -51,41 +66,6 @@ public class ProfileController {
         UUID resolvedViewerId = viewerId != null ? viewerId : userId;
         Profile profile = profileQueryService.getProfileForViewer(userId, resolvedViewerId);
         return ResponseEntity.ok(mapToResponse(profile));
-    }
-
-    private Profile mapToDomain(SetupProfileRequest request) {
-        List<ProfileTag> tags;
-        try {
-            tags = request.getTags().stream()
-                    .map(ProfileTag::fromCode)
-                    .collect(Collectors.toList());
-        } catch (IllegalArgumentException e) {
-            throw new DomainException(ProfileErrorCode.PROFILE_INVALID_TAG.name(), e.getMessage());
-        }
-
-        ProfileMode profileMode;
-        InfoVisibilityMode infoVisibilityMode;
-        try {
-            profileMode = ProfileMode.fromCode(request.getProfileMode());
-            infoVisibilityMode = InfoVisibilityMode.fromCode(request.getInfoVisibilityMode());
-        } catch (IllegalArgumentException e) {
-            throw new DomainException(ProfileErrorCode.PROFILE_INVALID_MODE.name(), e.getMessage());
-        }
-
-        try {
-            return new Profile(
-                    request.getUserId(),
-                    request.getFullName(),
-                    request.getCity(),
-                    request.getAvatarUrl(),
-                    request.getBio(),
-                    profileMode,
-                    infoVisibilityMode,
-                    tags
-            );
-        } catch (IllegalArgumentException e) {
-            throw new DomainException(ProfileErrorCode.PROFILE_INVALID_NAME.name(), e.getMessage());
-        }
     }
 
     private ProfileResponse mapToResponse(Profile profile) {

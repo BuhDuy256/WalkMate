@@ -10,7 +10,6 @@ public class SetupProfileRequestDto {
     private String avatarUrl;
     private String bio;
     private String profileMode;
-    private String infoVisibilityMode;
     private List<String> tags;
 
     public SetupProfileRequestDto(
@@ -20,7 +19,6 @@ public class SetupProfileRequestDto {
             String avatarUrl,
             String bio,
             String profileMode,
-            String infoVisibilityMode,
             List<String> tags
     ) {
         this.userId = userId;
@@ -29,7 +27,6 @@ public class SetupProfileRequestDto {
         this.avatarUrl = avatarUrl;
         this.bio = bio;
         this.profileMode = profileMode;
-        this.infoVisibilityMode = infoVisibilityMode;
         this.tags = tags;
     }
 
@@ -55,10 +52,6 @@ public class SetupProfileRequestDto {
 
     public String getProfileMode() {
         return profileMode;
-    }
-
-    public String getInfoVisibilityMode() {
-        return infoVisibilityMode;
     }
 
     public List<String> getTags() {

@@ -28,7 +28,6 @@ import com.walkmate.data.mapper.ProfileDomainToDtoMapper;
 import com.walkmate.data.mapper.ProfileDtoToDomainMapper;
 import com.walkmate.data.network.ApiClient;
 import com.walkmate.data.repository.ProfileRepositoryImpl;
-import com.walkmate.domain.profile.InfoVisibilityMode;
 import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileRepository;
 import com.walkmate.domain.profile.ProfileService;
@@ -51,8 +50,6 @@ public class ProfileActivity extends AppCompatActivity {
     private TextInputEditText etBio;
     private TextView tvBioCount;
     private MaterialSwitch swProfileMode;
-    private MaterialSwitch swInfoVisibility;
-    private TextView tvInfoModeDescription;
     private ChipGroup cgInterests;
     private ChipGroup cgWalkVibes;
     private ChipGroup cgBestTime;
@@ -87,8 +84,6 @@ public class ProfileActivity extends AppCompatActivity {
         etBio = findViewById(R.id.et_bio);
         tvBioCount = findViewById(R.id.tv_bio_count);
         swProfileMode = findViewById(R.id.sw_profile_mode);
-        swInfoVisibility = findViewById(R.id.sw_info_visibility);
-        tvInfoModeDescription = findViewById(R.id.tv_info_mode_description);
         cgInterests = findViewById(R.id.cg_interests);
         cgWalkVibes = findViewById(R.id.cg_walk_vibes);
         cgBestTime = findViewById(R.id.cg_best_time);
@@ -173,12 +168,6 @@ public class ProfileActivity extends AppCompatActivity {
             );
         }
 
-        if (swInfoVisibility != null) {
-            swInfoVisibility.setOnCheckedChangeListener((buttonView, isChecked) ->
-                    viewModel.onEvent(new ProfileUiEvent.InfoVisibilityChanged(isChecked ? InfoVisibilityMode.PUBLIC : InfoVisibilityMode.PRIVATE))
-            );
-        }
-
         btnSave.setOnClickListener(v -> viewModel.onEvent(new ProfileUiEvent.SaveClicked()));
     }
 
@@ -245,14 +234,6 @@ public class ProfileActivity extends AppCompatActivity {
 
         if (swProfileMode != null) {
             swProfileMode.setChecked(data.getProfileMode() == ProfileMode.PUBLIC);
-        }
-        if (swInfoVisibility != null) {
-            swInfoVisibility.setChecked(data.getInfoVisibilityMode() == InfoVisibilityMode.PUBLIC);
-        }
-        if (tvInfoModeDescription != null) {
-            tvInfoModeDescription.setText(data.getInfoVisibilityMode() == InfoVisibilityMode.PUBLIC
-                    ? "Your contact info can be seen in public profile."
-                    : "Your contact info is private (only you can see it).");
         }
 
         List<ProfileViewData.TagViewData> interests = data.getTagsByCategory("INTERESTS");

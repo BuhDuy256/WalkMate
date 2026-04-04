@@ -1,38 +1,40 @@
 package com.walkmate.presentation.dto.request.profile;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 public class SetupProfileRequest {
-    @NotNull(message = "User ID is required")
-    private UUID userId;
-
-    @NotBlank(message = "Display name is required")
-    @Size(max = 120, message = "Display name cannot exceed 120 characters")
-    private String fullName;
+    @NotBlank(message = "Name is required")
+    @Size(max = 120, message = "Name cannot exceed 120 characters")
+    private String name;
 
     @Size(max = 120, message = "City cannot exceed 120 characters")
     private String city;
 
-    @Size(max = 1024, message = "Avatar URL cannot exceed 1024 characters")
-    private String avatarUrl;
+    @Size(max = 500, message = "Walk bio cannot exceed 500 characters")
+    private String walkBio;
 
-    @Size(max = 500, message = "Bio cannot exceed 500 characters")
-    private String bio;
+    @Size(max = 2048, message = "Avatar cannot exceed 2048 characters")
+    private String avatar;
 
-    @NotBlank(message = "Profile mode is required")
-    private String profileMode;
+    private LocalDate dateOfBirth;
 
-    @NotBlank(message = "Info visibility mode is required")
-    private String infoVisibilityMode;
+    @Size(max = 50, message = "Gender cannot exceed 50 characters")
+    private String gender;
 
-    @NotNull(message = "Tags are required")
-    @Size(min = 3, message = "At least 3 tags are required")
-    private List<String> tags;
+    private Boolean publicProfile;
+
+    // Public info visibility flag from FE.
+    private Boolean publicInfo;
+
+    private List<String> interests;
+
+    private List<String> walkVibes;
+
+    private List<String> bestTimeToWalk;
 }
