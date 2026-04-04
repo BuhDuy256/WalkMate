@@ -43,40 +43,6 @@
             </LinearLayout>
         </LinearLayout>
 
-        <ProgressBar
-            android:id="@+id/progress_selection"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="8dp"
-            android:layout_marginTop="16dp"
-            android:max="100"
-            android:progress="0"
-            android:progressTint="@color/profile_accent" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/tv_selected_count"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="0 tags selected - 3 min required"
-                android:textColor="@color/profile_text_muted"
-                android:textSize="13sp" />
-
-            <TextView
-                android:id="@+id/tv_ready_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Add more info"
-                android:textColor="@color/profile_accent_dark"
-                android:textStyle="bold" />
-        </LinearLayout>
-
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -135,6 +101,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    app:hintEnabled="false"
                     app:boxBackgroundColor="@color/profile_input_bg"
                     app:boxBackgroundMode="filled"
                     app:boxCornerRadiusBottomEnd="16dp"
@@ -164,6 +131,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    app:hintEnabled="false"
                     app:boxBackgroundColor="@color/profile_input_bg"
                     app:boxBackgroundMode="filled"
                     app:boxCornerRadiusBottomEnd="16dp"
@@ -193,6 +161,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    app:hintEnabled="false"
                     app:boxBackgroundColor="@color/profile_input_bg"
                     app:boxBackgroundMode="filled"
                     app:boxCornerRadiusBottomEnd="16dp"
@@ -329,8 +298,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp"
+                    app:chipSpacingHorizontal="10dp"
+                    app:chipSpacingVertical="10dp"
                     app:singleSelection="false" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -417,8 +386,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp"
+                    app:chipSpacingHorizontal="10dp"
+                    app:chipSpacingVertical="10dp"
                     app:singleSelection="false" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -505,8 +474,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp"
+                    app:chipSpacingHorizontal="10dp"
+                    app:chipSpacingVertical="10dp"
                     app:singleSelection="false" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

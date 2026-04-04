@@ -37,9 +37,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     private ProfileViewModel viewModel;
 
-    private TextView tvSelectedCount;
-    private TextView tvReadyStatus;
-    private ProgressBar progressSelection;
     private ImageView ivAvatar;
     private ImageView ivAvatarCamera;
     private TextInputEditText etDisplayName;
@@ -74,9 +71,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        tvSelectedCount = findViewById(R.id.tv_selected_count);
-        tvReadyStatus = findViewById(R.id.tv_ready_status);
-        progressSelection = findViewById(R.id.progress_selection);
         ivAvatar = findViewById(R.id.iv_avatar);
         ivAvatarCamera = findViewById(R.id.iv_avatar_camera);
         etDisplayName = findViewById(R.id.et_display_name);
@@ -207,11 +201,6 @@ public class ProfileActivity extends AppCompatActivity {
                     : "Your contact info is private (only you can see it).");
         }
 
-        int selectedCount = data.getSelectedCount();
-        tvSelectedCount.setText(selectedCount + " tags selected - 3 min required");
-        tvReadyStatus.setText(data.canSave() ? "Ready to save" : "Add more info");
-        progressSelection.setProgress(Math.min(100, selectedCount * 100 / 6));
-
         List<ProfileViewData.TagViewData> interests = data.getTagsByCategory("INTERESTS");
         List<ProfileViewData.TagViewData> walkVibes = data.getTagsByCategory("WALK_VIBES");
         List<ProfileViewData.TagViewData> bestTime = data.getTagsByCategory("BEST_TIME");
@@ -259,20 +248,23 @@ public class ProfileActivity extends AppCompatActivity {
             chip.setCheckable(true);
             chip.setChecked(tag.isSelected());
             chip.setEnsureMinTouchTargetSize(false);
-            chip.setChipMinHeight(dpToPx(38));
+            chip.setChipMinHeight(dpToPx(44));
+            chip.setChipCornerRadius(dpToPx(22));
             chip.setChipBackgroundColorResource(android.R.color.transparent);
             chip.setChipStrokeWidth(0f);
             chip.setRippleColorResource(R.color.profile_card);
-            chip.setChipStartPadding(dpToPx(10));
-            chip.setChipEndPadding(dpToPx(8));
-            chip.setTextStartPadding(dpToPx(2));
-            chip.setTextEndPadding(dpToPx(2));
+            chip.setChipStartPadding(dpToPx(14));
+            chip.setChipEndPadding(dpToPx(12));
+            chip.setTextStartPadding(dpToPx(4));
+            chip.setTextEndPadding(dpToPx(6));
             chip.setBackgroundResource(style.backgroundDrawableRes);
 
             chip.setCloseIconVisible(tag.isSelected());
-            chip.setCloseIconResource(R.drawable.ic_chip_check_12);
-            chip.setCloseIconTintResource(android.R.color.white);
-            chip.setCloseIconSize(dpToPx(11));
+            chip.setCloseIconResource(R.drawable.ic_chip_check_bold_16);
+            chip.setCloseIconTintResource(style.textColorRes);
+            chip.setCloseIconSize(dpToPx(16));
+            chip.setCloseIconStartPadding(dpToPx(8));
+            chip.setCloseIconEndPadding(dpToPx(2));
             chip.setOnCloseIconClickListener(v -> chip.toggle());
 
             chip.setOnCheckedChangeListener((buttonView, isChecked) ->
