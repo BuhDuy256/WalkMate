@@ -1,13 +1,20 @@
 package com.walkmate.ui.explore;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.event.AppEvent;
+import com.walkmate.core.event.AppEventBus;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walkintent.WalkIntent;
+import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.ui.explore.ExploreUiState.AppState;
 
 import java.util.ArrayList;
@@ -21,17 +28,53 @@ import java.util.concurrent.Executors;
  * Owns the hotspot list and the WELCOME → SETUP → SCANNING state machine.
  * All network/db work runs on the ExecutorService; results are posted back
  * to the main thread via LiveData.postValue().
+ *
+ * Phase 4 additions:
+ *  - Stores activeIntentId to correlate FCM match events with the current scan.
+ *  - 10-second Handler timeout triggers a "Still looking…" dialog signal.
+ *  - Observes AppEventBus for MATCH_FOUND events (using observeForever so it
+ *    works regardless of which Fragment is currently visible).
+ *  - stopSearching() cancels the intent on the backend before resetting to WELCOME.
  */
 public class ExploreViewModel extends ViewModel {
 
+    private static final long TIMEOUT_MS = 10_000L;
+
     private final HotspotRepository hotspotRepository;
+    private final WalkIntentRepository intentRepository;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final MutableLiveData<ExploreUiState> uiState =
             new MutableLiveData<>(ExploreUiState.initial());
 
-    public ExploreViewModel(HotspotRepository hotspotRepository) {
+    // ── Scanning lifecycle ────────────────────────────────────────────────
+    private String activeIntentId = null;
+
+    private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+
+    private final Runnable timeoutRunnable = () -> {
+        if (current().getAppState() == AppState.SCANNING) {
+            post(current().withScanTimedOut(true));
+        }
+    };
+
+    // ── FCM observer ─────────────────────────────────────────────────────
+    private final Observer<AppEvent> appEventObserver = event -> {
+        if (event == null) return;
+        if (event.type == AppEvent.Type.MATCH_FOUND
+                && event.intentId != null
+                && event.intentId.equals(activeIntentId)) {
+            cancelScanningTimeout();
+            post(current().withMatchFound(event.proposalId));
+            AppEventBus.get().consumeEvent();
+        }
+    };
+
+    public ExploreViewModel(HotspotRepository hotspotRepository,
+                            WalkIntentRepository intentRepository) {
         this.hotspotRepository = hotspotRepository;
+        this.intentRepository  = intentRepository;
+        AppEventBus.get().observe().observeForever(appEventObserver);
         loadHotspots();
     }
 
@@ -100,7 +143,6 @@ public class ExploreViewModel extends ViewModel {
     /**
      * User dismissed the create-intent form (back press or sheet drag-down).
      * Returns to WELCOME and clears the selected hotspot.
-     * Wired by Phase B5.
      */
     public void closeSetup() {
         ExploreUiState s = current();
@@ -110,30 +152,76 @@ public class ExploreViewModel extends ViewModel {
 
     /**
      * Create-intent form submitted successfully.
-     * Moves to SCANNING state. The WalkIntent is passed to the Matches tab
-     * via the shared repository; ExploreViewModel does not own the intent lifecycle.
-     * Wired by Phase B5.
+     * Stores the intent ID for FCM correlation, starts the scanning timeout,
+     * then moves to SCANNING state.
      */
     public void onIntentCreated(WalkIntent intent) {
+        activeIntentId = intent.getId();
         ExploreUiState s = current();
-        // selectedHotspot is kept so the scanning card can show the hotspot name (Phase B6).
         post(new ExploreUiState(false, s.getHotspots(), s.getSelectedHotspot(),
                 AppState.SCANNING, null));
+        startScanningTimeout();
+    }
+
+    /**
+     * User tapped "Stop Searching".
+     * Cancels the timeout, sends a cancel request to the backend, then resets to WELCOME.
+     */
+    public void stopSearching() {
+        cancelScanningTimeout();
+        if (activeIntentId != null) {
+            final String idToCancel = activeIntentId;
+            activeIntentId = null;
+            intentRepository.cancelIntent(idToCancel, new DomainCallback<Void>() {
+                @Override public void onSuccess(Void result) { /* no-op */ }
+                @Override public void onError(Exception error) { /* silent; user already left scanning */ }
+            });
+        }
+        resetToWelcome();
     }
 
     /**
      * Scanning card dismissed (timeout or user action) → return to WELCOME.
-     * Wired by Phase B6.
      */
     public void resetToWelcome() {
         ExploreUiState s = current();
         post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null));
     }
 
+    /**
+     * Resets scanTimedOut to false so the "Still looking…" dialog does not
+     * re-appear on configuration change.
+     */
+    public void dismissTimeout() {
+        post(current().withScanTimedOut(false));
+    }
+
+    /**
+     * Called by ExploreFragment after it has handled the matchFoundProposalId navigation.
+     * Clears the signal so it is not re-delivered on rotation.
+     */
+    public void consumeMatchFound() {
+        ExploreUiState s = current();
+        if (s.getMatchFoundProposalId() == null) return;
+        post(new ExploreUiState(false, s.getHotspots(), s.getSelectedHotspot(),
+                AppState.SCANNING, null));
+    }
+
     public void consumeError() {
         ExploreUiState s = current();
         post(new ExploreUiState(s.isLoading(), s.getHotspots(), s.getSelectedHotspot(),
                 s.getAppState(), null));
+    }
+
+    // ── Timeout helpers ───────────────────────────────────────────────────
+
+    private void startScanningTimeout() {
+        timeoutHandler.removeCallbacks(timeoutRunnable);
+        timeoutHandler.postDelayed(timeoutRunnable, TIMEOUT_MS);
+    }
+
+    private void cancelScanningTimeout() {
+        timeoutHandler.removeCallbacks(timeoutRunnable);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
@@ -149,7 +237,9 @@ public class ExploreViewModel extends ViewModel {
 
     @Override
     protected void onCleared() {
-        super.onCleared();
+        cancelScanningTimeout();
+        AppEventBus.get().observe().removeObserver(appEventObserver);
         executor.shutdownNow();
+        super.onCleared();
     }
 }

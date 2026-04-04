@@ -26,6 +26,9 @@ public class MatchesFragment extends Fragment {
     // Shared ViewModel — sub-fragments access this via ViewModelProvider(requireParentFragment())
     private MatchesViewModel matchesViewModel;
 
+    // Phase 5 — prevents auto-scroll from firing more than once per session.
+    private boolean hasAutoScrolledToProposal = false;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -63,15 +66,33 @@ public class MatchesFragment extends Fragment {
 
         matchesViewModel.loadAll();
 
-        // Handle navigation argument — NavController passes this when deep-linking
-        // from FCM (via AppEventBus → MainActivity) or from the nav_graph deep link.
+        // Phase 5a — handle navigation argument from ExploreFragment (match found)
+        // or from AppEventBus (FCM notification via MainActivity).
         Bundle args = getArguments();
         if (args != null) {
             int scrollToTab = args.getInt("scrollToTab", 0);
             if (scrollToTab != 0) {
-                scrollToSubTab(scrollToTab);
+                subTabPager.post(() -> scrollToSubTab(scrollToTab));
             }
         }
+
+        // Phase 5b — auto-scroll to Proposal tab when proposals are loaded for the first time.
+        matchesViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            if (!hasAutoScrolledToProposal
+                    && state.getProposals() != null
+                    && !state.getProposals().isEmpty()) {
+                hasAutoScrolledToProposal = true;
+                scrollToSubTab(MatchesPagerAdapter.TAB_PROPOSAL);
+            }
+        });
+
+        // Phase 5c — scroll to Session tab after accepting a proposal.
+        matchesViewModel.getScrollToTabEvent().observe(getViewLifecycleOwner(), tabIndex -> {
+            if (tabIndex != null) {
+                scrollToSubTab(tabIndex);
+                matchesViewModel.consumeScrollToTab();
+            }
+        });
     }
 
     @Override
@@ -88,8 +109,8 @@ public class MatchesFragment extends Fragment {
     }
 
     /**
-     * Called by MainActivity when a push notification deep-links to a specific sub-tab.
-     * Example: new Proposal arrives → scrollToSubTab(MatchesPagerAdapter.TAB_PROPOSAL)
+     * Scrolls to the given sub-tab index.
+     * Called by navigation arguments and by the scrollToTabEvent observer.
      */
     public void scrollToSubTab(int index) {
         if (subTabPager != null) {

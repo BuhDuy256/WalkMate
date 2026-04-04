@@ -50,33 +50,7 @@
                 android:textColor="@color/text_dark"
                 android:textSize="30sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Your friendly walking space"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp" />
-
         </LinearLayout>
-
-        <!-- ── FORM HEADING ──────────────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="44dp"
-            android:text="Welcome back"
-            android:textColor="@color/text_dark"
-            android:textSize="26sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Sign in to continue your journey."
-            android:textColor="@color/text_muted"
-            android:textSize="14sp" />
 
         <!-- ── FIELDS ─────────────────────────────────────────────────────────── -->
         <com.walkmate.core.designsystem.view.WalkMateInputField
@@ -119,7 +93,7 @@
             android:layout_height="54dp"
             android:layout_marginTop="28dp"
             app:wm_buttonStyle="filled"
-            app:wm_text="Sign In ✦" />
+            app:wm_text="Sign In" />
 
         <!-- ── DIVIDER ────────────────────────────────────────────────────────── -->
         <LinearLayout

@@ -61,24 +61,6 @@
 
                 </LinearLayout>
 
-                <!-- ── HEADING ── -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="Welcome back! 👋"
-                    android:textColor="@color/text_dark"
-                    android:textSize="26sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Sign in to continue your journey."
-                    android:textColor="@color/text_muted"
-                    android:textSize="14sp" />
-
                 <!-- ── FIELDS ── -->
                 <com.walkmate.core.designsystem.view.WalkMateInputField
                     android:id="@+id/field_email"

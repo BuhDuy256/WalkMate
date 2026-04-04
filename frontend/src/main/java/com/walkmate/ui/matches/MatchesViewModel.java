@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.ui.matches.MatchesPagerAdapter;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.domain.walkproposal.WalkProposal;
@@ -28,6 +29,13 @@ public class MatchesViewModel extends ViewModel {
 
     private final MutableLiveData<MatchesUiState> uiState = new MutableLiveData<>(MatchesUiState.initial());
 
+    /**
+     * Phase 5 — one-shot navigation signal.
+     * Holds a tab index to scroll to after an action (e.g. accept proposal → Session tab).
+     * Observers must call consumeScrollToTab() after handling to prevent re-delivery on rotation.
+     */
+    private final MutableLiveData<Integer> scrollToTabEvent = new MutableLiveData<>(null);
+
     private final WalkIntentRepository intentRepository;
     private final WalkProposalRepository proposalRepository;
     private final WalkSessionRepository sessionRepository;
@@ -42,6 +50,15 @@ public class MatchesViewModel extends ViewModel {
 
     public LiveData<MatchesUiState> getUiState() {
         return uiState;
+    }
+
+    public LiveData<Integer> getScrollToTabEvent() {
+        return scrollToTabEvent;
+    }
+
+    /** Clears the scroll-to-tab signal after the Fragment has handled it. */
+    public void consumeScrollToTab() {
+        scrollToTabEvent.postValue(null);
     }
 
     // -------------------------------------------------------------------------
@@ -225,12 +242,14 @@ public class MatchesViewModel extends ViewModel {
     /**
      * Full refresh on accept: the backend atomically removes the proposal and
      * creates a new WalkSession, so a full loadAll() gives the most consistent view.
+     * Phase 5: posts a scroll-to-Session tab signal after data is refreshed.
      */
     public void acceptProposal(String proposalId) {
         proposalRepository.acceptProposal(proposalId, new DomainCallback<WalkSession>() {
             @Override
             public void onSuccess(WalkSession result) {
                 loadAll();
+                scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION);
             }
 
             @Override

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.data.repository.HotspotRepositoryImpl;
+import com.walkmate.data.repository.WalkIntentRepositoryImpl;
 
 public class ExploreViewModelFactory implements ViewModelProvider.Factory {
 
@@ -21,7 +22,9 @@ public class ExploreViewModelFactory implements ViewModelProvider.Factory {
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(ExploreViewModel.class)) {
-            return (T) new ExploreViewModel(new HotspotRepositoryImpl(appContext));
+            return (T) new ExploreViewModel(
+                    new HotspotRepositoryImpl(appContext),
+                    new WalkIntentRepositoryImpl(appContext));
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

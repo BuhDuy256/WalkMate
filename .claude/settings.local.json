@@ -14,7 +14,8 @@
       "Bash(mkdir -p \"C:/Users/Duy/Desktop/WalkMate/backend/src/main/java/com/walkmate/presentation/controller/social\")",
       "Bash(mkdir -p \"C:/Users/Duy/Desktop/WalkMate/backend/src/main/java/com/walkmate/presentation/dto/response/social\")",
       "Bash(xargs -I {} find {} -type d)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(find C:\\\\Users\\\\Duy\\\\Desktop\\\\WalkMate:*)"
     ]
   }
 }

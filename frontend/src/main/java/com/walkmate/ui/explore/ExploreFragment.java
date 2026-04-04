@@ -20,6 +20,8 @@ import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -677,6 +679,39 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             ).show();
             viewModel.consumeError();
         }
+
+        // Phase 4 — match found: navigate to MatchesFragment → Proposal tab.
+        if (state.getMatchFoundProposalId() != null) {
+            Bundle args = new Bundle();
+            args.putInt("scrollToTab", com.walkmate.ui.matches.MatchesPagerAdapter.TAB_PROPOSAL);
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.matchesFragment, args);
+            viewModel.consumeMatchFound();
+        }
+
+        // Phase 4 — timeout: show "Still looking…" dialog (only once per timeout).
+        if (state.isScanTimedOut()) {
+            showScanTimeoutDialog();
+        }
+    }
+
+    /** Shows the "Still looking…" bottom-sheet dialog on scan timeout. */
+    private void showScanTimeoutDialog() {
+        // Dismiss immediately in state so a rotation doesn't re-show the dialog.
+        viewModel.dismissTimeout();
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Still looking\u2026")
+                .setMessage("No match found yet. Keep your search active while you explore?")
+                .setPositiveButton("Keep Searching", (d, w) -> { /* stay in SCANNING */ })
+                .setNegativeButton("Save to Finding List", (d, w) -> {
+                    Bundle args = new Bundle();
+                    args.putInt("scrollToTab",
+                            com.walkmate.ui.matches.MatchesPagerAdapter.TAB_FINDING);
+                    Navigation.findNavController(requireView())
+                            .navigate(R.id.matchesFragment, args);
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void renderCreateIntentState(CreateIntentUiState state) {
@@ -846,8 +881,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
-        // Cancel the active scan and return to WELCOME.
-        btnStopSearching.setOnClickListener(v -> viewModel.resetToWelcome());
+        // Cancel the active scan: cancels backend intent and returns to WELCOME.
+        btnStopSearching.setOnClickListener(v -> viewModel.stopSearching());
 
         // Expand the sheet when the search field gains focus (Google Maps-like UX).
         searchInputEdit.setOnFocusChangeListener((v, hasFocus) -> {
