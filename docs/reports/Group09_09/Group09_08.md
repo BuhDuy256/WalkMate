@@ -16,8 +16,11 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Implement push notification => Finish frontend, backend just set up FCM.
+- Implement invitation management => Finish frontend, backend didn't handle failure cases in state transition of domain object.  
+- **Evidence:** 
+    - [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-30?atlOrigin=eyJpIjoiN2MwMzYzMjIwYzdhNDMxYmEzOGNmMjNmNjJlY2ZiZWMiLCJwIjoiaiJ9)
+    - [Github](https://github.com/BuhDuy256/WalkMate/commits/implement/realtime/)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -48,8 +51,7 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- I removed commits to clean workspace. I don't have evidence. I just prompts to ask about the feature flow of push notification.    
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -70,9 +72,7 @@
 
 ## Tasks Planned for Next Week
 
-- [ ] Task A – _(assignee)_
-- [ ] Task B – _(assignee)_
-- [ ] Task C – _(assignee)_
+- Didn't have plan, may be tommorrow. 
 
 ---
 
