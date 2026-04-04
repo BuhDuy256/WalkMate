@@ -22,4 +22,31 @@
     <color name="background">#F5F5F5</color>
     <color name="surface">#FFFFFF</color>
     <color name="divider">#E0E0E0</color>
+
+    <color name="rating_bg_warm">#FFF8F1</color>
+    <color name="rating_card_surface">#FFFFFC</color>
+    <color name="rating_input_surface">#FFF5ED</color>
+
+    <color name="rating_text_primary">#4A342A</color>
+    <color name="rating_text_secondary">#8A7465</color>
+    <color name="rating_text_muted">#B7A192</color>
+
+    <color name="rating_accent_soft">#F39A72</color>
+    <color name="rating_accent_strong">#DF7548</color>
+    <color name="rating_error">#CF4E4E</color>
+
+    <color name="rating_chip_orange">#FFF2E8</color>
+    <color name="rating_chip_orange_selected">#FFDCC8</color>
+    <color name="rating_chip_blush">#FFEDE8</color>
+    <color name="rating_chip_blush_selected">#FFD8CC</color>
+    <color name="rating_chip_mint">#ECF8EE</color>
+    <color name="rating_chip_mint_selected">#D4F0DA</color>
+    <color name="rating_chip_beige">#F8F1E8</color>
+    <color name="rating_chip_beige_selected">#EEDFCF</color>
+    <color name="rating_chip_butter">#FFF8DE</color>
+    <color name="rating_chip_butter_selected">#FFEDBB</color>
+    <color name="rating_chip_lavender">#F1ECFA</color>
+    <color name="rating_chip_lavender_selected">#E0D4F8</color>
+
+    <color name="rating_badge_locked">#ECE8E2</color>
 </resources>

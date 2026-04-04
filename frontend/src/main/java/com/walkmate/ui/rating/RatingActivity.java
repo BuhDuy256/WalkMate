@@ -3,9 +3,11 @@ package com.walkmate.ui.rating;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
@@ -244,20 +246,81 @@ public class RatingActivity extends AppCompatActivity {
 
         for (RatingViewData.TagViewData tag : tags) {
             Chip chip = new Chip(this);
-            chip.setText(tag.getDisplayText());
+            chip.setText(getTagEmoji(tag.getCode()) + "  " + tag.getDisplayText());
             chip.setCheckable(true);
             chip.setChecked(tag.isSelected());
-            chip.setChipBackgroundColorResource(
-                    tag.isSelected() ? R.color.chip_selected_bg : R.color.chip_unselected_bg
-            );
-            chip.setTextColor(getResources().getColor(
-                    tag.isSelected() ? R.color.chip_selected_text : R.color.chip_unselected_text, null
-            ));
+            chip.setEnsureMinTouchTargetSize(false);
+            chip.setChipMinHeight(dpToPx(42));
+            chip.setChipCornerRadius(dpToPx(21));
+            chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f);
+            chip.setTextStartPadding(dpToPx(2));
+            chip.setTextEndPadding(dpToPx(3));
+            chip.setChipStartPadding(dpToPx(14));
+            chip.setChipEndPadding(dpToPx(12));
+            chip.setChipStrokeWidth(0f);
+            chip.setChipBackgroundColorResource(android.R.color.transparent);
+            chip.setCloseIconVisible(tag.isSelected());
+            chip.setCloseIconResource(R.drawable.ic_star_filled);
+            chip.setCloseIconSize(dpToPx(14));
+            chip.setCloseIconTintResource(R.color.rating_accent_strong);
+                chip.setChipBackgroundColorResource(getTagBackgroundColor(tag.getCode(), tag.isSelected()));
+            chip.setTextColor(ContextCompat.getColor(this,
+                    tag.isSelected() ? R.color.rating_accent_strong : R.color.rating_text_primary));
             chip.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 viewModel.onEvent(new RatingUiEvent.TagToggled(tag.getCode()));
             });
             chipGroupTags.addView(chip);
         }
+    }
+
+    private int getTagBackgroundColor(String code, boolean selected) {
+        switch (code) {
+            case "FRIENDLY":
+            case "ON_TIME":
+                return selected ? R.color.rating_chip_orange_selected : R.color.rating_chip_orange;
+            case "GREAT_CHAT":
+            case "GOOD_PACE":
+                return selected ? R.color.rating_chip_lavender_selected : R.color.rating_chip_lavender;
+            case "NATURE_LOVER":
+            case "SAFE_ROUTE":
+                return selected ? R.color.rating_chip_mint_selected : R.color.rating_chip_mint;
+            case "ENCOURAGING":
+                return selected ? R.color.rating_chip_butter_selected : R.color.rating_chip_butter;
+            case "FOCUSED":
+            default:
+                return selected ? R.color.rating_chip_blush_selected : R.color.rating_chip_blush;
+        }
+    }
+
+    private String getTagEmoji(String code) {
+        switch (code) {
+            case "FRIENDLY":
+                return "😊";
+            case "ON_TIME":
+                return "⏰";
+            case "GREAT_CHAT":
+                return "🗣️";
+            case "GOOD_PACE":
+                return "🚶";
+            case "NATURE_LOVER":
+                return "🌿";
+            case "SAFE_ROUTE":
+                return "🔒";
+            case "ENCOURAGING":
+                return "✨";
+            case "FOCUSED":
+                return "🎯";
+            default:
+                return "•";
+        }
+    }
+
+    private int dpToPx(int dp) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                getResources().getDisplayMetrics()
+        );
     }
 
     private void handleEffect(RatingUiEffect effect) {
