@@ -1,9 +1,13 @@
 package com.walkmate.application.profile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.walkmate.domain.profile.ProfileErrorCode;
 import com.walkmate.domain.profile.ProfileTag;
+import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.presentation.dto.request.profile.SetupProfileRequest;
+import com.walkmate.presentation.dto.response.ProfileResponse;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -40,6 +44,55 @@ public class ProfileSetupPersistenceService {
             conn.commit();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save profile", e);
+        }
+    }
+
+    public ProfileResponse getProfile(UUID userId) {
+        String sql = """
+                SELECT
+                    user_id,
+                    full_name,
+                    gender,
+                    date_of_birth,
+                    avatar_url,
+                    bio,
+                    search_radius,
+                    interests,
+                    walk_vibes,
+                    best_time_to_walk,
+                    profile_visibility,
+                    created_at,
+                    updated_at
+                FROM user_profile
+                WHERE user_id = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                throw new DomainException(ProfileErrorCode.PROFILE_NOT_FOUND.name(), "Profile not found");
+            }
+
+            return new ProfileResponse(
+                    (UUID) rs.getObject("user_id"),
+                    rs.getString("full_name"),
+                    rs.getString("gender"),
+                    getLocalDate(rs, "date_of_birth"),
+                    rs.getString("avatar_url"),
+                    rs.getString("bio"),
+                    (Integer) rs.getObject("search_radius"),
+                    parseJsonArray(rs.getString("interests")),
+                    parseJsonArray(rs.getString("walk_vibes")),
+                    parseJsonArray(rs.getString("best_time_to_walk")),
+                    rs.getString("profile_visibility"),
+                    getLocalDateTime(rs, "created_at"),
+                    getLocalDateTime(rs, "updated_at")
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load profile", e);
         }
     }
 
@@ -212,6 +265,28 @@ public class ProfileSetupPersistenceService {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Invalid list payload", e);
         }
+    }
+
+    private List<String> parseJsonArray(String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(rawJson, new TypeReference<List<String>>() {
+            });
+        } catch (JsonProcessingException e) {
+            return List.of();
+        }
+    }
+
+    private LocalDate getLocalDate(ResultSet rs, String columnName) throws SQLException {
+        Date date = rs.getDate(columnName);
+        return date == null ? null : date.toLocalDate();
+    }
+
+    private java.time.LocalDateTime getLocalDateTime(ResultSet rs, String columnName) throws SQLException {
+        java.sql.Timestamp timestamp = rs.getTimestamp(columnName);
+        return timestamp == null ? null : timestamp.toLocalDateTime();
     }
 
     private void validateDateOfBirth(LocalDate dateOfBirth) {

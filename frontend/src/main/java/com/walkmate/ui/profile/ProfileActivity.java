@@ -39,6 +39,7 @@ import java.util.UUID;
 
 public class ProfileActivity extends AppCompatActivity {
     private static final int MAX_BIO_LENGTH = 120;
+    private static final UUID TEMP_PROFILE_USER_ID = UUID.fromString("d70c0cfd-ee5c-48d7-8e4e-d012573ac569");
 
     private ProfileViewModel viewModel;
 
@@ -121,8 +122,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void initViewModel() {
-        UUID ownerId = resolveUuid("PROFILE_OWNER_ID", resolveUuid("USER_ID", UUID.randomUUID()));
-        UUID viewerId = resolveUuid("VIEWER_ID", ownerId);
+        // Temporary hardcode for branch testing.
+        // TODO: Replace with user id from auth/session when authentication flow is integrated.
+        UUID ownerId = TEMP_PROFILE_USER_ID;
+        UUID viewerId = TEMP_PROFILE_USER_ID;
 
         ProfileApiService apiService = ApiClient.getProfileApi();
         ProfileRepository repository = new ProfileRepositoryImpl(
@@ -134,16 +137,6 @@ public class ProfileActivity extends AppCompatActivity {
 
         ProfileViewModelFactory factory = new ProfileViewModelFactory(service, ownerId, viewerId);
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
-    }
-
-    private UUID resolveUuid(String key, UUID defaultValue) {
-        if (getIntent().hasExtra(key)) {
-            String value = getIntent().getStringExtra(key);
-            if (value != null && !value.trim().isEmpty()) {
-                return UUID.fromString(value);
-            }
-        }
-        return defaultValue;
     }
 
     private void setupListeners() {
