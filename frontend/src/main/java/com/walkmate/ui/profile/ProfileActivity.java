@@ -31,6 +31,7 @@ import com.walkmate.data.repository.ProfileRepositoryImpl;
 import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileRepository;
 import com.walkmate.domain.profile.ProfileService;
+import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -185,6 +186,9 @@ public class ProfileActivity extends AppCompatActivity {
                     calendar.get(Calendar.MONTH),
                     calendar.get(Calendar.DAY_OF_MONTH)
             );
+                Calendar maxDob = Calendar.getInstance();
+                maxDob.add(Calendar.YEAR, -13);
+                dialog.getDatePicker().setMaxDate(maxDob.getTimeInMillis());
             dialog.show();
         };
 
@@ -194,6 +198,13 @@ public class ProfileActivity extends AppCompatActivity {
                 openPicker.onClick(v);
             }
         });
+
+        etDateOfBirth.addTextChangedListener(new SimpleTextWatcher(s -> {
+            LocalDate parsed = parseUiDate(s);
+            if (parsed != null) {
+                viewModel.onEvent(new ProfileUiEvent.DateOfBirthChanged(parsed));
+            }
+        }));
     }
 
     private void setupGenderDropdown() {
@@ -211,6 +222,9 @@ public class ProfileActivity extends AppCompatActivity {
                 acGender.showDropDown();
             }
         });
+        acGender.setOnItemClickListener((parent, view, position, id) ->
+                viewModel.onEvent(new ProfileUiEvent.GenderChanged(adapter.getItem(position)))
+        );
     }
 
     private void observeState() {
@@ -229,6 +243,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         setTextIfDifferent(etDisplayName, data.getFullName());
         setTextIfDifferent(etCity, data.getCity());
+        setTextIfDifferent(etDateOfBirth, formatUiDate(data.getDateOfBirth()));
+        setAutoCompleteTextIfDifferent(acGender, data.getGender());
         setTextIfDifferent(etBio, data.getBio());
         tvBioCount.setText(data.getBio().length() + "/" + MAX_BIO_LENGTH);
 
@@ -371,6 +387,39 @@ public class ProfileActivity extends AppCompatActivity {
         if (!current.equals(target)) {
             editText.setText(target);
             editText.setSelection(target.length());
+        }
+    }
+
+    private void setAutoCompleteTextIfDifferent(AutoCompleteTextView view, String value) {
+        String current = view.getText() == null ? "" : view.getText().toString();
+        String target = value == null ? "" : value;
+        if (!current.equals(target)) {
+            view.setText(target, false);
+        }
+    }
+
+    private String formatUiDate(LocalDate date) {
+        if (date == null) {
+            return "";
+        }
+        return String.format(Locale.getDefault(), "%02d/%02d/%04d", date.getDayOfMonth(), date.getMonthValue(), date.getYear());
+    }
+
+    private LocalDate parseUiDate(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            String[] parts = text.split("/");
+            if (parts.length != 3) {
+                return null;
+            }
+            int day = Integer.parseInt(parts[0]);
+            int month = Integer.parseInt(parts[1]);
+            int year = Integer.parseInt(parts[2]);
+            return LocalDate.of(year, month, day);
+        } catch (Exception ignored) {
+            return null;
         }
     }
 

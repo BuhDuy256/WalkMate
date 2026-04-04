@@ -2,6 +2,7 @@ package com.walkmate.data.repository;
 
 import com.walkmate.data.datasource.remote.api.ProfileApiService;
 import com.walkmate.data.datasource.remote.dto.ProfileResponseDto;
+import com.walkmate.data.datasource.remote.dto.ProfileSetupAckResponseDto;
 import com.walkmate.data.datasource.remote.dto.SetupProfileRequestDto;
 import com.walkmate.data.mapper.ProfileDomainToDtoMapper;
 import com.walkmate.data.mapper.ProfileDtoToDomainMapper;
@@ -33,12 +34,12 @@ public class ProfileRepositoryImpl implements ProfileRepository {
     @Override
     public Profile setupProfile(Profile profile) throws ProfileException {
         SetupProfileRequestDto requestDto = domainToDtoMapper.mapToDto(profile);
-        Call<ProfileResponseDto> call = apiService.setupProfile(requestDto);
+        Call<ProfileSetupAckResponseDto> call = apiService.setupProfile(requestDto);
 
         try {
-            Response<ProfileResponseDto> response = call.execute();
-            if (response.isSuccessful() && response.body() != null) {
-                return dtoToDomainMapper.mapToDomain(response.body());
+            Response<ProfileSetupAckResponseDto> response = call.execute();
+            if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                return profile;
             }
 
             String errorBody = response.errorBody() != null ? response.errorBody().string() : "";

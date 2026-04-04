@@ -47,6 +47,10 @@ public class ProfileViewModel extends ViewModel {
             handleCityChanged(((ProfileUiEvent.CityChanged) event).getCity());
         } else if (event instanceof ProfileUiEvent.BioChanged) {
             handleBioChanged(((ProfileUiEvent.BioChanged) event).getBio());
+        } else if (event instanceof ProfileUiEvent.DateOfBirthChanged) {
+            handleDateOfBirthChanged(((ProfileUiEvent.DateOfBirthChanged) event).getDateOfBirth());
+        } else if (event instanceof ProfileUiEvent.GenderChanged) {
+            handleGenderChanged(((ProfileUiEvent.GenderChanged) event).getGender());
         } else if (event instanceof ProfileUiEvent.TagToggled) {
             handleTagToggled(((ProfileUiEvent.TagToggled) event).getTagCode());
         } else if (event instanceof ProfileUiEvent.ProfileModeChanged) {
@@ -109,6 +113,22 @@ public class ProfileViewModel extends ViewModel {
         updateData(state.getData().withBio(bio));
     }
 
+    private void handleDateOfBirthChanged(java.time.LocalDate dateOfBirth) {
+        ProfileUiState state = _uiState.getValue();
+        if (state == null) {
+            return;
+        }
+        updateData(state.getData().withDateOfBirth(dateOfBirth));
+    }
+
+    private void handleGenderChanged(String gender) {
+        ProfileUiState state = _uiState.getValue();
+        if (state == null) {
+            return;
+        }
+        updateData(state.getData().withGender(gender));
+    }
+
     private void handleTagToggled(String tagCode) {
         ProfileUiState state = _uiState.getValue();
         if (state == null) {
@@ -147,7 +167,7 @@ public class ProfileViewModel extends ViewModel {
             return;
         }
         if (!state.getData().canSave()) {
-            _uiEffect.setValue(new ProfileUiEffect.ShowToast("Please fill display name and select at least 3 tags"));
+            _uiEffect.setValue(new ProfileUiEffect.ShowToast("Please fill display name"));
             return;
         }
 
@@ -180,6 +200,8 @@ public class ProfileViewModel extends ViewModel {
                 data.getCity(),
                 data.getAvatarUrl(),
                 data.getBio(),
+                data.getDateOfBirth(),
+                data.getGender(),
                 data.getProfileMode(),
                 data.getInfoVisibilityMode(),
                 data.getSelectedDomainTags(),

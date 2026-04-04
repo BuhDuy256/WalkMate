@@ -5,6 +5,7 @@ import com.walkmate.domain.profile.Profile;
 import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileTag;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +18,8 @@ public class ProfileViewData {
     private final String city;
     private final String avatarUrl;
     private final String bio;
+    private final LocalDate dateOfBirth;
+    private final String gender;
     private final ProfileMode profileMode;
     private final InfoVisibilityMode infoVisibilityMode;
     private final List<TagViewData> tags;
@@ -29,6 +32,8 @@ public class ProfileViewData {
             String city,
             String avatarUrl,
             String bio,
+            LocalDate dateOfBirth,
+            String gender,
             ProfileMode profileMode,
             InfoVisibilityMode infoVisibilityMode,
             List<TagViewData> tags,
@@ -40,6 +45,8 @@ public class ProfileViewData {
         this.city = city;
         this.avatarUrl = avatarUrl;
         this.bio = bio;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
         this.profileMode = profileMode;
         this.infoVisibilityMode = infoVisibilityMode;
         this.tags = tags;
@@ -69,6 +76,8 @@ public class ProfileViewData {
                 "",
                 "",
                 "",
+                null,
+                null,
                 ProfileMode.PUBLIC,
                 InfoVisibilityMode.PRIVATE,
                 defaultTags,
@@ -93,6 +102,8 @@ public class ProfileViewData {
                 profile.getCity(),
                 profile.getAvatarUrl(),
                 profile.getBio(),
+                profile.getDateOfBirth(),
+                profile.getGender(),
                 profile.getProfileMode(),
                 profile.getInfoVisibilityMode(),
                 mappedTags,
@@ -108,6 +119,8 @@ public class ProfileViewData {
                 city,
                 avatarUrl,
                 bio,
+                dateOfBirth,
+                gender,
                 profileMode,
                 infoVisibilityMode,
                 tags,
@@ -123,6 +136,8 @@ public class ProfileViewData {
                 newCity,
                 avatarUrl,
                 bio,
+                dateOfBirth,
+                gender,
                 profileMode,
                 infoVisibilityMode,
                 tags,
@@ -138,6 +153,8 @@ public class ProfileViewData {
                 city,
                 avatarUrl,
                 newBio,
+                dateOfBirth,
+                gender,
                 profileMode,
                 infoVisibilityMode,
                 tags,
@@ -153,6 +170,8 @@ public class ProfileViewData {
                 city,
                 avatarUrl,
                 bio,
+                dateOfBirth,
+                gender,
                 mode,
                 infoVisibilityMode,
                 tags,
@@ -168,6 +187,8 @@ public class ProfileViewData {
                 city,
                 avatarUrl,
                 bio,
+                dateOfBirth,
+                gender,
                 profileMode,
                 mode,
                 tags,
@@ -183,6 +204,8 @@ public class ProfileViewData {
                 city,
                 avatarUrl,
                 bio,
+                dateOfBirth,
+                gender,
                 profileMode,
                 infoVisibilityMode,
                 newTags,
@@ -191,8 +214,42 @@ public class ProfileViewData {
         );
     }
 
+    public ProfileViewData withDateOfBirth(LocalDate newDateOfBirth) {
+        return new ProfileViewData(
+                userId,
+                fullName,
+                city,
+                avatarUrl,
+                bio,
+                newDateOfBirth,
+                gender,
+                profileMode,
+                infoVisibilityMode,
+                tags,
+                email,
+                phone
+        );
+    }
+
+    public ProfileViewData withGender(String newGender) {
+        return new ProfileViewData(
+                userId,
+                fullName,
+                city,
+                avatarUrl,
+                bio,
+                dateOfBirth,
+                newGender,
+                profileMode,
+                infoVisibilityMode,
+                tags,
+                email,
+                phone
+        );
+    }
+
     public boolean canSave() {
-        return fullName != null && !fullName.trim().isEmpty() && getSelectedCount() >= 3;
+        return fullName != null && !fullName.trim().isEmpty();
     }
 
     public int getSelectedCount() {
@@ -237,6 +294,14 @@ public class ProfileViewData {
 
     public String getBio() {
         return bio;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
     }
 
     public ProfileMode getProfileMode() {

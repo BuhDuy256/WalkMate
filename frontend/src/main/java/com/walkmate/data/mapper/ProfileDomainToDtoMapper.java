@@ -20,6 +20,8 @@ public class ProfileDomainToDtoMapper {
                 profile.getCity(),
                 profile.getAvatarUrl(),
                 profile.getBio(),
+            profile.getDateOfBirth() == null ? null : profile.getDateOfBirth().toString(),
+            profile.getGender(),
                 profile.getProfileMode().name(),
                 tagCodes
         );

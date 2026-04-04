@@ -9,6 +9,8 @@ public class SetupProfileRequestDto {
     private String city;
     private String avatarUrl;
     private String bio;
+    private String dateOfBirth;
+    private String gender;
     private String profileMode;
     private List<String> tags;
 
@@ -18,6 +20,8 @@ public class SetupProfileRequestDto {
             String city,
             String avatarUrl,
             String bio,
+                String dateOfBirth,
+                String gender,
             String profileMode,
             List<String> tags
     ) {
@@ -26,6 +30,8 @@ public class SetupProfileRequestDto {
         this.city = city;
         this.avatarUrl = avatarUrl;
         this.bio = bio;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
         this.profileMode = profileMode;
         this.tags = tags;
     }
@@ -48,6 +54,14 @@ public class SetupProfileRequestDto {
 
     public String getBio() {
         return bio;
+    }
+
+    public String getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
     }
 
     public String getProfileMode() {

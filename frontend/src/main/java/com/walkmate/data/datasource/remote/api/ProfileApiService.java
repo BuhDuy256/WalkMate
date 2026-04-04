@@ -1,6 +1,7 @@
 package com.walkmate.data.datasource.remote.api;
 
 import com.walkmate.data.datasource.remote.dto.ProfileResponseDto;
+import com.walkmate.data.datasource.remote.dto.ProfileSetupAckResponseDto;
 import com.walkmate.data.datasource.remote.dto.SetupProfileRequestDto;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 public interface ProfileApiService {
     @PUT("/api/profiles/setup")
-    Call<ProfileResponseDto> setupProfile(@Body SetupProfileRequestDto request);
+    Call<ProfileSetupAckResponseDto> setupProfile(@Body SetupProfileRequestDto request);
 
     @GET("/api/profiles/{userId}")
     Call<ProfileResponseDto> getProfile(@Path("userId") UUID userId, @Query("viewerId") UUID viewerId);

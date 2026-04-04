@@ -1,6 +1,5 @@
 package com.walkmate.presentation.dto.request.profile;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -9,9 +8,11 @@ import java.util.List;
 
 @Data
 public class SetupProfileRequest {
-    @NotBlank(message = "Name is required")
     @Size(max = 120, message = "Name cannot exceed 120 characters")
     private String name;
+
+    @Size(max = 120, message = "Full name cannot exceed 120 characters")
+    private String fullName;
 
     @Size(max = 120, message = "City cannot exceed 120 characters")
     private String city;
@@ -19,8 +20,14 @@ public class SetupProfileRequest {
     @Size(max = 500, message = "Walk bio cannot exceed 500 characters")
     private String walkBio;
 
+    @Size(max = 500, message = "Bio cannot exceed 500 characters")
+    private String bio;
+
     @Size(max = 2048, message = "Avatar cannot exceed 2048 characters")
     private String avatar;
+
+    @Size(max = 2048, message = "Avatar URL cannot exceed 2048 characters")
+    private String avatarUrl;
 
     private LocalDate dateOfBirth;
 
@@ -28,6 +35,12 @@ public class SetupProfileRequest {
     private String gender;
 
     private Boolean publicProfile;
+
+    @Size(max = 20, message = "Profile visibility cannot exceed 20 characters")
+    private String profileVisibility;
+
+    @Size(max = 20, message = "Profile mode cannot exceed 20 characters")
+    private String profileMode;
 
     // Public info visibility flag from FE.
     private Boolean publicInfo;
@@ -37,4 +50,6 @@ public class SetupProfileRequest {
     private List<String> walkVibes;
 
     private List<String> bestTimeToWalk;
+
+    private List<String> tags;
 }

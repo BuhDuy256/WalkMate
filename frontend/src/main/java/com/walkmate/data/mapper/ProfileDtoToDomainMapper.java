@@ -23,6 +23,8 @@ public class ProfileDtoToDomainMapper {
                 dto.getCity(),
                 dto.getAvatarUrl(),
                 dto.getBio(),
+                null,
+                null,
                 ProfileMode.fromCode(dto.getProfileMode()),
                 InfoVisibilityMode.fromCode(dto.getInfoVisibilityMode()),
                 tags,

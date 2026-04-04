@@ -1,5 +1,6 @@
 package com.walkmate.presentation.controller.profile;
 
+import com.walkmate.application.profile.ProfileSetupPersistenceService;
 import com.walkmate.application.profile.ProfileQueryService;
 import com.walkmate.domain.profile.Profile;
 import com.walkmate.domain.profile.ProfileTag;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,36 +26,17 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/profiles")
 public class ProfileController {
     private final ProfileQueryService profileQueryService;
+    private final ProfileSetupPersistenceService profileSetupPersistenceService;
 
-    public ProfileController(ProfileQueryService profileQueryService) {
+    public ProfileController(ProfileQueryService profileQueryService, ProfileSetupPersistenceService profileSetupPersistenceService) {
         this.profileQueryService = profileQueryService;
+        this.profileSetupPersistenceService = profileSetupPersistenceService;
     }
 
     @PutMapping("/setup")
     public ResponseEntity<ProfileSetupAckResponse> setupProfile(@Valid @RequestBody SetupProfileRequest request) {
-        // TEMPORARY MODE: only intake/validate payload from FE for Postman testing.
-        // TODO: Persist these fields to DB by mapping request -> domain model and calling
-        // profileCommandService.setupProfile(...) after DB schema is updated with date_of_birth/gender
-        // plus profile visibility flags/avatar and category-based tags
-        // (interests, walk_vibes, best_time_to_walk).
-        ProfileSetupAckResponse response = new ProfileSetupAckResponse(
-                true,
-                "Profile payload received successfully (not persisted yet)",
-                LocalDateTime.now(),
-                request.getName(),
-                request.getCity(),
-                request.getWalkBio(),
-                request.getAvatar(),
-                request.getDateOfBirth(),
-                request.getGender(),
-                request.getPublicProfile(),
-                request.getPublicInfo(),
-                request.getInterests(),
-                request.getWalkVibes(),
-                request.getBestTimeToWalk()
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        profileSetupPersistenceService.saveProfile(request);
+        return ResponseEntity.status(HttpStatus.OK).body(new ProfileSetupAckResponse(true, "Đã lưu thành công"));
     }
 
     @GetMapping("/{userId}")

@@ -3,6 +3,8 @@ package com.walkmate.ui.profile;
 import com.walkmate.domain.profile.InfoVisibilityMode;
 import com.walkmate.domain.profile.ProfileMode;
 
+import java.time.LocalDate;
+
 public interface ProfileUiEvent {
     class NameChanged implements ProfileUiEvent {
         private final String name;
@@ -37,6 +39,30 @@ public interface ProfileUiEvent {
 
         public String getBio() {
             return bio;
+        }
+    }
+
+    class DateOfBirthChanged implements ProfileUiEvent {
+        private final LocalDate dateOfBirth;
+
+        public DateOfBirthChanged(LocalDate dateOfBirth) {
+            this.dateOfBirth = dateOfBirth;
+        }
+
+        public LocalDate getDateOfBirth() {
+            return dateOfBirth;
+        }
+    }
+
+    class GenderChanged implements ProfileUiEvent {
+        private final String gender;
+
+        public GenderChanged(String gender) {
+            this.gender = gender;
+        }
+
+        public String getGender() {
+            return gender;
         }
     }
 

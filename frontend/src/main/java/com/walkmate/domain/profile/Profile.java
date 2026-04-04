@@ -1,5 +1,6 @@
 package com.walkmate.domain.profile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,6 +10,8 @@ public class Profile {
     private final String city;
     private final String avatarUrl;
     private final String bio;
+    private final LocalDate dateOfBirth;
+    private final String gender;
     private final ProfileMode profileMode;
     private final InfoVisibilityMode infoVisibilityMode;
     private final List<ProfileTag> tags;
@@ -21,6 +24,8 @@ public class Profile {
             String city,
             String avatarUrl,
             String bio,
+            LocalDate dateOfBirth,
+            String gender,
             ProfileMode profileMode,
             InfoVisibilityMode infoVisibilityMode,
             List<ProfileTag> tags,
@@ -32,6 +37,8 @@ public class Profile {
         this.city = city;
         this.avatarUrl = avatarUrl;
         this.bio = bio;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
         this.profileMode = profileMode;
         this.infoVisibilityMode = infoVisibilityMode;
         this.tags = tags;
@@ -57,6 +64,14 @@ public class Profile {
 
     public String getBio() {
         return bio;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
     }
 
     public ProfileMode getProfileMode() {
