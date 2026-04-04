@@ -26,7 +26,7 @@
                 android:id="@+id/btn_back"
                 android:layout_width="42dp"
                 android:layout_height="42dp"
-                android:src="@drawable/ic_arrow_back"
+                android:src="@drawable/ic_rating_arrow_back"
                 android:padding="8dp"
                 android:background="@drawable/bg_rating_chip_soft_beige"
                 android:contentDescription="Back"
@@ -76,7 +76,7 @@
                         android:id="@+id/iv_partner_avatar"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/avatar_placeholder"
+                        android:src="@drawable/rating_avatar_placeholder"
                         app:civ_border_width="0dp" />
 
                     <LinearLayout
@@ -113,7 +113,7 @@
                             <View
                                 android:layout_width="4dp"
                                 android:layout_height="4dp"
-                                android:background="@drawable/dot_divider"
+                                android:background="@drawable/bg_rating_dot_divider"
                                 android:layout_marginHorizontal="8dp" />
 
                             <TextView
@@ -127,7 +127,7 @@
                             <View
                                 android:layout_width="4dp"
                                 android:layout_height="4dp"
-                                android:background="@drawable/dot_divider"
+                                android:background="@drawable/bg_rating_dot_divider"
                                 android:layout_marginHorizontal="8dp" />
 
                             <TextView
@@ -222,7 +222,7 @@
                         android:id="@+id/star_1"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:src="@drawable/ic_star_filled"
+                        android:src="@drawable/ic_rating_star_filled"
                         android:padding="2dp"
                         android:contentDescription="Star 1" />
 
@@ -230,7 +230,7 @@
                         android:id="@+id/star_2"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:src="@drawable/ic_star_filled"
+                        android:src="@drawable/ic_rating_star_filled"
                         android:padding="2dp"
                         android:contentDescription="Star 2" />
 
@@ -238,7 +238,7 @@
                         android:id="@+id/star_3"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:src="@drawable/ic_star_filled"
+                        android:src="@drawable/ic_rating_star_filled"
                         android:padding="2dp"
                         android:contentDescription="Star 3" />
 
@@ -246,7 +246,7 @@
                         android:id="@+id/star_4"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:src="@drawable/ic_star_filled"
+                        android:src="@drawable/ic_rating_star_filled"
                         android:padding="2dp"
                         android:contentDescription="Star 4" />
 
@@ -254,7 +254,7 @@
                         android:id="@+id/star_5"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:src="@drawable/ic_star_outline"
+                        android:src="@drawable/ic_rating_star_outline"
                         android:padding="2dp"
                         android:contentDescription="Star 5" />
                 </LinearLayout>
@@ -476,7 +476,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_badge_walk" />
+                            android:src="@drawable/ic_rating_badge_walk" />
                     </FrameLayout>
 
                     <TextView
@@ -509,7 +509,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_badge_star" />
+                            android:src="@drawable/ic_rating_badge_star" />
                     </FrameLayout>
 
                     <TextView
@@ -542,7 +542,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_badge_group" />
+                            android:src="@drawable/ic_rating_badge_group" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -551,7 +551,7 @@
                             android:textSize="10sp"
                             android:textColor="#FFFFFF"
                             android:textStyle="bold"
-                            android:background="@drawable/bg_badge_count"
+                            android:background="@drawable/bg_rating_badge_count"
                             android:paddingHorizontal="6dp"
                             android:paddingVertical="2dp"
                             android:layout_gravity="top|end" />
@@ -588,7 +588,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_badge_plus" />
+                            android:src="@drawable/ic_rating_badge_plus" />
                     </FrameLayout>
 
                     <TextView
@@ -621,7 +621,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_badge_clock" />
+                            android:src="@drawable/ic_rating_badge_clock" />
                     </FrameLayout>
 
                     <TextView

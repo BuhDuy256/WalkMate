@@ -234,9 +234,9 @@ public class RatingActivity extends AppCompatActivity {
     private void renderStars(int selectedStars) {
         for (int i = 0; i < starViews.length; i++) {
             if (i < selectedStars) {
-                starViews[i].setImageResource(R.drawable.ic_star_filled);
+                starViews[i].setImageResource(R.drawable.ic_rating_star_filled);
             } else {
-                starViews[i].setImageResource(R.drawable.ic_star_outline);
+                starViews[i].setImageResource(R.drawable.ic_rating_star_outline);
             }
         }
     }
@@ -260,7 +260,7 @@ public class RatingActivity extends AppCompatActivity {
             chip.setChipStrokeWidth(0f);
             chip.setChipBackgroundColorResource(android.R.color.transparent);
             chip.setCloseIconVisible(tag.isSelected());
-            chip.setCloseIconResource(R.drawable.ic_star_filled);
+            chip.setCloseIconResource(R.drawable.ic_rating_star_filled);
             chip.setCloseIconSize(dpToPx(14));
             chip.setCloseIconTintResource(R.color.rating_accent_strong);
                 chip.setChipBackgroundColorResource(getTagBackgroundColor(tag.getCode(), tag.isSelected()));
