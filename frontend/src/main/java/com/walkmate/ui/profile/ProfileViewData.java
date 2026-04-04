@@ -6,6 +6,7 @@ import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileTag;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -47,9 +48,20 @@ public class ProfileViewData {
     }
 
     public static ProfileViewData createInitial(UUID userId) {
+        List<String> defaultSelectedCodes = Arrays.asList(
+                "PET_WALKING",
+                "NATURE_LOVER",
+                "QUIET_WALK",
+                "MORNING_BIRD"
+        );
         List<TagViewData> defaultTags = new ArrayList<>();
         for (ProfileTag tag : ProfileTag.values()) {
-            defaultTags.add(new TagViewData(tag.name(), tag.getCategory(), tag.getDisplayName(), false));
+            defaultTags.add(new TagViewData(
+                    tag.name(),
+                    tag.getCategory(),
+                    tag.getDisplayName(),
+                    defaultSelectedCodes.contains(tag.name())
+            ));
         }
         return new ProfileViewData(
                 userId,

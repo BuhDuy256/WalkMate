@@ -2,19 +2,63 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="profile_bg">#F5F0E8</color>
-    <color name="profile_card">#FFFDF9</color>
-    <color name="profile_stroke">#F0E6D7</color>
-    <color name="profile_input_bg">#F4EEE4</color>
-    <color name="profile_text_primary">#5A3D2B</color>
-    <color name="profile_text_muted">#8B7A6B</color>
-    <color name="profile_accent">#F58A45</color>
-    <color name="profile_accent_dark">#D5672D</color>
 
-    <color name="profile_chip_interest_checked">#FFDAB9</color>
-    <color name="profile_chip_interest_unchecked">#FFF2E6</color>
-    <color name="profile_chip_vibe_checked">#CFE9FF</color>
-    <color name="profile_chip_vibe_unchecked">#EAF4FF</color>
-    <color name="profile_chip_time_checked">#FFEAA4</color>
-    <color name="profile_chip_time_unchecked">#FFF5D6</color>
+    <color name="profile_bg">#FBF4EC</color>
+    <color name="profile_card">#FFFDF8</color>
+    <color name="profile_stroke">#F2E8DB</color>
+    <color name="profile_input_bg">#F8EFE3</color>
+
+    <color name="profile_text_primary">#4E3526</color>
+    <color name="profile_text_muted">#8A7464</color>
+    <color name="profile_accent">#FF8A5B</color>
+    <color name="profile_accent_dark">#E56D3E</color>
+
+    <color name="profile_badge_orange_start">#FFA973</color>
+    <color name="profile_badge_orange_end">#FF7A53</color>
+
+    <color name="profile_chip_text_brown">#8D5B37</color>
+    <color name="profile_chip_text_blue">#2E84C8</color>
+    <color name="profile_chip_text_purple">#6E53CF</color>
+    <color name="profile_chip_text_green">#2E9C6E</color>
+    <color name="profile_chip_text_red">#C84F4F</color>
+
+    <color name="profile_chip_orange_unchecked">#FFE5D5</color>
+    <color name="profile_chip_orange_checked_start">#FFB38D</color>
+    <color name="profile_chip_orange_checked_end">#FF8F68</color>
+
+    <color name="profile_chip_purple_unchecked">#EFE6FF</color>
+    <color name="profile_chip_purple_checked_start">#C9B0FF</color>
+    <color name="profile_chip_purple_checked_end">#AC8CFF</color>
+
+    <color name="profile_chip_blue_unchecked">#DDF1FF</color>
+    <color name="profile_chip_blue_checked_start">#7ACDFD</color>
+    <color name="profile_chip_blue_checked_end">#4EB4F3</color>
+
+    <color name="profile_chip_mint_unchecked">#DDF8E9</color>
+    <color name="profile_chip_mint_checked_start">#86E8B2</color>
+    <color name="profile_chip_mint_checked_end">#62D69A</color>
+
+    <color name="profile_chip_yellow_unchecked">#FFF5CE</color>
+    <color name="profile_chip_yellow_checked_start">#FFD671</color>
+    <color name="profile_chip_yellow_checked_end">#FFC04E</color>
+
+    <color name="profile_chip_pink_unchecked">#FFDDE8</color>
+    <color name="profile_chip_pink_checked_start">#FFA9C7</color>
+    <color name="profile_chip_pink_checked_end">#FF8BB3</color>
+
+    <color name="profile_chip_cream_unchecked">#F8EFE3</color>
+    <color name="profile_chip_cream_checked_start">#F6D9B7</color>
+    <color name="profile_chip_cream_checked_end">#EDC89B</color>
+
+    <color name="profile_chip_red_unchecked">#FFE7E5</color>
+    <color name="profile_chip_red_checked_start">#FFB1A6</color>
+    <color name="profile_chip_red_checked_end">#FF8E84</color>
+
+    <color name="profile_chip_lavender_unchecked">#EEE5FF</color>
+    <color name="profile_chip_lavender_checked_start">#D2BEFF</color>
+    <color name="profile_chip_lavender_checked_end">#BDA0FF</color>
+
+    <color name="profile_chip_night_unchecked">#E7E8FF</color>
+    <color name="profile_chip_night_checked_start">#A9B2FF</color>
+    <color name="profile_chip_night_checked_end">#8F9BFF</color>
 </resources>
