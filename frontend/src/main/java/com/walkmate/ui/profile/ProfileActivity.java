@@ -311,7 +311,7 @@ public class ProfileActivity extends AppCompatActivity {
             chip.setBackgroundResource(style.backgroundDrawableRes);
 
             chip.setCloseIconVisible(tag.isSelected());
-            chip.setCloseIconResource(R.drawable.ic_chip_check_bold_16);
+            chip.setCloseIconResource(R.drawable.profile_ic_chip_check_bold_16);
             chip.setCloseIconTintResource(style.textColorRes);
             chip.setCloseIconSize(dpToPx(16));
             chip.setCloseIconStartPadding(dpToPx(8));
