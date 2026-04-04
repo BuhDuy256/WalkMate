@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.app.DatePickerDialog;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -29,7 +32,9 @@ import com.walkmate.domain.profile.InfoVisibilityMode;
 import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileRepository;
 import com.walkmate.domain.profile.ProfileService;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -41,6 +46,8 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageView ivAvatarCamera;
     private TextInputEditText etDisplayName;
     private TextInputEditText etCity;
+    private TextInputEditText etDateOfBirth;
+    private AutoCompleteTextView acGender;
     private TextInputEditText etBio;
     private TextView tvBioCount;
     private MaterialSwitch swProfileMode;
@@ -75,6 +82,8 @@ public class ProfileActivity extends AppCompatActivity {
         ivAvatarCamera = findViewById(R.id.iv_avatar_camera);
         etDisplayName = findViewById(R.id.et_display_name);
         etCity = findViewById(R.id.et_city);
+        etDateOfBirth = findViewById(R.id.et_date_of_birth);
+        acGender = findViewById(R.id.ac_gender);
         etBio = findViewById(R.id.et_bio);
         tvBioCount = findViewById(R.id.tv_bio_count);
         swProfileMode = findViewById(R.id.sw_profile_mode);
@@ -142,6 +151,9 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
+        setupDateOfBirthPicker();
+        setupGenderDropdown();
+
         etDisplayName.addTextChangedListener(new SimpleTextWatcher(s ->
                 viewModel.onEvent(new ProfileUiEvent.NameChanged(s))
         ));
@@ -168,6 +180,48 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         btnSave.setOnClickListener(v -> viewModel.onEvent(new ProfileUiEvent.SaveClicked()));
+    }
+
+    private void setupDateOfBirthPicker() {
+        if (etDateOfBirth == null) {
+            return;
+        }
+
+        View.OnClickListener openPicker = v -> {
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog dialog = new DatePickerDialog(
+                    ProfileActivity.this,
+                    (view, year, month, dayOfMonth) -> etDateOfBirth.setText(String.format(Locale.getDefault(), "%02d/%02d/%04d", dayOfMonth, month + 1, year)),
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+            );
+            dialog.show();
+        };
+
+        etDateOfBirth.setOnClickListener(openPicker);
+        etDateOfBirth.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                openPicker.onClick(v);
+            }
+        });
+    }
+
+    private void setupGenderDropdown() {
+        if (acGender == null) {
+            return;
+        }
+
+        String[] genderOptions = new String[]{"Female", "Male"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, genderOptions);
+        acGender.setAdapter(adapter);
+        acGender.setThreshold(0);
+        acGender.setOnClickListener(v -> acGender.showDropDown());
+        acGender.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                acGender.showDropDown();
+            }
+        });
     }
 
     private void observeState() {

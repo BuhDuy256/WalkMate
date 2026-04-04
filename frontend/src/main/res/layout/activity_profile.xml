@@ -123,6 +123,67 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
+                    android:text="DATE OF BIRTH"
+                    android:textColor="@color/profile_text_primary"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:hintEnabled="false"
+                    app:boxBackgroundColor="@color/profile_input_bg"
+                    app:boxBackgroundMode="filled"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusTopStart="16dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_date_of_birth"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:hint="Select your date of birth"
+                        android:inputType="none"
+                        android:textColor="@color/profile_text_primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="GENDER"
+                    android:textColor="@color/profile_text_primary"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:hintEnabled="false"
+                    app:endIconMode="dropdown_menu"
+                    app:boxBackgroundColor="@color/profile_input_bg"
+                    app:boxBackgroundMode="filled"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusTopStart="16dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/ac_gender"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Select gender"
+                        android:inputType="none"
+                        android:textColor="@color/profile_text_primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
                     android:text="CITY / NEIGHBORHOOD"
                     android:textColor="@color/profile_text_primary"
                     android:textStyle="bold" />
