@@ -8,7 +8,7 @@
 | ---------------- | ---------------------------------------------- |
 | **Group ID**     | Group 09                                       |
 | **Project Name** | WalkMate                                       |
-| **Date Range**   | YYYY-MM-DD – YYYY-MM-DD _(Monday to Saturday)_ |
+| **Date Range**   | 2026-03-30 – 2026-04-04 _(Monday to Saturday)_ |
 
 ---
 
@@ -17,21 +17,23 @@
 ### 23127179 – Nguyễn Bảo Duy
 
 - Implement push notification => Finish frontend, backend just set up FCM.
-- Implement invitation management => Finish frontend, backend didn't handle failure cases in state transition of domain object.  
-- **Evidence:** 
+- Implement invitation management => Finish frontend, backend didn't handle failure cases in state transition of domain object.
+- **Evidence:**
     - [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-30?atlOrigin=eyJpIjoiN2MwMzYzMjIwYzdhNDMxYmEzOGNmMjNmNjJlY2ZiZWMiLCJwIjoiaiJ9)
     - [Github](https://github.com/BuhDuy256/WalkMate/commits/implement/realtime/)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Implement chatroom domain => Pnly finish frontend, backend is not implemented
+- **Evidence:**
+    - [Jira Task](https://duybaonguyendev.atlassian.net/browse/KAN-29)
+    - [Github](https://github.com/BuhDuy256/WalkMate/tree/feature/chatroom)
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
-
+- Create presentation slide for the seminar
+- **Evidence:** 
+    - [Canva](https://www.canva.com/design/DAHFhLsqK48/fl1szqHMhPuPEFm1HXhpcg/edit)
 ### 23127539 – Nguyễn Thanh Tiến
 
 - Task 1: Implement Profile Flow
@@ -50,18 +52,17 @@
 ## AI Usage Declaration
 
 ### 23127179 – Nguyễn Bảo Duy
-
-- I removed commits to clean workspace. I don't have evidence. I just prompts to ask about the feature flow of push notification.    
+- I removed commits to clean workspace. I don't have evidence. I just prompts to ask about the feature flow of push notification.
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: bạn hãy xem domain chatroom (session 9) nó có relate đến những cái domain nào khác không
+- Prompt 2: tôi đang làm tính năng chat message cho app walkmate của tôi, bạn hãy đọc các code base và rút ra các phần cần reuse như button, color, theme, size, font, ... bạn có thể tự rút ra thêm. Hãy cho tôi biết những tư duy đúng, tư duy sai. bạn có thể hỏi ngược lại tôi và đề xuất cải thiện để có thể hướng tới UX tốt
 
-### 23127438 – Đặng Trường Nguyên
-
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+cho tôi hỏi, cái prompt trên nó có tối ưu để có thể cho tôi một thiết kế tốt, nâng cấp về tư duy hay là đạt được kết quả đúng ý và tối ưu không
+- **Evidence:**
+    - [Gemini](https://gemini.google.com/share/854de9682a6c)
+    - [Gemini](https://gemini.google.com/share/afced4efc7f3)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
@@ -72,7 +73,7 @@
 
 ## Tasks Planned for Next Week
 
-- Didn't have plan, may be tommorrow. 
+- Didn't have plan, may be tommorrow.
 
 ---
 
@@ -82,5 +83,3 @@
 | --- | ------------------------------------------------------------------------ | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Having trouble finding the right library to upload avatars to Cloudinary | Nguyễn Thanh Tiến | Pending | Not resolved yet. I am still having trouble identifying the correct library/package to handle avatar uploads to Cloudinary for this project. Because of that, the implementation has not been completed yet. |
 | 2   |                                                                          |                   |         |                                                                                                                                                                                                              |
-
-_(Remove this table if there are no issues this week)_
