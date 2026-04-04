@@ -1,13 +1,13 @@
 # WalkMate AI Developer Guidelines
 
 ## 📚 Project Architecture & Context (Single Source of Truth)
-**CRITICAL INSTRUCTION:** Before implementing new features, modifying existing logic, or when you need to understand the codebase, you **MUST** read the relevant documentation located in `docs/dev/single-source-of-truth/`. This folder is the absolute source of truth for the project.
+**CRITICAL INSTRUCTION:** Before implementing new features, modifying existing logic, or when you need to understand the codebase, you **MUST** read the relevant documentation located in `docs/single-source-of-truth/`. This folder is the absolute source of truth for the project.
 
-* **Architecture & Flow:** `docs/dev/single-source-of-truth/architecture/`
-    * Read `Frontend_V1.md` for UI/Client-side structures.
-    * Read `Backend_V1.md` and `Backend_Flow_V1.md` for server-side logic, API structure, and data flow.
-* **Features List:** `docs/dev/single-source-of-truth/features-list/` (Consult these to understand feature requirements and scoping).
-* **App Lifecycle:** `docs/dev/single-source-of-truth/lifecycle/` (Consult for state management and intent-proposal-session flows).
+* **Architecture & Flow:** `docs/single-source-of-truth/architecture/`
+    * Read `Frontend_VN.md` for UI/Client-side structures.
+    * Read `Backend_VN.md` and `Backend_Flow_VN.md` for server-side logic, API structure, and data flow.
+* **Features List:** `docs/single-source-of-truth/features-list/` (Consult these to understand feature requirements and scoping).
+* **App Lifecycle:** `docs/single-source-of-truth/lifecycle/` (Consult for state management and intent-proposal-session flows).
 
 ---
 
