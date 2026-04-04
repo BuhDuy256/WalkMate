@@ -24,8 +24,6 @@ import java.util.UUID;
 
 @Service
 public class ProfileSetupPersistenceService {
-    private static final UUID HARD_CODED_USER_ID = UUID.fromString("d70c0cfd-ee5c-48d7-8e4e-d012573ac569");
-
     private final DataSource dataSource;
     private final ObjectMapper objectMapper;
 
@@ -34,12 +32,12 @@ public class ProfileSetupPersistenceService {
         this.objectMapper = objectMapper;
     }
 
-    public void saveProfile(SetupProfileRequest request) {
+    public void saveProfile(UUID userId, SetupProfileRequest request) {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
-            ensureUserAccountExists(conn, HARD_CODED_USER_ID);
-            upsertUserProfile(conn, request);
+            ensureUserAccountExists(conn, userId);
+            upsertUserProfile(conn, userId, request);
 
             conn.commit();
         } catch (SQLException e) {
@@ -118,7 +116,7 @@ public class ProfileSetupPersistenceService {
         }
     }
 
-    private void upsertUserProfile(Connection conn, SetupProfileRequest request) throws SQLException {
+    private void upsertUserProfile(Connection conn, UUID userId, SetupProfileRequest request) throws SQLException {
         String resolvedName = resolveName(request);
         if (resolvedName == null || resolvedName.isBlank()) {
             throw new IllegalArgumentException("Name is required");
@@ -156,7 +154,7 @@ public class ProfileSetupPersistenceService {
                 """;
 
         try (PreparedStatement stmt = conn.prepareStatement(upsertSql)) {
-            stmt.setObject(1, HARD_CODED_USER_ID);
+            stmt.setObject(1, userId);
             stmt.setString(2, resolvedName);
 
             if (request.getGender() == null || request.getGender().isBlank()) {

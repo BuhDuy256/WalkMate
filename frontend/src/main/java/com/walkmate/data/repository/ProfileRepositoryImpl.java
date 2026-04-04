@@ -34,7 +34,7 @@ public class ProfileRepositoryImpl implements ProfileRepository {
     @Override
     public Profile setupProfile(Profile profile) throws ProfileException {
         SetupProfileRequestDto requestDto = domainToDtoMapper.mapToDto(profile);
-        Call<ProfileSetupAckResponseDto> call = apiService.setupProfile(requestDto);
+        Call<ProfileSetupAckResponseDto> call = apiService.setupProfile(profile.getUserId(), requestDto);
 
         try {
             Response<ProfileSetupAckResponseDto> response = call.execute();

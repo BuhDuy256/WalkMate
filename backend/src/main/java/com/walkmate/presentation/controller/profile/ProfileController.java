@@ -8,8 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,9 +26,12 @@ public class ProfileController {
         this.profileSetupPersistenceService = profileSetupPersistenceService;
     }
 
-    @PutMapping("/setup")
-    public ResponseEntity<ProfileSetupAckResponse> setupProfile(@Valid @RequestBody SetupProfileRequest request) {
-        profileSetupPersistenceService.saveProfile(request);
+    @PatchMapping("/{userId}")
+    public ResponseEntity<ProfileSetupAckResponse> setupProfile(
+            @PathVariable UUID userId,
+            @Valid @RequestBody SetupProfileRequest request
+    ) {
+        profileSetupPersistenceService.saveProfile(userId, request);
         return ResponseEntity.status(HttpStatus.OK).body(new ProfileSetupAckResponse(true, "Đã lưu thành công"));
     }
 
