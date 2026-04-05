@@ -6,6 +6,7 @@ import android.os.Looper;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.core.event.AppEvent;
@@ -19,8 +20,6 @@ import com.walkmate.ui.explore.ExploreUiState.AppState;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * ViewModel for the Explore tab.
@@ -30,11 +29,12 @@ import java.util.concurrent.Executors;
  * to the main thread via LiveData.postValue().
  *
  * Phase 4 additions:
- *  - Stores activeIntentId to correlate FCM match events with the current scan.
- *  - 10-second Handler timeout triggers a "Still looking…" dialog signal.
- *  - Observes AppEventBus for MATCH_FOUND events (using observeForever so it
- *    works regardless of which Fragment is currently visible).
- *  - stopSearching() cancels the intent on the backend before resetting to WELCOME.
+ * - Stores openIntentId to correlate FCM match events with the current scan.
+ * - 10-second Handler timeout triggers a "Still looking…" dialog signal.
+ * - Observes AppEventBus for MATCH_FOUND events (using observeForever so it
+ * works regardless of which Fragment is currently visible).
+ * - stopSearching() cancels the intent on the backend before resetting to
+ * WELCOME.
  */
 public class ExploreViewModel extends ViewModel {
 
@@ -42,40 +42,44 @@ public class ExploreViewModel extends ViewModel {
 
     private final HotspotRepository hotspotRepository;
     private final WalkIntentRepository intentRepository;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final SavedStateHandle savedState;
 
-    private final MutableLiveData<ExploreUiState> uiState =
-            new MutableLiveData<>(ExploreUiState.initial());
+    private static final String KEY_OPEN_INTENT_ID = "openIntentId";
 
-    // ── Scanning lifecycle ────────────────────────────────────────────────
-    private String activeIntentId = null;
+    private final MutableLiveData<ExploreUiState> uiState = new MutableLiveData<>(ExploreUiState.initial());
 
     private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
 
     private final Runnable timeoutRunnable = () -> {
-        if (current().getAppState() == AppState.SCANNING) {
+        // Double-check we're still scanning and haven't already matched (Bug 5)
+        if (current().getAppState() == AppState.SCANNING && getOpenIntentId() != null) {
             post(current().withScanTimedOut(true));
         }
     };
 
     // ── FCM observer ─────────────────────────────────────────────────────
     private final Observer<AppEvent> appEventObserver = event -> {
-        if (event == null) return;
+        if (event == null)
+            return;
         if (event.type == AppEvent.Type.MATCH_FOUND
                 && event.intentId != null
-                && event.intentId.equals(activeIntentId)) {
+                && event.intentId.equals(getOpenIntentId())) {
             cancelScanningTimeout();
+            setOpenIntentId(null); // Bug 4: clear session ID after match
             post(current().withMatchFound(event.proposalId));
             AppEventBus.get().consumeEvent();
         }
     };
 
     public ExploreViewModel(HotspotRepository hotspotRepository,
-                            WalkIntentRepository intentRepository) {
+            WalkIntentRepository intentRepository,
+            SavedStateHandle savedState) {
         this.hotspotRepository = hotspotRepository;
-        this.intentRepository  = intentRepository;
+        this.intentRepository = intentRepository;
+        this.savedState = savedState;
         AppEventBus.get().observe().observeForever(appEventObserver);
-        loadHotspots();
+        // Bug 7: loadHotspots() moved to Fragment.onViewCreated() to avoid
+        // emitting before the observer is attached on first launch.
     }
 
     public LiveData<ExploreUiState> getUiState() {
@@ -92,20 +96,26 @@ public class ExploreViewModel extends ViewModel {
         hotspotRepository.getHotspots(new DomainCallback<List<Hotspot>>() {
             @Override
             public void onSuccess(List<Hotspot> hotspots) {
-                post(new ExploreUiState(false, hotspots, null, AppState.WELCOME, null));
+                // Bug 1: preserve AppState and selectedHotspot instead of resetting
+                ExploreUiState s = current();
+                post(new ExploreUiState(false, hotspots,
+                        s.getSelectedHotspot(), s.getAppState(), null));
             }
 
             @Override
             public void onError(Exception error) {
-                post(new ExploreUiState(false, current().getHotspots(), null,
-                        AppState.WELCOME, error.getMessage()));
+                // Bug 1: same — preserve AppState and selectedHotspot on error
+                ExploreUiState s = current();
+                post(new ExploreUiState(false, s.getHotspots(),
+                        s.getSelectedHotspot(), s.getAppState(), error.getMessage()));
             }
         });
     }
 
     /**
      * User tapped a hotspot marker.
-     * Transitions directly to SETUP (skipping the old HOTSPOT_SELECTED CTA-card step).
+     * Transitions directly to SETUP (skipping the old HOTSPOT_SELECTED CTA-card
+     * step).
      */
     public void selectHotspot(String hotspotId) {
         ExploreUiState s = current();
@@ -116,8 +126,11 @@ public class ExploreViewModel extends ViewModel {
                 break;
             }
         }
-        if (found == null) return;
-        post(new ExploreUiState(false, s.getHotspots(), found, AppState.SETUP, null));
+        if (found == null)
+            return;
+        // Bug 2: preserve filteredHotspots so an active search isn't wiped
+        post(new ExploreUiState(false, s.getHotspots(), found, AppState.SETUP, null)
+                .withFilteredHotspots(s.getFilteredHotspots()));
     }
 
     /**
@@ -135,7 +148,8 @@ public class ExploreViewModel extends ViewModel {
         String lower = query.toLowerCase();
         List<Hotspot> filtered = new ArrayList<>();
         for (Hotspot h : all) {
-            if (h.getName().toLowerCase().contains(lower)) filtered.add(h);
+            if (h.getName().toLowerCase().contains(lower))
+                filtered.add(h);
         }
         post(s.withFilteredHotspots(filtered));
     }
@@ -146,8 +160,11 @@ public class ExploreViewModel extends ViewModel {
      */
     public void closeSetup() {
         ExploreUiState s = current();
-        if (s.getAppState() != AppState.SETUP) return;
-        post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null));
+        if (s.getAppState() != AppState.SETUP)
+            return;
+        // Bug 2: preserve filteredHotspots
+        post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null)
+                .withFilteredHotspots(s.getFilteredHotspots()));
     }
 
     /**
@@ -156,7 +173,7 @@ public class ExploreViewModel extends ViewModel {
      * then moves to SCANNING state.
      */
     public void onIntentCreated(WalkIntent intent) {
-        activeIntentId = intent.getId();
+        setOpenIntentId(intent.getId()); // Bug 3: persisted in SavedStateHandle
         ExploreUiState s = current();
         post(new ExploreUiState(false, s.getHotspots(), s.getSelectedHotspot(),
                 AppState.SCANNING, null));
@@ -165,16 +182,23 @@ public class ExploreViewModel extends ViewModel {
 
     /**
      * User tapped "Stop Searching".
-     * Cancels the timeout, sends a cancel request to the backend, then resets to WELCOME.
+     * Cancels the timeout, sends a cancel request to the backend, then resets to
+     * WELCOME.
      */
     public void stopSearching() {
         cancelScanningTimeout();
-        if (activeIntentId != null) {
-            final String idToCancel = activeIntentId;
-            activeIntentId = null;
+        String currentIntentId = getOpenIntentId();
+        if (currentIntentId != null) {
+            final String idToCancel = currentIntentId;
+            setOpenIntentId(null);
             intentRepository.cancelIntent(idToCancel, new DomainCallback<Void>() {
-                @Override public void onSuccess(Void result) { /* no-op */ }
-                @Override public void onError(Exception error) { /* silent; user already left scanning */ }
+                @Override
+                public void onSuccess(Void result) {
+                    /* no-op */ }
+
+                @Override
+                public void onError(Exception error) {
+                    /* silent; user already left scanning */ }
             });
         }
         resetToWelcome();
@@ -185,7 +209,9 @@ public class ExploreViewModel extends ViewModel {
      */
     public void resetToWelcome() {
         ExploreUiState s = current();
-        post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null));
+        // Bug 2: preserve filteredHotspots
+        post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null)
+                .withFilteredHotspots(s.getFilteredHotspots()));
     }
 
     /**
@@ -197,20 +223,34 @@ public class ExploreViewModel extends ViewModel {
     }
 
     /**
-     * Called by ExploreFragment after it has handled the matchFoundProposalId navigation.
+     * Called by ExploreFragment after it has handled the matchFoundProposalId
+     * navigation.
      * Clears the signal so it is not re-delivered on rotation.
      */
     public void consumeMatchFound() {
         ExploreUiState s = current();
-        if (s.getMatchFoundProposalId() == null) return;
+        if (s.getMatchFoundProposalId() == null)
+            return;
+        // Bug 2: preserve filteredHotspots
         post(new ExploreUiState(false, s.getHotspots(), s.getSelectedHotspot(),
-                AppState.SCANNING, null));
+                AppState.SCANNING, null)
+                .withFilteredHotspots(s.getFilteredHotspots()));
     }
 
     public void consumeError() {
         ExploreUiState s = current();
         post(new ExploreUiState(s.isLoading(), s.getHotspots(), s.getSelectedHotspot(),
                 s.getAppState(), null));
+    }
+
+    // ── SavedStateHandle helpers (Bug 3: survive process death) ──────────
+
+    private String getOpenIntentId() {
+        return savedState.get(KEY_OPEN_INTENT_ID);
+    }
+
+    private void setOpenIntentId(String id) {
+        savedState.set(KEY_OPEN_INTENT_ID, id);
     }
 
     // ── Timeout helpers ───────────────────────────────────────────────────
@@ -231,15 +271,19 @@ public class ExploreViewModel extends ViewModel {
         return s != null ? s : ExploreUiState.initial();
     }
 
+    // Bug 7: use setValue on main thread to avoid skipping the first emission
     private void post(ExploreUiState state) {
-        uiState.postValue(state);
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            uiState.setValue(state);
+        } else {
+            uiState.postValue(state);
+        }
     }
 
     @Override
     protected void onCleared() {
         cancelScanningTimeout();
         AppEventBus.get().observe().removeObserver(appEventObserver);
-        executor.shutdownNow();
         super.onCleared();
     }
 }

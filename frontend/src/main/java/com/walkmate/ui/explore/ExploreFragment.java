@@ -150,6 +150,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         setupCreateIntentListeners();
         setupListeners();
         setupBackPressHandling();
+        // Bug 7: load here (not in ViewModel constructor) so the observer is
+        // already attached; guard prevents redundant reload on config change.
+        if (viewModel.getUiState().getValue().getHotspots().isEmpty()) {
+            viewModel.loadHotspots();
+        }
     }
 
     @Override
@@ -203,7 +208,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private void setupViewModel() {
         viewModel = new ViewModelProvider(
             this,
-            new ExploreViewModelFactory(requireContext())
+            new ExploreViewModelFactory(this, getArguments(), requireContext())
         ).get(ExploreViewModel.class);
         viewModel
             .getUiState()
