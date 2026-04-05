@@ -53,14 +53,13 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        fieldEmail    = findViewById(R.id.field_email);
+        fieldEmail = findViewById(R.id.field_email);
         fieldPassword = findViewById(R.id.field_password);
-        btnSignIn     = findViewById(R.id.btn_signin_action);
+        btnSignIn = findViewById(R.id.btn_signin_action);
     }
 
     private void initClickListeners() {
-        btnSignIn.setOnClickListener(v ->
-                loginViewModel.login(fieldEmail.getText(), fieldPassword.getText()));
+        btnSignIn.setOnClickListener(v -> loginViewModel.login(fieldEmail.getText(), fieldPassword.getText()));
 
         TextView tvForgotPassword = findViewById(R.id.tv_forgot_password);
         tvForgotPassword.setOnClickListener(v -> {
@@ -68,13 +67,13 @@ public class AuthActivity extends AppCompatActivity {
         });
 
         TextView tvCreateAccount = findViewById(R.id.tv_create_account);
-        tvCreateAccount.setOnClickListener(v ->
-                startActivity(new Intent(this, RegisterActivity.class)));
+        tvCreateAccount.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
     }
 
     private void observeUiState() {
         loginViewModel.getUiState().observe(this, state -> {
-            if (state == null) return;
+            if (state == null)
+                return;
 
             btnSignIn.setLoading(state.isLoading());
 
