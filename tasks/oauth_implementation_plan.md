@@ -1,7 +1,7 @@
 # OAuth Google Sign-In — Master Implementation Plan
 **Project:** WalkMate Android  
 **Date:** 2026-04-05  
-**Status:** Planning Complete — Awaiting Execution
+**Status:** Phase 2 Complete — Awaiting Phase 3 Execution
 
 ---
 
@@ -46,7 +46,7 @@ New Google users get a `user_profile` row auto-created silently using:
 | **1 — Provider Setup** | Enable Google Sign-In in Firebase Console | Turn on Google as an auth provider under Authentication → Sign-in method | High |
 | **1 — Provider Setup** | Register SHA-1 fingerprints in Firebase | Add debug + release SHA-1 keystores to Firebase project settings so Android client is trusted | High |
 | **1 — Provider Setup** | Verify `google-services.json` is up to date | Re-download after enabling Google Sign-In; the `client_id` (OAuth client) must be present | High |
-| **2 — Database** | **Migration V4 — `V4__add_oauth_support.sql`** | **`ALTER TYPE auth_provider ADD VALUE 'GOOGLE'` + `provider_subject varchar` column + partial unique index on `provider_subject WHERE provider_subject IS NOT NULL`** | High |
+| **2 — Database ✅** | **Migration V4 — `V4__add_oauth_support.sql`** | **`ALTER TYPE auth_provider ADD VALUE 'GOOGLE'` + `provider_subject varchar` column + partial unique index on `provider_subject WHERE provider_subject IS NOT NULL`** | High |
 | **3 — Backend: Domain** | **`AuthProvider.java` — add `GOOGLE` value** | **Gap #2: Enum currently only has `LOCAL`; `AuthProvider.valueOf()` will throw on any DB row with `GOOGLE`** | High |
 | **3 — Backend: Domain** | **`User.java` — add `providerSubject` field + new factories** | **Gap #3/4: Add field, update rehydration constructor, add `registerWithGoogle(email, name, providerSubject)` factory, add `linkGoogleAccount(providerSubject)` method for A2 merge** | High |
 | **3 — Backend: Domain** | **`UserRepository.java` — add `findByProviderSubject(String)`** | **Gap #4: Domain interface contract for Google `sub`-based lookup needed by A2 merge strategy** | High |
