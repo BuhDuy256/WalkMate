@@ -1,0 +1,22 @@
+{
+  "repoId": "f39c6539-89f5-475f-bef0-fc261199755a",
+  "repoName": "WalkMate",
+  "server": "https://api.grapuco.com",
+  "language": "kotlin",
+  "features": {
+    "embeddings": true,
+    "dataFlowAnalysis": true
+  },
+  "ignore": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".git",
+    ".grapuco",
+    "__pycache__",
+    "vendor",
+    "target",
+    "build"
+  ],
+  "lastPush": "2026-04-05T08:50:07.649Z"
+}
