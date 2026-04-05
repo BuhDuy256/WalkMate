@@ -15,8 +15,7 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * ViewModel for the Home Dashboard.
@@ -33,7 +32,6 @@ import java.util.concurrent.Executors;
 public class HomeViewModel extends ViewModel {
 
     private final MutableLiveData<HomeDashboardUiState> uiState = new MutableLiveData<>();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final WalkSessionRepository sessionRepo;
     private final UserRepository userRepo;
@@ -61,26 +59,44 @@ public class HomeViewModel extends ViewModel {
 
     /**
      * Triggers a full dashboard data load.
-     * Safe to call multiple times (e.g., on resume). Each call posts a fresh
-     * loading state before fetching, preventing stale data from showing.
+     * Profile and sessions are fetched in parallel; notifications are chained
+     * only after both complete (since they are independent of each other).
      */
     public void loadDashboard() {
         uiState.postValue(HomeDashboardUiState.loading());
 
-        // Fetch the user profile to get the greeting name from the API.
-        profileRepo.getMyProfile(new DomainCallback<UserProfile>() {
-            @Override
-            public void onSuccess(UserProfile profile) {
-                cachedGreetingName = profile.getFullName();
-                loadSessions();
-            }
+        final String[] nameHolder = {null};
+        final List<WalkSession>[] sessionsHolder = new List[]{null};
+        final AtomicInteger doneCount = new AtomicInteger(0);
 
-            @Override
-            public void onError(Exception error) {
-                // Profile fetch failed — continue loading sessions with a
-                // fallback greeting name. The dashboard is still useful.
-                cachedGreetingName = null;
-                loadSessions();
+        // Called by whichever of the two parallel callbacks finishes last.
+        Runnable checkAllDone = () -> {
+            if (doneCount.incrementAndGet() == 2) {
+                cachedGreetingName = nameHolder[0];
+                loadNotificationsAndPublish(buildSessionSnapshot(sessionsHolder[0]));
+            }
+        };
+
+        // Fire both calls without waiting for each other.
+        profileRepo.getMyProfile(new DomainCallback<UserProfile>() {
+            @Override public void onSuccess(UserProfile profile) {
+                nameHolder[0] = profile.getFullName();
+                checkAllDone.run();
+            }
+            @Override public void onError(Exception error) {
+                // Profile failure is non-fatal — dashboard renders with fallback name.
+                checkAllDone.run();
+            }
+        });
+
+        sessionRepo.getActiveSessions(new DomainCallback<List<WalkSession>>() {
+            @Override public void onSuccess(List<WalkSession> sessions) {
+                sessionsHolder[0] = sessions;
+                checkAllDone.run();
+            }
+            @Override public void onError(Exception error) {
+                // Sessions failure is non-fatal — session card simply hidden.
+                checkAllDone.run();
             }
         });
     }
@@ -96,31 +112,7 @@ public class HomeViewModel extends ViewModel {
         // For Phase B this is a no-op; the Fragment handles it directly.
     }
 
-    @Override
-    protected void onCleared() {
-        executor.shutdown();
-    }
-
     // ── Private helpers ───────────────────────────────────────────────────────
-
-    private void loadSessions() {
-        sessionRepo.getActiveSessions(new DomainCallback<List<WalkSession>>() {
-            @Override
-            public void onSuccess(List<WalkSession> sessions) {
-                HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot =
-                        buildSessionSnapshot(sessions);
-                loadNotificationsAndPublish(sessionSnapshot);
-            }
-
-            @Override
-            public void onError(Exception error) {
-                uiState.postValue(new HomeDashboardUiState(
-                        false, cachedGreetingName, "Ho Chi Minh City", false,
-                        0, 7, 0, null, null,
-                        0.0, 0, error.getMessage()));
-            }
-        });
-    }
 
     private void loadNotificationsAndPublish(
             HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot) {

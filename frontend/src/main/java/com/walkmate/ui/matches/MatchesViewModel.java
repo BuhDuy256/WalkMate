@@ -66,11 +66,20 @@ public class MatchesViewModel extends ViewModel {
     // -------------------------------------------------------------------------
 
     /**
-     * Fires all three repository fetches in parallel via their own executors.
+     * Fires all three repository fetches in parallel.
      * Posts a loading state immediately, then a combined result state once all
      * three callbacks have returned (success or error).
      */
     public void loadAll() {
+        loadAll(null);
+    }
+
+    /**
+     * Same as {@link #loadAll()} but invokes {@code onComplete} after the
+     * combined state has been posted. Used by {@link #acceptProposal} to delay
+     * the scroll-to-Session signal until the data is actually ready.
+     */
+    public void loadAll(Runnable onComplete) {
         uiState.postValue(new MatchesUiState(true,
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -84,16 +93,21 @@ public class MatchesViewModel extends ViewModel {
                 new AtomicReference<>(Collections.emptyList());
         AtomicReference<List<WalkSession>> sessionsRef =
                 new AtomicReference<>(Collections.emptyList());
-        AtomicReference<String> firstError = new AtomicReference<>(null);
+        // Aggregate all errors instead of silently dropping all but the first.
+        AtomicReference<List<String>> errors = new AtomicReference<>(new ArrayList<>());
 
         Runnable onOneDone = () -> {
             if (pending.decrementAndGet() == 0) {
+                List<String> errorList = errors.get();
+                String errorMessage = errorList.isEmpty()
+                        ? null : String.join("; ", errorList);
                 uiState.postValue(new MatchesUiState(
                         false,
                         intentsRef.get(),
                         proposalsRef.get(),
                         sessionsRef.get(),
-                        firstError.get()));
+                        errorMessage));
+                if (onComplete != null) onComplete.run();
             }
         };
 
@@ -103,7 +117,7 @@ public class MatchesViewModel extends ViewModel {
                 onOneDone.run();
             }
             @Override public void onError(Exception error) {
-                firstError.compareAndSet(null, error.getMessage());
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
                 onOneDone.run();
             }
         });
@@ -114,7 +128,7 @@ public class MatchesViewModel extends ViewModel {
                 onOneDone.run();
             }
             @Override public void onError(Exception error) {
-                firstError.compareAndSet(null, error.getMessage());
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
                 onOneDone.run();
             }
         });
@@ -125,7 +139,7 @@ public class MatchesViewModel extends ViewModel {
                 onOneDone.run();
             }
             @Override public void onError(Exception error) {
-                firstError.compareAndSet(null, error.getMessage());
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
                 onOneDone.run();
             }
         });
@@ -215,14 +229,13 @@ public class MatchesViewModel extends ViewModel {
 
     /**
      * Hard cancel: removes the proposal and closes its parent intent on the backend.
-     * A full loadAll() is required because both the Proposal and Finding sub-tabs
-     * may be affected (the intent disappears from Finding when the proposal is cancelled).
+     * Only Intents and Proposals are affected — Sessions are unchanged.
      */
     public void cancelProposal(String proposalId) {
         proposalRepository.cancelProposal(proposalId, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                loadAll();
+                reloadIntentsAndProposals();
             }
 
             @Override
@@ -241,15 +254,16 @@ public class MatchesViewModel extends ViewModel {
 
     /**
      * Full refresh on accept: the backend atomically removes the proposal and
-     * creates a new WalkSession, so a full loadAll() gives the most consistent view.
-     * Phase 5: posts a scroll-to-Session tab signal after data is refreshed.
+     * creates a new WalkSession. The scroll-to-Session signal is emitted only
+     * after all data has been refreshed to avoid showing an empty Session tab.
      */
     public void acceptProposal(String proposalId) {
         proposalRepository.acceptProposal(proposalId, new DomainCallback<WalkSession>() {
             @Override
             public void onSuccess(WalkSession result) {
-                loadAll();
-                scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION);
+                // Pass the scroll event as a callback so it fires only after
+                // loadAll() has posted the updated state — not before.
+                loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION));
             }
 
             @Override
@@ -271,15 +285,15 @@ public class MatchesViewModel extends ViewModel {
     // -------------------------------------------------------------------------
 
     /**
-     * Full refresh on cancel: cancelling a session may re-open the WalkIntent
-     * (returning it to the Finding sub-tab), so a full loadAll() gives the most
-     * consistent view of all three sub-tabs.
+     * Targeted refresh on cancel: cancelling a session may re-open the WalkIntent
+     * (returning it to the Finding sub-tab), so Sessions and Intents are reloaded.
+     * Proposals are unaffected and not refetched.
      */
     public void cancelSession(String sessionId, String reason) {
         sessionRepository.cancelSession(sessionId, reason, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                loadAll();
+                reloadSessionsAndIntents();
             }
 
             @Override
@@ -309,5 +323,102 @@ public class MatchesViewModel extends ViewModel {
                 current.getProposals(),
                 current.getActiveSessions(),
                 null));
+    }
+
+    // -------------------------------------------------------------------------
+    // Targeted reload helpers — avoid reloading APIs that are unaffected
+    // -------------------------------------------------------------------------
+
+    /**
+     * Reloads only Intents and Proposals in parallel; keeps the current Sessions.
+     * Used after cancelProposal (Sessions are never changed by that action).
+     */
+    private void reloadIntentsAndProposals() {
+        AtomicInteger pending = new AtomicInteger(2);
+        AtomicReference<List<WalkIntent>> newIntents = new AtomicReference<>(Collections.emptyList());
+        AtomicReference<List<WalkProposal>> newProposals = new AtomicReference<>(Collections.emptyList());
+        AtomicReference<List<String>> errors = new AtomicReference<>(new ArrayList<>());
+
+        Runnable onOneDone = () -> {
+            if (pending.decrementAndGet() == 0) {
+                MatchesUiState current = uiState.getValue();
+                List<WalkSession> sessions = current != null
+                        ? current.getActiveSessions() : Collections.emptyList();
+                List<String> errorList = errors.get();
+                String errorMessage = errorList.isEmpty()
+                        ? null : String.join("; ", errorList);
+                uiState.postValue(new MatchesUiState(
+                        false, newIntents.get(), newProposals.get(), sessions, errorMessage));
+            }
+        };
+
+        intentRepository.listActiveIntents(new DomainCallback<List<WalkIntent>>() {
+            @Override public void onSuccess(List<WalkIntent> result) {
+                newIntents.set(result);
+                onOneDone.run();
+            }
+            @Override public void onError(Exception error) {
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
+                onOneDone.run();
+            }
+        });
+
+        proposalRepository.getProposals(new DomainCallback<List<WalkProposal>>() {
+            @Override public void onSuccess(List<WalkProposal> result) {
+                newProposals.set(result);
+                onOneDone.run();
+            }
+            @Override public void onError(Exception error) {
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
+                onOneDone.run();
+            }
+        });
+    }
+
+    /**
+     * Reloads only Sessions and Intents in parallel; keeps the current Proposals.
+     * Used after cancelSession (cancelling a session may re-open its parent Intent,
+     * but Proposals are never affected by that action).
+     */
+    private void reloadSessionsAndIntents() {
+        AtomicInteger pending = new AtomicInteger(2);
+        AtomicReference<List<WalkIntent>> newIntents = new AtomicReference<>(Collections.emptyList());
+        AtomicReference<List<WalkSession>> newSessions = new AtomicReference<>(Collections.emptyList());
+        AtomicReference<List<String>> errors = new AtomicReference<>(new ArrayList<>());
+
+        Runnable onOneDone = () -> {
+            if (pending.decrementAndGet() == 0) {
+                MatchesUiState current = uiState.getValue();
+                List<WalkProposal> proposals = current != null
+                        ? current.getProposals() : Collections.emptyList();
+                List<String> errorList = errors.get();
+                String errorMessage = errorList.isEmpty()
+                        ? null : String.join("; ", errorList);
+                uiState.postValue(new MatchesUiState(
+                        false, newIntents.get(), proposals, newSessions.get(), errorMessage));
+            }
+        };
+
+        intentRepository.listActiveIntents(new DomainCallback<List<WalkIntent>>() {
+            @Override public void onSuccess(List<WalkIntent> result) {
+                newIntents.set(result);
+                onOneDone.run();
+            }
+            @Override public void onError(Exception error) {
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
+                onOneDone.run();
+            }
+        });
+
+        sessionRepository.getActiveSessions(new DomainCallback<List<WalkSession>>() {
+            @Override public void onSuccess(List<WalkSession> result) {
+                newSessions.set(result);
+                onOneDone.run();
+            }
+            @Override public void onError(Exception error) {
+                synchronized (errors.get()) { errors.get().add(error.getMessage()); }
+                onOneDone.run();
+            }
+        });
     }
 }

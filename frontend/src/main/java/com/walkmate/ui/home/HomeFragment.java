@@ -9,6 +9,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.widget.NestedScrollView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -61,6 +63,8 @@ public class HomeFragment extends Fragment {
     private WalkMateStatColumn statDistance;
     private WalkMateStatColumn statSessions;
     private WalkMateStatColumn statStreak;
+    private ProgressBar loadingIndicator;
+    private NestedScrollView contentContainer;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -86,8 +90,12 @@ public class HomeFragment extends Fragment {
         setupViewModel();
         setupClickListeners(view);
 
-        viewModel.loadDashboard();
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+        // Only trigger a load when there is no cached data yet (Activity-scoped VM
+        // survives tab switches, so subsequent navigations reuse the cached state).
+        if (viewModel.getUiState().getValue() == null) {
+            viewModel.loadDashboard();
+        }
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
@@ -110,6 +118,8 @@ public class HomeFragment extends Fragment {
         statDistance          = root.findViewById(R.id.statDistance);
         statSessions          = root.findViewById(R.id.statSessions);
         statStreak            = root.findViewById(R.id.statStreak);
+        loadingIndicator      = root.findViewById(R.id.loadingIndicator);
+        contentContainer      = root.findViewById(R.id.contentContainer);
     }
 
     private void setupRecyclerView() {
@@ -126,7 +136,8 @@ public class HomeFragment extends Fragment {
                 app.getUserRepository(),
             app.getUserProfileRepository(),
             app.getNotificationRepository());
-        viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
+        // Scope to Activity so the VM survives tab switches — fixes reload-on-every-navigate.
+        viewModel = new ViewModelProvider(requireActivity(), factory).get(HomeViewModel.class);
     }
 
     private void setupClickListeners(View root) {
@@ -146,9 +157,9 @@ public class HomeFragment extends Fragment {
      * Called every time the LiveData emits a new HomeDashboardUiState.
      */
     private void renderState(HomeDashboardUiState state) {
-        if (state.isLoading()) {
-            return;
-        }
+        loadingIndicator.setVisibility(state.isLoading() ? View.VISIBLE : View.GONE);
+        contentContainer.setVisibility(state.isLoading() ? View.GONE : View.VISIBLE);
+        if (state.isLoading()) return;
 
         if (state.getError() != null) {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();

@@ -38,8 +38,8 @@ public class FindingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Shared ViewModel owned by MatchesFragment (the parent)
-        matchesViewModel = new ViewModelProvider(requireParentFragment())
+        // Shared ViewModel scoped to Activity — same instance as MatchesFragment.
+        matchesViewModel = new ViewModelProvider(requireActivity())
                 .get(MatchesViewModel.class);
 
         swipeRefresh = view.findViewById(R.id.swipeRefresh);

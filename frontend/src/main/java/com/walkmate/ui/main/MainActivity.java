@@ -55,17 +55,23 @@ public class MainActivity extends AppCompatActivity {
         // NavigationUI handles selection, back-stack management, and state restoration.
         NavigationUI.setupWithNavController(bottomNav, navController);
 
-        // Custom override: The user requested that tapping the Home tab from another 
-        // tab should always display the HomeFragment, not any sub-fragments (like 
-        // ExploreFragment) that were previously left open. NavigationUI's default 
+        // Custom override: The user requested that tapping the Home tab from another
+        // tab should always display the HomeFragment, not any sub-fragments (like
+        // ExploreFragment) that were previously left open. NavigationUI's default
         // behavior restores the state; we force it to pop back to the root of the tab.
+        // Fix: use a single NavOptions-based navigate instead of two back-to-back
+        // NavController calls, which caused a race condition / animation flicker.
         bottomNav.setOnItemSelectedListener(item -> {
-            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
             if (item.getItemId() == R.id.homeFragment) {
-                // Clear any restored backstack on top of homeFragment
-                navController.popBackStack(R.id.homeFragment, false);
+                navController.navigate(R.id.homeFragment,
+                        null,
+                        new NavOptions.Builder()
+                                .setPopUpTo(R.id.homeFragment, true)
+                                .setLaunchSingleTop(true)
+                                .build());
+                return true;
             }
-            return handled;
+            return NavigationUI.onNavDestinationSelected(item, navController);
         });
 
         // Restore bottom-nav visibility when navigating away from ExploreFragment

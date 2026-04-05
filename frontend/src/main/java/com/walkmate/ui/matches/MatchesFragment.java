@@ -23,7 +23,8 @@ public class MatchesFragment extends Fragment {
     private ViewPager2 subTabPager;
     private MatchesPagerAdapter pagerAdapter;
 
-    // Shared ViewModel — sub-fragments access this via ViewModelProvider(requireParentFragment())
+    // Shared ViewModel — scoped to Activity so it survives tab switches.
+    // Sub-fragments access it via ViewModelProvider(requireActivity()).
     private MatchesViewModel matchesViewModel;
 
     // Phase 5 — prevents auto-scroll from firing more than once per session.
@@ -60,11 +61,16 @@ public class MatchesFragment extends Fragment {
             }
         }).attach();
 
+        // Scope to Activity — VM survives tab switches and sub-fragments share the same instance.
         matchesViewModel = new ViewModelProvider(
-                this, new MatchesViewModelFactory(requireActivity().getApplication()))
+                requireActivity(), new MatchesViewModelFactory(requireActivity().getApplication()))
                 .get(MatchesViewModel.class);
 
-        matchesViewModel.loadAll();
+        // Only load when there is no cached data yet.
+        if (matchesViewModel.getUiState().getValue() == null
+                || matchesViewModel.getUiState().getValue().isLoading()) {
+            matchesViewModel.loadAll();
+        }
 
         // Phase 5a — handle navigation argument from ExploreFragment (match found)
         // or from AppEventBus (FCM notification via MainActivity).
