@@ -15,7 +15,13 @@
       "Bash(mkdir -p \"C:/Users/Duy/Desktop/WalkMate/backend/src/main/java/com/walkmate/presentation/dto/response/social\")",
       "Bash(xargs -I {} find {} -type d)",
       "Bash(xargs ls:*)",
-      "Bash(find C:\\\\Users\\\\Duy\\\\Desktop\\\\WalkMate:*)"
+      "Bash(find C:\\\\Users\\\\Duy\\\\Desktop\\\\WalkMate:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(cmd //c \"gradlew.bat test --tests com.walkmate.infrastructure.security.oauth.FirebaseTokenVerifierTest --tests com.walkmate.application.user.UserCommandServiceGoogleTest --tests com.walkmate.presentation.controller.user.GoogleAuthControllerTest 2>&1\")",
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.infrastructure.security.oauth.FirebaseTokenVerifierTest\" --tests \"com.walkmate.application.user.UserCommandServiceGoogleTest\" --tests \"com.walkmate.presentation.controller.user.GoogleAuthControllerTest\")",
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.application.user.UserCommandServiceGoogleTest\" --info)",
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.infrastructure.security.oauth.FirebaseTokenVerifierTest\" --tests \"com.walkmate.application.user.UserCommandServiceGoogleTest\" --tests \"com.walkmate.presentation.controller.user.GoogleAuthControllerTest\" --info)",
+      "Bash(find \"d:/Software Engineer/Android Projects/WalkMate/backend/build/test-results/test\" -name \"*.xml\" -exec grep -h \"tests=\" {} \\\\;)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 # OAuth Google Sign-In — Master Implementation Plan
 **Project:** WalkMate Android  
 **Date:** 2026-04-05  
-**Status:** Phase 4 Complete — Awaiting Phase 5 Execution
+**Status:** Phase 5 Complete — All Phases Done
 
 ---
 
@@ -71,8 +71,9 @@ New Google users get a `user_profile` row auto-created silently using:
 | **4 — Frontend: UI ✅** | **`AuthActivity` — add Google Sign-In button + `ActivityResultLauncher`** | **Gap #14: Add `WalkMateButton` (OUTLINED); register launcher for `GoogleSignIn` intent; on result extract `idToken` and call `loginViewModel.loginWithGoogle(idToken)`** | High |
 | **4 — Frontend: UI ✅** | Add Google button to `activity_auth.xml` layout | Place below the divider, above "Create Account" link; follow Google branding guidelines | Med |
 | **4 — Frontend: UI ✅** | Handle Google flow from `RegisterActivity` | Reuse same `loginWithGoogle` path — the backend find-or-create covers both new and existing users | Med |
-| **5 — Testing & Security** | Backend: unit test `FirebaseTokenVerifier` | Mock `FirebaseAuth`; verify happy path, expired token, revoked token all produce correct result/exception | High |
-| **5 — Testing & Security** | Backend: integration test `POST /api/v1/auth/google` | Cover: new Google user, existing LOCAL merge (A2), duplicate `provider_subject` idempotency | High |
+| **5 — Testing & Security ✅** | **Backend: unit test `FirebaseTokenVerifier`** | **4 tests: happy path, null name/picture, expired token, revoked token — all pass** | High |
+| **5 — Testing & Security ✅** | **Backend: unit test `UserCommandService` Google flow** | **4 tests: new user + profile, A2 merge, idempotent re-login, invalid token — all pass** | High |
+| **5 — Testing & Security ✅** | **Backend: controller slice test `POST /api/v1/auth/google`** | **6 tests: 200 happy path, 200 merge/idempotent, 400 invalid token, 400 provider conflict, 422 blank token, 422 missing field — all pass** | High |
 | **5 — Testing & Security** | Frontend: manual E2E — new Google user | Sign in → profile auto-created → lands on `MainActivity` | High |
 | **5 — Testing & Security** | Frontend: manual E2E — LOCAL account A2 merge | Register email/pass → sign in with same Google email → verify both login methods still work | High |
 | **5 — Testing & Security** | Frontend: token expiry validation | Confirm `SessionManager.hasUsableAccessToken()` correctly evaluates the WalkMate JWT (not Firebase token) | Med |
@@ -100,7 +101,34 @@ New Google users get a `user_profile` row auto-created silently using:
 
 ---
 
-## 4. Execution Rules
+## 4. Manual E2E Testing Checklist (Phase 5)
+
+These scenarios require a physical or emulated device with the debug build installed and the backend running.
+
+### E2E-1: New Google User
+1. Ensure the Google account has **never** signed in to WalkMate before.
+2. Tap **"Sign in with Google"** on `AuthActivity` → select the account.
+3. **Expected:** 200 response → `MainActivity` loads → no errors in Logcat.
+4. **DB check:** `user_account` row has `provider = 'GOOGLE'` and `provider_subject` set. `user_profile` row auto-created with `full_name` and `avatar_url` from Google.
+
+### E2E-2: A2 Merge (LOCAL → Google link)
+1. Register a LOCAL account (`email@example.com`) via the normal register flow.
+2. Sign out (clear token via force-stop or logout).
+3. Tap **"Sign in with Google"** using the same `email@example.com` Google account.
+4. **Expected:** Login succeeds → `MainActivity` loads.
+5. **DB check:** The original `user_account` row now has `provider_subject` populated; `password_hash` is preserved.
+6. **Verify dual login:** Sign out, then log back in via email/password with the same account — it should still work.
+
+### E2E-3: Token Expiry Validation
+1. Sign in with Google → token is saved to `EncryptedSharedPreferences`.
+2. In `SessionManager.hasUsableAccessToken()`, verify it is parsing the **WalkMate JWT** expiry (not the Firebase token expiry).
+   - The WalkMate JWT `exp` claim is set by `TokenProvider`; the Firebase ID token expires after 1 hour.
+3. Manually set the system clock past the WalkMate JWT expiry.
+4. **Expected:** `hasUsableAccessToken()` returns `false` → app prompts re-authentication.
+
+---
+
+## 5. Execution Rules
 
 > **Do not generate code for all phases at once.**
 > The user will explicitly prompt: **"Execute Phase X"**, at which point the AI will provide the code and instructions strictly for that phase only.
