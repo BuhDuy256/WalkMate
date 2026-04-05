@@ -19,6 +19,7 @@ public class User {
     private AuthProvider  provider;
     private AccountStatus status;
     private String        passwordHash;
+    private String        providerSubject;
     private Instant       createdAt;
     private Instant       lastLoginAt;
     private int           trustScore;
@@ -32,7 +33,7 @@ public class User {
     // ── Rehydration constructor (repository → domain) ─────────────────────────
 
     public User(UUID userId, String email, String phone, AuthProvider provider, AccountStatus status,
-                String passwordHash, Instant createdAt, Instant lastLoginAt,
+                String passwordHash, String providerSubject, Instant createdAt, Instant lastLoginAt,
                 int trustScore, int totalPoints, double totalDistanceKm, int completedSessions,
                 String fcmToken) {
         this.userId            = userId;
@@ -41,6 +42,7 @@ public class User {
         this.provider          = provider;
         this.status            = status;
         this.passwordHash      = passwordHash;
+        this.providerSubject   = providerSubject;
         this.createdAt         = createdAt;
         this.lastLoginAt       = lastLoginAt;
         this.trustScore        = trustScore;
@@ -54,12 +56,13 @@ public class User {
 
     private User(String fullName, String email, String passwordHash) {
         requireText(fullName, "Full name is required");
-        this.email        = normalizeEmail(email);
-        this.phone        = null;
-        this.provider     = DEFAULT_PROVIDER;
-        this.status       = DEFAULT_STATUS;
-        this.passwordHash = requireText(passwordHash, "Password hash is required");
-        this.lastLoginAt  = null;
+        this.email           = normalizeEmail(email);
+        this.phone           = null;
+        this.provider        = DEFAULT_PROVIDER;
+        this.status          = DEFAULT_STATUS;
+        this.passwordHash    = requireText(passwordHash, "Password hash is required");
+        this.providerSubject = null;
+        this.lastLoginAt     = null;
         this.createdAt         = Instant.now();
         this.trustScore        = 0;
         this.totalPoints       = 0;
@@ -70,6 +73,25 @@ public class User {
 
     public static User register(String fullName, String email, String passwordHash) {
         return new User(fullName, email, passwordHash);
+    }
+
+    /** Factory for brand-new Google Sign-In users (no password). */
+    public static User registerWithGoogle(String email, String providerSubject) {
+        User u = new User();
+        u.email           = normalizeEmail(email);
+        u.phone           = null;
+        u.provider        = AuthProvider.GOOGLE;
+        u.status          = DEFAULT_STATUS;
+        u.passwordHash    = null;
+        u.providerSubject = requireText(providerSubject, "Provider subject is required");
+        u.lastLoginAt     = Instant.now();
+        u.createdAt         = Instant.now();
+        u.trustScore        = 0;
+        u.totalPoints       = 0;
+        u.totalDistanceKm   = 0.0;
+        u.completedSessions = 0;
+        u.fcmToken          = null;
+        return u;
     }
 
     // ── Domain behaviour ──────────────────────────────────────────────────────
@@ -83,6 +105,23 @@ public class User {
             throw new DomainException(UserErrorCode.USER_INVALID_CREDENTIALS);
         }
         this.lastLoginAt = Instant.now();
+    }
+
+    /** Records a successful OAuth login (updates lastLoginAt without a password check). */
+    public void recordLogin() {
+        this.lastLoginAt = Instant.now();
+    }
+
+    /**
+     * A2 merge: links this LOCAL account to a Google identity.
+     * Throws if a different provider_subject is already set (safety guard).
+     */
+    public void linkGoogleAccount(String providerSubject) {
+        if (this.providerSubject != null && !this.providerSubject.equals(providerSubject)) {
+            throw new DomainException(UserErrorCode.USER_PROVIDER_CONFLICT);
+        }
+        this.providerSubject = requireText(providerSubject, "Provider subject is required");
+        this.lastLoginAt     = Instant.now();
     }
 
     /**

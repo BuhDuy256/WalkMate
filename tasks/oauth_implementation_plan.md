@@ -1,7 +1,7 @@
 # OAuth Google Sign-In — Master Implementation Plan
 **Project:** WalkMate Android  
 **Date:** 2026-04-05  
-**Status:** Phase 2 Complete — Awaiting Phase 3 Execution
+**Status:** Phase 4 Complete — Awaiting Phase 5 Execution
 
 ---
 
@@ -47,30 +47,30 @@ New Google users get a `user_profile` row auto-created silently using:
 | **1 — Provider Setup** | Register SHA-1 fingerprints in Firebase | Add debug + release SHA-1 keystores to Firebase project settings so Android client is trusted | High |
 | **1 — Provider Setup** | Verify `google-services.json` is up to date | Re-download after enabling Google Sign-In; the `client_id` (OAuth client) must be present | High |
 | **2 — Database ✅** | **Migration V4 — `V4__add_oauth_support.sql`** | **`ALTER TYPE auth_provider ADD VALUE 'GOOGLE'` + `provider_subject varchar` column + partial unique index on `provider_subject WHERE provider_subject IS NOT NULL`** | High |
-| **3 — Backend: Domain** | **`AuthProvider.java` — add `GOOGLE` value** | **Gap #2: Enum currently only has `LOCAL`; `AuthProvider.valueOf()` will throw on any DB row with `GOOGLE`** | High |
-| **3 — Backend: Domain** | **`User.java` — add `providerSubject` field + new factories** | **Gap #3/4: Add field, update rehydration constructor, add `registerWithGoogle(email, name, providerSubject)` factory, add `linkGoogleAccount(providerSubject)` method for A2 merge** | High |
-| **3 — Backend: Domain** | **`UserRepository.java` — add `findByProviderSubject(String)`** | **Gap #4: Domain interface contract for Google `sub`-based lookup needed by A2 merge strategy** | High |
-| **3 — Backend: Domain** | **`UserErrorCode.java` — add `USER_PROVIDER_CONFLICT`** | **New error for edge case: account found by email but `provider_subject` belongs to a different Google account** | Med |
-| **3 — Backend: Infra** | **`UserJdbcRepository` — implement `findByProviderSubject()`** | **Gap #4: SQL `WHERE provider_subject = :sub`; reuses existing `mapRow()`** | High |
-| **3 — Backend: Infra** | **`UserJdbcRepository.save()` and `mapRow()` — add `provider_subject`** | **Gap #4: The INSERT/UPDATE and SELECT queries must include the new column** | High |
-| **3 — Backend: Application** | **`GoogleIdentity.java` — new record** | **Internal value object: `record GoogleIdentity(String sub, String email, String name, String pictureUrl)`** | High |
-| **3 — Backend: Application** | **`GoogleTokenVerifier.java` — new interface** | **Gap #6: Declare in `application/user/`; single method `GoogleIdentity verify(String firebaseIdToken)`** | High |
-| **3 — Backend: Application** | **`GoogleAuthCommand.java` — new record** | **Gap #5: Pure Java record `(String firebaseIdToken)` — the command handed to `UserCommandService`** | High |
-| **3 — Backend: Application** | **`UserCommandService.loginOrRegisterWithGoogle()` — new method** | **Gap #5: Core find-or-create logic: verify token → look up by `providerSubject` → if not found, try email (A2 merge) → else create new Google user + auto-create profile** | High |
-| **3 — Backend: Infra** | **`FirebaseTokenVerifier.java` — new impl** | **Gap #6: Implements `GoogleTokenVerifier`; calls `FirebaseAuth.getInstance(firebaseApp).verifyIdToken(idToken)`; wraps `FirebaseAuthException` into `DomainException(USER_INVALID_CREDENTIALS)`** | High |
-| **3 — Backend: Presentation** | **`GoogleLoginRequest.java` — new DTO** | **Gap #8: Request DTO with single field `@NotBlank String idToken`** | High |
-| **3 — Backend: Presentation** | **`UserController` — add `POST /api/v1/auth/google`** | **Gap #8: Accepts `GoogleLoginRequest`, delegates to `loginOrRegisterWithGoogle()`, returns same `LoginUserResponse` shape** | High |
-| **3 — Backend: Config** | **`SecurityConfig` — permit `/api/v1/auth/google`** | **Gap #7: Add `.requestMatchers(HttpMethod.POST, "/api/v1/auth/google").permitAll()`** | High |
-| **3 — Backend: Infra** | Auto-create `user_profile` for new Google users | Inside `loginOrRegisterWithGoogle()`: call `UserProfileCommandService` or insert directly; uses `name` + `pictureUrl` from `GoogleIdentity`; `gender = null` | High |
-| **4 — Frontend: Build** | **Add `firebase-auth` dependency to `build.gradle`** | **Gap #9: `com.google.firebase:firebase-auth:23.x.x`** | High |
-| **4 — Frontend: Data** | **`GoogleLoginRequestDto.java` — new DTO** | **Gap #11: Simple POJO `{ String idToken }` under `dto/request/user/`** | High |
-| **4 — Frontend: Data** | **`AuthApiService` — add `loginWithGoogle()`** | **Gap #11: `@POST("api/v1/auth/google") Call<ApiResponse<LoginResponseDto>> loginWithGoogle(@Body GoogleLoginRequestDto)`** | High |
-| **4 — Frontend: Domain** | **`UserRepository` (interface) — add `loginWithGoogle()`** | **Gap #10: `void loginWithGoogle(String firebaseIdToken, DomainCallback<String> callback)`** | High |
-| **4 — Frontend: Data** | **`UserRepositoryImpl` — implement `loginWithGoogle()`** | **Gap #12: (1) `FirebaseAuth.signInWithCredential(GoogleAuthProvider.getCredential(googleIdToken, null))` → (2) get Firebase ID token → (3) `POST /api/v1/auth/google` → (4) `saveAccessToken()` → callback** | High |
-| **4 — Frontend: ViewModel** | **`LoginViewModel` — add `loginWithGoogle(String googleIdToken)`** | **Gap #13: Sets loading state, delegates to `userRepository.loginWithGoogle()`, posts success/error UiState** | High |
-| **4 — Frontend: UI** | **`AuthActivity` — add Google Sign-In button + `ActivityResultLauncher`** | **Gap #14: Add `WalkMateButton` (OUTLINED); register launcher for `GoogleSignIn` intent; on result extract `idToken` and call `loginViewModel.loginWithGoogle(idToken)`** | High |
-| **4 — Frontend: UI** | Add Google button to `activity_auth.xml` layout | Place below the divider, above "Create Account" link; follow Google branding guidelines | Med |
-| **4 — Frontend: UI** | Handle Google flow from `RegisterActivity` | Reuse same `loginWithGoogle` path — the backend find-or-create covers both new and existing users | Med |
+| **3 — Backend: Domain ✅** | **`AuthProvider.java` — add `GOOGLE` value** | **Gap #2: Enum currently only has `LOCAL`; `AuthProvider.valueOf()` will throw on any DB row with `GOOGLE`** | High |
+| **3 — Backend: Domain ✅** | **`User.java` — add `providerSubject` field + new factories** | **Gap #3/4: Add field, update rehydration constructor, add `registerWithGoogle(email, name, providerSubject)` factory, add `linkGoogleAccount(providerSubject)` method for A2 merge** | High |
+| **3 — Backend: Domain ✅** | **`UserRepository.java` — add `findByProviderSubject(String)`** | **Gap #4: Domain interface contract for Google `sub`-based lookup needed by A2 merge strategy** | High |
+| **3 — Backend: Domain ✅** | **`UserErrorCode.java` — add `USER_PROVIDER_CONFLICT`** | **New error for edge case: account found by email but `provider_subject` belongs to a different Google account** | Med |
+| **3 — Backend: Infra ✅** | **`UserJdbcRepository` — implement `findByProviderSubject()`** | **Gap #4: SQL `WHERE provider_subject = :sub`; reuses existing `mapRow()`** | High |
+| **3 — Backend: Infra ✅** | **`UserJdbcRepository.save()` and `mapRow()` — add `provider_subject`** | **Gap #4: The INSERT/UPDATE and SELECT queries must include the new column** | High |
+| **3 — Backend: Application ✅** | **`GoogleIdentity.java` — new record** | **Internal value object: `record GoogleIdentity(String sub, String email, String name, String pictureUrl)`** | High |
+| **3 — Backend: Application ✅** | **`GoogleTokenVerifier.java` — new interface** | **Gap #6: Declare in `application/user/`; single method `GoogleIdentity verify(String firebaseIdToken)`** | High |
+| **3 — Backend: Application ✅** | **`GoogleAuthCommand.java` — new record** | **Gap #5: Pure Java record `(String firebaseIdToken)` — the command handed to `UserCommandService`** | High |
+| **3 — Backend: Application ✅** | **`UserCommandService.loginOrRegisterWithGoogle()` — new method** | **Gap #5: Core find-or-create logic: verify token → look up by `providerSubject` → if not found, try email (A2 merge) → else create new Google user + auto-create profile** | High |
+| **3 — Backend: Infra ✅** | **`FirebaseTokenVerifier.java` — new impl** | **Gap #6: Implements `GoogleTokenVerifier`; calls `FirebaseAuth.getInstance(firebaseApp).verifyIdToken(idToken)`; wraps `FirebaseAuthException` into `DomainException(USER_INVALID_CREDENTIALS)`** | High |
+| **3 — Backend: Presentation ✅** | **`GoogleLoginRequest.java` — new DTO** | **Gap #8: Request DTO with single field `@NotBlank String idToken`** | High |
+| **3 — Backend: Presentation ✅** | **`UserController` — add `POST /api/v1/auth/google`** | **Gap #8: Accepts `GoogleLoginRequest`, delegates to `loginOrRegisterWithGoogle()`, returns same `LoginUserResponse` shape** | High |
+| **3 — Backend: Config ✅** | **`SecurityConfig` — permit `/api/v1/auth/google`** | **Gap #7: Add `.requestMatchers(HttpMethod.POST, "/api/v1/auth/google").permitAll()`** | High |
+| **3 — Backend: Infra ✅** | Auto-create `user_profile` for new Google users | Inside `loginOrRegisterWithGoogle()`: call `UserProfileCommandService` or insert directly; uses `name` + `pictureUrl` from `GoogleIdentity`; `gender = null` | High |
+| **4 — Frontend: Build ✅** | **Add `firebase-auth` dependency to `build.gradle`** | **Gap #9: `com.google.firebase:firebase-auth:23.x.x`** | High |
+| **4 — Frontend: Data ✅** | **`GoogleLoginRequestDto.java` — new DTO** | **Gap #11: Simple POJO `{ String idToken }` under `dto/request/user/`** | High |
+| **4 — Frontend: Data ✅** | **`AuthApiService` — add `loginWithGoogle()`** | **Gap #11: `@POST("api/v1/auth/google") Call<ApiResponse<LoginResponseDto>> loginWithGoogle(@Body GoogleLoginRequestDto)`** | High |
+| **4 — Frontend: Domain ✅** | **`UserRepository` (interface) — add `loginWithGoogle()`** | **Gap #10: `void loginWithGoogle(String firebaseIdToken, DomainCallback<String> callback)`** | High |
+| **4 — Frontend: Data ✅** | **`UserRepositoryImpl` — implement `loginWithGoogle()`** | **Gap #12: (1) `FirebaseAuth.signInWithCredential(GoogleAuthProvider.getCredential(googleIdToken, null))` → (2) get Firebase ID token → (3) `POST /api/v1/auth/google` → (4) `saveAccessToken()` → callback** | High |
+| **4 — Frontend: ViewModel ✅** | **`LoginViewModel` — add `loginWithGoogle(String googleIdToken)`** | **Gap #13: Sets loading state, delegates to `userRepository.loginWithGoogle()`, posts success/error UiState** | High |
+| **4 — Frontend: UI ✅** | **`AuthActivity` — add Google Sign-In button + `ActivityResultLauncher`** | **Gap #14: Add `WalkMateButton` (OUTLINED); register launcher for `GoogleSignIn` intent; on result extract `idToken` and call `loginViewModel.loginWithGoogle(idToken)`** | High |
+| **4 — Frontend: UI ✅** | Add Google button to `activity_auth.xml` layout | Place below the divider, above "Create Account" link; follow Google branding guidelines | Med |
+| **4 — Frontend: UI ✅** | Handle Google flow from `RegisterActivity` | Reuse same `loginWithGoogle` path — the backend find-or-create covers both new and existing users | Med |
 | **5 — Testing & Security** | Backend: unit test `FirebaseTokenVerifier` | Mock `FirebaseAuth`; verify happy path, expired token, revoked token all produce correct result/exception | High |
 | **5 — Testing & Security** | Backend: integration test `POST /api/v1/auth/google` | Cover: new Google user, existing LOCAL merge (A2), duplicate `provider_subject` idempotency | High |
 | **5 — Testing & Security** | Frontend: manual E2E — new Google user | Sign in → profile auto-created → lands on `MainActivity` | High |

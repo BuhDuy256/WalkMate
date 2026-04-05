@@ -6,6 +6,8 @@ public interface UserRepository {
     void login(String email, String password, DomainCallback<String> callback);
     // register only signals success (Void) — the caller redirects to login on success
     void register(String fullname, String email, String password, DomainCallback<Void> callback);
+    // Signs in via Google: exchanges a Google ID token for a WalkMate access token.
+    void loginWithGoogle(String googleIdToken, DomainCallback<String> callback);
     void saveAccessToken(String token);
     String getAccessToken();
     // Registers or refreshes the FCM device token on the backend.

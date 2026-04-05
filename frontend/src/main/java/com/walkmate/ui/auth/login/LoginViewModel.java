@@ -53,6 +53,27 @@ public class LoginViewModel extends ViewModel {
         });
     }
 
+    public void loginWithGoogle(String googleIdToken) {
+        if (googleIdToken == null || googleIdToken.trim().isEmpty()) {
+            uiState.setValue(new LoginUiState(false, "Google Sign-In failed. Please try again.", false));
+            return;
+        }
+
+        uiState.setValue(new LoginUiState(true, null, false));
+
+        userRepository.loginWithGoogle(googleIdToken, new DomainCallback<String>() {
+            @Override
+            public void onSuccess(String token) {
+                uiState.postValue(new LoginUiState(false, null, true));
+            }
+
+            @Override
+            public void onError(Exception error) {
+                uiState.postValue(new LoginUiState(false, error.getMessage(), false));
+            }
+        });
+    }
+
     public void consumeError() {
         uiState.setValue(new LoginUiState(uiState.getValue().isLoading(), null, uiState.getValue().isSuccess()));
     }

@@ -3,10 +3,14 @@ package com.walkmate.data.repository;
 import android.content.Context;
 import android.util.Log;
 
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.AuthApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.UserApiService;
+import com.walkmate.data.datasource.remote.dto.request.user.GoogleLoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.UpdateFcmTokenRequestDto;
@@ -66,6 +70,50 @@ public class UserRepositoryImpl implements UserRepository {
                 callback.onError(e);
             }
         });
+    }
+
+    @Override
+    public void loginWithGoogle(String googleIdToken, DomainCallback<String> callback) {
+        // Step 1: Sign in to Firebase with the Google ID token to get a Firebase ID token
+        AuthCredential credential = GoogleAuthProvider.getCredential(googleIdToken, null);
+        FirebaseAuth.getInstance().signInWithCredential(credential)
+                .addOnSuccessListener(authResult -> {
+                    // Step 2: Get the Firebase ID token
+                    authResult.getUser().getIdToken(false)
+                            .addOnSuccessListener(tokenResult -> {
+                                String firebaseIdToken = tokenResult.getToken();
+                                // Step 3: Exchange Firebase ID token for WalkMate JWT on background thread
+                                executor.execute(() -> {
+                                    try {
+                                        Response<ApiResponse<LoginResponseDto>> resp = authApiService
+                                                .loginWithGoogle(new GoogleLoginRequestDto(firebaseIdToken))
+                                                .execute();
+
+                                        if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                                            String token = resp.body().getData().getAccessToken();
+                                            saveAccessToken(token);
+                                            Log.d(TAG, "Google login succeeded");
+                                            callback.onSuccess(token);
+                                        } else {
+                                            String code = extractErrorCode(resp.body(), "GOOGLE_LOGIN_FAILED");
+                                            Log.w(TAG, "Google backend login failed: " + code);
+                                            callback.onError(new Exception(code));
+                                        }
+                                    } catch (IOException e) {
+                                        Log.e(TAG, "Google login network error", e);
+                                        callback.onError(e);
+                                    }
+                                });
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to get Firebase ID token", e);
+                                callback.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Firebase signInWithCredential failed", e);
+                    callback.onError(e);
+                });
     }
 
     @Override

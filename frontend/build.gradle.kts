@@ -99,7 +99,11 @@ dependencies {
     implementation(libs.navigationFragment)
     implementation(libs.navigationUi)
 
-    // Firebase Cloud Messaging
+    // Firebase (BOM pins all firebase versions)
     implementation(platform(libs.firebaseBom))
     implementation(libs.firebaseMessaging)
+    implementation(libs.firebaseAuth)
+
+    // Google Sign-In (provides GoogleSignIn, GoogleSignInClient, GoogleSignInAccount)
+    implementation(libs.playServicesAuth)
 }

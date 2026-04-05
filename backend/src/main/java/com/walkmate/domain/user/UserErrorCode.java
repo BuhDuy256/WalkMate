@@ -10,7 +10,8 @@ public enum UserErrorCode implements ErrorCode {
     USER_NOT_FOUND("User not found"),
     USER_ALREADY_EXISTS("Email already exists"),
     USER_INVALID_CREDENTIALS("Invalid email or password"),
-    INVALID_USER_DATA("Invalid data provided");
+    INVALID_USER_DATA("Invalid data provided"),
+    USER_PROVIDER_CONFLICT("This Google account is already linked to a different WalkMate account");
 
     private final String message;
 

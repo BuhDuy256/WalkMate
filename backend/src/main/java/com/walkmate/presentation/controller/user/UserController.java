@@ -1,10 +1,12 @@
 package com.walkmate.presentation.controller.user;
 
+import com.walkmate.application.user.GoogleAuthCommand;
 import com.walkmate.application.user.LoginResult;
 import com.walkmate.application.user.LoginUserCommand;
 import com.walkmate.application.user.RegisterUserCommand;
 import com.walkmate.application.user.UserCommandService;
 import com.walkmate.domain.user.User;
+import com.walkmate.presentation.dto.request.user.GoogleLoginRequest;
 import com.walkmate.presentation.dto.request.user.LoginUserRequest;
 import com.walkmate.presentation.dto.request.user.RegisterUserRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
@@ -43,6 +45,14 @@ public class UserController {
     public ResponseEntity<ApiResponse<LoginUserResponse>> loginUser(@Valid @RequestBody LoginUserRequest request) {
         LoginResult loginResult = userCommandService.loginUser(
                 new LoginUserCommand(request.email(), request.password())
+        );
+        return ResponseEntity.ok(ApiResponse.success(userMapper.toLoginUserResponse(loginResult)));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<LoginUserResponse>> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        LoginResult loginResult = userCommandService.loginOrRegisterWithGoogle(
+                new GoogleAuthCommand(request.idToken())
         );
         return ResponseEntity.ok(ApiResponse.success(userMapper.toLoginUserResponse(loginResult)));
     }

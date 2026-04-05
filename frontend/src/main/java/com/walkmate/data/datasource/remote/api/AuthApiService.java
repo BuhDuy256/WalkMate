@@ -1,5 +1,6 @@
 package com.walkmate.data.datasource.remote.api;
 
+import com.walkmate.data.datasource.remote.dto.request.user.GoogleLoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
@@ -17,4 +18,7 @@ public interface AuthApiService {
 
     @POST("api/v1/auth/login")
     Call<ApiResponse<LoginResponseDto>> login(@Body LoginRequestDto request);
+
+    @POST("api/v1/auth/google")
+    Call<ApiResponse<LoginResponseDto>> loginWithGoogle(@Body GoogleLoginRequestDto request);
 }
