@@ -1,44 +1,78 @@
-Dear students,
+# Weekly Report – Group 09
 
-In this course, each group is required to submit a weekly working report on Moodle. The report must include the tasks completed during the week and the task allocation for each group member.
+---
 
-# Submission Format
+## General Information
 
-Please submit one ZIP file named GroupXX_YY.zip, XX: id of the group, YY: id of the week, (e.g., Group02_02.zip) containing at least the following files:
+| Field            | Value                                          |
+| ---------------- | ---------------------------------------------- |
+| **Group ID**     | Group 09                                       |
+| **Project Name** | WalkMate                                       |
+| **Date Range**   | YYYY-MM-DD – YYYY-MM-DD _(Monday to Saturday)_ |
 
-- GroupID.md: the weekly report written in Markdown
-- GroupID.pdf: the PDF version of GroupID.md
-- Other supplementary files (if any)
+---
 
-# Weekly Report Content
+## Tasks Completed This Week
 
-General Information
+### 23127179 – Nguyễn Bảo Duy
 
-- Group ID
-- Group Name
-- Project Name
-- Date range (Monday to Saturday), e.g., 2026-01-19 – 2026-01-24
+- Task 1 description
+- **Evidence:** _(Jira screenshot link / output document / artifact)_
 
-# Tasks Completed This Week
+### 23127006 – Trần Nguyễn Khải Luân
 
-For each group member, list the completed tasks as follows:
-StudentID – Full Name
+- Task 1 description
+- **Evidence:** _(Jira screenshot link / output document / artifact)_
 
-- Task 1 (one task per line)
-- Task 2
-- ...
-- Evidence: Jira screenshots, output documents, or other relevant artifacts
-- Note: Each task should be carried out by only one or two members, not more.
+### 23127438 – Đặng Trường Nguyên
 
-# AI Usage Declaration
+- Task 1 description
+- **Evidence:** _(Jira screenshot link / output document / artifact)_
 
-Describe how your group used AI tools during the current week (if any).
-Link: https://drive.google.com/file/d/1l6bO6fog1eM6K4_10oMshg5GawmEkr_o/view?usp=sharing
+### 23127539 – Nguyễn Thanh Tiến
 
-# Tasks Planned for Next Week
+- Task 1 description
+- **Evidence:** _(Jira screenshot link / output document / artifact)_
 
-List the tasks your group plans to work on in the upcoming week.
+---
 
-# Issues
+## AI Usage Declaration
 
-List any issues raised by group members and explain how the group addressed them (or why they were not resolved)
+### 23127179 – Nguyễn Bảo Duy
+
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
+
+### 23127006 – Trần Nguyễn Khải Luân
+
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
+
+### 23127438 – Đặng Trường Nguyên
+
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
+
+### 23127539 – Nguyễn Thanh Tiến
+
+- Prompt 1: _(paste prompt text)_
+- **Evidence:** _(paste AI chat/tool link)_
+
+---
+
+## Tasks Planned for Next Week
+
+- [ ] Task A – _(assignee)_
+- [ ] Task B – _(assignee)_
+- [ ] Task C – _(assignee)_
+
+---
+
+## Issues
+
+| #   | Issue                  | Raised By       | Status             | Resolution / Reason Not Resolved          |
+| --- | ---------------------- | --------------- | ------------------ | ----------------------------------------- |
+| 1   | _(Describe the issue)_ | _(Member name)_ | Resolved / Pending | _(How it was resolved, or why it wasn't)_ |
+| 2   |                        |                 |                    |                                           |
+
+_(Remove this table if there are no issues this week)_

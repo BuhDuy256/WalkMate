@@ -16,7 +16,12 @@ local.properties
 /personal
 .env
 .idea
+<<<<<<< HEAD
 
 # Firebase credentials — must never be committed
 google-services.json
 firebase-service-account.json
+=======
+.claude
+.grapuco
+>>>>>>> main
