@@ -22,7 +22,11 @@
       "Bash(./gradlew :backend:test --tests \"com.walkmate.application.user.UserCommandServiceGoogleTest\" --info)",
       "Bash(./gradlew :backend:test --tests \"com.walkmate.infrastructure.security.oauth.FirebaseTokenVerifierTest\" --tests \"com.walkmate.application.user.UserCommandServiceGoogleTest\" --tests \"com.walkmate.presentation.controller.user.GoogleAuthControllerTest\" --info)",
       "Bash(find \"d:/Software Engineer/Android Projects/WalkMate/backend/build/test-results/test\" -name \"*.xml\" -exec grep -h \"tests=\" {} \\\\;)",
-      "mcp__grapuco__get_architecture"
+      "mcp__grapuco__get_architecture",
+      "mcp__grapuco__list_repositories",
+      "mcp__grapuco__get_context",
+      "mcp__grapuco__semantic_search_docs",
+      "mcp__grapuco__search_code"
     ]
   }
 }
