@@ -37,8 +37,10 @@ public class WalkIntentController {
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final WalkIntentCommandService walkIntentCommandService;
-        private final WalkIntentQueryService   walkIntentQueryService;
+    
+    private final WalkIntentQueryService   walkIntentQueryService;
     private final MatchingCommandService   matchingCommandService;
+    
     private final WalkIntentMapper         walkIntentMapper;
     private final ProposalMapper           proposalMapper;
 
@@ -129,4 +131,5 @@ public class WalkIntentController {
         LocalTime localTime = LocalTime.of(totalMinutes / 60, totalMinutes % 60);
         return LocalDateTime.of(localDate, localTime).atZone(VN_ZONE).toInstant();
     }
+
 }
