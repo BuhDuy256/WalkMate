@@ -6,9 +6,9 @@ The **WalkIntent** domain declares a user's availability and intent to participa
 
 ### Lifecycle Stages
 
-- **OPEN:** The intent is newly created and actively looking for a match. It blocks the time overlap in `UserSchedule`.
-- **MATCHING:** A `MatchProposal` has been generated. The intent is "soft-locked" to prevent multiple simultaneous proposals. It remains blocking the time overlap.
-- **CONSUMED:** A `WalkSession` has been successfully created. This is a terminal state. The responsibility of blocking the time overlap is handed over to the `WalkSession`.
+- **OPEN:** The intent is newly created and actively looking for a match. Nó tham gia vào việc duy trì chặn trùng lịch trên toàn hệ thống thời gian.
+- **MATCHING:** A `MatchProposal` has been generated. The intent is "soft-locked" (đánh dấu matching lock) để không bị Match Engine tìm thấy nữa, nhưng vẫn tham gia chặn trùng lặp thời gian.
+- **CONSUMED:** A `WalkSession` has been successfully created. This is a terminal state. Trách nhiệm duy trì chặn thời gian được chuyển giao hoàn toàn sang `WalkSession`.
 - **CANCELLED:** The user manually withdrew the intent. Terminal state.
 - **EXPIRED:** The valid time window passed without a confirmed match. Terminal state.
 
@@ -73,16 +73,17 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 
 ---
 
-## 4. UserSchedule (Centralized Invariant Source)
+## 4. Time Overlap Invariant (Domain Service Approach)
 
-To ensure the **Time Overlap Invariant** (One user cannot be in two places at once), the system utilizes a centralized `UserSchedule` table.
+Để đảm bảo quy tắc **Không chọn trùng khung giờ** (Một người không thể ở hai nơi trong cùng một khoảng thời gian), hệ thống loại bỏ bảng `UserSchedule` tập trung và thay thế bằng Domain Service chuyên biệt đóng vai trò Nguồn Sự Thật.
 
 ### Logic
 
-- **Ownership:** Every `WalkIntent` (OPEN/MATCHING) and `WalkSession` (PENDING/ACTIVE) must have a corresponding **ACTIVE** entry in this table.
-- **Validation:** Before creating a new `WalkIntent`, the system checks `UserSchedule` for any **ACTIVE** record where:
-  `MAX(Existing_Start, New_Start) < MIN(Existing_End, New_End)`.
-- **Hand-off:** When an Intent transitions to `CONSUMED`, the `UserSchedule` record is updated to reflect the new `ref_id` (Session ID) and `ref_type` (SESSION), ensuring a continuous lock on the user's time without double-counting.
+- **Nguồn dữ liệu:** Domain Service sẽ truy vấn đồng thời trên 2 bảng để kiểm tra:
+  - Bảng `WalkIntent` (với các trạng thái `OPEN`, `MATCHING`).
+  - Bảng `WalkSession` (với các trạng thái `PENDING`, `ACTIVE`).
+- **Validation:** Trước khi cho phép tạo mới hoặc dời lịch trình, hệ thống gọi Service để xác nhận không có bất kỳ dòng nào thỏa mãn: `MAX(Existing_Start, New_Start) < MIN(Existing_End, New_End)` thuộc về user đó.
+- **Hand-off (Bàn giao):** Khi Intent chuyển từ `MATCHING` sang `CONSUMED`, Intent này sẽ "nhả" chặn thời gian, đồng thời `WalkSession` mới ngay lập tức "kế thừa" khoảng thời gian này thông qua Atomic Transaction, đảm bảo việc khóa thời gian liền mạch hoàn toàn mà không bị hở.
 
 # Mốt số lưu ý
 
@@ -118,5 +119,5 @@ Vì app của bạn là WalkMate (gặp người lạ), sự tin tưởng là qu
 
 Đây là lỗi kỹ thuật hay gặp ở các app dạng Grab:
 
-- **Vấn đề:** Hai Proposal khác nhau cùng nhảy vào "vồ" lấy một `WalkIntent` cùng một lúc ở mức mili giây.
-- **Giải pháp:** Sử dụng **Database Transaction** và **Pessimistic Locking** (Khóa bản ghi). Khi một Proposal đang được tạo cho Intent A, phải khóa dòng Intent A đó lại để không có Proposal thứ hai nào "đụng" vào được cho đến khi trạng thái chuyển sang `MATCHING` xong xuôi.
+- **Vấn đề:** Hai thao tác khác nhau (ví dụ: Match Engine sinh Proposal và User chủ động Cancel Intent) diễn ra cùng lúc ở mức mili giây trên chung 1 bản ghi.
+- **Giải pháp:** Sử dụng **Optimistic Locking (Versioning)** kết hợp với Database Transaction. Bất kỳ bản ghi nào trong `WalkIntent`, `MatchProposal`, và `WalkSession` đều có trường `version` định kỳ tăng dần. Nếu version từ Memory/Request gửi xuống DB khác với version hiện trạng trong DB, transaction sẽ bị từ chối xác nhận (fail-fast), tránh ghi đè dữ liệu sai.
