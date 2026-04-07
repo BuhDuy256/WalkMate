@@ -15,7 +15,11 @@
       "Bash(mkdir -p \"C:/Users/Duy/Desktop/WalkMate/backend/src/main/java/com/walkmate/presentation/dto/response/social\")",
       "Bash(xargs -I {} find {} -type d)",
       "Bash(xargs ls:*)",
-      "Bash(find C:\\\\Users\\\\Duy\\\\Desktop\\\\WalkMate:*)"
+      "Bash(find C:\\\\Users\\\\Duy\\\\Desktop\\\\WalkMate:*)",
+      "mcp__grapuco__list_repositories",
+      "mcp__grapuco__get_architecture",
+      "mcp__grapuco__search_code",
+      "mcp__grapuco__get_context"
     ]
   }
 }
