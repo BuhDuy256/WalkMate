@@ -23,6 +23,7 @@ import com.walkmate.domain.walkintent.WalkIntentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -36,14 +37,15 @@ public class MatchingCommandService {
 
     private static final long PROPOSAL_TTL_MINUTES = 5;
 
-    private final WalkIntentRepository    walkIntentRepository;
-    private final MatchProposalRepository matchProposalRepository;
-    private final WalkSessionRepository   walkSessionRepository;
-    private final HotspotRepository       hotspotRepository;
-    private final UserRepository          userRepository;
-    private final MatchingStrategy        matchingStrategy;
-    private final NotificationPublisher   notificationPublisher;
+    private final WalkIntentRepository     walkIntentRepository;
+    private final MatchProposalRepository  matchProposalRepository;
+    private final WalkSessionRepository    walkSessionRepository;
+    private final HotspotRepository        hotspotRepository;
+    private final UserRepository           userRepository;
+    private final MatchingStrategy         matchingStrategy;
+    private final NotificationPublisher    notificationPublisher;
     private final PushNotificationProvider pushNotificationProvider;
+    private final TransactionTemplate      transactionTemplate;
 
     // ── Find or create a proposal ─────────────────────────────────────────────
 
@@ -102,11 +104,28 @@ public class MatchingCommandService {
 
         MatchProposal saved = matchProposalRepository.save(proposal);
 
-        // 6. Lock both intents to MATCHING so the matching engine ignores them (I-4, P-1, GAP-2)
-        intent.lock();
-        matched.lock();
-        walkIntentRepository.save(intent);
-        walkIntentRepository.save(matched);
+        // 6. Re-acquire both intents under pessimistic locks before transitioning to MATCHING.
+        //    Load in consistent lexicographic order (same strategy as acceptProposal) to prevent
+        //    deadlock when two threads race on the same intent pair (I-4, P-1, GAP-2, Phase-0 Issue-1).
+        String firstId  = intentId.compareTo(matched.getId()) <= 0 ? intentId : matched.getId();
+        String secondId = firstId.equals(intentId) ? matched.getId() : intentId;
+
+        WalkIntent lockedFirst = walkIntentRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        WalkIntent lockedSecond = walkIntentRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+
+        // Re-verify both are still OPEN under the lock; a concurrent thread may have already
+        // locked one of them between our initial read and this point.
+        if (lockedFirst.getStatus() != IntentStatus.OPEN || lockedSecond.getStatus() != IntentStatus.OPEN) {
+            throw new DomainException(WalkIntentErrorCode.INVALID_INTENT_DATA,
+                    "One or both intents are no longer OPEN — cannot lock for matching");
+        }
+
+        lockedFirst.lock();
+        lockedSecond.lock();
+        walkIntentRepository.save(lockedFirst);
+        walkIntentRepository.save(lockedSecond);
 
         // 1. Persist an in-app notification for the matched user's notification feed.
         notificationPublisher.publish(Notification.create(
@@ -307,21 +326,30 @@ public class MatchingCommandService {
     /**
      * Called by the scheduler to expire overdue proposals and return both
      * intents to OPEN so participants re-enter the matching pool (P-4, GAP-3).
+     *
+     * Each proposal is processed in its own isolated transaction (Phase-0 Issue-2).
+     * A failure on one proposal (e.g. OCC conflict) rolls back only that proposal's
+     * changes and is logged; the sweep continues to the next proposal.
+     * The outer method is intentionally not @Transactional — the TransactionTemplate
+     * creates a fresh REQUIRED transaction per iteration.
      */
-    @Transactional
     public void sweepExpiredProposals() {
         List<MatchProposal> overdue = matchProposalRepository.findExpiredPending();
         for (MatchProposal proposal : overdue) {
-            proposal.expire();
-            matchProposalRepository.save(proposal);
+            transactionTemplate.execute(status -> {
+                proposal.expire();
+                matchProposalRepository.save(proposal);
 
-            walkIntentRepository.findById(proposal.getIntentIdA())
-                    .filter(i -> i.getStatus() == IntentStatus.MATCHING)
-                    .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+                walkIntentRepository.findById(proposal.getIntentIdA())
+                        .filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                        .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
 
-            walkIntentRepository.findById(proposal.getIntentIdB())
-                    .filter(i -> i.getStatus() == IntentStatus.MATCHING)
-                    .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+                walkIntentRepository.findById(proposal.getIntentIdB())
+                        .filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                        .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+
+                return null;
+            });
         }
     }
 }

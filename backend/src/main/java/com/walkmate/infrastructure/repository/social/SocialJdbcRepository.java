@@ -17,64 +17,39 @@ public class SocialJdbcRepository implements SocialRepository {
     private final JdbcClient jdbcClient;
 
     // ── Follow ────────────────────────────────────────────────────────────────
+    // V104 migration dropped follow_relation and replaced it with the friendship table.
+    // These methods are no longer backed by a real table and will be reimplemented
+    // once the friendship-based social flow is designed. Calling them now fails fast
+    // rather than producing a cryptic DB error about a missing table.
 
     @Override
     public void follow(UUID followerId, UUID followeeId) {
-        jdbcClient.sql("""
-                        INSERT INTO follow_relation (follower_id, followee_id)
-                        VALUES (:followerId, :followeeId)
-                        ON CONFLICT DO NOTHING
-                        """)
-                .param("followerId", followerId)
-                .param("followeeId", followeeId)
-                .update();
+        throw new UnsupportedOperationException(
+                "follow_relation was dropped in V104. Use friendship-based social flow.");
     }
 
     @Override
     public void unfollow(UUID followerId, UUID followeeId) {
-        jdbcClient.sql("""
-                        DELETE FROM follow_relation
-                        WHERE follower_id = :followerId AND followee_id = :followeeId
-                        """)
-                .param("followerId", followerId)
-                .param("followeeId", followeeId)
-                .update();
+        throw new UnsupportedOperationException(
+                "follow_relation was dropped in V104. Use friendship-based social flow.");
     }
 
     @Override
     public boolean isFollowing(UUID followerId, UUID followeeId) {
-        return jdbcClient.sql("""
-                        SELECT COUNT(1) FROM follow_relation
-                        WHERE follower_id = :followerId AND followee_id = :followeeId
-                        """)
-                .param("followerId", followerId)
-                .param("followeeId", followeeId)
-                .query(Integer.class)
-                .single() > 0;
+        throw new UnsupportedOperationException(
+                "follow_relation was dropped in V104. Use friendship-based social flow.");
     }
 
     @Override
     public List<UUID> getFollowerIds(UUID userId) {
-        return jdbcClient.sql("""
-                        SELECT follower_id FROM follow_relation
-                        WHERE followee_id = :userId
-                        ORDER BY followed_at DESC
-                        """)
-                .param("userId", userId)
-                .query(UUID.class)
-                .list();
+        throw new UnsupportedOperationException(
+                "follow_relation was dropped in V104. Use friendship-based social flow.");
     }
 
     @Override
     public List<UUID> getFolloweeIds(UUID userId) {
-        return jdbcClient.sql("""
-                        SELECT followee_id FROM follow_relation
-                        WHERE follower_id = :userId
-                        ORDER BY followed_at DESC
-                        """)
-                .param("userId", userId)
-                .query(UUID.class)
-                .list();
+        throw new UnsupportedOperationException(
+                "follow_relation was dropped in V104. Use friendship-based social flow.");
     }
 
     // ── Block ─────────────────────────────────────────────────────────────────

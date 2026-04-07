@@ -2,6 +2,7 @@ package com.walkmate.application.walkintent;
 
 import com.walkmate.domain.hotspot.HotspotErrorCode;
 import com.walkmate.domain.hotspot.HotspotRepository;
+import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.walkintent.MatchingConstraints;
@@ -19,8 +20,9 @@ import java.util.UUID;
 public class WalkIntentCommandService {
 
     private final WalkIntentRepository walkIntentRepository;
-    private final HotspotRepository hotspotRepository;
-    private final SocialRepository socialRepository;
+    private final HotspotRepository    hotspotRepository;
+    private final WalkSessionRepository walkSessionRepository;
+    private final SocialRepository      socialRepository;
 
     @Transactional
     public WalkIntent createIntent(CreateWalkIntentCommand command) {
@@ -28,10 +30,16 @@ public class WalkIntentCommandService {
         hotspotRepository.findById(command.hotspotId())
                 .orElseThrow(() -> new DomainException(HotspotErrorCode.HOTSPOT_NOT_FOUND));
 
-        // 2. Guard: no overlapping OPEN or MATCHING intent for this user in the same window
+        // 2a. Guard: no overlapping OPEN or MATCHING intent for this user in the same window (I-1)
         if (walkIntentRepository.hasOverlappingActiveIntent(
                 command.userId(), command.timeWindowStart(), command.timeWindowEnd())) {
             throw new DomainException(WalkIntentErrorCode.INTENT_OVERLAPPING);
+        }
+
+        // 2b. Guard: no overlapping PENDING or ACTIVE session for this user in the same window (I-1)
+        if (walkSessionRepository.hasOverlappingActiveSession(
+                command.userId(), command.timeWindowStart(), command.timeWindowEnd())) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_OVERLAPPING_SESSION);
         }
 
         // 3. If private, validate an ACCEPTED friendship exists with the invited user (I-7)
