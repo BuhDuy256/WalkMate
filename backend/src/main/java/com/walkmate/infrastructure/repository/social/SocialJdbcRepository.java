@@ -137,4 +137,21 @@ public class SocialJdbcRepository implements SocialRepository {
                 .list();
         return new HashSet<>(ids);
     }
+
+    // ── Friendship ────────────────────────────────────────────────────────────
+
+    @Override
+    public boolean areAcceptedFriends(UUID userId1, UUID userId2) {
+        Integer count = jdbcClient.sql("""
+                        SELECT COUNT(1) FROM friendship
+                        WHERE status = 'ACCEPTED'
+                          AND ((requester_id = :userId1 AND addressee_id = :userId2)
+                            OR (requester_id = :userId2 AND addressee_id = :userId1))
+                        """)
+                .param("userId1", userId1)
+                .param("userId2", userId2)
+                .query(Integer.class)
+                .single();
+        return count != null && count > 0;
+    }
 }

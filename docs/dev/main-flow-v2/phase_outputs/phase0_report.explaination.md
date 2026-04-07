@@ -1,9 +1,3 @@
-Chào bạn, 3 vấn đề (Open Issues / Blockers) được liệt kê trong tài liệu này đều là những bài toán kinh điển về **Đồng bộ hóa (Concurrency)**, **Quản lý giao dịch (Transaction Management)** và **Đảm bảo chất lượng (Quality Assurance)** trong hệ thống Backend. 
-
-Dưới đây là phần giải thích "mổ xẻ" bản chất kỹ thuật của từng vấn đề một cách trực diện và dễ hiểu nhất:
-
----
-
 ### 1. Vấn đề 1: Lỗi "nhanh tay thì được" (Race Condition) khi Lock dữ liệu
 **Bản chất vấn đề:** Khi hệ thống muốn ghép cặp 2 người (Match), nó cần đọc trạng thái của 2 cái `intent` (yêu cầu đi dạo) từ Database lên để xem có rảnh (`OPEN`) không, sau đó mới khóa lại (`lock()`). 
 Tuy nhiên, hiện tại code đang dùng hàm đọc thông thường (`findById`) thay vì đọc có khóa chết (`findByIdForUpdate` - hay còn gọi là **Pessimistic Lock**).

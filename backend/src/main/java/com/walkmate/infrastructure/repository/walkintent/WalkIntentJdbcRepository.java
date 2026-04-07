@@ -28,7 +28,8 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     intent_id, hotspot_id, user_id,
                     time_window_start, time_window_end,
                     matching_constraints,
-                    status, created_at, expires_at, version
+                    status, created_at, expires_at, version,
+                    is_private, invited_friend_id, description
                 )
                 VALUES (
                     :intentId,
@@ -40,15 +41,21 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     CAST(:status AS intent_status),
                     :createdAt,
                     :expiresAt,
-                    :version
+                    :version,
+                    :isPrivate,
+                    :invitedFriendId,
+                    :description
                 )
                 ON CONFLICT (intent_id) DO UPDATE SET
-                    status              = CAST(EXCLUDED.status AS intent_status),
-                    time_window_start   = EXCLUDED.time_window_start,
-                    time_window_end     = EXCLUDED.time_window_end,
+                    status               = CAST(EXCLUDED.status AS intent_status),
+                    time_window_start    = EXCLUDED.time_window_start,
+                    time_window_end      = EXCLUDED.time_window_end,
                     matching_constraints = EXCLUDED.matching_constraints,
-                    expires_at          = EXCLUDED.expires_at,
-                    version             = EXCLUDED.version
+                    expires_at           = EXCLUDED.expires_at,
+                    version              = EXCLUDED.version,
+                    is_private           = EXCLUDED.is_private,
+                    invited_friend_id    = EXCLUDED.invited_friend_id,
+                    description          = EXCLUDED.description
                 """;
 
         jdbcClient.sql(sql)
@@ -62,6 +69,10 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                 .param("createdAt",          Timestamp.from(intent.getCreatedAt()))
                 .param("expiresAt",          Timestamp.from(intent.getExpiresAt()))
                 .param("version",            intent.getVersion())
+                .param("isPrivate",          intent.isPrivate())
+                .param("invitedFriendId",    intent.getInvitedFriendId() != null
+                                                 ? UUID.fromString(intent.getInvitedFriendId()) : null)
+                .param("description",        intent.getDescription())
                 .update();
 
         return intent;
@@ -81,7 +92,10 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description
                 FROM walk_intent
                 WHERE intent_id = :intentId
                 """;
@@ -106,7 +120,10 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description
                 FROM walk_intent
                 WHERE intent_id = :intentId
                 FOR UPDATE
@@ -139,7 +156,10 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description
                 FROM walk_intent
                 WHERE user_id = :userId
                   AND status = 'OPEN'
@@ -157,7 +177,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
         final String sql = """
                 SELECT COUNT(*) FROM walk_intent
                 WHERE user_id = :userId
-                  AND status IN ('OPEN', 'CONSUMED')
+                  AND status IN ('OPEN', 'MATCHING')
                   AND time_window_start < :end
                   AND time_window_end   > :start
                 """;
@@ -211,11 +231,15 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description
                 FROM walk_intent
                 WHERE hotspot_id          = :hotspotId
                   AND status              = 'OPEN'
                   AND user_id            != :excludeUserId
+                  AND (is_private = false OR invited_friend_id = :callerId)
                   AND (matching_constraints->>'age_min')::int <= :ageMax
                   AND (matching_constraints->>'age_max')::int >= :ageMin
                   AND time_window_start   < :boundaryEnd
@@ -226,6 +250,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
         return jdbcClient.sql(sql)
                 .param("hotspotId",     UUID.fromString(hotspotId))
                 .param("excludeUserId", UUID.fromString(excludeUserId))
+                .param("callerId",      UUID.fromString(excludeUserId))
                 .param("ageMin",        ageMin)
                 .param("ageMax",        ageMax)
                 .param("boundaryEnd",   Timestamp.from(boundaryEnd))
@@ -247,7 +272,10 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                 IntentStatus.valueOf(rs.getString("status")),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("expires_at").toInstant(),
-                rs.getLong("version")
+                rs.getLong("version"),
+                rs.getBoolean("is_private"),
+                rs.getString("invited_friend_id"),
+                rs.getString("description")
         );
     }
 

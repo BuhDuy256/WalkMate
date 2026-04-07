@@ -200,7 +200,7 @@ private static final int PROPOSAL_TTL_MINUTES = 5;
 ```
 
 **Checklist:**
-- [ ] Constant updated.
+- [x] Constant updated.
 - [ ] Any related test fixtures that assume 30 min TTL are updated.
 
 ---
@@ -219,8 +219,8 @@ private static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(15);
 ```
 
 **Checklist:**
-- [ ] Both constants updated to match S-3.
-- [ ] Scheduler query in `WalkSessionJdbcRepository.findSessionsPastActivationWindow()` uses correct boundary (`scheduledStart + 15 min < now`). Update SQL if needed.
+- [x] Both constants updated to match S-3.
+- [x] Scheduler query in `WalkSessionJdbcRepository.findSessionsPastActivationWindow()` uses correct boundary (`scheduledStart + 15 min < now`). Update SQL if needed.
 
 ---
 
@@ -243,9 +243,9 @@ public ResponseEntity<ApiResponse<WalkSessionResponse>> completeSession(
 ```
 
 **Checklist:**
-- [ ] Endpoint added.
-- [ ] `completeSession()` in service already enforces `SESSION_COMPLETE_TOO_EARLY` guard (S-5) — verify no changes needed.
-- [ ] `SessionMapper.toResponse()` correctly maps the terminal session fields.
+- [x] Endpoint added.
+- [x] `completeSession()` in service already enforces `SESSION_COMPLETE_TOO_EARLY` guard (S-5) — verify no changes needed.
+- [x] `SessionMapper.toResponse()` correctly maps the terminal session fields.
 
 ---
 
@@ -297,14 +297,14 @@ Add filter: `AND (is_private = false OR invited_friend_id = :callerId)`. This en
 Expose `isPrivate`, `description` (omit `invitedFriendId` for privacy unless caller is the owner).
 
 **Checklist:**
-- [ ] Domain entity updated.
-- [ ] Command updated.
-- [ ] Request DTO updated with validation.
-- [ ] Controller passes new fields.
-- [ ] Service validates friendship before creating private intent.
-- [ ] JDBC repository reads/writes new columns.
-- [ ] `findOpenCandidates()` SQL includes `is_private` filter.
-- [ ] Response DTO updated.
+- [x] Domain entity updated.
+- [x] Command updated.
+- [x] Request DTO updated with validation.
+- [x] Controller passes new fields.
+- [x] Service validates friendship before creating private intent.
+- [x] JDBC repository reads/writes new columns.
+- [x] `findOpenCandidates()` SQL includes `is_private` filter.
+- [x] Response DTO updated.
 
 ---
 
@@ -323,9 +323,9 @@ AND status IN ('OPEN', 'MATCHING')
 The `WalkSessionRepository.hasOverlappingActiveSession()` query is already correct (`PENDING`, `ACTIVE`) — verify and leave as-is.
 
 **Checklist:**
-- [ ] SQL updated from `('OPEN', 'CONSUMED')` to `('OPEN', 'MATCHING')`.
-- [ ] Verify session overlap check still uses `('PENDING', 'ACTIVE')`.
-- [ ] `WalkIntentCommandService.createIntent()` calls both checks (intent overlap + session overlap) — confirm this already exists.
+- [x] SQL updated from `('OPEN', 'CONSUMED')` to `('OPEN', 'MATCHING')`.
+- [x] Verify session overlap check still uses `('PENDING', 'ACTIVE')` — confirmed, no change needed.
+- [ ] `WalkIntentCommandService.createIntent()` calls both checks (intent overlap + session overlap) — session overlap check is NOT called; pre-existing gap, not in Phase 1 scope.
 
 ---
 

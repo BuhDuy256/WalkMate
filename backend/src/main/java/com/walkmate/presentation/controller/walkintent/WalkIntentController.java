@@ -65,7 +65,10 @@ public class WalkIntentController {
                         start,
                         end,
                         request.ageMin(),
-                        request.ageMax()
+                        request.ageMax(),
+                        request.isPrivate(),
+                        request.invitedFriendId(),
+                        request.description()
                 )
         );
         return ResponseEntity.status(HttpStatus.CREATED)

@@ -18,7 +18,9 @@ public class WalkIntentMapper {
                 intent.getMatchingConstraints().ageMax(),
                 intent.getStatus().name(),
                 intent.getCreatedAt().toString(),
-                intent.getExpiresAt().toString()
+                intent.getExpiresAt().toString(),
+                intent.isPrivate(),
+                intent.getDescription()
         );
     }
 }

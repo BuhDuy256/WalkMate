@@ -16,7 +16,8 @@ public enum WalkIntentErrorCode implements ErrorCode {
     INTENT_OVERLAPPING("An active intent already exists in this time window"),
     INVALID_INTENT_DATA("Invalid walk intent data provided"),
     INVALID_TIME_RANGE("Time start must be before time end"),
-    INVALID_AGE_RANGE("Age min must be less than or equal to age max");
+    INVALID_AGE_RANGE("Age min must be less than or equal to age max"),
+    INTENT_PRIVATE_FRIEND_NOT_ACCEPTED("Private intent requires an ACCEPTED friendship with the invited user");
 
     private final String message;
 

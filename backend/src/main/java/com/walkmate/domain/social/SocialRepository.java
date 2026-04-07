@@ -36,4 +36,13 @@ public interface SocialRepository {
      * See {@code RuleBasedMatchingStrategy} and {@code OPTIMIZATION_DECISION_LOG.md}.
      */
     Set<UUID> getBlockedAndBlockerIds(UUID userId);
+
+    // ── Friendship ────────────────────────────────────────────────────────────
+
+    /**
+     * Returns true when a friendship row with status = 'ACCEPTED' exists
+     * between the two users (in either direction).
+     * Used to validate private WalkIntent creation (I-7).
+     */
+    boolean areAcceptedFriends(UUID userId1, UUID userId2);
 }

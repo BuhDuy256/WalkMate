@@ -23,6 +23,9 @@ public class WalkIntent {
     private Instant createdAt;
     private Instant expiresAt;
     private long version;
+    private boolean isPrivate;
+    private String invitedFriendId;
+    private String description;
 
     protected WalkIntent() {
     }
@@ -33,7 +36,8 @@ public class WalkIntent {
                       MatchingConstraints matchingConstraints,
                       IntentStatus status,
                       Instant createdAt, Instant expiresAt,
-                      long version) {
+                      long version,
+                      boolean isPrivate, String invitedFriendId, String description) {
         this.id = id;
         this.hotspotId = hotspotId;
         this.userId = userId;
@@ -44,11 +48,15 @@ public class WalkIntent {
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.version = version;
+        this.isPrivate = isPrivate;
+        this.invitedFriendId = invitedFriendId;
+        this.description = description;
     }
 
     private WalkIntent(String hotspotId, String userId,
                        Instant timeWindowStart, Instant timeWindowEnd,
-                       MatchingConstraints matchingConstraints) {
+                       MatchingConstraints matchingConstraints,
+                       boolean isPrivate, String invitedFriendId, String description) {
         requireText(hotspotId, "Hotspot ID is required");
         requireText(userId, "User ID is required");
         if (!timeWindowEnd.isAfter(timeWindowStart)) {
@@ -69,12 +77,17 @@ public class WalkIntent {
         this.createdAt = Instant.now();
         this.expiresAt = timeWindowEnd;
         this.version = 0;
+        this.isPrivate = isPrivate;
+        this.invitedFriendId = invitedFriendId;
+        this.description = description;
     }
 
     public static WalkIntent create(String hotspotId, String userId,
                                     Instant timeWindowStart, Instant timeWindowEnd,
-                                    MatchingConstraints matchingConstraints) {
-        return new WalkIntent(hotspotId, userId, timeWindowStart, timeWindowEnd, matchingConstraints);
+                                    MatchingConstraints matchingConstraints,
+                                    boolean isPrivate, String invitedFriendId, String description) {
+        return new WalkIntent(hotspotId, userId, timeWindowStart, timeWindowEnd, matchingConstraints,
+                isPrivate, invitedFriendId, description);
     }
 
     /** Transitions OPEN → MATCHING when a MatchProposal is created for this intent. */

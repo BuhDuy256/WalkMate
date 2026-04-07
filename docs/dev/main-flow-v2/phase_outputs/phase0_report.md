@@ -134,11 +134,3 @@ In Step 0.3, `intent` and `matched` are loaded via `findById()` (no pessimistic 
 
 ### 2. `sweepExpiredProposals()` runs all proposals in one transaction
 If the proposal sweep processes multiple expired proposals in a single `@Transactional`, a failure mid-sweep rolls back all changes. For production correctness, each proposal should be processed in its own transaction (via a transactional helper bean or `TransactionTemplate`). This is a robustness issue, not a correctness issue — a failed sweep retries in 60 seconds.
-
-### 3. No test coverage for Phase 0 changes
-No unit or integration tests were written as part of Phase 0. Phase 1 should include tests that verify:
-- `WalkIntent.lock()` / `unlock()` state transitions and guards
-- `MatchProposal.version` OCC: concurrent save throws `PROPOSAL_CONCURRENT_MODIFICATION`
-- `MatchingCommandService.findOrCreateProposal()` sets both intents to MATCHING
-- `passProposal()` / `cancelProposal()` correctly restore intents to OPEN
-- `sweepExpiredProposals()` expires proposals and unlocks intents

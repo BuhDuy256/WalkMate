@@ -144,7 +144,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
         //   scheduledStart + ACTIVATION_WINDOW_AFTER < now
         final String sql = selectAll() + """
                 WHERE status = 'PENDING'
-                  AND scheduled_start + INTERVAL '30 minutes' < :now
+                  AND scheduled_start + INTERVAL '15 minutes' < :now
                 """;
         return jdbcClient.sql(sql)
                 .param("now", Timestamp.from(now))

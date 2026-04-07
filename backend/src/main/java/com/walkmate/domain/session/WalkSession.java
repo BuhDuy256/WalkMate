@@ -11,9 +11,9 @@ import java.util.UUID;
 public class WalkSession {
 
     /** Arrival window opens this many minutes before the scheduled start. */
-    public static final Duration ACTIVATION_WINDOW_BEFORE = Duration.ofMinutes(15);
+    public static final Duration ACTIVATION_WINDOW_BEFORE = Duration.ofMinutes(10);
     /** Arrival window closes this many minutes after the scheduled start. */
-    public static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(30);
+    public static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(15);
 
     private String        sessionId;
     private String        proposalId;

@@ -84,4 +84,16 @@ public class SessionController {
         sessionCommandService.abortSession(sessionId, principal.userId(), request.reason());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    /**
+     * POST /api/v1/sessions/{sessionId}/complete
+     * User-initiated session completion. Enforces S-5 (minimum 5-minute guard).
+     */
+    @PostMapping("/{sessionId}/complete")
+    public ResponseEntity<ApiResponse<WalkSessionResponse>> completeSession(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String sessionId) {
+        WalkSession session = sessionCommandService.completeSession(sessionId, principal.userId());
+        return ResponseEntity.ok(ApiResponse.success(sessionMapper.toResponse(session)));
+    }
 }

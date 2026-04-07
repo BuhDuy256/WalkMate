@@ -8,6 +8,9 @@ public record CreateWalkIntentCommand(
         Instant timeWindowStart,
         Instant timeWindowEnd,
         int ageMin,
-        int ageMax
+        int ageMax,
+        boolean isPrivate,
+        String invitedFriendId,
+        String description
 ) {
 }

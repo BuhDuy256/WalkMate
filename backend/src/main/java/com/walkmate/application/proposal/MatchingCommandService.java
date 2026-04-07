@@ -34,7 +34,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MatchingCommandService {
 
-    private static final long PROPOSAL_TTL_MINUTES = 30;
+    private static final long PROPOSAL_TTL_MINUTES = 5;
 
     private final WalkIntentRepository    walkIntentRepository;
     private final MatchProposalRepository matchProposalRepository;
