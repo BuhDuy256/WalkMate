@@ -4,9 +4,12 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.walkmate.application.notification.PushNotificationProvider;
+import com.walkmate.domain.notification.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 /**
  * Firebase Cloud Messaging implementation of {@link PushNotificationProvider}.
@@ -60,6 +63,30 @@ public class FcmNotificationProvider implements PushNotificationProvider {
             // the MatchProposal that was already persisted to the database.
             log.error("FCM MATCH_FOUND delivery failed: proposalId={} token=[{}…] code={} message={}",
                     proposalId,
+                    fcmToken.substring(0, Math.min(12, fcmToken.length())),
+                    ex.getMessagingErrorCode(),
+                    ex.getMessage());
+        }
+    }
+
+    @Override
+    public void sendPush(String fcmToken, NotificationType type, Map<String, Object> payload) {
+        Message.Builder builder = Message.builder()
+                .setToken(fcmToken)
+                .putData("type", type.name());
+
+        if (payload != null) {
+            payload.forEach((k, v) -> builder.putData(k, v != null ? v.toString() : ""));
+        }
+
+        try {
+            String messageId = firebaseMessaging.send(builder.build());
+            log.debug("FCM push dispatched: type={} messageId={}", type, messageId);
+        } catch (FirebaseMessagingException ex) {
+            // Failures are always swallowed — a push failure must never roll back
+            // the business transaction or block notification DB persistence.
+            log.error("FCM push delivery failed: type={} token=[{}…] code={} message={}",
+                    type,
                     fcmToken.substring(0, Math.min(12, fcmToken.length())),
                     ex.getMessagingErrorCode(),
                     ex.getMessage());

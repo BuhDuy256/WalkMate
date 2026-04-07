@@ -16,40 +16,75 @@ public class SocialJdbcRepository implements SocialRepository {
 
     private final JdbcClient jdbcClient;
 
-    // ── Follow ────────────────────────────────────────────────────────────────
-    // V104 migration dropped follow_relation and replaced it with the friendship table.
-    // These methods are no longer backed by a real table and will be reimplemented
-    // once the friendship-based social flow is designed. Calling them now fails fast
-    // rather than producing a cryptic DB error about a missing table.
+    // ── Follow (remapped to friendship table — V104) ──────────────────────────
+    // V104 replaced the unidirectional follow_relation with the bidirectional
+    // friendship table. Follow semantics are preserved:
+    //   follow(A,B)      → INSERT a PENDING friendship request from A to B
+    //   unfollow(A,B)    → DELETE the friendship row where A is the requester
+    //   isFollowing(A,B) → true if A has a PENDING or ACCEPTED friendship to B
+    //   getFollowerIds   → requester_ids of PENDING/ACCEPTED rows addressed to userId
+    //   getFolloweeIds   → addressee_ids of PENDING/ACCEPTED rows initiated by userId
 
     @Override
     public void follow(UUID followerId, UUID followeeId) {
-        throw new UnsupportedOperationException(
-                "follow_relation was dropped in V104. Use friendship-based social flow.");
+        jdbcClient.sql("""
+                        INSERT INTO friendship (requester_id, addressee_id, status)
+                        VALUES (:followerId, :followeeId, CAST('PENDING' AS friend_status))
+                        ON CONFLICT (requester_id, addressee_id) DO NOTHING
+                        """)
+                .param("followerId", followerId)
+                .param("followeeId", followeeId)
+                .update();
     }
 
     @Override
     public void unfollow(UUID followerId, UUID followeeId) {
-        throw new UnsupportedOperationException(
-                "follow_relation was dropped in V104. Use friendship-based social flow.");
+        jdbcClient.sql("""
+                        DELETE FROM friendship
+                        WHERE requester_id = :followerId AND addressee_id = :followeeId
+                        """)
+                .param("followerId", followerId)
+                .param("followeeId", followeeId)
+                .update();
     }
 
     @Override
     public boolean isFollowing(UUID followerId, UUID followeeId) {
-        throw new UnsupportedOperationException(
-                "follow_relation was dropped in V104. Use friendship-based social flow.");
+        Integer count = jdbcClient.sql("""
+                        SELECT COUNT(1) FROM friendship
+                        WHERE requester_id = :followerId
+                          AND addressee_id = :followeeId
+                          AND status IN ('PENDING', 'ACCEPTED')
+                        """)
+                .param("followerId", followerId)
+                .param("followeeId", followeeId)
+                .query(Integer.class)
+                .single();
+        return count != null && count > 0;
     }
 
     @Override
     public List<UUID> getFollowerIds(UUID userId) {
-        throw new UnsupportedOperationException(
-                "follow_relation was dropped in V104. Use friendship-based social flow.");
+        return jdbcClient.sql("""
+                        SELECT requester_id FROM friendship
+                        WHERE addressee_id = :userId
+                          AND status IN ('PENDING', 'ACCEPTED')
+                        """)
+                .param("userId", userId)
+                .query(UUID.class)
+                .list();
     }
 
     @Override
     public List<UUID> getFolloweeIds(UUID userId) {
-        throw new UnsupportedOperationException(
-                "follow_relation was dropped in V104. Use friendship-based social flow.");
+        return jdbcClient.sql("""
+                        SELECT addressee_id FROM friendship
+                        WHERE requester_id = :userId
+                          AND status IN ('PENDING', 'ACCEPTED')
+                        """)
+                .param("userId", userId)
+                .query(UUID.class)
+                .list();
     }
 
     // ── Block ─────────────────────────────────────────────────────────────────

@@ -582,11 +582,11 @@ AND :callerId != ALL(wi.excluded_user_ids)
 This filters out candidates who have excluded the caller.
 
 **Checklist:**
-- [ ] New migration `V106` with `excluded_user_ids` column.
-- [ ] Domain entity field + `excludeUser()` method.
-- [ ] JDBC repository reads/writes `excluded_user_ids` array.
-- [ ] `passProposal()` calls `excludeUser()` on caller's intent.
-- [ ] `findOpenCandidates()` SQL filters on `excluded_user_ids`.
+- [x] New migration `V106` with `excluded_user_ids` column.
+- [x] Domain entity field + `excludeUser()` method.
+- [x] JDBC repository reads/writes `excluded_user_ids` array.
+- [x] `passProposal()` calls `excludeUser()` on caller's intent.
+- [x] `findOpenCandidates()` SQL filters on `excluded_user_ids`.
 
 ---
 
@@ -663,12 +663,12 @@ public void expire() {
 - `WalkIntentRepository.findOverdueOpenIntents(now)` → intents where `time_window_end <= :now AND status IN ('OPEN', 'MATCHING')`
 
 **Checklist:**
-- [ ] `IntentScheduler.java` created (or existing scheduler extended).
-- [ ] `WalkIntent.expire()` domain method added.
-- [ ] `MatchProposal.expire()` domain method added.
-- [ ] Two new repository query methods in `WalkIntentRepository` + JDBC impl.
-- [ ] Cascade: proposal expired + partner intent unlocked atomically.
-- [ ] `@Scheduled` runs every 60 seconds.
+- [x] `IntentScheduler.java` created (or existing scheduler extended).
+- [x] `WalkIntent.expire()` domain method added.
+- [x] `MatchProposal.expire()` domain method added — already present from Phase 0.
+- [x] Two new repository query methods in `WalkIntentRepository` + JDBC impl.
+- [x] Cascade: proposal expired + partner intent unlocked atomically.
+- [x] `@Scheduled` runs every 60 seconds.
 
 ---
 
@@ -802,14 +802,14 @@ The `PROPOSAL_RECEIVED` notification's `publish()` call that already exists in `
 Also remove `PushNotificationProvider` from `MatchingCommandService`'s constructor dependencies once this cleanup is done, unless it is still used elsewhere.
 
 **Checklist:**
-- [ ] `sendPush(String, NotificationType, Map)` added to `PushNotificationProvider` interface.
-- [ ] `sendPush()` implemented in `FcmNotificationProvider` with data-only payload and error swallowing.
-- [ ] `UserRepository` and `PushNotificationProvider` injected into `NotificationPublisherImpl`.
-- [ ] `NotificationPublisherImpl.publish()` dual-dispatches: DB persist first, then FCM.
-- [ ] FCM exception in `publish()` is caught independently — never blocks DB persistence.
-- [ ] Manual `pushNotificationProvider.sendMatchFound()` call removed from `MatchingCommandService`.
-- [ ] `PushNotificationProvider` removed from `MatchingCommandService` dependencies (if no longer used).
-- [ ] `SESSION_CONFIRMED`, `SESSION_ACTIVE`, and `REVIEW_REQUESTED` events are now automatically pushed via FCM with no call-site changes in `SessionCommandService`.
+- [x] `sendPush(String, NotificationType, Map)` added to `PushNotificationProvider` interface.
+- [x] `sendPush()` implemented in `FcmNotificationProvider` with data-only payload and error swallowing.
+- [x] `UserRepository` and `PushNotificationProvider` injected into `NotificationPublisherImpl`.
+- [x] `NotificationPublisherImpl.publish()` dual-dispatches: DB persist first, then FCM.
+- [x] FCM exception in `publish()` is caught independently — never blocks DB persistence.
+- [x] Manual `pushNotificationProvider.sendMatchFound()` call removed from `MatchingCommandService`.
+- [x] `PushNotificationProvider` removed from `MatchingCommandService` dependencies (if no longer used).
+- [x] `SESSION_CONFIRMED`, `SESSION_ACTIVE`, and `REVIEW_REQUESTED` events are now automatically pushed via FCM with no call-site changes in `SessionCommandService`.
 
 ---
 

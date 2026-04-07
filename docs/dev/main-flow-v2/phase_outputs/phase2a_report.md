@@ -100,4 +100,4 @@ No unit or integration tests were written for steps 2.1–2.3 (same pattern as p
 - `SessionCommandService` terminal transitions — verify afterCommit hook fires for each
 
 ### 3. No MongoTransactionManager — reconciliation path undefined
-Per the architectural contract, if MongoDB write fails after PostgreSQL commits, the WalkSession is valid but has no chat room. A reconciliation job to detect and repair this gap is not yet implemented. This is a known accepted risk per ADR-001.
+Per the architectural contract, if MongoDB write fails after PostgreSQL commits, the WalkSession is valid but has no chat room. A reconciliation job to detect and repair this gap is not yet implemented. This is a known accepted risk per ADR-001. (Not a code fix — accepted architectural trade-off.)

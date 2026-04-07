@@ -5,6 +5,8 @@ import lombok.Getter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -26,6 +28,7 @@ public class WalkIntent {
     private boolean isPrivate;
     private String invitedFriendId;
     private String description;
+    private List<UUID> excludedUserIds;
 
     protected WalkIntent() {
     }
@@ -37,7 +40,8 @@ public class WalkIntent {
                       IntentStatus status,
                       Instant createdAt, Instant expiresAt,
                       long version,
-                      boolean isPrivate, String invitedFriendId, String description) {
+                      boolean isPrivate, String invitedFriendId, String description,
+                      List<UUID> excludedUserIds) {
         this.id = id;
         this.hotspotId = hotspotId;
         this.userId = userId;
@@ -51,6 +55,7 @@ public class WalkIntent {
         this.isPrivate = isPrivate;
         this.invitedFriendId = invitedFriendId;
         this.description = description;
+        this.excludedUserIds = excludedUserIds != null ? excludedUserIds : new ArrayList<>();
     }
 
     private WalkIntent(String hotspotId, String userId,
@@ -80,6 +85,7 @@ public class WalkIntent {
         this.isPrivate = isPrivate;
         this.invitedFriendId = invitedFriendId;
         this.description = description;
+        this.excludedUserIds = new ArrayList<>();
     }
 
     public static WalkIntent create(String hotspotId, String userId,
@@ -126,6 +132,26 @@ public class WalkIntent {
             throw new DomainException(WalkIntentErrorCode.INTENT_NOT_MATCHING);
         }
         this.status = IntentStatus.CONSUMED;
+        this.version++;
+    }
+
+    /** Transitions OPEN or MATCHING → EXPIRED (I-5, I-6, GAP-13, GAP-14). */
+    public void expire() {
+        if (this.status != IntentStatus.OPEN && this.status != IntentStatus.MATCHING) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_TERMINAL);
+        }
+        this.status = IntentStatus.EXPIRED;
+        this.version++;
+    }
+
+    /**
+     * Adds the given userId to this intent's per-intent exclude list (X-3, GAP-11).
+     * The matching engine will not pair this intent with the excluded user again.
+     */
+    public void excludeUser(UUID userId) {
+        if (!this.excludedUserIds.contains(userId)) {
+            this.excludedUserIds.add(userId);
+        }
         this.version++;
     }
 

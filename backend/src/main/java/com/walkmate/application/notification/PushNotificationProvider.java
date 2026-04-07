@@ -21,6 +21,10 @@ package com.walkmate.application.notification;
  *       implementation owns those details.</li>
  * </ul>
  */
+import com.walkmate.domain.notification.NotificationType;
+
+import java.util.Map;
+
 public interface PushNotificationProvider {
 
     /**
@@ -35,4 +39,17 @@ public interface PushNotificationProvider {
      * @param proposalId the MatchProposal UUID that was created
      */
     void sendMatchFound(String fcmToken, String intentId, String proposalId);
+
+    /**
+     * Sends a generic data-only push notification to a device.
+     *
+     * <p>This is the primary dispatch method used by {@code NotificationPublisherImpl}
+     * for all lifecycle events. The existing {@code sendMatchFound()} remains for
+     * backwards compatibility but new notification types route through here.</p>
+     *
+     * @param fcmToken FCM registration token of the target device
+     * @param type     the notification type — mapped to the {@code "type"} data field
+     * @param payload  arbitrary key/value data included in the FCM data payload
+     */
+    void sendPush(String fcmToken, NotificationType type, Map<String, Object> payload);
 }
