@@ -836,10 +836,10 @@ eventPublisher.publish(new SessionAbortedEvent(session.getSessionId(), callerId)
 The gamification/reputation service should subscribe to these events and apply penalty to `trust_score`.
 
 **Checklist:**
-- [ ] `SessionNoShowEvent` created with `sessionId` + `penalizedUserId`.
-- [ ] `SessionAbortedEvent` created with `sessionId` + `abortingUserId`.
-- [ ] Events published from `handleExpiredSessions()` and `abortSession()`.
-- [ ] Gamification service handles events to deduct trust score.
+- [x] `SessionNoShowEvent` created with `sessionId` + `penalizedUserId`.
+- [x] `SessionAbortedEvent` created with `sessionId` + `abortingUserId`.
+- [x] Events published from `handleExpiredSessions()` and `abortSession()`.
+- [x] Gamification service handles events to deduct trust score.
 
 ---
 
@@ -855,8 +855,8 @@ WHERE user_id = :userId AND status IN ('OPEN', 'MATCHING')
 ```
 
 **Checklist:**
-- [ ] SQL updated.
-- [ ] `WalkIntentResponse` already exposes `status` field (so MATCHING will appear automatically).
+- [x] SQL updated.
+- [x] `WalkIntentResponse` already exposes `status` field (so MATCHING will appear automatically).
 
 ---
 

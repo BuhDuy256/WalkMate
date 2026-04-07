@@ -1,7 +1,9 @@
 package com.walkmate.application.session;
 
 import com.walkmate.application.chat.ChatRoomRepository;
+import com.walkmate.application.gamification.SessionAbortedEvent;
 import com.walkmate.application.gamification.SessionCompletedEvent;
+import com.walkmate.application.gamification.SessionNoShowEvent;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.session.AbortReason;
@@ -119,6 +121,7 @@ public class SessionCommandService {
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, SessionStatus.ACTIVE, SessionStatus.ABORTED,
                 callerId, reason.name());
+        eventPublisher.publishEvent(new SessionAbortedEvent(session.getSessionId(), callerId));
 
         // S-7: lock the chat room after PostgreSQL commits
         final String sid = session.getSessionId();
@@ -193,12 +196,15 @@ public class SessionCommandService {
             boolean       aArrived  = session.getUserAActivatedAt() != null;
             boolean       bArrived  = session.getUserBActivatedAt() != null;
 
+            String noShowUserId = null;
             if (!aArrived && !bArrived) {
                 // Nobody showed up (S-6)
                 session.cancel("Auto-cancelled: no participants arrived within activation window", null);
             } else {
                 // Exactly one person showed up (S-5)
                 session.markNoShow();
+                noShowUserId = (session.getUserAActivatedAt() == null)
+                        ? session.getUserIdA() : session.getUserIdB();
             }
 
             sessionRepository.save(session);
@@ -206,6 +212,10 @@ public class SessionCommandService {
                     null, "scheduler-sweep");
             log.info("Scheduler: session {} transitioned {} → {}",
                     session.getSessionId(), prev, session.getStatus());
+
+            if (noShowUserId != null) {
+                eventPublisher.publishEvent(new SessionNoShowEvent(session.getSessionId(), noShowUserId));
+            }
 
             // S-7: lock the chat room for any terminal transition (CANCELLED or NO_SHOW)
             final String expiredSid = session.getSessionId();

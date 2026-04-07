@@ -4,6 +4,8 @@ import com.walkmate.domain.gamification.Badge;
 import com.walkmate.domain.gamification.BadgePolicy;
 import com.walkmate.domain.gamification.UserBadgeRepository;
 import com.walkmate.domain.gamification.UserStats;
+import com.walkmate.domain.review.SessionOutcome;
+import com.walkmate.domain.review.TrustScorePolicy;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.tracking.TrackingChunkRepository;
@@ -57,6 +59,28 @@ public class GamificationCommandService {
         }
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSessionNoShow(SessionNoShowEvent event) {
+        try {
+            applyPenalty(event.getPenalizedUserId(), SessionOutcome.NO_SHOW);
+        } catch (Exception ex) {
+            log.error("Gamification penalty failed for NO_SHOW session={} user={}: {}",
+                    event.getSessionId(), event.getPenalizedUserId(), ex.getMessage(), ex);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSessionAborted(SessionAbortedEvent event) {
+        try {
+            applyPenalty(event.getAbortingUserId(), SessionOutcome.ABORTED);
+        } catch (Exception ex) {
+            log.error("Gamification penalty failed for ABORTED session={} user={}: {}",
+                    event.getSessionId(), event.getAbortingUserId(), ex.getMessage(), ex);
+        }
+    }
+
     // ── Core reward logic ─────────────────────────────────────────────────────
 
     private void rewardBothParticipants(WalkSession session) {
@@ -104,6 +128,19 @@ public class GamificationCommandService {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void applyPenalty(String userId, SessionOutcome outcome) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            log.warn("Gamification: user {} not found, skipping penalty", userId);
+            return;
+        }
+        int newScore = TrustScorePolicy.apply(user.getTrustScore(), outcome);
+        user.applyTrustScore(newScore);
+        userRepository.save(user);
+        log.info("Gamification: applied {} penalty ({}) to user {} — new trustScore={}",
+                outcome.name(), outcome.getDelta(), userId, newScore);
+    }
 
     private double calculateTotalDistanceKm(String sessionId) {
         List<String> polylines = trackingChunkRepository.findPolylinesBySessionId(sessionId);

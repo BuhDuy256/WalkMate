@@ -172,7 +172,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     excluded_user_ids
                 FROM walk_intent
                 WHERE user_id = :userId
-                  AND status = 'OPEN'
+                  AND status IN ('OPEN', 'MATCHING')
                 ORDER BY created_at DESC
                 """;
 

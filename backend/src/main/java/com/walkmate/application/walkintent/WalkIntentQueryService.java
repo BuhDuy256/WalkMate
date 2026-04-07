@@ -18,7 +18,7 @@ public class WalkIntentQueryService {
     private final WalkIntentRepository walkIntentRepository;
     private final MatchingStrategy matchingStrategy;
 
-    /** Returns all OPEN intents for the authenticated user. */
+    /** Returns all OPEN or MATCHING intents for the authenticated user. */
     @Transactional(readOnly = true)
     public List<WalkIntent> listActiveIntents(String userId) {
         return walkIntentRepository.findOpenByUserId(userId);
