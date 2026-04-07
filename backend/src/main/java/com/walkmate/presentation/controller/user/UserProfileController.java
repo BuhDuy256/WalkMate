@@ -7,7 +7,6 @@ import com.walkmate.application.user.UserProfileCommandService;
 import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserProfile;
-import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.infrastructure.storage.AvatarStorageService;
 import com.walkmate.presentation.dto.request.user.UpdateFcmTokenRequest;
@@ -42,7 +41,6 @@ public class UserProfileController {
     private final UserQueryService           queryService;
     private final UserCommandService         userCommandService;
     private final UserProfileCommandService  commandService;
-    private final UserProfileRepository      profileRepository;
     private final AvatarStorageService       storageService;
     private final UserProfileMapper          mapper;
 
@@ -55,7 +53,7 @@ public class UserProfileController {
         UUID userId  = UUID.fromString(principal.userId());
         UserProfile  profile = queryService.getMyProfile(userId);
         User         user    = queryService.getUser(userId);
-        List<String> tags    = profileRepository.findTagsByUserId(userId);
+        List<String> tags    = queryService.getTagsByUserId(userId);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(profile, user, tags)));
     }
@@ -86,7 +84,7 @@ public class UserProfileController {
 
         UserProfile  updated = commandService.updateProfile(command);
         User         user    = queryService.getUser(callerId);
-        List<String> tags    = profileRepository.findTagsByUserId(callerId);
+        List<String> tags    = queryService.getTagsByUserId(callerId);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated, user, tags)));
     }
@@ -114,7 +112,7 @@ public class UserProfileController {
         UUID         uid     = UUID.fromString(userId);
         UserProfile  profile = queryService.getProfile(uid);
         User         user    = queryService.getUser(uid);
-        List<String> tags    = profileRepository.findTagsByUserId(uid);
+        List<String> tags    = queryService.getTagsByUserId(uid);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(profile, user, tags)));
     }

@@ -67,13 +67,13 @@ Ac session — the refresh_tokens migration risk and the visibilityMode coupling
 
   | Phase                                                                                                    | Task                                                                   | Brief Description                               | Priority |
   | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------- | -------- |
-  | 1                                                                                                        | **Fix `fullName` silent discard bug**                                  | Remove `fullName` from `User.register()`;       |
+  | 1                                                                                                        | **Fix `fullName` silent discard bug** ✅                               | Remove `fullName` from `User.register()`;       |
   | `UserCommandService.registerUser()` creates `UserProfile` with `fullName` atomically after saving `User` | High                                                                   |
-  | 1                                                                                                        | **Split `authenticate()` → `validateCredentials()` + `recordLogin()`** | `validateCredentials()` becomes a pure          |
+  | 1                                                                                                        | **Split `authenticate()` → `validateCredentials()` + `recordLogin()`** ✅ | `validateCredentials()` becomes a pure       |
   | check (no side-effects); service calls `recordLogin()` explicitly afterward                              | High                                                                   |
-  | 1                                                                                                        | **Remove `UserProfileRepository` from `UserProfileController`**        | Move `findTagsByUserId()` call into             |
+  | 1                                                                                                        | **Remove `UserProfileRepository` from `UserProfileController`** ✅     | Move `findTagsByUserId()` call into             |
   | `UserQueryService`; controller calls service only                                                        | High                                                                   |
-  | 1                                                                                                        | **Rename `USER_ALREADY_EXISTS` → `USER_EMAIL_ALREADY_EXISTS`**         | Align error code name with `DOMAIN_CONTRACTS.md |
+  | 1                                                                                                        | **Rename `USER_ALREADY_EXISTS` → `USER_EMAIL_ALREADY_EXISTS`** ✅      | Align error code name with `DOMAIN_CONTRACTS.md |
   | §4.3`; update all call sites                                                                             | Med                                                                    |
 
   ---

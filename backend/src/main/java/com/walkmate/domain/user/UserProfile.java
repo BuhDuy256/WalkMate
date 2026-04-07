@@ -49,6 +49,12 @@ public class UserProfile {
         return new UserProfile(userId, "", null, null, null, null, 5000);
     }
 
+    /** Creates a pre-populated profile for a new locally registered user. */
+    public static UserProfile createForLocal(UUID userId, String fullName) {
+        String name = (fullName != null && !fullName.isBlank()) ? fullName.strip() : "";
+        return new UserProfile(userId, name, null, null, null, null, 5000);
+    }
+
     /** Creates a pre-populated profile for a new Google Sign-In user. */
     public static UserProfile createForOAuth(UUID userId, String fullName, String avatarUrl) {
         String name = (fullName != null && !fullName.isBlank()) ? fullName.strip() : "";

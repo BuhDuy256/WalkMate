@@ -54,8 +54,7 @@ public class User {
 
     // ── Creation factory ──────────────────────────────────────────────────────
 
-    private User(String fullName, String email, String passwordHash) {
-        requireText(fullName, "Full name is required");
+    private User(String email, String passwordHash) {
         this.email           = normalizeEmail(email);
         this.phone           = null;
         this.provider        = DEFAULT_PROVIDER;
@@ -71,8 +70,8 @@ public class User {
         this.fcmToken          = null;
     }
 
-    public static User register(String fullName, String email, String passwordHash) {
-        return new User(fullName, email, passwordHash);
+    public static User register(String email, String passwordHash) {
+        return new User(email, passwordHash);
     }
 
     /** Factory for brand-new Google Sign-In users (no password). */
@@ -100,11 +99,11 @@ public class User {
         return requireText(email, "Email is required").trim().toLowerCase(Locale.ROOT);
     }
 
-    public void authenticate(String rawPassword, PasswordMatcher matcher) {
+    /** Pure credential check — no side-effects. Call {@link #recordLogin()} afterward. */
+    public void validateCredentials(String rawPassword, PasswordMatcher matcher) {
         if (!matcher.matches(rawPassword, this.passwordHash)) {
             throw new DomainException(UserErrorCode.USER_INVALID_CREDENTIALS);
         }
-        this.lastLoginAt = Instant.now();
     }
 
     /** Records a successful OAuth login (updates lastLoginAt without a password check). */

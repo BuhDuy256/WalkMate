@@ -26,7 +26,14 @@
       "mcp__grapuco__list_repositories",
       "mcp__grapuco__get_context",
       "mcp__grapuco__semantic_search_docs",
-      "mcp__grapuco__search_code"
+      "mcp__grapuco__search_code",
+      "mcp__grapuco__get_project_modules",
+      "Bash(./gradlew compileJava)",
+      "Bash(ls gradlew*)",
+      "Bash(ls *.gradle*)",
+      "Bash(gradle compileJava)",
+      "Bash(./gradlew :backend:compileJava)",
+      "Bash(./gradlew :backend:test)"
     ]
   }
 }

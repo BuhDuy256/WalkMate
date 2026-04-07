@@ -31,7 +31,8 @@ public class UserCommandService {
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_INVALID_CREDENTIALS));
 
-        user.authenticate(command.password(), passwordEncoder::matches);
+        user.validateCredentials(command.password(), passwordEncoder::matches);
+        user.recordLogin();
 
         TokenPair tokenPair = tokenProvider.generateTokenPair(user);
 
@@ -105,15 +106,16 @@ public class UserCommandService {
 
         userRepository.findByEmail(normalizedEmail)
                 .ifPresent(existingUser -> {
-                    throw new DomainException(UserErrorCode.USER_ALREADY_EXISTS);
+                    throw new DomainException(UserErrorCode.USER_EMAIL_ALREADY_EXISTS);
                 });
 
         User user = User.register(
-                command.fullName(),
                 normalizedEmail,
                 passwordEncoder.encode(command.password())
         );
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        profileRepository.save(UserProfile.createForLocal(saved.getUserId(), command.fullName()));
+        return saved;
     }
 }
