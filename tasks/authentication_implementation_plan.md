@@ -7,7 +7,7 @@ Ac session — the refresh_tokens migration risk and the visibilityMode coupling
   **Project:** WalkMate Backend
   **Date:** 2026-04-07
   **Branch:** `feature/oauth` (base for all auth work)
-  **Status:** Planning Complete — Awaiting Phase 1 Execution
+  **Status:** Phase 1 ✅ Phase 2 ✅ — Awaiting Phase 3 Execution
 
   ---
 

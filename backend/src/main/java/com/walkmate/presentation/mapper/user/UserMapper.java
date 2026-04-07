@@ -14,6 +14,11 @@ public class UserMapper {
     }
 
     public LoginUserResponse toLoginUserResponse(LoginResult loginResult) {
-        return new LoginUserResponse(loginResult.accessToken(), "Bearer", loginResult.expiresIn());
+        return new LoginUserResponse(
+                loginResult.accessToken(),
+                "Bearer",
+                loginResult.expiresIn(),
+                loginResult.refreshToken(),
+                loginResult.refreshTokenExpiresIn());
     }
 }

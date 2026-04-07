@@ -33,7 +33,9 @@
       "Bash(ls *.gradle*)",
       "Bash(gradle compileJava)",
       "Bash(./gradlew :backend:compileJava)",
-      "Bash(./gradlew :backend:test)"
+      "Bash(./gradlew :backend:test)",
+      "Bash(./gradlew :backend:compileJava :backend:compileTestJava)",
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.application.*\" --tests \"com.walkmate.presentation.*\")"
     ]
   }
 }

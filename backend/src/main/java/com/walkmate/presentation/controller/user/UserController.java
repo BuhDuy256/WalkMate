@@ -44,7 +44,7 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginUserResponse>> loginUser(@Valid @RequestBody LoginUserRequest request) {
         LoginResult loginResult = userCommandService.loginUser(
-                new LoginUserCommand(request.email(), request.password())
+                new LoginUserCommand(request.email(), request.password(), request.deviceId())
         );
         return ResponseEntity.ok(ApiResponse.success(userMapper.toLoginUserResponse(loginResult)));
     }
@@ -52,7 +52,7 @@ public class UserController {
     @PostMapping("/google")
     public ResponseEntity<ApiResponse<LoginUserResponse>> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
         LoginResult loginResult = userCommandService.loginOrRegisterWithGoogle(
-                new GoogleAuthCommand(request.idToken())
+                new GoogleAuthCommand(request.idToken(), request.deviceId())
         );
         return ResponseEntity.ok(ApiResponse.success(userMapper.toLoginUserResponse(loginResult)));
     }

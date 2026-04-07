@@ -4,6 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 
 public record GoogleLoginRequest(
         @NotBlank(message = "Firebase ID token is required")
-        String idToken
+        String idToken,
+
+        @NotBlank(message = "Device ID is required")
+        String deviceId
 ) {
 }

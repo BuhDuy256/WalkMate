@@ -13,27 +13,29 @@ public class User {
     private static final AuthProvider  DEFAULT_PROVIDER = AuthProvider.LOCAL;
     private static final AccountStatus DEFAULT_STATUS   = AccountStatus.ACTIVE;
 
-    private UUID          userId;
-    private String        email;
-    private String        phone;
-    private AuthProvider  provider;
-    private AccountStatus status;
-    private String        passwordHash;
-    private String        providerSubject;
-    private Instant       createdAt;
-    private Instant       lastLoginAt;
-    private int           trustScore;
-    private int           totalPoints;
-    private double        totalDistanceKm;
-    private int           completedSessions;
-    private String        fcmToken;
+    private UUID           userId;
+    private String         email;
+    private String         phone;
+    private AuthProvider   provider;
+    private AccountStatus  status;
+    private VisibilityMode visibilityMode;
+    private String         passwordHash;
+    private String         providerSubject;
+    private Instant        createdAt;
+    private Instant        lastLoginAt;
+    private int            trustScore;
+    private int            totalPoints;
+    private double         totalDistanceKm;
+    private int            completedSessions;
+    private String         fcmToken;
 
     protected User() {}
 
     // ── Rehydration constructor (repository → domain) ─────────────────────────
 
     public User(UUID userId, String email, String phone, AuthProvider provider, AccountStatus status,
-                String passwordHash, String providerSubject, Instant createdAt, Instant lastLoginAt,
+                VisibilityMode visibilityMode, String passwordHash, String providerSubject,
+                Instant createdAt, Instant lastLoginAt,
                 int trustScore, int totalPoints, double totalDistanceKm, int completedSessions,
                 String fcmToken) {
         this.userId            = userId;
@@ -41,6 +43,7 @@ public class User {
         this.phone             = phone;
         this.provider          = provider;
         this.status            = status;
+        this.visibilityMode    = visibilityMode != null ? visibilityMode : VisibilityMode.PUBLIC;
         this.passwordHash      = passwordHash;
         this.providerSubject   = providerSubject;
         this.createdAt         = createdAt;
@@ -59,6 +62,7 @@ public class User {
         this.phone           = null;
         this.provider        = DEFAULT_PROVIDER;
         this.status          = DEFAULT_STATUS;
+        this.visibilityMode  = VisibilityMode.PUBLIC;
         this.passwordHash    = requireText(passwordHash, "Password hash is required");
         this.providerSubject = null;
         this.lastLoginAt     = null;
@@ -81,8 +85,29 @@ public class User {
         u.phone           = null;
         u.provider        = AuthProvider.GOOGLE;
         u.status          = DEFAULT_STATUS;
+        u.visibilityMode  = VisibilityMode.PUBLIC;
         u.passwordHash    = null;
         u.providerSubject = requireText(providerSubject, "Provider subject is required");
+        u.lastLoginAt     = Instant.now();
+        u.createdAt         = Instant.now();
+        u.trustScore        = 0;
+        u.totalPoints       = 0;
+        u.totalDistanceKm   = 0.0;
+        u.completedSessions = 0;
+        u.fcmToken          = null;
+        return u;
+    }
+
+    /** Factory for brand-new phone+OTP users. */
+    public static User registerWithPhone(Phone phone) {
+        User u = new User();
+        u.email           = null;
+        u.phone           = phone.value();
+        u.provider        = AuthProvider.PHONE;
+        u.status          = DEFAULT_STATUS;
+        u.visibilityMode  = VisibilityMode.PUBLIC;
+        u.passwordHash    = null;
+        u.providerSubject = null;
         u.lastLoginAt     = Instant.now();
         u.createdAt         = Instant.now();
         u.trustScore        = 0;
@@ -101,9 +126,23 @@ public class User {
 
     /** Pure credential check — no side-effects. Call {@link #recordLogin()} afterward. */
     public void validateCredentials(String rawPassword, PasswordMatcher matcher) {
+        if (this.status != AccountStatus.ACTIVE) {
+            throw new DomainException(UserErrorCode.USER_ACCOUNT_SUSPENDED);
+        }
         if (!matcher.matches(rawPassword, this.passwordHash)) {
             throw new DomainException(UserErrorCode.USER_INVALID_CREDENTIALS);
         }
+    }
+
+    /** Sets visibility mode with idempotency guard. */
+    public void setVisibilityMode(VisibilityMode mode) {
+        if (this.visibilityMode == VisibilityMode.PUBLIC && mode == VisibilityMode.PUBLIC) {
+            throw new DomainException(UserErrorCode.USER_ALREADY_PUBLIC);
+        }
+        if (this.visibilityMode == VisibilityMode.PRIVATE && mode == VisibilityMode.PRIVATE) {
+            throw new DomainException(UserErrorCode.USER_ALREADY_PRIVATE);
+        }
+        this.visibilityMode = mode;
     }
 
     /** Records a successful OAuth login (updates lastLoginAt without a password check). */

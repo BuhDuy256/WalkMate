@@ -8,6 +8,8 @@ import com.walkmate.domain.user.UserErrorCode;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
+
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,14 +36,16 @@ public class UserCommandService {
         user.validateCredentials(command.password(), passwordEncoder::matches);
         user.recordLogin();
 
-        TokenPair tokenPair = tokenProvider.generateTokenPair(user);
+        TokenPair tokenPair    = tokenProvider.generateTokenPair(user);
+        Instant   refreshExpiry = Instant.now().plusSeconds(tokenPair.refreshTokenExpiresIn());
 
-        RefreshToken refreshToken = RefreshToken.issue(user.getUserId(), tokenPair.refreshToken());
-        refreshTokenRepository.save(refreshToken);
+        refreshTokenRepository.save(
+                RefreshToken.issue(user.getUserId(), command.deviceId(), tokenPair.refreshToken(), refreshExpiry));
 
         userRepository.save(user);
 
-        return new LoginResult(tokenPair.accessToken(), tokenPair.accessTokenExpiresIn());
+        return new LoginResult(tokenPair.accessToken(), tokenPair.accessTokenExpiresIn(),
+                tokenPair.refreshToken(), tokenPair.refreshTokenExpiresIn());
     }
 
     /**
@@ -64,10 +68,14 @@ public class UserCommandService {
         user.recordLogin();
         userRepository.save(user);
 
-        TokenPair tokenPair = tokenProvider.generateTokenPair(user);
-        refreshTokenRepository.save(RefreshToken.issue(user.getUserId(), tokenPair.refreshToken()));
+        TokenPair tokenPair    = tokenProvider.generateTokenPair(user);
+        Instant   refreshExpiry = Instant.now().plusSeconds(tokenPair.refreshTokenExpiresIn());
 
-        return new LoginResult(tokenPair.accessToken(), tokenPair.accessTokenExpiresIn());
+        refreshTokenRepository.save(
+                RefreshToken.issue(user.getUserId(), command.deviceId(), tokenPair.refreshToken(), refreshExpiry));
+
+        return new LoginResult(tokenPair.accessToken(), tokenPair.accessTokenExpiresIn(),
+                tokenPair.refreshToken(), tokenPair.refreshTokenExpiresIn());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

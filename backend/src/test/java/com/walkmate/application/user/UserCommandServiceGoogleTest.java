@@ -73,7 +73,7 @@ class UserCommandServiceGoogleTest {
                 tokenProvider,
                 googleTokenVerifier
         );
-        when(tokenProvider.generateTokenPair(any())).thenReturn(new TokenPair("access-token", 3600L, "refresh-token"));
+        when(tokenProvider.generateTokenPair(any())).thenReturn(new TokenPair("access-token", 3600L, "refresh-token", 2592000L));
     }
 
     // ── Scenario 1: Brand-new Google user ────────────────────────────────────
@@ -89,7 +89,7 @@ class UserCommandServiceGoogleTest {
         User savedUser = buildSavedGoogleUser();
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        LoginResult result = service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN));
+        LoginResult result = service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN, "device-test"));
 
         assertThat(result.accessToken()).isEqualTo("access-token");
 
@@ -112,7 +112,7 @@ class UserCommandServiceGoogleTest {
         when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(localUser));
         when(userRepository.save(any(User.class))).thenReturn(localUser);
 
-        LoginResult result = service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN));
+        LoginResult result = service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN, "device-test"));
 
         assertThat(result.accessToken()).isEqualTo("access-token");
         // providerSubject should now be set (linkGoogleAccount was called)
@@ -133,7 +133,7 @@ class UserCommandServiceGoogleTest {
                 .thenReturn(Optional.of(existingGoogleUser));
         when(userRepository.save(any(User.class))).thenReturn(existingGoogleUser);
 
-        LoginResult result = service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN));
+        LoginResult result = service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN, "device-test"));
 
         assertThat(result.accessToken()).isEqualTo("access-token");
         // No email lookup or profile creation needed
@@ -150,7 +150,7 @@ class UserCommandServiceGoogleTest {
                 .thenThrow(new DomainException(UserErrorCode.USER_INVALID_CREDENTIALS));
 
         assertThatThrownBy(() ->
-                service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN)))
+                service.loginOrRegisterWithGoogle(new GoogleAuthCommand(FIREBASE_ID_TOKEN, "device-test")))
                 .isInstanceOf(DomainException.class)
                 .satisfies(ex -> assertThat(((DomainException) ex).getErrorCode())
                         .isEqualTo(UserErrorCode.USER_INVALID_CREDENTIALS));
@@ -165,6 +165,7 @@ class UserCommandServiceGoogleTest {
     private User buildSavedGoogleUser() {
         return new User(
                 UUID.randomUUID(), USER_EMAIL, null, AuthProvider.GOOGLE, AccountStatus.ACTIVE,
+                com.walkmate.domain.user.VisibilityMode.PUBLIC,
                 null, GOOGLE_SUB, Instant.now(), Instant.now(),
                 0, 0, 0.0, 0, null
         );
@@ -174,6 +175,7 @@ class UserCommandServiceGoogleTest {
     private User buildLocalUser() {
         return new User(
                 UUID.randomUUID(), USER_EMAIL, null, AuthProvider.LOCAL, AccountStatus.ACTIVE,
+                com.walkmate.domain.user.VisibilityMode.PUBLIC,
                 "$2a$10$hashedpassword", null, Instant.now(), null,
                 0, 0, 0.0, 0, null
         );

@@ -49,15 +49,15 @@ class GoogleAuthControllerTest {
 
     @Test
     void googleLogin_validToken_returns200WithAccessToken() throws Exception {
-        LoginResult loginResult = new LoginResult("access-token-xyz", 3600L);
-        LoginUserResponse loginResponse = new LoginUserResponse("access-token-xyz", "Bearer", 3600L);
+        LoginResult loginResult = new LoginResult("access-token-xyz", 3600L, "refresh-token-xyz", 2592000L);
+        LoginUserResponse loginResponse = new LoginUserResponse("access-token-xyz", "Bearer", 3600L, "refresh-token-xyz", 2592000L);
 
         when(userCommandService.loginOrRegisterWithGoogle(any())).thenReturn(loginResult);
         when(userMapper.toLoginUserResponse(loginResult)).thenReturn(loginResponse);
 
         mockMvc.perform(post("/api/v1/auth/google")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"idToken\":\"firebase-id-token-xyz\"}"))
+                        .content("{\"idToken\":\"firebase-id-token-xyz\",\"deviceId\":\"device-test\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token-xyz"))
@@ -71,15 +71,15 @@ class GoogleAuthControllerTest {
      */
     @Test
     void googleLogin_existingUserMergeOrIdempotent_returns200() throws Exception {
-        LoginResult loginResult = new LoginResult("merged-access-token", 3600L);
-        LoginUserResponse loginResponse = new LoginUserResponse("merged-access-token", "Bearer", 3600L);
+        LoginResult loginResult = new LoginResult("merged-access-token", 3600L, "refresh-token-merged", 2592000L);
+        LoginUserResponse loginResponse = new LoginUserResponse("merged-access-token", "Bearer", 3600L, "refresh-token-merged", 2592000L);
 
         when(userCommandService.loginOrRegisterWithGoogle(any())).thenReturn(loginResult);
         when(userMapper.toLoginUserResponse(loginResult)).thenReturn(loginResponse);
 
         mockMvc.perform(post("/api/v1/auth/google")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"idToken\":\"firebase-id-token-existing\"}"))
+                        .content("{\"idToken\":\"firebase-id-token-existing\",\"deviceId\":\"device-test\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").value("merged-access-token"));
@@ -94,7 +94,7 @@ class GoogleAuthControllerTest {
 
         mockMvc.perform(post("/api/v1/auth/google")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"idToken\":\"expired-or-invalid-token\"}"))
+                        .content("{\"idToken\":\"expired-or-invalid-token\",\"deviceId\":\"device-test\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("USER_INVALID_CREDENTIALS"));
@@ -107,7 +107,7 @@ class GoogleAuthControllerTest {
 
         mockMvc.perform(post("/api/v1/auth/google")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"idToken\":\"conflicting-sub-token\"}"))
+                        .content("{\"idToken\":\"conflicting-sub-token\",\"deviceId\":\"device-test\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("USER_PROVIDER_CONFLICT"));
