@@ -20,5 +20,7 @@ local.properties
 # Firebase credentials — must never be committed
 google-services.json
 firebase-service-account.json
-.claude
 .grapuco
+.vscode
+.claude
+.idea
