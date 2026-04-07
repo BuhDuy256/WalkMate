@@ -459,13 +459,13 @@ public class MongoChatRoomRepository implements ChatRoomRepository {
 ```
 
 **Checklist:**
-- [ ] `spring-boot-starter-data-mongodb` added to `build.gradle`.
-- [ ] `MONGODB_URI` and `MONGODB_DATABASE` added to `application.properties`.
-- [ ] `MONGODB_URI` and `MONGODB_DATABASE` added to `.env` (local dev).
-- [ ] `ChatRoomDocument` created in `infrastructure/repository/chat/document/`.
-- [ ] `ChatRoomRepository` port created in `application/chat/`.
-- [ ] `MongoChatRoomRepository` adapter created in `infrastructure/repository/chat/`.
-- [ ] No `MongoTransactionManager` bean registered anywhere.
+- [x] `spring-boot-starter-data-mongodb` added to `build.gradle`.
+- [x] `MONGODB_URI` and `MONGODB_DATABASE` added to `application.properties`.
+- [x] `MONGODB_URI` and `MONGODB_DATABASE` added to `.env` (local dev).
+- [x] `ChatRoomDocument` created in `infrastructure/repository/chat/document/`.
+- [x] `ChatRoomRepository` port created in `application/chat/`.
+- [x] `MongoChatRoomRepository` adapter created in `infrastructure/repository/chat/`.
+- [x] No `MongoTransactionManager` bean registered anywhere.
 - [ ] Application starts successfully with MongoDB URI present; fails fast without it.
 
 ---
@@ -505,10 +505,10 @@ private final ChatRoomRepository chatRoomRepository;  // new dependency
 ```
 
 **Checklist:**
-- [ ] `ChatRoomRepository` injected into `MatchingCommandService`.
-- [ ] `afterCommit()` hook registered after `walkSessionRepository.save(session)`.
-- [ ] MongoDB write is NOT inside the `@Transactional` boundary.
-- [ ] Exception from `initRoom()` is caught and logged; it never propagates to the caller.
+- [x] `ChatRoomRepository` injected into `MatchingCommandService`.
+- [x] `afterCommit()` hook registered after `walkSessionRepository.save(session)`.
+- [x] MongoDB write is NOT inside the `@Transactional` boundary.
+- [x] Exception from `initRoom()` is caught and logged; it never propagates to the caller.
 
 ---
 
@@ -540,12 +540,12 @@ Apply the same `afterCommit()` pattern to **`cancelSession()`** and **`abortSess
 Also apply to the scheduler sweep in **`handleExpiredSessions()`** for sessions that auto-complete or auto-cancel.
 
 **Checklist:**
-- [ ] `ChatRoomRepository` injected into `SessionCommandService`.
-- [ ] `afterCommit()` hook added to `completeSession()`.
-- [ ] `afterCommit()` hook added to `cancelSession()`.
-- [ ] `afterCommit()` hook added to `abortSession()`.
-- [ ] `afterCommit()` hook added to the scheduler's auto-complete and auto-cancel paths inside `handleExpiredSessions()`.
-- [ ] Exception from `closeRoom()` is always caught and logged; never propagates.
+- [x] `ChatRoomRepository` injected into `SessionCommandService`.
+- [x] `afterCommit()` hook added to `completeSession()`.
+- [x] `afterCommit()` hook added to `cancelSession()`.
+- [x] `afterCommit()` hook added to `abortSession()`.
+- [x] `afterCommit()` hook added to the scheduler's auto-complete and auto-cancel paths inside `handleExpiredSessions()`.
+- [x] Exception from `closeRoom()` is always caught and logged; never propagates.
 
 ---
 

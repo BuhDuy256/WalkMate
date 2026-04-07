@@ -1,5 +1,6 @@
 package com.walkmate.application.session;
 
+import com.walkmate.application.chat.ChatRoomRepository;
 import com.walkmate.application.gamification.SessionCompletedEvent;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationType;
@@ -15,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +42,7 @@ public class SessionCommandService {
     private final WalkSessionRepository     sessionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationPublisher     notificationPublisher;
+    private final ChatRoomRepository        chatRoomRepository;
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -90,6 +94,16 @@ public class SessionCommandService {
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, SessionStatus.PENDING, SessionStatus.CANCELLED,
                 callerId, reason);
+
+        // S-7: lock the chat room after PostgreSQL commits
+        final String sid = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try { chatRoomRepository.closeRoom(sid); }
+                catch (Exception e) { log.error("Chat room close failed on cancelSession: sessionId={}", sid, e); }
+            }
+        });
     }
 
     // ── Abort (mid-walk emergency) ────────────────────────────────────────────
@@ -105,6 +119,16 @@ public class SessionCommandService {
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, SessionStatus.ACTIVE, SessionStatus.ABORTED,
                 callerId, reason.name());
+
+        // S-7: lock the chat room after PostgreSQL commits
+        final String sid = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try { chatRoomRepository.closeRoom(sid); }
+                catch (Exception e) { log.error("Chat room close failed on abortSession: sessionId={}", sid, e); }
+            }
+        });
     }
 
     // ── Complete (user-initiated) ─────────────────────────────────────────────
@@ -127,6 +151,16 @@ public class SessionCommandService {
         sessionRepository.logStateChange(sessionId, SessionStatus.ACTIVE, SessionStatus.COMPLETED,
                 callerId, "User completed walk");
         eventPublisher.publishEvent(new SessionCompletedEvent(session));
+
+        // S-7: lock the chat room after PostgreSQL commits
+        final String sid = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try { chatRoomRepository.closeRoom(sid); }
+                catch (Exception e) { log.error("Chat room close failed on completeSession: sessionId={}", sid, e); }
+            }
+        });
 
         // Notify both participants to leave a review
         String partnerId = session.getUserIdA().equals(callerId)
@@ -172,6 +206,16 @@ public class SessionCommandService {
                     null, "scheduler-sweep");
             log.info("Scheduler: session {} transitioned {} → {}",
                     session.getSessionId(), prev, session.getStatus());
+
+            // S-7: lock the chat room for any terminal transition (CANCELLED or NO_SHOW)
+            final String expiredSid = session.getSessionId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try { chatRoomRepository.closeRoom(expiredSid); }
+                    catch (Exception e) { log.error("Chat room close failed on scheduler sweep: sessionId={}", expiredSid, e); }
+                }
+            });
         }
 
         // ── S-9: ACTIVE sessions that have run past scheduledEnd + maxLifespan ──
@@ -183,6 +227,16 @@ public class SessionCommandService {
             sessionRepository.logStateChange(session.getSessionId(), SessionStatus.ACTIVE, SessionStatus.COMPLETED,
                     null, "scheduler-auto-complete");
             eventPublisher.publishEvent(new SessionCompletedEvent(session));
+
+            // S-7: lock the chat room after PostgreSQL commits
+            final String autoSid = session.getSessionId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try { chatRoomRepository.closeRoom(autoSid); }
+                    catch (Exception e) { log.error("Chat room close failed on scheduler auto-complete: sessionId={}", autoSid, e); }
+                }
+            });
 
             // Notify both participants to leave a review (auto-completed walk)
             Map<String, Object> reviewPayload = Map.of("sessionId", session.getSessionId());

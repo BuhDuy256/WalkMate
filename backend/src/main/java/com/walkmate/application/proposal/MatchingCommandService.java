@@ -1,5 +1,6 @@
 package com.walkmate.application.proposal;
 
+import com.walkmate.application.chat.ChatRoomRepository;
 import com.walkmate.application.notification.PushNotificationProvider;
 import com.walkmate.application.walkintent.MatchingStrategy;
 import com.walkmate.application.walkintent.MatchResult;
@@ -21,8 +22,11 @@ import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentErrorCode;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
@@ -31,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchingCommandService {
@@ -46,6 +51,7 @@ public class MatchingCommandService {
     private final NotificationPublisher    notificationPublisher;
     private final PushNotificationProvider pushNotificationProvider;
     private final TransactionTemplate      transactionTemplate;
+    private final ChatRoomRepository       chatRoomRepository;
 
     // ── Find or create a proposal ─────────────────────────────────────────────
 
@@ -231,6 +237,23 @@ public class MatchingCommandService {
                 proposal.getProposedEndTime()
         );
         walkSessionRepository.save(session);
+
+        // Register afterCommit hook — MongoDB write fires only once PostgreSQL commits.
+        // MongoDB is a derived, eventually-consistent store. If this write fails, the
+        // WalkSession remains valid in PostgreSQL (source of truth) and a reconciliation
+        // job can re-initialize the missing chat room. (GAP-8, P-3 step 3)
+        final String sessionId = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    chatRoomRepository.initRoom(sessionId);
+                } catch (Exception e) {
+                    log.error("Chat room init failed after session creation: sessionId={} error={}",
+                            sessionId, e.getMessage());
+                }
+            }
+        });
 
         // Notify both participants that their session has been confirmed
         notificationPublisher.publish(Notification.create(
