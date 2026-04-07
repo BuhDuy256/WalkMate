@@ -2,7 +2,9 @@ package com.walkmate.infrastructure.repository.proposal;
 
 import com.walkmate.domain.proposal.MatchProposal;
 import com.walkmate.domain.proposal.MatchProposalRepository;
+import com.walkmate.domain.proposal.ProposalErrorCode;
 import com.walkmate.domain.proposal.ProposalStatus;
+import com.walkmate.domain.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -22,44 +24,69 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
 
     @Override
     public MatchProposal save(MatchProposal proposal) {
-        final String sql = """
-                INSERT INTO match_proposal (
-                    proposal_id, intent_id_a, intent_id_b,
-                    proposed_start_time, proposed_end_time,
-                    proposed_location_lat, proposed_location_lng,
-                    accepted_by_a, accepted_by_b,
-                    status, created_at, expires_at, confirmed_at
-                )
-                VALUES (
-                    :proposalId, :intentIdA, :intentIdB,
-                    :proposedStartTime, :proposedEndTime,
-                    :proposedLocationLat, :proposedLocationLng,
-                    :acceptedByA, :acceptedByB,
-                    CAST(:status AS proposal_status), :createdAt, :expiresAt, :confirmedAt
-                )
-                ON CONFLICT (proposal_id) DO UPDATE SET
-                    accepted_by_a    = EXCLUDED.accepted_by_a,
-                    accepted_by_b    = EXCLUDED.accepted_by_b,
-                    status           = CAST(EXCLUDED.status AS proposal_status),
-                    confirmed_at     = EXCLUDED.confirmed_at
-                """;
+        if (proposal.getVersion() == 0) {
+            // Fresh proposal — INSERT with version = 0
+            final String insertSql = """
+                    INSERT INTO match_proposal (
+                        proposal_id, intent_id_a, intent_id_b,
+                        proposed_start_time, proposed_end_time,
+                        proposed_location_lat, proposed_location_lng,
+                        accepted_by_a, accepted_by_b,
+                        status, created_at, expires_at, confirmed_at, version
+                    )
+                    VALUES (
+                        :proposalId, :intentIdA, :intentIdB,
+                        :proposedStartTime, :proposedEndTime,
+                        :proposedLocationLat, :proposedLocationLng,
+                        :acceptedByA, :acceptedByB,
+                        CAST(:status AS proposal_status), :createdAt, :expiresAt, :confirmedAt, 0
+                    )
+                    """;
 
-        jdbcClient.sql(sql)
-                .param("proposalId",          UUID.fromString(proposal.getProposalId()))
-                .param("intentIdA",           UUID.fromString(proposal.getIntentIdA()))
-                .param("intentIdB",           UUID.fromString(proposal.getIntentIdB()))
-                .param("proposedStartTime",   Timestamp.from(proposal.getProposedStartTime()))
-                .param("proposedEndTime",     Timestamp.from(proposal.getProposedEndTime()))
-                .param("proposedLocationLat", proposal.getProposedLocationLat())
-                .param("proposedLocationLng", proposal.getProposedLocationLng())
-                .param("acceptedByA",         proposal.isAcceptedByA())
-                .param("acceptedByB",         proposal.isAcceptedByB())
-                .param("status",              proposal.getStatus().name())
-                .param("createdAt",           Timestamp.from(proposal.getCreatedAt()))
-                .param("expiresAt",           Timestamp.from(proposal.getExpiresAt()))
-                .param("confirmedAt",         proposal.getConfirmedAt() != null
-                        ? Timestamp.from(proposal.getConfirmedAt()) : null)
-                .update();
+            jdbcClient.sql(insertSql)
+                    .param("proposalId",          UUID.fromString(proposal.getProposalId()))
+                    .param("intentIdA",           UUID.fromString(proposal.getIntentIdA()))
+                    .param("intentIdB",           UUID.fromString(proposal.getIntentIdB()))
+                    .param("proposedStartTime",   Timestamp.from(proposal.getProposedStartTime()))
+                    .param("proposedEndTime",     Timestamp.from(proposal.getProposedEndTime()))
+                    .param("proposedLocationLat", proposal.getProposedLocationLat())
+                    .param("proposedLocationLng", proposal.getProposedLocationLng())
+                    .param("acceptedByA",         proposal.isAcceptedByA())
+                    .param("acceptedByB",         proposal.isAcceptedByB())
+                    .param("status",              proposal.getStatus().name())
+                    .param("createdAt",           Timestamp.from(proposal.getCreatedAt()))
+                    .param("expiresAt",           Timestamp.from(proposal.getExpiresAt()))
+                    .param("confirmedAt",         proposal.getConfirmedAt() != null
+                            ? Timestamp.from(proposal.getConfirmedAt()) : null)
+                    .update();
+        } else {
+            // Existing proposal — UPDATE with OCC guard (X-5)
+            // Domain methods already incremented version; DB holds version - 1.
+            final String updateSql = """
+                    UPDATE match_proposal
+                    SET accepted_by_a = :acceptedByA,
+                        accepted_by_b = :acceptedByB,
+                        status        = CAST(:status AS proposal_status),
+                        confirmed_at  = :confirmedAt,
+                        version       = version + 1
+                    WHERE proposal_id = :proposalId
+                      AND version     = :expectedVersion
+                    """;
+
+            int rows = jdbcClient.sql(updateSql)
+                    .param("proposalId",       UUID.fromString(proposal.getProposalId()))
+                    .param("acceptedByA",      proposal.isAcceptedByA())
+                    .param("acceptedByB",      proposal.isAcceptedByB())
+                    .param("status",           proposal.getStatus().name())
+                    .param("confirmedAt",      proposal.getConfirmedAt() != null
+                            ? Timestamp.from(proposal.getConfirmedAt()) : null)
+                    .param("expectedVersion",  proposal.getVersion() - 1)
+                    .update();
+
+            if (rows == 0) {
+                throw new DomainException(ProposalErrorCode.PROPOSAL_CONCURRENT_MODIFICATION);
+            }
+        }
 
         return proposal;
     }
@@ -102,6 +129,21 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    @Override
+    public List<MatchProposal> findExpiredPending() {
+        final String sql = selectWithJoin() + """
+                WHERE mp.status = 'PENDING'
+                  AND mp.expires_at < NOW()
+                ORDER BY mp.expires_at ASC
+                """;
+
+        return jdbcClient.sql(sql)
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
     private String selectWithJoin() {
         return """
                 SELECT
@@ -119,7 +161,8 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                     mp.status,
                     mp.created_at,
                     mp.expires_at,
-                    mp.confirmed_at
+                    mp.confirmed_at,
+                    mp.version
                 FROM match_proposal mp
                 JOIN walk_intent wi_a ON mp.intent_id_a = wi_a.intent_id
                 JOIN walk_intent wi_b ON mp.intent_id_b = wi_b.intent_id
@@ -143,7 +186,8 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("expires_at").toInstant(),
                 rs.getTimestamp("confirmed_at") != null
-                        ? rs.getTimestamp("confirmed_at").toInstant() : null
+                        ? rs.getTimestamp("confirmed_at").toInstant() : null,
+                rs.getLong("version")
         );
     }
 }

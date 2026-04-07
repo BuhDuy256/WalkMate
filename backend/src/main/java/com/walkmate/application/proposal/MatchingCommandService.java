@@ -102,6 +102,12 @@ public class MatchingCommandService {
 
         MatchProposal saved = matchProposalRepository.save(proposal);
 
+        // 6. Lock both intents to MATCHING so the matching engine ignores them (I-4, P-1, GAP-2)
+        intent.lock();
+        matched.lock();
+        walkIntentRepository.save(intent);
+        walkIntentRepository.save(matched);
+
         // 1. Persist an in-app notification for the matched user's notification feed.
         notificationPublisher.publish(Notification.create(
                 matched.getUserId(),
@@ -180,8 +186,8 @@ public class MatchingCommandService {
         WalkIntent second = walkIntentRepository.findByIdForUpdate(secondId)
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
 
-        // Re-verify both are still OPEN under the lock
-        if (first.getStatus() != IntentStatus.OPEN || second.getStatus() != IntentStatus.OPEN) {
+        // Re-verify both are still MATCHING under the lock (P-2, GAP-7)
+        if (first.getStatus() != IntentStatus.MATCHING || second.getStatus() != IntentStatus.MATCHING) {
             throw new DomainException(ProposalErrorCode.PROPOSAL_INTENT_NO_LONGER_OPEN);
         }
 
@@ -238,7 +244,16 @@ public class MatchingCommandService {
 
         proposal.reject();
         matchProposalRepository.save(proposal);
-        // Both intents remain OPEN — users can find new matches
+
+        // Return both intents to OPEN so they re-enter the matching pool (GAP-3)
+        WalkIntent intentA = walkIntentRepository.findById(proposal.getIntentIdA())
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        WalkIntent intentB = walkIntentRepository.findById(proposal.getIntentIdB())
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        intentA.unlock();
+        intentB.unlock();
+        walkIntentRepository.save(intentA);
+        walkIntentRepository.save(intentB);
     }
 
     // ── Cancel proposal ───────────────────────────────────────────────────────
@@ -264,11 +279,20 @@ public class MatchingCommandService {
         proposal.reject();
         matchProposalRepository.save(proposal);
 
-        // Close the caller's intent so they leave the matching pool
+        // Close the caller's intent — they are explicitly withdrawing from the search
         WalkIntent callerIntent = walkIntentRepository.findById(callerIntentId)
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
         callerIntent.cancel();
         walkIntentRepository.save(callerIntent);
+
+        // Return the partner's intent to OPEN so they can be matched again (GAP-3)
+        String partnerIntentId = callerIntentId.equals(proposal.getIntentIdA())
+                ? proposal.getIntentIdB()
+                : proposal.getIntentIdA();
+        WalkIntent partnerIntent = walkIntentRepository.findById(partnerIntentId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        partnerIntent.unlock();
+        walkIntentRepository.save(partnerIntent);
     }
 
     // ── List proposals ────────────────────────────────────────────────────────
@@ -276,5 +300,28 @@ public class MatchingCommandService {
     @Transactional(readOnly = true)
     public List<MatchProposal> getPendingProposals(String userId) {
         return matchProposalRepository.findPendingForUser(userId);
+    }
+
+    // ── Scheduler sweep ───────────────────────────────────────────────────────
+
+    /**
+     * Called by the scheduler to expire overdue proposals and return both
+     * intents to OPEN so participants re-enter the matching pool (P-4, GAP-3).
+     */
+    @Transactional
+    public void sweepExpiredProposals() {
+        List<MatchProposal> overdue = matchProposalRepository.findExpiredPending();
+        for (MatchProposal proposal : overdue) {
+            proposal.expire();
+            matchProposalRepository.save(proposal);
+
+            walkIntentRepository.findById(proposal.getIntentIdA())
+                    .filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                    .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+
+            walkIntentRepository.findById(proposal.getIntentIdB())
+                    .filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                    .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+        }
     }
 }

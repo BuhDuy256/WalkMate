@@ -23,9 +23,9 @@ public enum IntentStatus { OPEN, MATCHING, CONSUMED, CANCELLED, EXPIRED }
 ```
 
 **Checklist:**
-- [ ] Add `MATCHING` between `OPEN` and `CONSUMED`.
-- [ ] Verify no existing `switch` statement on `IntentStatus` is non-exhaustive (add a compile-time check).
-- [ ] Update any pattern matching / switch expressions in `WalkIntent.java` guard methods (`cancel()`, `consume()`) to allow `MATCHING` as a valid source state.
+- [x] Add `MATCHING` between `OPEN` and `CONSUMED`.
+- [x] Verify no existing `switch` statement on `IntentStatus` is non-exhaustive — confirmed no switch statements; guards use if-checks only.
+- [x] Update any pattern matching / switch expressions in `WalkIntent.java` guard methods (`cancel()`, `consume()`) to allow `MATCHING` as a valid source state.
 
 ---
 
@@ -63,10 +63,10 @@ public void consume() {
 ```
 
 **Checklist:**
-- [ ] `lock()` guards on `OPEN`.
-- [ ] `unlock()` guards on `MATCHING`.
-- [ ] `consume()` guards on `MATCHING` (update from `OPEN`).
-- [ ] `cancel()` must guard on `OPEN` **or** `MATCHING` (user can cancel even while matching).
+- [x] `lock()` guards on `OPEN`.
+- [x] `unlock()` guards on `MATCHING`.
+- [x] `consume()` guards on `MATCHING` (updated from negative CONSUMED/CANCELLED check to positive MATCHING check).
+- [x] `cancel()` guards on `OPEN` **or** `MATCHING` — confirmed: it blocks only CANCELLED/CONSUMED, so OPEN and MATCHING are both valid sources.
 
 ---
 
@@ -86,10 +86,10 @@ walkIntentRepository.save(intentB);
 This must happen within the **same `@Transactional` boundary** as the proposal save.
 
 **Checklist:**
-- [ ] Load `intentA` and `intentB` objects (by ID) before creating proposal.
-- [ ] Call `lock()` on both.
-- [ ] Save both intents inside the transaction.
-- [ ] `findOpenCandidates()` SQL query must exclude `MATCHING` intents — verify the `status = 'OPEN'` filter already does this (it should, because MATCHING ≠ OPEN).
+- [x] Load `intentA` and `intentB` objects (by ID) before creating proposal — `intent` loaded at step 1, `matched` via matchingStrategy result.
+- [x] Call `lock()` on both.
+- [x] Save both intents inside the transaction.
+- [x] `findOpenCandidates()` SQL query excludes `MATCHING` intents — confirmed `status = 'OPEN'` filter already handles this.
 
 ---
 
@@ -118,9 +118,9 @@ walkIntentRepository.save(partnerIntent);
 **Proposal EXPIRED (scheduler):** When a proposal timeout fires, both intents must be unlocked. Add an `expireProposal(proposalId)` method or handle in the existing expired-session sweep.
 
 **Checklist:**
-- [ ] `passProposal()` unlocks both intents.
-- [ ] `cancelProposal()` cancels caller's intent, unlocks partner's intent.
-- [ ] Scheduled expiry path also unlocks both intents.
+- [x] `passProposal()` unlocks both intents.
+- [x] `cancelProposal()` cancels caller's intent, unlocks partner's intent.
+- [x] Scheduled expiry path also unlocks both intents — `sweepExpiredProposals()` added to `MatchingCommandService`, wired into `SessionScheduler`.
 
 ---
 
@@ -155,12 +155,12 @@ WHERE proposal_id = :proposalId
 If `rowsUpdated == 0`, throw a concurrency conflict exception.
 
 **Checklist:**
-- [ ] `version` field in domain entity.
-- [ ] `version` populated in `create()` factory.
-- [ ] `version` incremented in `recordAcceptance()`, `reject()`, `confirm()`.
-- [ ] `RowMapper` reads version from result set.
-- [ ] UPDATE query includes `AND version = :expectedVersion`.
-- [ ] Throw `OptimisticLockException` (or domain-specific error) when update returns 0 rows.
+- [x] `version` field in domain entity.
+- [x] `version` populated in `create()` factory (`version = 0`).
+- [x] `version` incremented in `recordAcceptance()`, `reject()`, `confirm()` — also added `expire()` with version++.
+- [x] `RowMapper` reads `version` from result set.
+- [x] UPDATE query includes `AND version = :expectedVersion` (expectedVersion = proposal.getVersion() - 1).
+- [x] Throws `PROPOSAL_CONCURRENT_MODIFICATION` when update returns 0 rows.
 
 ---
 
@@ -179,8 +179,8 @@ if (intentA.getStatus() != IntentStatus.MATCHING
 ```
 
 **Checklist:**
-- [ ] Guard changed from `OPEN` to `MATCHING`.
-- [ ] `consume()` (Step 0.2) correctly transitions `MATCHING → CONSUMED`.
+- [x] Guard changed from `OPEN` to `MATCHING`.
+- [x] `consume()` (Step 0.2) correctly transitions `MATCHING → CONSUMED`.
 
 ---
 

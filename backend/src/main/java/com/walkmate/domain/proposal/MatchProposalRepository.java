@@ -14,4 +14,7 @@ public interface MatchProposalRepository {
 
     /** Returns all PENDING proposals where either intent belongs to the given user. */
     List<MatchProposal> findPendingForUser(String userId);
+
+    /** Returns all PENDING proposals whose expires_at is in the past. */
+    List<MatchProposal> findExpiredPending();
 }

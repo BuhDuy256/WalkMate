@@ -77,6 +77,25 @@ public class WalkIntent {
         return new WalkIntent(hotspotId, userId, timeWindowStart, timeWindowEnd, matchingConstraints);
     }
 
+    /** Transitions OPEN → MATCHING when a MatchProposal is created for this intent. */
+    public void lock() {
+        if (this.status != IntentStatus.OPEN) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_NOT_OPEN);
+        }
+        this.status = IntentStatus.MATCHING;
+        this.version++;
+    }
+
+    /** Transitions MATCHING → OPEN when a MatchProposal is REJECTED or EXPIRED. */
+    public void unlock() {
+        if (this.status != IntentStatus.MATCHING) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_NOT_MATCHING);
+        }
+        this.status = IntentStatus.OPEN;
+        this.version++;
+    }
+
+    /** Cancel is allowed from OPEN or MATCHING — the user may withdraw at any point. */
     public void cancel() {
         if (this.status == IntentStatus.CANCELLED) {
             throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CANCELLED);
@@ -88,12 +107,10 @@ public class WalkIntent {
         this.version++;
     }
 
+    /** Transitions MATCHING → CONSUMED when the MatchProposal is CONFIRMED (I-3). */
     public void consume() {
-        if (this.status == IntentStatus.CANCELLED) {
-            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CANCELLED);
-        }
-        if (this.status == IntentStatus.CONSUMED) {
-            throw new DomainException(WalkIntentErrorCode.INTENT_ALREADY_CONSUMED);
+        if (this.status != IntentStatus.MATCHING) {
+            throw new DomainException(WalkIntentErrorCode.INTENT_NOT_MATCHING);
         }
         this.status = IntentStatus.CONSUMED;
         this.version++;
