@@ -84,7 +84,7 @@ public class GamificationCommandService {
     // ── Core reward logic ─────────────────────────────────────────────────────
 
     private void rewardBothParticipants(WalkSession session) {
-        double distanceKm  = calculateTotalDistanceKm(session.getSessionId());
+        double distanceKm  = calculateTotalDistanceKm(session);
         int    durationMin = calculateDurationMinutes(session.getStartedAt(), session.getEndedAt());
         int    points      = (int) (distanceKm * 10) + (durationMin * 2);
 
@@ -142,8 +142,17 @@ public class GamificationCommandService {
                 outcome.name(), outcome.getDelta(), userId, newScore);
     }
 
-    private double calculateTotalDistanceKm(String sessionId) {
-        List<String> polylines = trackingChunkRepository.findPolylinesBySessionId(sessionId);
+    private double calculateTotalDistanceKm(WalkSession session) {
+        String sid   = session.getSessionId();
+        String idA   = session.getUserIdA();
+        String idB   = session.getUserIdB();
+
+        int countA = trackingChunkRepository.countChunks(sid, idA);
+        int countB = trackingChunkRepository.countChunks(sid, idB);
+        // Use the participant with more chunks (better GPS coverage). Tiebreak: user_id_a.
+        String canonicalUserId = (countB > countA) ? idB : idA;
+
+        List<String> polylines = trackingChunkRepository.findPolylinesBySessionAndUser(sid, canonicalUserId);
         if (polylines.isEmpty()) return 0.0;
         return polylines.stream()
                 .mapToDouble(PolylineDecoder::calculateDistanceKm)

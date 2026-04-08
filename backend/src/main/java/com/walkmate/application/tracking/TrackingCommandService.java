@@ -84,9 +84,9 @@ public class TrackingCommandService {
         // 4. Pack timestamps as big-endian BYTEA (8 bytes × pointCount)
         byte[] timestampBytes = packTimestamps(points);
 
-        // 5. Get next chunk index and persist
-        int chunkIndex = chunkRepository.nextChunkIndex(sessionId);
-        chunkRepository.saveChunk(sessionId, chunkIndex, polyline, timestampBytes, points.size());
+        // 5. Get next chunk index (per-user) and persist
+        int chunkIndex = chunkRepository.nextChunkIndex(sessionId, callerId);
+        chunkRepository.saveChunk(sessionId, callerId, chunkIndex, polyline, timestampBytes, points.size());
 
         // 6. Return acknowledged local IDs
         List<Long> acknowledgedIds = new ArrayList<>(points.size());

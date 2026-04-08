@@ -15,13 +15,14 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
     private final JdbcClient jdbcClient;
 
     @Override
-    public int nextChunkIndex(String sessionId) {
+    public int nextChunkIndex(String sessionId, String userId) {
         Integer next = jdbcClient.sql("""
                         SELECT COALESCE(MAX(chunk_index) + 1, 0)
                         FROM session_point_chunks
-                        WHERE session_id = :sessionId
+                        WHERE session_id = :sessionId AND user_id = :userId
                         """)
                 .param("sessionId", UUID.fromString(sessionId))
+                .param("userId",    UUID.fromString(userId))
                 .query(Integer.class)
                 .single();
         return next != null ? next : 0;
@@ -40,19 +41,46 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
     }
 
     @Override
-    public void saveChunk(String sessionId, int chunkIndex, String polyline,
+    public List<String> findPolylinesBySessionAndUser(String sessionId, String userId) {
+        return jdbcClient.sql("""
+                        SELECT polyline FROM session_point_chunks
+                        WHERE session_id = :sessionId AND user_id = :userId
+                        ORDER BY chunk_index ASC
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId",    UUID.fromString(userId))
+                .query(String.class)
+                .list();
+    }
+
+    @Override
+    public int countChunks(String sessionId, String userId) {
+        Integer count = jdbcClient.sql("""
+                        SELECT COUNT(*) FROM session_point_chunks
+                        WHERE session_id = :sessionId AND user_id = :userId
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId",    UUID.fromString(userId))
+                .query(Integer.class)
+                .single();
+        return count != null ? count : 0;
+    }
+
+    @Override
+    public void saveChunk(String sessionId, String userId, int chunkIndex, String polyline,
                           byte[] timestamps, int pointCount) {
         jdbcClient.sql("""
                         INSERT INTO session_point_chunks
-                            (session_id, chunk_index, polyline, timestamps, point_count)
+                            (session_id, user_id, chunk_index, polyline, timestamps, point_count)
                         VALUES
-                            (:sessionId, :chunkIndex, :polyline, :timestamps, :pointCount)
+                            (:sessionId, :userId, :chunkIndex, :polyline, :timestamps, :pointCount)
                         """)
-                .param("sessionId",   UUID.fromString(sessionId))
-                .param("chunkIndex",  chunkIndex)
-                .param("polyline",    polyline)
-                .param("timestamps",  timestamps)
-                .param("pointCount",  pointCount)
+                .param("sessionId",  UUID.fromString(sessionId))
+                .param("userId",     UUID.fromString(userId))
+                .param("chunkIndex", chunkIndex)
+                .param("polyline",   polyline)
+                .param("timestamps", timestamps)
+                .param("pointCount", pointCount)
                 .update();
     }
 }
