@@ -2,7 +2,9 @@ package com.walkmate.data.datasource.remote.api;
 
 import com.walkmate.data.datasource.remote.dto.request.walksession.AbortWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
+import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.session.SessionRouteResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
 
 import java.util.List;
@@ -28,4 +30,24 @@ public interface SessionApiService {
     @POST("api/v1/sessions/{sessionId}/abort")
     Call<ApiResponse<Void>> abortSession(@Path("sessionId") String sessionId,
                                          @Body AbortWalkSessionRequest body);
+
+    // UC-19 — Complete an active walk session
+    @POST("api/v1/sessions/{sessionId}/complete")
+    Call<ApiResponse<WalkSessionResponse>> completeSession(
+            @Path("sessionId") String sessionId);
+
+    // UC-22 — Fetch terminal session history list
+    @GET("api/v1/sessions/history")
+    Call<ApiResponse<List<WalkSessionResponse>>> getSessionHistory();
+
+    // UC-23 — Fetch GPS route for a completed session
+    @GET("api/v1/sessions/{sessionId}/route")
+    Call<ApiResponse<SessionRouteResponse>> getSessionRoute(
+            @Path("sessionId") String sessionId);
+
+    // UC-25 — Submit an incident report
+    @POST("api/v1/sessions/{sessionId}/report")
+    Call<ApiResponse<Void>> reportSession(
+            @Path("sessionId") String sessionId,
+            @Body ReportSessionRequest body);
 }
