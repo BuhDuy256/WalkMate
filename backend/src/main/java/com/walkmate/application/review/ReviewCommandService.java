@@ -1,5 +1,6 @@
 package com.walkmate.application.review;
 
+import com.walkmate.application.gamification.BadgeEvaluationService;
 import com.walkmate.domain.review.ReviewErrorCode;
 import com.walkmate.domain.review.SessionOutcome;
 import com.walkmate.domain.review.TrustScorePolicy;
@@ -23,9 +24,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewCommandService {
 
-    private final WalkSessionRepository walkSessionRepository;
-    private final WalkReviewRepository  walkReviewRepository;
-    private final UserRepository        userRepository;
+    private final WalkSessionRepository  walkSessionRepository;
+    private final WalkReviewRepository   walkReviewRepository;
+    private final UserRepository         userRepository;
+    private final BadgeEvaluationService badgeEvaluationService;
 
     /**
      * Submits a review for a completed walk session.
@@ -81,6 +83,7 @@ public class ReviewCommandService {
         int newScore = TrustScorePolicy.apply(reviewee.getTrustScore(), outcome);
         reviewee.applyTrustScore(newScore);
         userRepository.save(reviewee);
+        badgeEvaluationService.evaluateAndAward(reviewee);
 
         return review;
     }

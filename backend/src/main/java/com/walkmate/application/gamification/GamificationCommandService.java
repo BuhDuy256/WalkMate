@@ -1,9 +1,5 @@
 package com.walkmate.application.gamification;
 
-import com.walkmate.domain.gamification.Badge;
-import com.walkmate.domain.gamification.BadgePolicy;
-import com.walkmate.domain.gamification.UserBadgeRepository;
-import com.walkmate.domain.gamification.UserStats;
 import com.walkmate.domain.review.SessionOutcome;
 import com.walkmate.domain.review.TrustScorePolicy;
 import com.walkmate.domain.session.WalkSession;
@@ -23,7 +19,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Handles all gamification side-effects after a session is marked COMPLETED.
@@ -40,9 +35,9 @@ import java.util.Set;
 public class GamificationCommandService {
 
     private final UserRepository          userRepository;
-    private final UserBadgeRepository     badgeRepository;
     private final TrackingChunkRepository trackingChunkRepository;
     private final WalkSessionRepository   sessionRepository;
+    private final BadgeEvaluationService  badgeEvaluationService;
 
     // ── Event listener ────────────────────────────────────────────────────────
 
@@ -110,21 +105,7 @@ public class GamificationCommandService {
         user.applySessionReward(points, distanceKm);
         userRepository.save(user);
 
-        UserStats stats = new UserStats(
-                userId,
-                user.getCompletedSessions(),
-                user.getTotalDistanceKm(),
-                user.getTotalPoints(),
-                user.getTrustScore()
-        );
-
-        Set<String>  existingBadges = badgeRepository.findBadgeNamesByUserId(userId);
-        List<Badge>  newBadges      = BadgePolicy.evaluateEarned(stats, existingBadges);
-
-        if (!newBadges.isEmpty()) {
-            badgeRepository.saveAll(userId, newBadges);
-            log.info("Awarded {} new badge(s) to user {}: {}", newBadges.size(), userId, newBadges);
-        }
+        badgeEvaluationService.evaluateAndAward(user);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
