@@ -137,6 +137,10 @@ public class TrackingRepositoryImpl implements TrackingRepository {
                 if (response.isSuccessful()
                         && response.body() != null
                         && response.body().isSuccess()) {
+                    List<Long> acked = response.body().getData().getAcknowledgedIds();
+                    if (acked != null && !acked.isEmpty()) {
+                        dao.markAsSynced(acked);
+                    }
                     Log.d(TAG, "Sync succeeded — " + points.size() + " points acknowledged");
                     callback.onSuccess(null);
                 } else {
@@ -171,10 +175,8 @@ public class TrackingRepositoryImpl implements TrackingRepository {
         pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                List<Long> ids = new ArrayList<>(unsyncedEntities.size());
-                for (RoutePointEntity e : unsyncedEntities) ids.add(e.id);
-                dao.markAsSynced(ids);
-                Log.d(TAG, "Marked " + ids.size() + " points as synced");
+                // Acknowledged IDs are marked synced inside pushRoutePoints via the server response.
+                Log.d(TAG, "Batch sync completed — " + unsyncedEntities.size() + " points pushed");
             }
 
             @Override

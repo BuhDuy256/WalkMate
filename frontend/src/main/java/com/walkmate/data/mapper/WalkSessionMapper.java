@@ -20,10 +20,17 @@ public class WalkSessionMapper {
      * @param callerId   the authenticated user's ID, used to determine which side is the partner
      */
     public static WalkSession toDomain(WalkSessionResponse response, String callerId) {
-        String partnerId = callerId.equals(response.getUserIdA())
-                ? response.getUserIdB()
-                : response.getUserIdA();
+        boolean isCallerUserA = callerId.equals(response.getUserIdA());
+        String partnerId = isCallerUserA ? response.getUserIdB() : response.getUserIdA();
 
+        // TODO Phase 4: add these fields to WalkSession and map here:
+        //   isCallerUserA                     → isCallerUserA
+        //   response.getScheduledEnd()        → scheduledEnd
+        //   response.getStartedAt()           → startedAt
+        //   response.getEndedAt()             → endedAt
+        //   response.getUserAActivatedAt()    → userAActivatedAt
+        //   response.getUserBActivatedAt()    → userBActivatedAt
+        //   response.isReviewed()             → isReviewed
         return new WalkSession(
                 response.getSessionId(),
                 response.getProposalId(),

@@ -18,6 +18,12 @@ public class WalkProposalMapper {
      * until a user-profile enrichment endpoint is added.
      */
     public static WalkProposal toDomain(WalkProposalResponse response) {
+        // TODO Phase 4: add these fields to WalkProposal and map here:
+        //   response.getExpiresAt()           → expiresAt
+        //   response.getProposedLat()         → meetingLat
+        //   response.getProposedLng()         → meetingLng
+        //   response.getMyAcceptanceStatus()  → myAcceptanceStatus
+        //   response.getSessionId()           → sessionId
         return new WalkProposal(
                 response.getProposalId(),
                 response.getCallersIntentId(),
