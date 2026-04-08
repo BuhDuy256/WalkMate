@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.walkmate.data.repository.UserRepositoryImpl;
+import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.user.UserRepository;
 
 public class RegisterViewModelFactory implements ViewModelProvider.Factory {
@@ -13,8 +13,7 @@ public class RegisterViewModelFactory implements ViewModelProvider.Factory {
     private final UserRepository userRepository;
 
     public RegisterViewModelFactory(Context context) {
-        // Service locator pattern implementation
-        this.userRepository = new UserRepositoryImpl(context.getApplicationContext());
+        this.userRepository = ((WalkMateApplication) context.getApplicationContext()).getUserRepository();
     }
 
     @NonNull

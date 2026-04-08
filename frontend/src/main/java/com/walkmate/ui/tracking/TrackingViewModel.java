@@ -12,9 +12,13 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.tracking.RoutePoint;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.tracking.WalkState;
+import com.walkmate.domain.walksession.AbortReason;
+import com.walkmate.domain.walksession.WalkSession;
+import com.walkmate.domain.walksession.WalkSessionRepository;
 import com.walkmate.service.WalkTrackerService;
 
 import java.util.ArrayList;
@@ -84,9 +88,16 @@ public class TrackingViewModel extends AndroidViewModel {
     /** Epoch ms when the most recent pause began. 0 if not currently paused. */
     private long pauseStartEpochMs;
 
+    // ── Completion error event ────────────────────────────────────────────────
+
+    private final MutableLiveData<String> completionErrorLiveData = new MutableLiveData<>();
+
+    public LiveData<String> getCompletionError() { return completionErrorLiveData; }
+
     // ── Repository + route cache ──────────────────────────────────────────────
 
     private final TrackingRepository repository;
+    private final WalkSessionRepository sessionRepository;
 
     /**
      * Room-backed LiveData for the current session's route points.
@@ -103,9 +114,11 @@ public class TrackingViewModel extends AndroidViewModel {
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
-    public TrackingViewModel(@NonNull Application application) {
+    public TrackingViewModel(@NonNull Application application,
+                             @NonNull WalkSessionRepository sessionRepository) {
         super(application);
         repository = ((WalkMateApplication) application).getTrackingRepository();
+        this.sessionRepository = sessionRepository;
 
         // Wire the two always-present sources; route points are added lazily.
         uiStateLiveData.addSource(walkStateLiveData,     state -> rebuildUiState());
@@ -206,6 +219,63 @@ public class TrackingViewModel extends AndroidViewModel {
         walkStateLiveData.setValue(WalkState.FINISHED);
     }
 
+    /**
+     * Requests walk completion via the backend API.
+     * Enforces the 5-minute minimum gate — posts remaining seconds to UiState if too early.
+     * Transitions ACTIVE → FINISHING → FINISHED (or back to ACTIVE on error).
+     */
+    public void requestCompleteWalk() {
+        if (walkStateLiveData.getValue() != WalkState.ACTIVE) return;
+        long elapsed = valueOrDefault(elapsedSecondsLiveData, 0L);
+        long minDurationSeconds = WalkSession.MINIMUM_WALK_DURATION_MINUTES * 60L;
+        if (elapsed < minDurationSeconds) {
+            // Gate not yet reached — UiState already shows remaining time via rebuildUiState()
+            rebuildUiState();
+            return;
+        }
+        stopTimer();
+        stopGpsService();
+        walkStateLiveData.setValue(WalkState.FINISHING);
+        sessionRepository.completeSession(sessionId, new DomainCallback<WalkSession>() {
+            @Override
+            public void onSuccess(WalkSession result) {
+                walkStateLiveData.postValue(WalkState.FINISHED);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                walkStateLiveData.postValue(WalkState.ACTIVE);
+                startTimer();
+                startGpsService();
+                completionErrorLiveData.postValue(e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Aborts the walk with the given reason via the backend API.
+     * Transitions ACTIVE → FINISHING → FINISHED (or back to ACTIVE on error).
+     */
+    public void abortWalk(AbortReason reason) {
+        stopTimer();
+        stopGpsService();
+        walkStateLiveData.setValue(WalkState.FINISHING);
+        sessionRepository.abortSession(sessionId, reason.toApiValue(), new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                walkStateLiveData.postValue(WalkState.FINISHED);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                walkStateLiveData.postValue(WalkState.ACTIVE);
+                startTimer();
+                startGpsService();
+                completionErrorLiveData.postValue(e.getMessage());
+            }
+        });
+    }
+
     // ── Timer ─────────────────────────────────────────────────────────────────
 
     private void startTimer() {
@@ -268,6 +338,13 @@ public class TrackingViewModel extends AndroidViewModel {
         // Camera follows the user while actively walking; freezes on pause/finish.
         boolean cameraFollowing = (state == WalkState.ACTIVE);
 
+        // Compute remaining seconds before complete is allowed (0 when permitted).
+        long minDuration = WalkSession.MINIMUM_WALK_DURATION_MINUTES * 60L;
+        long completeTooEarlySeconds = (state == WalkState.ACTIVE && elapsedSeconds < minDuration)
+                ? (minDuration - elapsedSeconds) : 0L;
+
+        boolean isSaving = (state == WalkState.FINISHING);
+
         uiStateLiveData.setValue(new TrackingUiState(
                 state,
                 mapPoints,
@@ -275,7 +352,9 @@ public class TrackingViewModel extends AndroidViewModel {
                 elapsedSeconds,
                 paceMinPerKm,
                 partnerName,
-                cameraFollowing
+                cameraFollowing,
+                completeTooEarlySeconds,
+                isSaving
         ));
     }
 

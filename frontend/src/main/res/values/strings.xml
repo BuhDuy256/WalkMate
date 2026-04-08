@@ -88,6 +88,11 @@
 
     <string name="profile_coming_soon">Coming Soon</string>
 
+    <!-- Session lifecycle -->
+    <string name="session_waiting_for_partner">Waiting for partner to arrive…</string>
+    <string name="btn_complete_walk">Complete Walk</string>
+    <string name="btn_abort_walk">Emergency Abort</string>
+
     <!-- Tracking screen -->
     <string name="btn_pause">Pause</string>
     <string name="btn_resume">Resume</string>
@@ -98,6 +103,16 @@
     <string name="label_pace_unit">min / km</string>
     <string name="pace_placeholder">--\'--\"</string>
     <string name="tracking_permission_denied">Location permission is required to track your walk.</string>
+    <string name="tracking_complete_too_early_format">Available in %ds</string>
+    <string name="complete_walk_confirm_title">Complete Walk?</string>
+    <string name="complete_walk_confirm_message">Are you sure you want to finish the walk?</string>
+    <string name="btn_complete_confirm">Complete</string>
+    <string name="abort_walk_title">Abort Walk?</string>
+    <string name="btn_abort_confirm">Abort</string>
+    <string name="abort_reason_safety">Safety concern</string>
+    <string name="abort_reason_emergency">Emergency</string>
+    <string name="abort_reason_misconduct">Partner misconduct</string>
+    <string name="abort_reason_other">Other</string>
     <string name="walk_completed_title">Walk Complete!</string>
     <string name="walk_completed_message">Distance: %1$s km\nTime: %2$s\nPace: %3$s</string>
     <string name="btn_done">Done</string>

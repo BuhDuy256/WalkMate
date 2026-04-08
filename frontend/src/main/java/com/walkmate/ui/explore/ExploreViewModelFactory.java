@@ -9,8 +9,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import androidx.savedstate.SavedStateRegistryOwner;
 
-import com.walkmate.data.repository.HotspotRepositoryImpl;
-import com.walkmate.data.repository.WalkIntentRepositoryImpl;
+import com.walkmate.WalkMateApplication;
 
 public class ExploreViewModelFactory extends AbstractSavedStateViewModelFactory {
 
@@ -32,9 +31,10 @@ public class ExploreViewModelFactory extends AbstractSavedStateViewModelFactory 
             @NonNull Class<T> modelClass,
             @NonNull SavedStateHandle handle) {
         if (modelClass.isAssignableFrom(ExploreViewModel.class)) {
+            WalkMateApplication app = (WalkMateApplication) appContext;
             return (T) new ExploreViewModel(
-                    new HotspotRepositoryImpl(appContext),
-                    new WalkIntentRepositoryImpl(appContext),
+                    app.getHotspotRepository(),
+                    app.getWalkIntentRepository(),
                     handle);
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());

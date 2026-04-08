@@ -21,6 +21,10 @@ public class TrackingUiState {
     private final double paceMinPerKm;   // 0.0 until sufficient distance is accumulated
     private final String partnerName;
     private final boolean isCameraFollowingUser;
+    /** Seconds remaining before Complete Walk is allowed; 0 when complete is permitted. */
+    private final long completeTooEarlySeconds;
+    /** True while a complete/abort API call is in flight (FINISHING state). */
+    private final boolean isSaving;
 
     public TrackingUiState(
             WalkState walkState,
@@ -29,7 +33,9 @@ public class TrackingUiState {
             long elapsedSeconds,
             double paceMinPerKm,
             String partnerName,
-            boolean isCameraFollowingUser) {
+            boolean isCameraFollowingUser,
+            long completeTooEarlySeconds,
+            boolean isSaving) {
         this.walkState = walkState;
         this.mapPoints = mapPoints != null
                 ? Collections.unmodifiableList(mapPoints)
@@ -39,15 +45,19 @@ public class TrackingUiState {
         this.paceMinPerKm = paceMinPerKm;
         this.partnerName = partnerName;
         this.isCameraFollowingUser = isCameraFollowingUser;
+        this.completeTooEarlySeconds = completeTooEarlySeconds;
+        this.isSaving = isSaving;
     }
 
     // ── Getters ───────────────────────────────────────────────────────────────
 
-    public WalkState getWalkState()            { return walkState; }
-    public List<LatLng> getMapPoints()         { return mapPoints; }
-    public double getDistanceKm()              { return distanceKm; }
-    public long getElapsedSeconds()            { return elapsedSeconds; }
-    public double getPaceMinPerKm()            { return paceMinPerKm; }
-    public String getPartnerName()             { return partnerName; }
-    public boolean isCameraFollowingUser()     { return isCameraFollowingUser; }
+    public WalkState getWalkState()                { return walkState; }
+    public List<LatLng> getMapPoints()             { return mapPoints; }
+    public double getDistanceKm()                  { return distanceKm; }
+    public long getElapsedSeconds()                { return elapsedSeconds; }
+    public double getPaceMinPerKm()                { return paceMinPerKm; }
+    public String getPartnerName()                 { return partnerName; }
+    public boolean isCameraFollowingUser()         { return isCameraFollowingUser; }
+    public long getCompleteTooEarlySeconds()       { return completeTooEarlySeconds; }
+    public boolean isSaving()                      { return isSaving; }
 }

@@ -6,9 +6,11 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.walkmate.WalkMateApplication;
+import com.walkmate.domain.walksession.WalkSessionRepository;
+
 /**
- * Factory that satisfies {@link TrackingViewModel}'s {@link Application} constructor
- * argument, which the default no-arg factory cannot provide.
+ * Factory that satisfies {@link TrackingViewModel}'s constructor arguments.
  *
  * Usage in {@link TrackingScreenActivity}:
  * <pre>
@@ -31,7 +33,9 @@ public class TrackingViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(TrackingViewModel.class)) {
-            return (T) new TrackingViewModel(application);
+            WalkSessionRepository sessionRepository =
+                    ((WalkMateApplication) application).getWalkSessionRepository();
+            return (T) new TrackingViewModel(application, sessionRepository);
         }
         throw new IllegalArgumentException(
                 "TrackingViewModelFactory cannot create: " + modelClass.getName());

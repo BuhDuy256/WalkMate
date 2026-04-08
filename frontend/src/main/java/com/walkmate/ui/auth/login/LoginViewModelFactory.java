@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.walkmate.data.repository.UserRepositoryImpl;
+import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.user.UserRepository;
 
 public class LoginViewModelFactory implements ViewModelProvider.Factory {
@@ -13,8 +13,7 @@ public class LoginViewModelFactory implements ViewModelProvider.Factory {
     private final UserRepository userRepository;
 
     public LoginViewModelFactory(Context context) {
-        // Simple DI configuration
-        this.userRepository = new UserRepositoryImpl(context.getApplicationContext());
+        this.userRepository = ((WalkMateApplication) context.getApplicationContext()).getUserRepository();
     }
 
     @NonNull

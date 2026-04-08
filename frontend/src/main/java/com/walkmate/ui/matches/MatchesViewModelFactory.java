@@ -6,10 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.walkmate.data.repository.UserProfileRepositoryImpl;
-import com.walkmate.data.repository.WalkIntentRepositoryImpl;
-import com.walkmate.data.repository.WalkProposalRepositoryImpl;
-import com.walkmate.data.repository.WalkSessionRepositoryImpl;
+import com.walkmate.WalkMateApplication;
 
 public class MatchesViewModelFactory implements ViewModelProvider.Factory {
 
@@ -24,11 +21,12 @@ public class MatchesViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(MatchesViewModel.class)) {
+            WalkMateApplication app = (WalkMateApplication) application;
             return (T) new MatchesViewModel(
-                    new WalkIntentRepositoryImpl(application),
-                    new WalkProposalRepositoryImpl(application),
-                    new WalkSessionRepositoryImpl(application),
-                    new UserProfileRepositoryImpl(application));
+                    app.getWalkIntentRepository(),
+                    app.getWalkProposalRepository(),
+                    app.getWalkSessionRepository(),
+                    app.getUserProfileRepository());
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

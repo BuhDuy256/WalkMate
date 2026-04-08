@@ -7,18 +7,24 @@ import com.google.firebase.FirebaseApp;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
+import com.walkmate.data.repository.HotspotRepositoryImpl;
 import com.walkmate.data.repository.NotificationRepositoryImpl;
 import com.walkmate.data.repository.SocialRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserProfileRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
+import com.walkmate.data.repository.WalkIntentRepositoryImpl;
+import com.walkmate.data.repository.WalkProposalRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
 import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
+import com.walkmate.domain.walkintent.WalkIntentRepository;
+import com.walkmate.domain.walkproposal.WalkProposalRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
 /**
@@ -37,7 +43,10 @@ public class WalkMateApplication extends Application {
 
     private WalkMateDatabase database;
     private SessionManager sessionManager;
+    private HotspotRepository hotspotRepository;
     private TrackingRepository trackingRepository;
+    private WalkIntentRepository walkIntentRepository;
+    private WalkProposalRepository walkProposalRepository;
     private WalkSessionRepository walkSessionRepository;
     private UserRepository userRepository;
     private UserProfileRepository userProfileRepository;
@@ -70,11 +79,32 @@ public class WalkMateApplication extends Application {
         return sessionManager;
     }
 
+    public HotspotRepository getHotspotRepository() {
+        if (hotspotRepository == null) {
+            hotspotRepository = new HotspotRepositoryImpl(this);
+        }
+        return hotspotRepository;
+    }
+
     public TrackingRepository getTrackingRepository() {
         if (trackingRepository == null) {
             trackingRepository = new TrackingRepositoryImpl(database.routePointDao(), sessionManager);
         }
         return trackingRepository;
+    }
+
+    public WalkIntentRepository getWalkIntentRepository() {
+        if (walkIntentRepository == null) {
+            walkIntentRepository = new WalkIntentRepositoryImpl(this);
+        }
+        return walkIntentRepository;
+    }
+
+    public WalkProposalRepository getWalkProposalRepository() {
+        if (walkProposalRepository == null) {
+            walkProposalRepository = new WalkProposalRepositoryImpl(this);
+        }
+        return walkProposalRepository;
     }
 
     public WalkSessionRepository getWalkSessionRepository() {

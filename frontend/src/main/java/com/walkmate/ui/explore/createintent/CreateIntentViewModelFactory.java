@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.walkmate.data.repository.WalkIntentRepositoryImpl;
+import com.walkmate.WalkMateApplication;
 
 public class CreateIntentViewModelFactory implements ViewModelProvider.Factory {
 
@@ -21,7 +21,8 @@ public class CreateIntentViewModelFactory implements ViewModelProvider.Factory {
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(CreateIntentViewModel.class)) {
-            return (T) new CreateIntentViewModel(new WalkIntentRepositoryImpl(appContext));
+            WalkMateApplication app = (WalkMateApplication) appContext;
+            return (T) new CreateIntentViewModel(app.getWalkIntentRepository());
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

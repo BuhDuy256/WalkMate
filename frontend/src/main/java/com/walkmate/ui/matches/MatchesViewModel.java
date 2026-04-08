@@ -86,6 +86,20 @@ public class MatchesViewModel extends ViewModel {
 
     public void consumeNoMatchFoundEvent() { noMatchFoundEvent.postValue(null); }
 
+    // ── Activation result event ───────────────────────────────────────────────
+
+    private final MutableLiveData<ActivationResult> activationResultEvent = new MutableLiveData<>(null);
+
+    public LiveData<ActivationResult> getActivationResultEvent() { return activationResultEvent; }
+
+    public void consumeActivationResult() { activationResultEvent.postValue(null); }
+
+    static class ActivationResult {
+        final WalkSession session;
+        final String errorCode;
+        ActivationResult(WalkSession s, String e) { session = s; errorCode = e; }
+    }
+
     // -------------------------------------------------------------------------
     // Data loading
     // -------------------------------------------------------------------------
@@ -385,6 +399,27 @@ public class MatchesViewModel extends ViewModel {
                         current.getProposals(),
                         current.getActiveSessions(),
                         error.getMessage()));
+            }
+        });
+    }
+
+    /**
+     * Activates the caller's side of a session.
+     * Case B: both activated (status ACTIVE) — posts result so SessionFragment can launch TrackingScreenActivity.
+     * Case A: only caller activated — posts result so SessionFragment can show waiting UI and start polling.
+     * Error: SESSION_ACTIVATION_WINDOW_CLOSED or other error — posts result with errorCode.
+     */
+    public void activateSession(String sessionId) {
+        sessionRepository.activateSession(sessionId, new DomainCallback<WalkSession>() {
+            @Override
+            public void onSuccess(WalkSession result) {
+                activationResultEvent.postValue(new ActivationResult(result, null));
+                loadAll(null);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                activationResultEvent.postValue(new ActivationResult(null, e.getMessage()));
             }
         });
     }

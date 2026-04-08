@@ -31,6 +31,7 @@ import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.domain.tracking.WalkState;
+import com.walkmate.domain.walksession.AbortReason;
 import com.walkmate.service.WalkTrackerService;
 
 import java.util.List;
@@ -95,6 +96,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private LinearLayout          btnRowPauseStop;
     private MaterialButton        btnPause;
     private MaterialButton        btnStop;
+    private MaterialButton        btnComplete;
+    private MaterialButton        btnAbort;
     private FloatingActionButton  fabRecenter;
     private LinearLayout          bottomPanel;
 
@@ -122,6 +125,11 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         viewModel = new ViewModelProvider(this, factory).get(TrackingViewModel.class);
         viewModel.startTrackingSession(sessionId, partnerName, meetingLat, meetingLng);
         viewModel.getUiState().observe(this, this::renderState);
+        viewModel.getCompletionError().observe(this, error -> {
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -227,6 +235,43 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             viewModel.finishWalk();
             // renderState() will react to FINISHED and show the summary dialog.
         });
+
+        // Complete Walk — confirmation dialog then API-backed completion.
+        btnComplete.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.complete_walk_confirm_title)
+                    .setMessage(R.string.complete_walk_confirm_message)
+                    .setPositiveButton(R.string.btn_complete_confirm,
+                            (d, w) -> viewModel.requestCompleteWalk())
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        });
+
+        // Emergency Abort — radio-button dialog with AbortReason, then API-backed abort.
+        btnAbort.setOnClickListener(v -> showAbortReasonDialog());
+    }
+
+    private void showAbortReasonDialog() {
+        String[] labels = {
+                getString(R.string.abort_reason_safety),
+                getString(R.string.abort_reason_emergency),
+                getString(R.string.abort_reason_misconduct),
+                getString(R.string.abort_reason_other)
+        };
+        AbortReason[] reasons = {
+                AbortReason.SAFETY_CONCERN,
+                AbortReason.EMERGENCY,
+                AbortReason.PARTNER_MISCONDUCT,
+                AbortReason.OTHER
+        };
+        final int[] selected = {0};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.abort_walk_title)
+                .setSingleChoiceItems(labels, 0, (d, which) -> selected[0] = which)
+                .setPositiveButton(R.string.btn_abort_confirm,
+                        (d, w) -> viewModel.abortWalk(reasons[selected[0]]))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     @Override
@@ -253,7 +298,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void renderState(TrackingUiState state) {
         updatePartnerHeader(state.getPartnerName());
         updateStats(state);
-        updateControls(state.getWalkState());
+        updateControls(state);
 
         if (googleMap != null) {
             updatePolyline(state.getMapPoints());
@@ -278,36 +323,74 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Controls which button row is shown based on the walk state:
+     * Controls which button row is shown based on the walk state and new session lifecycle fields:
      * <ul>
-     *   <li>{@code READY}    — Start only</li>
-     *   <li>{@code ACTIVE}   — Pause ("Pause") + Stop</li>
-     *   <li>{@code PAUSED}   — Pause ("Resume") + Stop</li>
-     *   <li>{@code FINISHED} — all hidden (summary dialog takes over)</li>
+     *   <li>{@code READY}     — Start only</li>
+     *   <li>{@code ACTIVE}    — Pause/Resume row + Complete Walk + Abort</li>
+     *   <li>{@code PAUSED}    — Pause/Resume row only</li>
+     *   <li>{@code FINISHING} — Complete/Abort disabled (saving indicator)</li>
+     *   <li>{@code FINISHED}  — all hidden (summary dialog takes over)</li>
      * </ul>
      */
-    private void updateControls(WalkState state) {
-        switch (state) {
+    private void updateControls(TrackingUiState state) {
+        WalkState walkState = state.getWalkState();
+        switch (walkState) {
             case READY:
                 btnStart.setVisibility(View.VISIBLE);
                 btnRowPauseStop.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.GONE);
+                btnAbort.setVisibility(View.GONE);
                 break;
 
             case ACTIVE:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_pause);
+                btnComplete.setVisibility(View.VISIBLE);
+                btnAbort.setVisibility(View.VISIBLE);
+                long tooEarly = state.getCompleteTooEarlySeconds();
+                if (tooEarly > 0) {
+                    btnComplete.setEnabled(false);
+                    btnComplete.setText(getString(R.string.tracking_complete_too_early_format, tooEarly));
+                } else {
+                    btnComplete.setEnabled(true);
+                    btnComplete.setText(R.string.btn_complete_walk);
+                }
+                btnAbort.setEnabled(true);
                 break;
 
             case PAUSED:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_resume);
+                // Keep Complete and Abort accessible — user may need them without resuming.
+                btnComplete.setVisibility(View.VISIBLE);
+                btnComplete.setEnabled(state.getCompleteTooEarlySeconds() == 0);
+                if (state.getCompleteTooEarlySeconds() > 0) {
+                    btnComplete.setText(getString(R.string.tracking_complete_too_early_format,
+                            state.getCompleteTooEarlySeconds()));
+                } else {
+                    btnComplete.setText(R.string.btn_complete_walk);
+                }
+                btnAbort.setVisibility(View.VISIBLE);
+                btnAbort.setEnabled(true);
+                break;
+
+            case FINISHING:
+                btnStart.setVisibility(View.GONE);
+                btnRowPauseStop.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.VISIBLE);
+                btnComplete.setEnabled(false);
+                btnComplete.setText(R.string.btn_complete_walk);
+                btnAbort.setVisibility(View.VISIBLE);
+                btnAbort.setEnabled(false);
                 break;
 
             case FINISHED:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.GONE);
+                btnAbort.setVisibility(View.GONE);
                 break;
         }
     }
@@ -429,6 +512,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         btnRowPauseStop     = findViewById(R.id.btnRowPauseStop);
         btnPause            = findViewById(R.id.btnPause);
         btnStop             = findViewById(R.id.btnStop);
+        btnComplete         = findViewById(R.id.btnComplete);
+        btnAbort            = findViewById(R.id.btnAbort);
         fabRecenter         = findViewById(R.id.fabRecenter);
         bottomPanel         = findViewById(R.id.bottomPanel);
     }

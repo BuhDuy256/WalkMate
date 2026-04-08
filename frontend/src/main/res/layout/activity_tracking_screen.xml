@@ -225,6 +225,37 @@
 
             </LinearLayout>
 
+            <!-- Complete Walk — ACTIVE state only; disabled until 5-min minimum. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnComplete"
+                style="@style/Widget.Material3.Button.UnelevatedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_gradient_orange_pill"
+                android:text="@string/btn_complete_walk"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:backgroundTint="@null"
+                app:cornerRadius="999dp" />
+
+            <!-- Emergency Abort — ACTIVE state; red outlined pill. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAbort"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/btn_abort_walk"
+                android:textColor="@color/color_danger"
+                android:textSize="14sp"
+                android:visibility="gone"
+                app:strokeColor="@color/color_danger"
+                app:strokeWidth="1.5dp"
+                app:cornerRadius="999dp" />
+
         </LinearLayout>
 
     </LinearLayout>
