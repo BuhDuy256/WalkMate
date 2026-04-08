@@ -126,4 +126,32 @@
         <attr name="wm_navigable" format="boolean" />
     </declare-styleable>
 
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CountdownTimerView
+         Self-ticking MM:SS countdown text view. Switches colour to urgentColor
+         when the remaining time drops below urgentThresholdSec.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="CountdownTimerView">
+        <!-- Seconds remaining below which the text colour switches to wm_urgentColor -->
+        <attr name="wm_urgentThresholdSec" format="integer" />
+        <!-- Text colour when remaining time is below the urgent threshold -->
+        <attr name="wm_urgentColor"        format="color"   />
+        <!-- Text colour when remaining time is above the urgent threshold -->
+        <attr name="wm_normalColor"        format="color"   />
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ActivationWindowButtonView
+         Vertical view with a status label and a WalkMateButton that enables
+         itself only while the session activation window is open
+         (scheduledStart − 10 min to scheduledStart + 15 min, per S-3).
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="ActivationWindowButtonView">
+        <!-- Button / status label text when the window is open -->
+        <attr name="wm_arriveLabel"  format="string" />
+        <!-- Status label text when the window has not yet opened -->
+        <attr name="wm_waitingLabel" format="string" />
+    </declare-styleable>
+
 </resources>
