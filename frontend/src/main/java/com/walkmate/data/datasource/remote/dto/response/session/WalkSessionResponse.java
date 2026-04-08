@@ -52,6 +52,11 @@ public class WalkSessionResponse {
     @SerializedName("abort_reason")
     private String abortReason;         // null unless ABORTED
 
+    // True when the calling user has already submitted a review for this
+    // session.  Used by UC-22/UC-24 to show or suppress the review prompt.
+    @SerializedName("is_reviewed")
+    private boolean isReviewed;
+
     public String getSessionId()           { return sessionId; }
     public String getProposalId()          { return proposalId; }
     public String getUserIdA()             { return userIdA; }
@@ -66,6 +71,7 @@ public class WalkSessionResponse {
     public String getEndedAt()             { return endedAt; }
     public String getUserAActivatedAt()    { return userAActivatedAt; }
     public String getUserBActivatedAt()    { return userBActivatedAt; }
-    public String getCancellationReason()  { return cancellationReason; }
-    public String getAbortReason()         { return abortReason; }
+    public String  getCancellationReason() { return cancellationReason; }
+    public String  getAbortReason()        { return abortReason; }
+    public boolean isReviewed()            { return isReviewed; }
 }

@@ -7,6 +7,8 @@ import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.ReviewApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.review.SubmitReviewRequest;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.review.ReviewResponse;
 import com.walkmate.domain.review.ReviewRepository;
@@ -49,7 +51,12 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "REVIEW_SUBMIT_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "REVIEW_SUBMIT_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "submitReview network error", e);
@@ -69,7 +76,12 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                     List<ReviewResponse> data = resp.body().getData();
                     callback.onSuccess(toDomainList(data != null ? data : Collections.emptyList()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "REVIEWS_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "REVIEWS_FETCH_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getReviewsForUser network error", e);
@@ -98,10 +110,4 @@ public class ReviewRepositoryImpl implements ReviewRepository {
         return result;
     }
 
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

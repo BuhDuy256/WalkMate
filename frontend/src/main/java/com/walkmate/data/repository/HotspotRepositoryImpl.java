@@ -6,6 +6,8 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.HotspotApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.hotspot.HotspotResponse;
 import com.walkmate.data.mapper.HotspotMapper;
@@ -54,7 +56,12 @@ public class HotspotRepositoryImpl implements HotspotRepository {
                     }
                     callback.onSuccess(HotspotMapper.toDomainList(payload));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(response.body(), "HOTSPOT_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(response, "HOTSPOT_FETCH_FAILED");
+                    if (response.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getHotspots network error", e);
@@ -76,7 +83,12 @@ public class HotspotRepositoryImpl implements HotspotRepository {
                     }
                     callback.onSuccess(HotspotMapper.toDomain(payload));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(response.body(), "HOTSPOT_NOT_FOUND")));
+                    ApiError apiError = ErrorParser.extractApiError(response, "HOTSPOT_NOT_FOUND");
+                    if (response.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getHotspotById network error", e);
@@ -85,10 +97,4 @@ public class HotspotRepositoryImpl implements HotspotRepository {
         });
     }
 
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

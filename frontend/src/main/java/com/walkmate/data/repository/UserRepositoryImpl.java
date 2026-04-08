@@ -10,6 +10,8 @@ import com.walkmate.data.datasource.remote.api.UserApiService;
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.UpdateFcmTokenRequestDto;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.LoginResponseDto;
 import com.walkmate.data.datasource.remote.dto.response.user.RegisterResponseDto;
@@ -57,9 +59,13 @@ public class UserRepositoryImpl implements UserRepository {
                     Log.d(TAG, "real login succeeded");
                     callback.onSuccess(token);
                 } else {
-                    String code = extractErrorCode(resp.body(), "USER_INVALID_CREDENTIALS");
-                    Log.w(TAG, "login failed: " + code);
-                    callback.onError(new Exception(code));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "USER_INVALID_CREDENTIALS");
+                    Log.w(TAG, "login failed: " + apiError.getCode());
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "login network error", e);
@@ -79,9 +85,13 @@ public class UserRepositoryImpl implements UserRepository {
                     Log.d(TAG, "real register succeeded");
                     callback.onSuccess(null);
                 } else {
-                    String code = extractErrorCode(resp.body(), "REGISTER_FAILED");
-                    Log.w(TAG, "register failed: " + code);
-                    callback.onError(new Exception(code));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "REGISTER_FAILED");
+                    Log.w(TAG, "register failed: " + apiError.getCode());
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "register network error", e);
@@ -122,9 +132,13 @@ public class UserRepositoryImpl implements UserRepository {
                     Log.d(TAG, "FCM token registered with backend");
                     callback.onSuccess(null);
                 } else {
-                    String code = extractErrorCode(resp.body(), "FCM_TOKEN_UPDATE_FAILED");
-                    Log.w(TAG, "FCM token update failed: " + code);
-                    callback.onError(new Exception(code));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "FCM_TOKEN_UPDATE_FAILED");
+                    Log.w(TAG, "FCM token update failed: " + apiError.getCode());
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "FCM token update network error", e);
@@ -141,14 +155,4 @@ public class UserRepositoryImpl implements UserRepository {
         return sessionManager;
     }
 
-    // ---------------------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------------------
-
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

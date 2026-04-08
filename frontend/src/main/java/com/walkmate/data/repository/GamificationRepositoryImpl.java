@@ -6,6 +6,8 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.GamificationApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.BadgeResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.LeaderboardEntryResponse;
@@ -54,7 +56,12 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                     List<BadgeResponse> data = resp.body().getData();
                     callback.onSuccess(toBadgeDomainList(data != null ? data : Collections.emptyList()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "BADGES_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "BADGES_FETCH_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getBadges network error", e);
@@ -73,7 +80,12 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(toStatsDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "STATS_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "STATS_FETCH_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getStats network error", e);
@@ -93,7 +105,12 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                     List<LeaderboardEntryResponse> data = resp.body().getData();
                     callback.onSuccess(toLeaderboardDomainList(data != null ? data : Collections.emptyList()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "LEADERBOARD_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "LEADERBOARD_FETCH_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getLeaderboard network error", e);
@@ -126,10 +143,4 @@ public class GamificationRepositoryImpl implements GamificationRepository {
         return result;
     }
 
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

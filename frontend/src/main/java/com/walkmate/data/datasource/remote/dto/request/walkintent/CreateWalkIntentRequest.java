@@ -25,6 +25,12 @@ public class CreateWalkIntentRequest {
 
     private List<String> tags;
 
+    @SerializedName("is_private")
+    private boolean isPrivate;
+
+    @SerializedName("invited_friend_id")
+    private String invitedFriendId;
+
     public CreateWalkIntentRequest() {
         // Empty constructor for Gson
     }
@@ -35,7 +41,9 @@ public class CreateWalkIntentRequest {
                                    float timeEnd,
                                    int ageMin,
                                    int ageMax,
-                                   List<String> tags) {
+                                   List<String> tags,
+                                   boolean isPrivate,
+                                   String invitedFriendId) {
         this.hotspotId = hotspotId;
         this.date = date;
         this.timeStart = timeStart;
@@ -43,6 +51,8 @@ public class CreateWalkIntentRequest {
         this.ageMin = ageMin;
         this.ageMax = ageMax;
         this.tags = tags;
+        this.isPrivate = isPrivate;
+        this.invitedFriendId = invitedFriendId;
     }
 
     public String getHotspotId() { return hotspotId; }
@@ -52,4 +62,6 @@ public class CreateWalkIntentRequest {
     public int getAgeMin() { return ageMin; }
     public int getAgeMax() { return ageMax; }
     public List<String> getTags() { return tags; }
+    public boolean isPrivate() { return isPrivate; }
+    public String getInvitedFriendId() { return invitedFriendId; }
 }

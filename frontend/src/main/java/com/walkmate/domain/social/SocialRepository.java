@@ -16,6 +16,10 @@ public interface SocialRepository {
 
     void getFollowing(String userId, DomainCallback<List<UserSummary>> callback);
 
+    // ── Friends ───────────────────────────────────────────────────────────────
+
+    void getFriends(DomainCallback<List<UserSummary>> callback);
+
     // ── Block ─────────────────────────────────────────────────────────────────
 
     void block(String targetUserId, DomainCallback<Void> callback);

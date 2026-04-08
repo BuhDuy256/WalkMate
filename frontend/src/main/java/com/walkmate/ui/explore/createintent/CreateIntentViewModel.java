@@ -27,10 +27,12 @@ public class CreateIntentViewModel extends ViewModel {
     }
 
     public void submit(String hotspotId, String date, float timeStart, float timeEnd,
-                       int ageMin, int ageMax, java.util.List<String> tags) {
+                       int ageMin, int ageMax, java.util.List<String> tags,
+                       boolean isPrivate, String invitedFriendId) {
         uiState.setValue(new CreateIntentUiState(true, null, null));
 
         intentRepository.createIntent(hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
+                isPrivate, invitedFriendId,
                 new DomainCallback<WalkIntent>() {
                     @Override
                     public void onSuccess(WalkIntent intent) {

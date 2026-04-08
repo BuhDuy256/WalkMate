@@ -6,6 +6,8 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.ProposalApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.data.mapper.WalkProposalMapper;
@@ -51,7 +53,12 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                     callback.onSuccess(WalkProposalMapper.toDomainList(
                             data != null ? data : Collections.emptyList()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSALS_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSALS_FETCH_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getProposals network error", e);
@@ -82,7 +89,12 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                         callback.onSuccess(null);
                     }
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSAL_ACCEPT_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_ACCEPT_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "acceptProposal network error", e);
@@ -100,7 +112,12 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSAL_PASS_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_PASS_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "passProposal network error", e);
@@ -118,7 +135,12 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSAL_CANCEL_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_CANCEL_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "cancelProposal network error", e);
@@ -127,14 +149,4 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
         });
     }
 
-    // ---------------------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------------------
-
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

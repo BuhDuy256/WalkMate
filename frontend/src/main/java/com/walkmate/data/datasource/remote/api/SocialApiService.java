@@ -27,6 +27,11 @@ public interface SocialApiService {
     @GET("api/v1/users/{userId}/following")
     Call<ApiResponse<List<UserSummaryResponse>>> getFollowing(@Path("userId") String userId);
 
+    // ── Friends ───────────────────────────────────────────────────────────────
+
+    @GET("api/v1/users/me/friends")
+    Call<ApiResponse<List<UserSummaryResponse>>> getFriends();
+
     // ── Block ─────────────────────────────────────────────────────────────────
 
     @POST("api/v1/users/{userId}/block")

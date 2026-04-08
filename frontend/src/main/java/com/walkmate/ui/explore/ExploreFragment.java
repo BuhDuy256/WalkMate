@@ -524,7 +524,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             timeEnd,
             ageMin,
             ageMax,
-            tags
+            tags,
+            false,   // isPrivate — wired up by UC-08 UI
+            null     // invitedFriendId — wired up by UC-08 UI
         );
     }
 

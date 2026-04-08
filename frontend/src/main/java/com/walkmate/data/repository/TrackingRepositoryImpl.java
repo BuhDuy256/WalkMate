@@ -11,6 +11,8 @@ import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.RoutePointSyncApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.tracking.PushRoutePointsRequest;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.tracking.PushRoutePointsResponse;
 import com.walkmate.data.mapper.RoutePointMapper;
@@ -138,11 +140,13 @@ public class TrackingRepositoryImpl implements TrackingRepository {
                     Log.d(TAG, "Sync succeeded — " + points.size() + " points acknowledged");
                     callback.onSuccess(null);
                 } else {
-                    String errCode = response.body() != null && response.body().getError() != null
-                            ? response.body().getError().getCode()
-                            : TrackingErrorCode.SYNC_FAILED;
-                    Log.w(TAG, "Sync failed: " + errCode);
-                    callback.onError(new Exception(errCode));
+                    ApiError apiError = ErrorParser.extractApiError(response, TrackingErrorCode.SYNC_FAILED);
+                    Log.w(TAG, "Sync failed: " + apiError.getCode());
+                    if (response.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "pushRoutePoints network error", e);

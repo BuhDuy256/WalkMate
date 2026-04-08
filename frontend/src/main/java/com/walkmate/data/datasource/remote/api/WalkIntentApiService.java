@@ -22,7 +22,7 @@ public interface WalkIntentApiService {
     @GET("api/v1/intents")
     Call<ApiResponse<List<WalkIntentResponse>>> listActiveIntents();
 
-    @GET("api/v1/intents/{intentId}/match")
+    @POST("api/v1/intents/{intentId}/match")
     Call<ApiResponse<WalkProposalResponse>> findMatch(@Path("intentId") String intentId);
 
     @DELETE("api/v1/intents/{intentId}")

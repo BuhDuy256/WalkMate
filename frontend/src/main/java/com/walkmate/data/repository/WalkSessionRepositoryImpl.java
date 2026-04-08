@@ -8,6 +8,8 @@ import com.walkmate.data.datasource.remote.api.SessionApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.walksession.AbortWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
 import com.walkmate.data.mapper.WalkSessionMapper;
@@ -52,7 +54,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(WalkSessionMapper.toDomainList(
                             data != null ? data : Collections.emptyList(), callerId));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSIONS_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSIONS_FETCH_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getActiveSessions network error", e);
@@ -73,7 +80,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     String callerId = sessionManager.getUserId();
                     callback.onSuccess(WalkSessionMapper.toDomain(data, callerId));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSION_ACTIVATE_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ACTIVATE_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "activateSession network error", e);
@@ -92,7 +104,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSION_CANCEL_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_CANCEL_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "cancelSession network error", e);
@@ -111,7 +128,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSION_ABORT_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ABORT_FAILED");
+                    if (resp.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "abortSession network error", e);
@@ -120,12 +142,4 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }
