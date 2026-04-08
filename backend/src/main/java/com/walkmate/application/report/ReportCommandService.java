@@ -9,6 +9,7 @@ import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +20,21 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class ReportCommandService {
 
-    private static final Duration COMPLETED_REPORT_WINDOW = Duration.ofHours(72);
-    private static final Duration TERMINAL_REPORT_WINDOW  = Duration.ofHours(24);
+    /**
+     * Reporting window for COMPLETED sessions (hours).
+     * Override with {@code app.report.completed-window-hours} in application.properties.
+     * Default: 72 hours.
+     */
+    @Value("${app.report.completed-window-hours:72}")
+    private long completedWindowHours;
+
+    /**
+     * Reporting window for ABORTED sessions (hours).
+     * Override with {@code app.report.terminal-window-hours} in application.properties.
+     * Default: 24 hours.
+     */
+    @Value("${app.report.terminal-window-hours:24}")
+    private long terminalWindowHours;
 
     private final WalkSessionRepository   sessionRepository;
     private final SessionReportRepository reportRepository;
@@ -58,13 +72,13 @@ public class ReportCommandService {
                 break;
 
             case COMPLETED:
-                if (now.isAfter(session.getEndedAt().plus(COMPLETED_REPORT_WINDOW))) {
+                if (now.isAfter(session.getEndedAt().plus(Duration.ofHours(completedWindowHours)))) {
                     throw new DomainException(ReportErrorCode.REPORT_WINDOW_EXPIRED);
                 }
                 break;
 
             case ABORTED:
-                if (now.isAfter(session.getEndedAt().plus(TERMINAL_REPORT_WINDOW))) {
+                if (now.isAfter(session.getEndedAt().plus(Duration.ofHours(terminalWindowHours)))) {
                     throw new DomainException(ReportErrorCode.REPORT_WINDOW_EXPIRED);
                 }
                 break;

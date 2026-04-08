@@ -403,7 +403,7 @@ REPORT_SELF_NOT_ALLOWED          // reporter == reportedUser
 ### Step 3.4 — Presentation layer (G-11)
 
 ```
-POST /api/sessions/{sessionId}/report
+POST /api/v1/sessions/{sessionId}/report
 Authorization: Bearer <token>
 Body: { "reportedUserId": "...", "reason": "...", "evidenceUrl": "..." (optional) }
 Response 201: { "reportId": "...", "createdAt": "..." }

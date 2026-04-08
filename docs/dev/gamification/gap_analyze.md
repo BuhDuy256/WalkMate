@@ -255,7 +255,7 @@ ALTER TABLE session_report
 
 **Presentation:**
 ```
-POST /api/sessions/{sessionId}/report
+POST /api/v1/sessions/{sessionId}/report
 Body: { reportedUserId, reason, evidenceUrl? }
 ```
 
@@ -265,7 +265,7 @@ Body: { reportedUserId, reason, evidenceUrl? }
 
 **Gap G-10:** Create `ReportCommandService.submitReport` with the status-window validation rules above.
 
-**Gap G-11:** Create `ReportController` — `POST /api/sessions/{sessionId}/report`.
+**Gap G-11:** Create `ReportController` — `POST /api/v1/sessions/{sessionId}/report`.
 
 ---
 
