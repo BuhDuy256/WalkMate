@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.walkmate.R;
+import com.walkmate.ui.matches.MatchesPagerAdapter;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
 
@@ -48,11 +49,35 @@ public class FindingFragment extends Fragment {
 
         adapter = new FindingAdapter();
         adapter.setOnCancelClickListener(intent -> matchesViewModel.cancelIntent(intent.getId()));
+        adapter.setOnIntentActionListener(new FindingAdapter.OnIntentActionListener() {
+            @Override
+            public void onFindMatchClicked(String intentId) {
+                matchesViewModel.triggerMatch(intentId);
+            }
+
+            @Override
+            public void onViewProposalClicked(String intentId) {
+                matchesViewModel.navigateToTab(MatchesPagerAdapter.TAB_PROPOSAL);
+            }
+
+            @Override
+            public void onIntentExpired() {
+                matchesViewModel.loadAll();
+            }
+        });
         recyclerView.setAdapter(adapter);
 
         swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());
 
         matchesViewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+
+        matchesViewModel.getNoMatchFoundEvent().observe(getViewLifecycleOwner(), noMatch -> {
+            if (noMatch != null && noMatch) {
+                Toast.makeText(requireContext(),
+                        R.string.no_match_found_toast, Toast.LENGTH_LONG).show();
+                matchesViewModel.consumeNoMatchFoundEvent();
+            }
+        });
     }
 
     private void renderState(MatchesUiState state) {

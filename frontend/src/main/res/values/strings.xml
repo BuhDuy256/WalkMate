@@ -60,6 +60,8 @@
 
     <!-- Finding sub-tab -->
     <string name="btn_cancel_intent">Cancel Intent</string>
+    <string name="btn_view_proposal">View Proposal</string>
+    <string name="no_match_found_toast">No match found yet. You\'ll be notified when one is found!</string>
     <string name="finding_empty">No active intents.\nHead to Explore to find a hotspot!</string>
     <string name="age_range_format">%1$d – %2$d y/o</string>
 
@@ -78,6 +80,7 @@
 
     <!-- Proposal sub-tab -->
     <string name="btn_cancel_proposal">Cancel Proposal</string>
+    <string name="proposal_waiting_partner">Waiting for partner to accept…</string>
     <string name="proposal_empty">No new proposals right now.\nHang tight — we\'re finding your match!</string>
     <string name="proposal_common_time">Common time window</string>
     <string name="proposal_common_interests">Common interests</string>

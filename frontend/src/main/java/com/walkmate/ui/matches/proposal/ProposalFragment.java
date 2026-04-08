@@ -57,6 +57,9 @@ public class ProposalFragment extends Fragment {
             @Override public void onCancel(String proposalId) {
                 matchesViewModel.cancelProposal(proposalId);
             }
+            @Override public void onProposalExpired() {
+                matchesViewModel.loadAll();
+            }
         });
         recyclerView.setAdapter(adapter);
 

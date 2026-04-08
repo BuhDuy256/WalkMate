@@ -75,6 +75,17 @@
 
             </LinearLayout>
 
+            <!-- Countdown timer (top-right; proposal 5-minute TTL) -->
+            <com.walkmate.core.designsystem.view.CountdownTimerView
+                android:id="@+id/countdownTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textSize="12sp"
+                app:wm_urgentThresholdSec="60"
+                app:wm_urgentColor="@color/color_danger"
+                app:wm_normalColor="@color/text_muted" />
+
         </LinearLayout>
 
         <!-- ── Divider ── -->
@@ -163,6 +174,18 @@
                 app:elevation="0dp" />
 
         </LinearLayout>
+
+        <!-- Waiting overlay: shown when I accepted but partner has not (Case A) -->
+        <TextView
+            android:id="@+id/txtWaitingOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:text="@string/proposal_waiting_partner"
+            android:textColor="@color/text_muted"
+            android:textSize="14sp"
+            android:visibility="gone" />
 
         <!-- Cancel (full-width, danger text — destructive secondary action) -->
         <com.google.android.material.button.MaterialButton

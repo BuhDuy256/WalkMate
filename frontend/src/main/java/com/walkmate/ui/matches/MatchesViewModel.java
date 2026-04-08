@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
+import com.walkmate.domain.user.UserProfile;
+import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.domain.walkproposal.WalkProposal;
@@ -15,7 +17,9 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,13 +43,19 @@ public class MatchesViewModel extends ViewModel {
     private final WalkIntentRepository intentRepository;
     private final WalkProposalRepository proposalRepository;
     private final WalkSessionRepository sessionRepository;
+    private final UserProfileRepository userProfileRepository;
+
+    /** In-memory cache of userId → UserProfile for partner name enrichment. */
+    private final Map<String, UserProfile> profileCache = new HashMap<>();
 
     public MatchesViewModel(WalkIntentRepository intentRepository,
                             WalkProposalRepository proposalRepository,
-                            WalkSessionRepository sessionRepository) {
+                            WalkSessionRepository sessionRepository,
+                            UserProfileRepository userProfileRepository) {
         this.intentRepository = intentRepository;
         this.proposalRepository = proposalRepository;
         this.sessionRepository = sessionRepository;
+        this.userProfileRepository = userProfileRepository;
     }
 
     public LiveData<MatchesUiState> getUiState() {
@@ -60,6 +70,21 @@ public class MatchesViewModel extends ViewModel {
     public void consumeScrollToTab() {
         scrollToTabEvent.postValue(null);
     }
+
+    /** Navigates to the given tab index (e.g. TAB_PROPOSAL) by posting a scroll event. */
+    public void navigateToTab(int tabIndex) {
+        scrollToTabEvent.postValue(tabIndex);
+    }
+
+    // -------------------------------------------------------------------------
+    // No-match-found event (gap 3.7 — 204 No Content handling)
+    // -------------------------------------------------------------------------
+
+    private final MutableLiveData<Boolean> noMatchFoundEvent = new MutableLiveData<>(null);
+
+    public LiveData<Boolean> getNoMatchFoundEvent() { return noMatchFoundEvent; }
+
+    public void consumeNoMatchFoundEvent() { noMatchFoundEvent.postValue(null); }
 
     // -------------------------------------------------------------------------
     // Data loading
@@ -108,6 +133,7 @@ public class MatchesViewModel extends ViewModel {
                         sessionsRef.get(),
                         errorMessage));
                 if (onComplete != null) onComplete.run();
+                enrichProposalPartnerNames(proposalsRef.get());
             }
         };
 
@@ -171,6 +197,38 @@ public class MatchesViewModel extends ViewModel {
                         current.getProposals(),
                         current.getActiveSessions(),
                         null));
+            }
+
+            @Override
+            public void onError(Exception error) {
+                MatchesUiState current = uiState.getValue();
+                if (current == null) return;
+                uiState.postValue(new MatchesUiState(
+                        false,
+                        current.getActiveIntents(),
+                        current.getProposals(),
+                        current.getActiveSessions(),
+                        error.getMessage()));
+            }
+        });
+    }
+
+    /**
+     * Triggers a match request for the given intent (gap 3.6).
+     * Case A (200 + body): a proposal was created — reload all data and scroll to Proposal tab.
+     * Case B (204 No Content, null body): no match yet — fire noMatchFoundEvent for the UI to toast.
+     */
+    public void triggerMatch(String intentId) {
+        intentRepository.findMatch(intentId, new DomainCallback<WalkProposal>() {
+            @Override
+            public void onSuccess(WalkProposal result) {
+                if (result == null) {
+                    // Case B: 204 No Content — server found no match yet
+                    noMatchFoundEvent.postValue(true);
+                } else {
+                    // Case A: proposal created — refresh and navigate to Proposal tab
+                    loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_PROPOSAL));
+                }
             }
 
             @Override
@@ -253,17 +311,22 @@ public class MatchesViewModel extends ViewModel {
     }
 
     /**
-     * Full refresh on accept: the backend atomically removes the proposal and
-     * creates a new WalkSession. The scroll-to-Session signal is emitted only
-     * after all data has been refreshed to avoid showing an empty Session tab.
+     * Accepts a proposal.
+     * Case B (CONFIRMED + session_id non-null): reload all data and navigate to Session tab.
+     * Case A (PENDING, only I accepted): update the proposal in-place so the waiting
+     * overlay is shown without a full reload.
      */
     public void acceptProposal(String proposalId) {
         proposalRepository.acceptProposal(proposalId, new DomainCallback<WalkProposal>() {
             @Override
             public void onSuccess(WalkProposal result) {
-                // Pass the scroll event as a callback so it fires only after
-                // loadAll() has posted the updated state — not before.
-                loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION));
+                if (result.isConfirmed()) {
+                    // Case B: both accepted — session created, navigate to Session tab
+                    loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION));
+                } else {
+                    // Case A: I accepted but partner has not — show waiting overlay in-place
+                    updateProposalInPlace(result);
+                }
             }
 
             @Override
@@ -278,6 +341,22 @@ public class MatchesViewModel extends ViewModel {
                         error.getMessage()));
             }
         });
+    }
+
+    /** Replaces a single proposal entry in the current UiState without a full reload. */
+    private void updateProposalInPlace(WalkProposal updated) {
+        MatchesUiState current = uiState.getValue();
+        if (current == null) return;
+        List<WalkProposal> updatedList = new ArrayList<>();
+        for (WalkProposal p : current.getProposals()) {
+            updatedList.add(p.getProposalId().equals(updated.getProposalId()) ? updated : p);
+        }
+        uiState.postValue(new MatchesUiState(
+                false,
+                current.getActiveIntents(),
+                updatedList,
+                current.getActiveSessions(),
+                null));
     }
 
     // -------------------------------------------------------------------------
@@ -349,6 +428,7 @@ public class MatchesViewModel extends ViewModel {
                         ? null : String.join("; ", errorList);
                 uiState.postValue(new MatchesUiState(
                         false, newIntents.get(), newProposals.get(), sessions, errorMessage));
+                enrichProposalPartnerNames(newProposals.get());
             }
         };
 
@@ -420,5 +500,57 @@ public class MatchesViewModel extends ViewModel {
                 onOneDone.run();
             }
         });
+    }
+
+    // -------------------------------------------------------------------------
+    // Partner name enrichment (gap 4.5)
+    // -------------------------------------------------------------------------
+
+    /**
+     * For each proposal, resolves the partner's real name from cache or API.
+     * Each successful fetch updates {@code profileCache} and rebuilds the
+     * proposals list in the current UiState with the enriched name.
+     */
+    private void enrichProposalPartnerNames(List<WalkProposal> proposals) {
+        for (WalkProposal p : proposals) {
+            String uid = p.getMatchedUserId();
+            if (profileCache.containsKey(uid)) {
+                rebuildUiStateWithEnrichedProposals();
+            } else {
+                userProfileRepository.getProfile(uid, new DomainCallback<UserProfile>() {
+                    @Override
+                    public void onSuccess(UserProfile profile) {
+                        profileCache.put(uid, profile);
+                        rebuildUiStateWithEnrichedProposals();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        // Fail silently — adapter falls back to userId placeholder
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Reads the current UiState proposals, replaces each entry whose userId is
+     * in {@code profileCache} with a copy carrying the real display name, then
+     * re-posts the state.
+     */
+    private void rebuildUiStateWithEnrichedProposals() {
+        MatchesUiState current = uiState.getValue();
+        if (current == null) return;
+        List<WalkProposal> enriched = new ArrayList<>();
+        for (WalkProposal p : current.getProposals()) {
+            UserProfile cached = profileCache.get(p.getMatchedUserId());
+            enriched.add(cached != null ? p.withMatchedUserName(cached.getFullName()) : p);
+        }
+        uiState.postValue(new MatchesUiState(
+                current.isLoading(),
+                current.getActiveIntents(),
+                enriched,
+                current.getActiveSessions(),
+                current.getError()));
     }
 }

@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
+import com.walkmate.core.designsystem.view.CountdownTimerView;
 import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkproposal.WalkProposal;
 
@@ -28,6 +29,7 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         void onPass(String proposalId);
         void onAccept(String proposalId);
         void onCancel(String proposalId);
+        void onProposalExpired();
     }
 
     // -------------------------------------------------------------------------
@@ -59,6 +61,12 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
     }
 
     @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        holder.countdown.cancelCountdown();
+    }
+
+    @Override
     public int getItemCount() {
         return items.size();
     }
@@ -72,7 +80,9 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         private final TextView txtAge;
         private final TextView txtTrustScore;
         private final TextView txtTimeWindow;
+        private final CountdownTimerView countdown;
         private final TagChipGroup chipGroupTags;
+        private final TextView txtWaitingOverlay;
         private final MaterialButton btnPass;
         private final MaterialButton btnAccept;
         private final MaterialButton btnCancelProposal;
@@ -84,17 +94,20 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
             txtAge             = itemView.findViewById(R.id.txtAge);
             txtTrustScore      = itemView.findViewById(R.id.txtTrustScore);
             txtTimeWindow      = itemView.findViewById(R.id.txtTimeWindow);
+            countdown          = itemView.findViewById(R.id.countdownTimer);
             chipGroupTags      = itemView.findViewById(R.id.chipGroupTags);
+            txtWaitingOverlay  = itemView.findViewById(R.id.txtWaitingOverlay);
             btnPass            = itemView.findViewById(R.id.btnPass);
             btnAccept          = itemView.findViewById(R.id.btnAccept);
             btnCancelProposal  = itemView.findViewById(R.id.btnCancelProposal);
         }
 
         void bind(WalkProposal proposal) {
-            String name = proposal.getMatchedUserName();
-            avatarPartner.bind(name, null);
-
-            txtName.setText(name);
+            // Partner display name (may be userId placeholder until VM enriches it)
+            String displayName = proposal.getMatchedUserName() != null
+                    ? proposal.getMatchedUserName() : proposal.getMatchedUserId();
+            avatarPartner.bind(displayName, null);
+            txtName.setText(displayName);
             txtAge.setText("· " + proposal.getMatchedUserAge() + " tuổi");
             txtTrustScore.setText(itemView.getContext().getString(
                     R.string.proposal_trust_format, proposal.getTrustScore()));
@@ -107,13 +120,29 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
             chipGroupTags.setTags(proposal.getOverlappingTags());
 
-            // Buttons
-            btnPass.setOnClickListener(v -> {
-                if (actionListener != null) actionListener.onPass(proposal.getProposalId());
+            // Countdown timer (5-minute TTL)
+            countdown.startCountdown(proposal.getExpiresAt());
+            countdown.setOnExpiredListener(() -> {
+                if (actionListener != null) actionListener.onProposalExpired();
             });
-            btnAccept.setOnClickListener(v -> {
-                if (actionListener != null) actionListener.onAccept(proposal.getProposalId());
-            });
+
+            // Case A: I accepted, waiting for partner → hide Accept/Pass, show waiting overlay
+            if (proposal.isAcceptedByMe() && proposal.getStatus() == WalkProposal.Status.PENDING) {
+                txtWaitingOverlay.setVisibility(View.VISIBLE);
+                btnAccept.setVisibility(View.GONE);
+                btnPass.setVisibility(View.GONE);
+            } else {
+                txtWaitingOverlay.setVisibility(View.GONE);
+                btnAccept.setVisibility(View.VISIBLE);
+                btnPass.setVisibility(View.VISIBLE);
+                btnPass.setOnClickListener(v -> {
+                    if (actionListener != null) actionListener.onPass(proposal.getProposalId());
+                });
+                btnAccept.setOnClickListener(v -> {
+                    if (actionListener != null) actionListener.onAccept(proposal.getProposalId());
+                });
+            }
+
             btnCancelProposal.setOnClickListener(v -> {
                 if (actionListener != null) actionListener.onCancel(proposal.getProposalId());
             });

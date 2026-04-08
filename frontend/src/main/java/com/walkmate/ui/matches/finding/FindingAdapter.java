@@ -4,6 +4,7 @@ import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.CountdownTimerView;
 import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkintent.WalkIntent;
 
@@ -26,11 +28,22 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
         void onCancelClick(WalkIntent intent);
     }
 
+    public interface OnIntentActionListener {
+        void onFindMatchClicked(String intentId);
+        void onViewProposalClicked(String intentId);
+        void onIntentExpired();
+    }
+
     private final List<WalkIntent> items = new ArrayList<>();
     private OnCancelClickListener cancelListener;
+    private OnIntentActionListener actionListener;
 
     public void setOnCancelClickListener(OnCancelClickListener listener) {
         this.cancelListener = listener;
+    }
+
+    public void setOnIntentActionListener(OnIntentActionListener listener) {
+        this.actionListener = listener;
     }
 
     public void setItems(List<WalkIntent> newItems) {
@@ -53,6 +66,12 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
     }
 
     @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        holder.countdown.cancelCountdown();
+    }
+
+    @Override
     public int getItemCount() {
         return items.size();
     }
@@ -63,20 +82,26 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
         private final TextView txtHotspotName;
         private final TextView txtTimeWindow;
+        private final CountdownTimerView countdown;
         private final Chip chipDuration;
         private final Chip chipAgeRange;
         private final TagChipGroup chipGroupTags;
         private final Chip chipStatus;
+        private final ImageView imgLock;
+        private final MaterialButton btnFindMatch;
         private final MaterialButton btnCancelIntent;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             txtHotspotName  = itemView.findViewById(R.id.txtHotspotName);
             txtTimeWindow   = itemView.findViewById(R.id.txtTimeWindow);
+            countdown       = itemView.findViewById(R.id.countdownTimer);
             chipDuration    = itemView.findViewById(R.id.chipDuration);
             chipAgeRange    = itemView.findViewById(R.id.chipAgeRange);
             chipGroupTags   = itemView.findViewById(R.id.chipGroupTags);
             chipStatus      = itemView.findViewById(R.id.chipStatus);
+            imgLock         = itemView.findViewById(R.id.imgLock);
+            btnFindMatch    = itemView.findViewById(R.id.btnFindMatch);
             btnCancelIntent = itemView.findViewById(R.id.btnCancelIntent);
         }
 
@@ -95,9 +120,38 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
             bindStatusChip(intent.getStatus());
 
-            btnCancelIntent.setOnClickListener(v -> {
-                if (cancelListener != null) cancelListener.onCancelClick(intent);
-            });
+            // Countdown timer
+            if (intent.getExpiresAt() != null) {
+                countdown.setVisibility(View.VISIBLE);
+                countdown.startCountdown(intent.getExpiresAt());
+                countdown.setOnExpiredListener(() -> {
+                    if (actionListener != null) actionListener.onIntentExpired();
+                });
+            } else {
+                countdown.setVisibility(View.GONE);
+                countdown.cancelCountdown();
+            }
+
+            // OPEN vs MATCHING state
+            if (intent.isMatching()) {
+                btnFindMatch.setText(R.string.btn_view_proposal);
+                btnFindMatch.setOnClickListener(v -> {
+                    if (actionListener != null) actionListener.onViewProposalClicked(intent.getId());
+                });
+                btnCancelIntent.setVisibility(View.GONE);
+                imgLock.setVisibility(View.VISIBLE);
+            } else {
+                // OPEN (default)
+                btnFindMatch.setText(R.string.find_match);
+                btnFindMatch.setOnClickListener(v -> {
+                    if (actionListener != null) actionListener.onFindMatchClicked(intent.getId());
+                });
+                btnCancelIntent.setVisibility(View.VISIBLE);
+                imgLock.setVisibility(View.GONE);
+                btnCancelIntent.setOnClickListener(v -> {
+                    if (cancelListener != null) cancelListener.onCancelClick(intent);
+                });
+            }
         }
 
         private void bindStatusChip(String status) {
