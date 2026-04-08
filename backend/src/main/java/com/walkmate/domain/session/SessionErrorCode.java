@@ -12,7 +12,8 @@ public enum SessionErrorCode implements ErrorCode {
     SESSION_ACTIVATION_WINDOW_CLOSED("SESSION_ACTIVATION_WINDOW_CLOSED", "The activation window for this session is closed"),
     SESSION_CANCEL_NOT_PENDING("SESSION_CANCEL_NOT_PENDING", "Only PENDING sessions can be cancelled"),
     SESSION_COMPLETE_TOO_EARLY("SESSION_COMPLETE_TOO_EARLY", "Session cannot be completed yet — minimum walk duration has not been met"),
-    SESSION_OVERLAPPING("SESSION_OVERLAPPING", "User already has an overlapping active session");
+    SESSION_OVERLAPPING("SESSION_OVERLAPPING", "User already has an overlapping active session"),
+    SESSION_NOT_FINISHED("SESSION_NOT_FINISHED", "Route data is only available for finished sessions");
 
     private final String code;
     private final String message;

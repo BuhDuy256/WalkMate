@@ -165,6 +165,20 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 .list();
     }
 
+    @Override
+    public List<WalkSession> findCompletedByUserId(String userId) {
+        final String sql = selectAll() + """
+                WHERE (user_id_a = :userId OR user_id_b = :userId)
+                  AND status IN ('COMPLETED', 'NO_SHOW', 'ABORTED', 'CANCELLED')
+                ORDER BY COALESCE(ended_at, created_at) DESC
+                LIMIT 50
+                """;
+        return jdbcClient.sql(sql)
+                .param("userId", UUID.fromString(userId))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
     // ── Audit log ─────────────────────────────────────────────────────────────
 
     @Override

@@ -32,4 +32,10 @@ public interface WalkSessionRepository {
     /** Appends one row to the session_state_change_log audit table. */
     void logStateChange(String sessionId, SessionStatus from, SessionStatus to,
                         String changedBy, String reason);
+
+    /**
+     * Returns terminal sessions (COMPLETED, NO_SHOW, ABORTED, CANCELLED) for a user,
+     * ordered by ended_at DESC (falling back to created_at). Capped at 50 rows.
+     */
+    List<WalkSession> findCompletedByUserId(String userId);
 }
