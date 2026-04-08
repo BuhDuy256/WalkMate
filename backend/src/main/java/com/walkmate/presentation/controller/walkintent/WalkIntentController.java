@@ -91,13 +91,17 @@ public class WalkIntentController {
     }
 
     /**
-     * GET /api/v1/intents/{intentId}/match
-     * Runs the matching engine for the given intent.
+     * POST /api/v1/intents/{intentId}/match
+     * Triggers the matching engine for the given intent.
      * Returns the proposal if a candidate was found (or an existing PENDING proposal).
      * Returns 204 No Content if no candidate is available yet.
+     *
+     * POST is correct here: every call may mutate state (create a MatchProposal,
+     * transition the intent from OPEN → MATCHING). GET is reserved for safe,
+     * idempotent reads.
      */
-    @GetMapping("/{intentId}/match")
-    public ResponseEntity<ApiResponse<WalkProposalResponse>> findMatch(
+    @PostMapping("/{intentId}/match")
+    public ResponseEntity<ApiResponse<WalkProposalResponse>> triggerMatch(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String intentId) {
         MatchProposal proposal = matchingCommandService

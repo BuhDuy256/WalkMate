@@ -77,6 +77,30 @@ public class SocialController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     * GET /api/v1/users/me/friends
+     *
+     * Returns the caller's friend list for the private-intent friend-picker (UC-08).
+     * Requires authentication.
+     *
+     * Current implementation: "friends" = users the caller is following.
+     * When a real Friendship table is introduced, only this endpoint's backing
+     * service method needs to change — the contract stays the same.
+     *
+     * Response: list of { userId, fullName, avatarUrl }
+     */
+    @GetMapping("/api/v1/users/me/friends")
+    public ResponseEntity<ApiResponse<List<UserSummaryResponse>>> getFriends(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        UUID callerId = UUID.fromString(principal.userId());
+        List<UserSummaryResponse> result = queryService.getFriends(callerId)
+                .stream()
+                .map(this::toSummary)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     // ── Block ─────────────────────────────────────────────────────────────────
 
     /** POST /api/v1/users/{userId}/block */
