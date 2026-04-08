@@ -1,6 +1,6 @@
 package com.walkmate.infrastructure.repository.chat;
 
-import com.walkmate.application.chat.ChatRoomRepository;
+import com.walkmate.domain.chat.ChatRoomRepository;
 import com.walkmate.infrastructure.repository.chat.document.ChatRoomDocument;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
-package com.walkmate.application.chat;
+package com.walkmate.domain.chat;
 
 /**
- * Application-layer port for managing chat room lifecycle.
+ * Domain-layer port for managing chat room lifecycle.
  * Implementations live in the infrastructure layer (MongoDB adapter).
  *
  * No MongoDB-specific types appear in this interface — callers depend only on this port.

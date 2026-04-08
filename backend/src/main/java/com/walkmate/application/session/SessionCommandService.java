@@ -1,11 +1,11 @@
 package com.walkmate.application.session;
 
-import com.walkmate.application.chat.ChatRoomRepository;
 import com.walkmate.application.gamification.SessionAbortedEvent;
 import com.walkmate.application.gamification.SessionCompletedEvent;
 import com.walkmate.application.gamification.SessionNoShowEvent;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationType;
+import com.walkmate.domain.chat.ChatRoomRepository;
 import com.walkmate.domain.session.AbortReason;
 import com.walkmate.domain.session.SessionErrorCode;
 import com.walkmate.domain.session.SessionStatus;

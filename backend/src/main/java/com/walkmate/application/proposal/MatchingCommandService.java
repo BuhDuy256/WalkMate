@@ -1,6 +1,5 @@
 package com.walkmate.application.proposal;
 
-import com.walkmate.application.chat.ChatRoomRepository;
 import com.walkmate.application.walkintent.MatchingStrategy;
 import com.walkmate.application.walkintent.MatchResult;
 import com.walkmate.domain.hotspot.Hotspot;
@@ -11,6 +10,7 @@ import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.proposal.MatchProposal;
 import com.walkmate.domain.proposal.MatchProposalRepository;
 import com.walkmate.domain.proposal.ProposalErrorCode;
+import com.walkmate.domain.chat.ChatRoomRepository;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.shared.NotificationPublisher;

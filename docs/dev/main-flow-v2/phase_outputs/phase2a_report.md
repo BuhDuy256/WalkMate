@@ -13,7 +13,7 @@ backend/build.gradle                                                            
 backend/src/main/resources/application.properties                                 (modified)
 backend/.env                                                                       (modified)
 backend/src/main/java/com/walkmate/infrastructure/repository/chat/document/ChatRoomDocument.java   (new)
-backend/src/main/java/com/walkmate/application/chat/ChatRoomRepository.java       (new)
+backend/src/main/java/com/walkmate/domain/chat/ChatRoomRepository.java            (new)
 backend/src/main/java/com/walkmate/infrastructure/repository/chat/MongoChatRoomRepository.java    (new)
 backend/src/main/java/com/walkmate/application/proposal/MatchingCommandService.java (modified)
 backend/src/main/java/com/walkmate/application/session/SessionCommandService.java  (modified)
@@ -60,7 +60,7 @@ All five pre-implementation checks were performed against the live codebase.
 | Dependency `spring-boot-starter-data-mongodb` in `build.gradle` | **yes** |
 | `MONGODB_URI` / `MONGODB_DATABASE` in `application.properties` | **yes** |
 | `MONGODB_URI` / `MONGODB_DATABASE` in `.env` (placeholder values) | **yes** |
-| `ChatRoomRepository` port path | `application/chat/ChatRoomRepository.java` |
+| `ChatRoomRepository` port path | `domain/chat/ChatRoomRepository.java` |
 | `MongoChatRoomRepository` adapter path | `infrastructure/repository/chat/MongoChatRoomRepository.java` |
 | `ChatRoomDocument` collection name | `chat_rooms` |
 | afterCommit hook in `acceptProposal()` | **yes** |

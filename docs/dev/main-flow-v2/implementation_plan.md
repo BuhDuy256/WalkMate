@@ -394,13 +394,13 @@ public class ChatRoomDocument {
 
 > **Architecture note:** The `@Document` annotation and all MongoDB-specific types are confined to the `infrastructure` layer. No MongoDB type leaks into the `domain` or `application` layers.
 
-#### 2.1d — Define `ChatRoomRepository` port (application layer)
+#### 2.1d — Define `ChatRoomRepository` port (domain layer)
 
-**File:** `application/chat/ChatRoomRepository.java`
+**File:** `domain/chat/ChatRoomRepository.java`
 
 ```java
 /**
- * Application-layer port for managing chat room lifecycle.
+ * Domain-layer port for managing chat room lifecycle.
  * Implementations live in the infrastructure layer (MongoDB adapter).
  */
 public interface ChatRoomRepository {
@@ -463,7 +463,7 @@ public class MongoChatRoomRepository implements ChatRoomRepository {
 - [x] `MONGODB_URI` and `MONGODB_DATABASE` added to `application.properties`.
 - [x] `MONGODB_URI` and `MONGODB_DATABASE` added to `.env` (local dev).
 - [x] `ChatRoomDocument` created in `infrastructure/repository/chat/document/`.
-- [x] `ChatRoomRepository` port created in `application/chat/`.
+- [x] `ChatRoomRepository` port created in `domain/chat/`.
 - [x] `MongoChatRoomRepository` adapter created in `infrastructure/repository/chat/`.
 - [x] No `MongoTransactionManager` bean registered anywhere.
 - [ ] Application starts successfully with MongoDB URI present; fails fast without it.
@@ -897,7 +897,7 @@ Phase 3 (after Phase 2):
 | `application/walkintent/WalkIntentQueryService.java` | 3.2 |
 | `application/session/SessionCommandService.java` | 1.3, 2.3, 3.1 |
 | `application/walkintent/IntentScheduler.java` | 2.5 (new file) |
-| `application/chat/ChatRoomRepository.java` | 2.1d (new file) |
+| `domain/chat/ChatRoomRepository.java` | 2.1d (new file) |
 | `application/notification/PushNotificationProvider.java` | 2.6a |
 | `presentation/controller/session/SessionController.java` | 1.3 |
 | `presentation/dto/request/walkintent/CreateWalkIntentRequest.java` | 1.4c |
