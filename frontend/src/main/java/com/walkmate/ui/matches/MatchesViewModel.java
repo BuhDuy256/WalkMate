@@ -258,9 +258,9 @@ public class MatchesViewModel extends ViewModel {
      * after all data has been refreshed to avoid showing an empty Session tab.
      */
     public void acceptProposal(String proposalId) {
-        proposalRepository.acceptProposal(proposalId, new DomainCallback<WalkSession>() {
+        proposalRepository.acceptProposal(proposalId, new DomainCallback<WalkProposal>() {
             @Override
-            public void onSuccess(WalkSession result) {
+            public void onSuccess(WalkProposal result) {
                 // Pass the scroll event as a callback so it fires only after
                 // loadAll() has posted the updated state — not before.
                 loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION));

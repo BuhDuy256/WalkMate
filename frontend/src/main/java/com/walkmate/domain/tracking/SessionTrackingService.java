@@ -6,6 +6,9 @@ import com.walkmate.domain.shared.DomainCallback;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Domain-layer service that owns the GPS point processing pipeline for a
@@ -39,6 +42,10 @@ public class SessionTrackingService {
      */
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    private final ScheduledExecutorService syncScheduler =
+            Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> periodicSyncFuture;
+
     private volatile String currentSessionId;
 
     public SessionTrackingService(TrackingRepository repository) {
@@ -55,6 +62,9 @@ public class SessionTrackingService {
     public void startSession(String sessionId) {
         currentSessionId = sessionId;
         executor.execute(filterPolicy::reset);
+        periodicSyncFuture = syncScheduler.scheduleAtFixedRate(
+                () -> repository.triggerPeriodicSync(sessionId),
+                30L, 30L, TimeUnit.SECONDS);
         Log.d(TAG, "Session started: " + sessionId);
     }
 
@@ -102,6 +112,8 @@ public class SessionTrackingService {
      */
     public void stopTracking() {
         currentSessionId = null;
+        if (periodicSyncFuture != null) { periodicSyncFuture.cancel(false); }
+        syncScheduler.shutdown();
         executor.shutdown(); // graceful — finishes in-flight writes before terminating
         Log.d(TAG, "Executor shut down — tracking stopped");
     }

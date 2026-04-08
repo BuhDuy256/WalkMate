@@ -32,7 +32,7 @@ public class CreateIntentViewModel extends ViewModel {
         uiState.setValue(new CreateIntentUiState(true, null, null));
 
         intentRepository.createIntent(hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
-                isPrivate, invitedFriendId,
+                isPrivate, invitedFriendId, null,
                 new DomainCallback<WalkIntent>() {
                     @Override
                     public void onSuccess(WalkIntent intent) {

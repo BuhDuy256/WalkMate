@@ -14,7 +14,6 @@ import com.walkmate.data.mapper.WalkProposalMapper;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walkproposal.WalkProposal;
 import com.walkmate.domain.walkproposal.WalkProposalRepository;
-import com.walkmate.domain.walksession.WalkSession;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -67,27 +66,15 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
         });
     }
 
-    /**
-     * Accepts a proposal.
-     * - If both users have now accepted (status == CONFIRMED), calls onSuccess with the new WalkSession.
-     * - If only this user has accepted (status == PENDING), calls onSuccess(null) — the caller
-     *   should interpret null as "waiting for the other participant".
-     */
     @Override
-    public void acceptProposal(String proposalId, DomainCallback<WalkSession> callback) {
+    public void acceptProposal(String proposalId, DomainCallback<WalkProposal> callback) {
         executor.execute(() -> {
             try {
                 Response<ApiResponse<WalkProposalResponse>> resp =
                         apiService.acceptProposal(proposalId).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    WalkProposalResponse proposal = resp.body().getData();
-                    if (proposal.getSessionId() != null) {
-                        callback.onSuccess(WalkProposalMapper.toSession(proposal));
-                    } else {
-                        // Partial accept — waiting for the other participant
-                        callback.onSuccess(null);
-                    }
+                    callback.onSuccess(WalkProposalMapper.toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_ACCEPT_FAILED");
                     if (resp.code() == 422) {

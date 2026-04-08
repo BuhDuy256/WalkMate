@@ -43,6 +43,10 @@ import retrofit2.Response;
  */
 public class TrackingRepositoryImpl implements TrackingRepository {
 
+    public interface SessionEndedListener {
+        void onSessionEndedRemotely(String errorCode);
+    }
+
     private static final String TAG = "TrackingRepo";
 
     /** Trigger a backend push when this many unsynced points accumulate. */
@@ -51,6 +55,12 @@ public class TrackingRepositoryImpl implements TrackingRepository {
     private final RoutePointDao          dao;
     private final SessionManager         sessionManager;
     private final ExecutorService        executor = Executors.newSingleThreadExecutor();
+
+    private SessionEndedListener sessionEndedListener;
+
+    public void setSessionEndedListener(SessionEndedListener l) {
+        this.sessionEndedListener = l;
+    }
 
     public TrackingRepositoryImpl(RoutePointDao dao, SessionManager sessionManager) {
         this.dao            = dao;
@@ -145,16 +155,39 @@ public class TrackingRepositoryImpl implements TrackingRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(response, TrackingErrorCode.SYNC_FAILED);
-                    Log.w(TAG, "Sync failed: " + apiError.getCode());
-                    if (response.code() == 422) {
+                    String errorCode = apiError.getCode();
+                    Log.w(TAG, "Sync failed: " + errorCode);
+                    if ("SESSION_NOT_ACTIVE".equals(errorCode) || "SESSION_NOT_FOUND".equals(errorCode)) {
+                        callback.onError(new Exception("SESSION_TERMINAL|" + errorCode));
+                    } else if (response.code() == 422) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
-                        callback.onError(new Exception(apiError.getCode()));
+                        callback.onError(new Exception(errorCode));
                     }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "pushRoutePoints network error", e);
                 callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void triggerPeriodicSync(String sessionId) {
+        executor.execute(() -> {
+            List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId);
+            if (unsyncedEntities != null && !unsyncedEntities.isEmpty()) {
+                List<RoutePoint> domainPoints = RoutePointMapper.toDomainList(unsyncedEntities);
+                pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
+                    @Override public void onSuccess(Void v) { /* silent success */ }
+                    @Override public void onError(Exception e) {
+                        if (e.getMessage() != null && e.getMessage().startsWith("SESSION_TERMINAL|")) {
+                            if (sessionEndedListener != null) {
+                                sessionEndedListener.onSessionEndedRemotely(e.getMessage());
+                            }
+                        }
+                    }
+                });
             }
         });
     }

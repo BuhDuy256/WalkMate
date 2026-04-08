@@ -48,12 +48,13 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
     public void createIntent(String hotspotId, String date, float timeStart, float timeEnd,
                              int ageMin, int ageMax, List<String> tags,
                              boolean isPrivate, String invitedFriendId,
+                             String description,
                              DomainCallback<WalkIntent> callback) {
         executor.execute(() -> {
             try {
                 CreateWalkIntentRequest request = new CreateWalkIntentRequest(
                         hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
-                        isPrivate, invitedFriendId);
+                        isPrivate, invitedFriendId, description);
 
                 Response<ApiResponse<WalkIntentResponse>> resp =
                         apiService.createIntent(request).execute();

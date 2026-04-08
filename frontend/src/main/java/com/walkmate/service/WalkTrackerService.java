@@ -69,7 +69,7 @@ public class WalkTrackerService extends Service {
     // ── Location config ───────────────────────────────────────────────────────
 
     /** How often to request a new GPS fix (milliseconds). */
-    private static final long LOCATION_INTERVAL_MS     = 3_000L;
+    private static final long LOCATION_INTERVAL_MS     = 5_000L;
     /** Fastest interval — ignored if no other app is requesting faster. */
     private static final long LOCATION_FASTEST_MS      = 1_500L;
     /** Minimum movement between fixes delivered to the callback. */
