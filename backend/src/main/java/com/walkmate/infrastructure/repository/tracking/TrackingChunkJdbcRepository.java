@@ -55,7 +55,7 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
 
     @Override
     public int countChunks(String sessionId, String userId) {
-        Integer count = jdbcClient.sql("""
+        return jdbcClient.sql("""
                         SELECT COUNT(*) FROM session_point_chunks
                         WHERE session_id = :sessionId AND user_id = :userId
                         """)
@@ -63,7 +63,6 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
                 .param("userId",    UUID.fromString(userId))
                 .query(Integer.class)
                 .single();
-        return count != null ? count : 0;
     }
 
     @Override

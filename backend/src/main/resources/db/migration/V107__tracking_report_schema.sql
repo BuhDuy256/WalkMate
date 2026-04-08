@@ -4,24 +4,39 @@
 -- ============================================================
 
 -- ── Step 0.1 — Add user_id to session_point_chunks (G-1) ─────
--- Step 1: Add the column (nullable first to allow the ALTER on non-empty tables).
+
+-- Step 1: Add the column as nullable first (required for non-empty tables).
 ALTER TABLE public.session_point_chunks
     ADD COLUMN user_id uuid;
 
--- Step 2: Enforce NOT NULL (dev branch has no live rows; prod must backfill before this runs).
+-- Step 2: Delete any pre-existing rows that predate the user_id column.
+--         On a fresh dev DB this is a no-op. On a production deployment these
+--         rows have no associated user and cannot be reconstructed; they must
+--         be discarded before the NOT NULL constraint can be applied.
+DELETE FROM public.session_point_chunks WHERE user_id IS NULL;
+
+-- Step 3: Enforce NOT NULL now that all rows have a valid user_id.
 ALTER TABLE public.session_point_chunks
     ALTER COLUMN user_id SET NOT NULL;
 
--- Step 3: Drop old session-scoped unique constraint.
+-- Step 4: Add FK constraint to user_account.
+--         ON DELETE CASCADE: GPS chunks are disposable trace data; they
+--         follow the user lifetime (in practice a user cannot be deleted while
+--         walk_session rows exist due to the RESTRICT on walk_session.user_id_a/b).
+ALTER TABLE public.session_point_chunks
+    ADD CONSTRAINT session_point_chunks_user_id_fkey
+        FOREIGN KEY (user_id) REFERENCES public.user_account (user_id) ON DELETE CASCADE;
+
+-- Step 5: Drop old session-scoped unique constraint.
 ALTER TABLE public.session_point_chunks
     DROP CONSTRAINT session_point_chunks_unique;
 
--- Step 4: Add per-user unique constraint (session_id, user_id, chunk_index).
+-- Step 6: Add per-user unique constraint (session_id, user_id, chunk_index).
 ALTER TABLE public.session_point_chunks
     ADD CONSTRAINT session_point_chunks_unique
         UNIQUE (session_id, user_id, chunk_index);
 
--- Step 5: Replace the covering index with a user-scoped variant.
+-- Step 7: Replace the covering index with a user-scoped variant.
 DROP INDEX IF EXISTS public.idx_chunks_session_order;
 CREATE INDEX idx_chunks_session_user_order
     ON public.session_point_chunks (session_id, user_id, chunk_index ASC);

@@ -195,4 +195,4 @@ Consider enabling configuration cache to speed up this build: https://docs.gradl
 | # | Description | Severity |
 |---|-------------|----------|
 | 1 | `findPolylinesBySessionId(String sessionId)` retained in interface and JDBC impl — plan Step 1.1 notes removal only "if there are other callers"; the method is retained because Phase 4 (History flow / G-14) will use it for dual-path rendering. No deviation from plan intent. | None |
-| 2 | `countChunks` null guard: JDBC `COUNT(*)` should never return null, but a defensive `count != null ? count : 0` guard is in place matching the pattern used in `nextChunkIndex`. | None |
+| 2 | `countChunks` null guard removed — `COUNT(*)` is guaranteed non-null in PostgreSQL. **RESOLVED** — `TrackingChunkJdbcRepository.countChunks` now returns `.query(Integer.class).single()` directly. | None (resolved) |

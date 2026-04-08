@@ -120,9 +120,9 @@ Unique constraint: session_report_unique (session_id, reporter_id)
 
 | # | Description | Severity | Resolution |
 |---|-------------|----------|------------|
-| 1 | `flywayMigrate` Gradle task unavailable — Flyway runs at Spring Boot startup only | Low | Document as expected; verified via `compileJava` instead |
-| 2 | `session_point_chunks.user_id` has no FK constraint to `user_account` — the migration adds the column but does not add `REFERENCES public.user_account(user_id)` | Low | Matches implementation_plan.md spec (FK omitted intentionally to avoid cascading complexity; application layer enforces the relationship via `callerId` from JWT) |
-| 3 | Existing rows in `session_point_chunks` (if any in prod) will fail `SET NOT NULL` without backfill | Medium | Documented in migration comment; dev branch has no live GPS chunk rows. Prod deployment must backfill `user_id` before applying this migration. |
+| 1 | `flywayMigrate` Gradle task unavailable — Flyway runs at Spring Boot startup only | Low | Expected; Flyway is a Spring Boot runtime dependency. Verified via `compileJava`. |
+| 2 | `session_point_chunks.user_id` had no FK constraint to `user_account` | Low | **RESOLVED** — V107 updated to add `session_point_chunks_user_id_fkey` (`ON DELETE CASCADE`). |
+| 3 | `SET NOT NULL` without prior backfill — migration would fail on non-empty tables | Medium | **RESOLVED** — V107 updated to `DELETE FROM session_point_chunks WHERE user_id IS NULL` before `ALTER COLUMN user_id SET NOT NULL`. Self-contained and safe in all environments. |
 
 ---
 
