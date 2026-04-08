@@ -24,6 +24,9 @@ public enum WalkState {
     /** GPS paused (no new points), stopwatch frozen; polyline remains on map. */
     PAUSED,
 
+    /** Complete tapped; API call in progress. Awaiting server confirmation. */
+    FINISHING,
+
     /** Walk ended; summary stats available. GPS service stopped. */
     FINISHED
 }

@@ -23,14 +23,6 @@ public class WalkSessionMapper {
         boolean isCallerUserA = callerId.equals(response.getUserIdA());
         String partnerId = isCallerUserA ? response.getUserIdB() : response.getUserIdA();
 
-        // TODO Phase 4: add these fields to WalkSession and map here:
-        //   isCallerUserA                     → isCallerUserA
-        //   response.getScheduledEnd()        → scheduledEnd
-        //   response.getStartedAt()           → startedAt
-        //   response.getEndedAt()             → endedAt
-        //   response.getUserAActivatedAt()    → userAActivatedAt
-        //   response.getUserBActivatedAt()    → userBActivatedAt
-        //   response.isReviewed()             → isReviewed
         return new WalkSession(
                 response.getSessionId(),
                 response.getProposalId(),
@@ -39,7 +31,14 @@ public class WalkSessionMapper {
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),
                 response.getScheduledStart(),
-                toStatus(response.getStatus())
+                toStatus(response.getStatus()),
+                response.getScheduledEnd(),
+                response.getStartedAt(),
+                response.getEndedAt(),
+                response.getUserAActivatedAt(),
+                response.getUserBActivatedAt(),
+                response.isReviewed(),
+                isCallerUserA
         );
     }
 

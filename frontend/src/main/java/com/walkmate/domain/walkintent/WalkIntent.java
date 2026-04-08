@@ -10,15 +10,18 @@ public class WalkIntent {
     private final float timeEnd;
     private final int ageMin;
     private final int ageMax;
-    private final String status;     // "OPEN" | "CONSUMED" | "CANCELLED" | "EXPIRED"
+    private final String status;     // "OPEN" | "MATCHING" | "CONSUMED" | "CANCELLED" | "EXPIRED"
     private final String createdAt;
     private final List<String> tags; // empty list until API contract includes it
+    private final String expiresAt;  // ISO-8601, nullable
+    private final String description; // nullable
 
     public WalkIntent(String id, String hotspotId, String userId,
                       float timeStart, float timeEnd,
                       int ageMin, int ageMax,
                       String status, String createdAt,
-                      List<String> tags) {
+                      List<String> tags,
+                      String expiresAt, String description) {
         this.id = id;
         this.hotspotId = hotspotId;
         this.userId = userId;
@@ -29,6 +32,8 @@ public class WalkIntent {
         this.status = status;
         this.createdAt = createdAt;
         this.tags = tags;
+        this.expiresAt = expiresAt;
+        this.description = description;
     }
 
     public String getId() { return id; }
@@ -41,4 +46,9 @@ public class WalkIntent {
     public String getStatus() { return status; }
     public String getCreatedAt() { return createdAt; }
     public List<String> getTags() { return tags; }
+    public String getExpiresAt() { return expiresAt; }
+    public String getDescription() { return description; }
+
+    public boolean isOpen() { return "OPEN".equals(status); }
+    public boolean isMatching() { return "MATCHING".equals(status); }
 }

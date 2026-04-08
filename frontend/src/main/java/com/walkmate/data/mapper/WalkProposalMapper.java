@@ -18,12 +18,6 @@ public class WalkProposalMapper {
      * until a user-profile enrichment endpoint is added.
      */
     public static WalkProposal toDomain(WalkProposalResponse response) {
-        // TODO Phase 4: add these fields to WalkProposal and map here:
-        //   response.getExpiresAt()           → expiresAt
-        //   response.getProposedLat()         → meetingLat
-        //   response.getProposedLng()         → meetingLng
-        //   response.getMyAcceptanceStatus()  → myAcceptanceStatus
-        //   response.getSessionId()           → sessionId
         return new WalkProposal(
                 response.getProposalId(),
                 response.getCallersIntentId(),
@@ -34,7 +28,12 @@ public class WalkProposalMapper {
                 Collections.emptyList(),        // tags not yet in API
                 toHourFloat(response.getProposedTimeStart()),
                 toHourFloat(response.getProposedTimeEnd()),
-                toStatus(response.getStatus())
+                toStatus(response.getStatus()),
+                response.getExpiresAt(),
+                response.getProposedLat(),
+                response.getProposedLng(),
+                response.getMyAcceptanceStatus(),
+                response.getSessionId()
         );
     }
 
@@ -59,7 +58,14 @@ public class WalkProposalMapper {
                 response.getProposedLat(),
                 response.getProposedLng(),
                 response.getProposedTimeStart(),
-                WalkSession.Status.PENDING
+                WalkSession.Status.PENDING,
+                null,   // scheduledEnd
+                null,   // startedAt
+                null,   // endedAt
+                null,   // userAActivatedAt
+                null,   // userBActivatedAt
+                false,  // isReviewed
+                false   // isCallerUserA — unknown at proposal stage; corrected on session fetch
         );
     }
 

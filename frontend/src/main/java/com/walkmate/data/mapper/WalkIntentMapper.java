@@ -14,9 +14,6 @@ import java.time.ZoneId;
 public class WalkIntentMapper {
 
     public static WalkIntent toDomain(WalkIntentResponse response) {
-        // TODO Phase 4: add expiresAt and description to WalkIntent and map here:
-        //   response.getExpiresAt()   → expiresAt
-        //   description               → null (field not present in WalkIntentResponse)
         return new WalkIntent(
                 response.getId(),
                 response.getHotspotId(),
@@ -27,7 +24,9 @@ public class WalkIntentMapper {
                 response.getAgeMax(),
                 response.getStatus(),
                 response.getCreatedAt(),
-                Collections.emptyList()  // tags not yet in API contract
+                Collections.emptyList(),  // tags not yet in API contract
+                response.getExpiresAt(),
+                null  // description not in API contract
         );
     }
 

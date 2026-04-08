@@ -1,13 +1,14 @@
 package com.walkmate.data.mapper;
 
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
-import com.walkmate.domain.walksession.SessionSummary; // TODO Phase 4: create this domain model
+import com.walkmate.domain.walksession.SessionSummary;
+import com.walkmate.domain.walksession.WalkSession;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Maps {@link WalkSessionResponse} → {@link SessionSummary} (domain model created in Phase 4).
+ * Maps {@link WalkSessionResponse} → {@link SessionSummary}.
  *
  * <p>Used for UC-22 history list. Only the 7 summary fields are mapped;
  * totalDistanceKm and durationMinutes are not available in WalkSessionResponse —
@@ -22,7 +23,7 @@ public class SessionSummaryMapper {
 
         return new SessionSummary(
                 response.getSessionId(),
-                response.getStatus(),
+                toStatus(response.getStatus()),
                 partnerId,
                 response.getScheduledStart(),
                 0.0,   // totalDistanceKm — not in WalkSessionResponse; use SessionRouteResponse
@@ -37,6 +38,18 @@ public class SessionSummaryMapper {
             result.add(toDomain(r, callerId));
         }
         return result;
+    }
+
+    private static WalkSession.Status toStatus(String raw) {
+        if (raw == null) return WalkSession.Status.PENDING;
+        switch (raw) {
+            case "ACTIVE":    return WalkSession.Status.ACTIVE;
+            case "COMPLETED": return WalkSession.Status.COMPLETED;
+            case "CANCELLED": return WalkSession.Status.CANCELLED;
+            case "NO_SHOW":   return WalkSession.Status.NO_SHOW;
+            case "ABORTED":   return WalkSession.Status.ABORTED;
+            default:          return WalkSession.Status.PENDING;
+        }
     }
 
     private SessionSummaryMapper() {}
