@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Session Complete"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:id="@+id/txtSummaryPartner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/txtSummaryDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/txtSummaryDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/txtSummaryBadges"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/btnLeaveReview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Leave a Review"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnReportIncident"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Report Incident"
+        android:visibility="gone"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnDoneSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Done" />
+
+</LinearLayout>

@@ -30,6 +30,12 @@
           only icon + text tint change to orange_end on selection.
         - elevation creates a subtle shadow separating the bar from content.
     -->
+    <!-- Full-screen overlay container for manual fragment transactions (e.g. EditProfile, SessionHistory) -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"

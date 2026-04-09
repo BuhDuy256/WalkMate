@@ -94,9 +94,9 @@ public class MatchesViewModel extends ViewModel {
 
     public void consumeActivationResult() { activationResultEvent.postValue(null); }
 
-    static class ActivationResult {
-        final WalkSession session;
-        final String errorCode;
+    public static class ActivationResult {
+        public final WalkSession session;
+        public final String errorCode;
         ActivationResult(WalkSession s, String e) { session = s; errorCode = e; }
     }
 
