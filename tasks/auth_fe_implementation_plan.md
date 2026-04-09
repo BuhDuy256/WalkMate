@@ -3,7 +3,7 @@
   > **File:** `tasks/auth_fe_implementation_plan.md`
   > **Created:** 2026-04-09
   > **Branch:** `feature/oauth`
-  > **Overall Status:** 🔴 Not Started
+  > **Overall Status:** 🟢 Complete
 
   ---
 
@@ -181,38 +181,38 @@
   > No UI changes. No network changes. Data layer only.
 
   **`SessionManager.java`**
-  - [ ] **Add `KEY_REFRESH_TOKEN = "refresh_token"` constant**
-  - [ ] **Add `saveRefreshToken(String token)` method**
-  - [ ] **Add `getRefreshToken()` method — returns null if absent**
-  - [ ] **Add `KEY_DEVICE_ID = "device_id"` constant**
-  - [ ] **Add `getOrGenerateDeviceId()` — reads stored ID; if null, generates `UUID.randomUUID().toString()`, saves,
+  - [x] **Add `KEY_REFRESH_TOKEN = "refresh_token"` constant**
+  - [x] **Add `saveRefreshToken(String token)` method**
+  - [x] **Add `getRefreshToken()` method — returns null if absent**
+  - [x] **Add `KEY_DEVICE_ID = "device_id"` constant**
+  - [x] **Add `getOrGenerateDeviceId()` — reads stored ID; if null, generates `UUID.randomUUID().toString()`, saves,
   returns it**
-  - [ ] **Update `clearSession()` — remove `KEY_REFRESH_TOKEN` entry; do NOT remove `KEY_DEVICE_ID`**
+  - [x] **Update `clearSession()` — remove `KEY_REFRESH_TOKEN` entry; do NOT remove `KEY_DEVICE_ID`**
 
   **Request DTOs**
-  - [ ] **Add `deviceId` field + constructor param to `LoginRequestDto.java`**
-  - [ ] **Add `deviceId` field + constructor param to `RegisterRequestDto.java`**
-  - [ ] **Add `deviceId` field + constructor param to `GoogleLoginRequestDto.java`**
-  - [ ] **Create `RefreshTokenRequestDto.java` in `dto/request/user/`**
-  - [ ] **Create `LogoutRequestDto.java` in `dto/request/user/`**
-  - [ ] **Create `SendOtpRequestDto.java` in `dto/request/user/`**
-  - [ ] **Create `VerifyOtpRequestDto.java` in `dto/request/user/`**
-  - [ ] Create `SetVisibilityRequestDto.java` in `dto/request/user/`
+  - [x] **Add `deviceId` field + constructor param to `LoginRequestDto.java`**
+  - [x] **Add `deviceId` field + constructor param to `RegisterRequestDto.java`**
+  - [x] **Add `deviceId` field + constructor param to `GoogleLoginRequestDto.java`**
+  - [x] **Create `RefreshTokenRequestDto.java` in `dto/request/user/`**
+  - [x] **Create `LogoutRequestDto.java` in `dto/request/user/`**
+  - [x] **Create `SendOtpRequestDto.java` in `dto/request/user/`**
+  - [x] **Create `VerifyOtpRequestDto.java` in `dto/request/user/`**
+  - [x] Create `SetVisibilityRequestDto.java` in `dto/request/user/`
 
   **Response DTOs**
-  - [ ] **Add `refreshToken` (String) field + getter to `LoginResponseDto.java` in `dto/response/user/`**
-  - [ ] **Add `refreshTokenExpiresIn` (long) field + getter to `LoginResponseDto.java`**
-  - [ ] **Delete phantom `LoginResponseDto.java` from `dto/request/user/`**
-  - [ ] **Delete phantom `LoginRequestDto.java` from `dto/request/user/`**
-  - [ ] Create `SetVisibilityResponseDto.java` in `dto/response/user/`
+  - [x] **Add `refreshToken` (String) field + getter to `LoginResponseDto.java` in `dto/response/user/`**
+  - [x] **Add `refreshTokenExpiresIn` (long) field + getter to `LoginResponseDto.java`**
+  - [x] **Delete phantom `LoginResponseDto.java` from `dto/request/user/`**
+  - [x] **Delete phantom `LoginRequestDto.java` from `dto/response/user/`**
+  - [x] Create `SetVisibilityResponseDto.java` in `dto/response/user/`
 
   **API Services**
-  - [ ] **Add `refreshToken()` endpoint to `AuthApiService`**
-  - [ ] **Add `logout()` endpoint to `AuthApiService`**
-  - [ ] **Add `logoutAll()` endpoint to `AuthApiService`**
-  - [ ] **Add `sendOtp()` endpoint to `AuthApiService`**
-  - [ ] **Add `verifyOtp()` endpoint to `AuthApiService`**
-  - [ ] Add `setVisibility()` endpoint to `UserApiService`
+  - [x] **Add `refreshToken()` endpoint to `AuthApiService`**
+  - [x] **Add `logout()` endpoint to `AuthApiService`**
+  - [x] **Add `logoutAll()` endpoint to `AuthApiService`**
+  - [x] **Add `sendOtp()` endpoint to `AuthApiService`**
+  - [x] **Add `verifyOtp()` endpoint to `AuthApiService`**
+  - [x] Add `setVisibility()` endpoint to `UserApiService`
 
   ---
 
@@ -220,22 +220,22 @@
   > **Goal:** Implement silent token rotation that is thread-safe and loop-proof.
   > No Repository or UI changes.
 
-  - [ ] **Create `AuthEventBus.java` — singleton `MutableLiveData<AuthEvent>` with `postForceLogout()` and `observe()`
+  - [x] **Create `AuthEventBus.java` — singleton `MutableLiveData<AuthEvent>` with `postForceLogout()` and `observe()`
   methods**
-  - [ ] **Register `AuthEventBus` as singleton in `WalkMateApplication`**
-  - [ ] **Create `TokenRefreshAuthenticator.java` implementing `okhttp3.Authenticator`**
-  - [ ] **Add `private static final ReentrantLock REFRESH_LOCK = new ReentrantLock();`**
-  - [ ] **Implement infinite-loop guard: if URL contains `/auth/refresh` → call `clearSession()` +
+  - [x] **Register `AuthEventBus` as singleton in `WalkMateApplication`**
+  - [x] **Create `TokenRefreshAuthenticator.java` implementing `okhttp3.Authenticator`**
+  - [x] **Add `private static final ReentrantLock REFRESH_LOCK = new ReentrantLock();`**
+  - [x] **Implement infinite-loop guard: if URL contains `/auth/refresh` → call `clearSession()` +
   `AuthEventBus.postForceLogout()` → return `null`**
-  - [ ] **Implement stale-token check: if `sessionManager.getAccessToken()` differs from token at entry → rebuild
+  - [x] **Implement stale-token check: if `sessionManager.getAccessToken()` differs from token at entry → rebuild
   request with current token, skip refresh**
-  - [ ] **Implement refresh call inside lock: `authApiService.refreshToken(...).execute()` synchronously**
-  - [ ] **On refresh success: `saveAccessToken()` + `saveRefreshToken()` → rebuild and return original request**
-  - [ ] **On refresh failure: `clearSession()` + `AuthEventBus.postForceLogout()` → return `null`**
-  - [ ] **Always release lock in `finally` block**
-  - [ ] **Update `ApiClient.buildAuthenticatedRetrofit()` to accept `AuthApiService` parameter and wire
+  - [x] **Implement refresh call inside lock: `authApiService.refreshToken(...).execute()` synchronously**
+  - [x] **On refresh success: `saveAccessToken()` + `saveRefreshToken()` → rebuild and return original request**
+  - [x] **On refresh failure: `clearSession()` + `AuthEventBus.postForceLogout()` → return `null`**
+  - [x] **Always release lock in `finally` block**
+  - [x] **Update `ApiClient.buildAuthenticatedRetrofit()` to accept `AuthApiService` parameter and wire
   `TokenRefreshAuthenticator`**
-  - [ ] Update all callers of `buildAuthenticatedRetrofit()` in `RepositoryImpl` classes to pass `authApiService`
+  - [x] Update all callers of `buildAuthenticatedRetrofit()` in `RepositoryImpl` classes to pass `authApiService`
 
   ---
 
@@ -243,27 +243,27 @@
   > **Goal:** Update domain model, add error mapping, implement all new repository operations.
   > No Fragment or Activity changes.
 
-  - [ ] Create `AccountStatus.java` enum in `domain/user/`: `ACTIVE`, `SUSPENDED`, `BANNED`
-  - [ ] Create `VisibilityMode.java` enum in `domain/user/`: `PUBLIC`, `PRIVATE`
-  - [ ] Add `accountStatus` and `visibilityMode` fields to `domain/user/User.java`
-  - [ ] **Add all 15 `UserErrorCode` entries as string resources in `res/values/strings.xml` keyed as
-  `error_<CODE_NAME>`**
-  - [ ] Add `error_generic` fallback string resource
-  - [ ] **Create `UserErrorMessageMapper.java` in `core/util/` with `enum ActionType { TOAST, FIELD_ERROR, FORCE_LOGOUT,
+  - [x] Create `AccountStatus.java` enum in `domain/user/`: `ACTIVE`, `SUSPENDED`, `BANNED`
+  - [x] Create `VisibilityMode.java` enum in `domain/user/`: `PUBLIC`, `PRIVATE`
+  - [x] Add `accountStatus` and `visibilityMode` fields to `domain/user/User.java`
+  - [x] **Add all 16 `UserErrorCode` entries as string resources in `res/values/strings.xml` keyed as
+  `error_<CODE_NAME>`** (backend has 16, not 15)
+  - [x] Add `error_generic` fallback string resource
+  - [x] **Create `UserErrorMessageMapper.java` in `core/util/` with `enum ActionType { TOAST, FIELD_ERROR, FORCE_LOGOUT,
    SILENT }` and `static ErrorResult map(String errorCode)`**
-  - [ ] **Map `USER_ACCOUNT_SUSPENDED` → `ActionType.FORCE_LOGOUT`**
-  - [ ] **Map `USER_ALREADY_PRIVATE` / `USER_ALREADY_PUBLIC` → `ActionType.SILENT`**
-  - [ ] **Update `UserRepository.java` interface: add all new method signatures; update existing signatures to include
+  - [x] **Map `USER_ACCOUNT_SUSPENDED` → `ActionType.FORCE_LOGOUT`**
+  - [x] **Map `USER_ALREADY_PRIVATE` / `USER_ALREADY_PUBLIC` → `ActionType.SILENT`**
+  - [x] **Update `UserRepository.java` interface: add all new method signatures; update existing signatures to include
   `deviceId`**
-  - [ ] **Update `UserRepositoryImpl.login()`: include `deviceId`, save refresh token on success**
-  - [ ] **Update `UserRepositoryImpl.register()`: include `deviceId`, save both tokens, change callback to
+  - [x] **Update `UserRepositoryImpl.login()`: include `deviceId`, save refresh token on success**
+  - [x] **Update `UserRepositoryImpl.register()`: include `deviceId`, save both tokens, change callback to
   `DomainCallback<String>` returning access token**
-  - [ ] **Update `UserRepositoryImpl.loginWithGoogle()`: include `deviceId`, save both tokens**
-  - [ ] **Implement `UserRepositoryImpl.logout()`**
-  - [ ] **Implement `UserRepositoryImpl.logoutAll()`**
-  - [ ] **Implement `UserRepositoryImpl.sendOtp()`**
-  - [ ] **Implement `UserRepositoryImpl.verifyOtp()`**
-  - [ ] Implement `UserRepositoryImpl.setVisibility()`
+  - [x] **Update `UserRepositoryImpl.loginWithGoogle()`: include `deviceId`, save both tokens**
+  - [x] **Implement `UserRepositoryImpl.logout()`**
+  - [x] **Implement `UserRepositoryImpl.logoutAll()`**
+  - [x] **Implement `UserRepositoryImpl.sendOtp()`**
+  - [x] **Implement `UserRepositoryImpl.verifyOtp()`**
+  - [x] Implement `UserRepositoryImpl.setVisibility()`
 
   ---
 
@@ -271,24 +271,24 @@
   > **Goal:** Wire all backend capabilities into the UI.
   > One sub-feature at a time.
 
-  - [ ] **Add `AuthEventBus` observer to `AuthActivity` → on `FORCE_LOGOUT`: `clearSession()` + relaunch with
+  - [x] **Add `AuthEventBus` observer to `AuthActivity` → on `FORCE_LOGOUT`: `clearSession()` + relaunch with
   `FLAG_ACTIVITY_CLEAR_TASK`**
-  - [ ] **Add `AuthEventBus` observer to `MainActivity` → same forced logout behaviour**
-  - [ ] **Update `LoginUiState.java` — add `boolean forcedLogout` field**
-  - [ ] **Update `LoginViewModel` — use `UserErrorMessageMapper`; post `forcedLogout=true` on `FORCE_LOGOUT` action**
-  - [ ] **Update `RegisterViewModel` — on success, navigate to `MainActivity` (auto-login)**
-  - [ ] Add "Continue with Phone Number" entry point to `activity_auth.xml` and `AuthActivity`
-  - [ ] Create `PhoneOtpUiState.java`
-  - [ ] Create `PhoneOtpViewModel.java` with `sendOtp()`, `verifyOtp()`, resend countdown timer
-  - [ ] Create `PhoneOtpViewModelFactory.java`
-  - [ ] Create `PhoneInputFragment.java`
-  - [ ] **Create `OtpInputView.java` in `core/designsystem/view/` — 6-digit auto-focus input; register in `attrs.xml`
+  - [x] **Add `AuthEventBus` observer to `MainActivity` → same forced logout behaviour**
+  - [x] **Update `LoginUiState.java` — add `boolean forcedLogout` field**
+  - [x] **Update `LoginViewModel` — use `UserErrorMessageMapper`; post `forcedLogout=true` on `FORCE_LOGOUT` action**
+  - [x] **Update `RegisterViewModel` — on success, navigate to `MainActivity` (auto-login)**
+  - [x] Add "Continue with Phone Number" entry point to `activity_auth.xml` and `AuthActivity`
+  - [x] Create `PhoneOtpUiState.java`
+  - [x] Create `PhoneOtpViewModel.java` with `sendOtp()`, `verifyOtp()`, resend countdown timer
+  - [x] Create `PhoneOtpViewModelFactory.java`
+  - [x] Create `PhoneInputFragment.java`
+  - [x] **Create `OtpInputView.java` in `core/designsystem/view/` — 6-digit auto-focus input; register in `attrs.xml`
   and `Frontend_VI.md` catalogue**
-  - [ ] Create `OtpVerifyFragment.java` with `OtpInputView` + resend countdown
-  - [ ] Add `visibilityMode` to Profile UiState; add `setVisibility()` to Profile ViewModel
-  - [ ] Add `SwitchMaterial` visibility toggle to Profile/Settings layout
-  - [ ] Add "Log Out All Devices" button to Settings layout (Security section)
-  - [ ] **Wire Logout All: `AlertDialog` confirmation → `logoutAll()` → `clearSession()` → navigate to `AuthActivity`**
+  - [x] Create `OtpVerifyFragment.java` with `OtpInputView` + resend countdown
+  - [x] Add `visibilityMode` to Profile UiState; add `setVisibility()` to Profile ViewModel
+  - [x] Add `SwitchMaterial` visibility toggle to Profile/Settings layout
+  - [x] Add "Log Out All Devices" button to Settings layout (Security section)
+  - [x] **Wire Logout All: `AlertDialog` confirmation → `logoutAll()` → `clearSession()` → navigate to `AuthActivity`**
 
   ---
 
@@ -408,13 +408,13 @@
   ┌───────┬───────────────────────────┬────────────────┬──────────────┐
   │ Phase │           Name            │     Status     │ Done / Total │
   ├───────┼───────────────────────────┼────────────────┼──────────────┤
-  │ 1     │ Foundation & Data Layer   │ 🔴 Not Started │ 0 / 20       │
+  │ 1     │ Foundation & Data Layer   │ 🟢 Complete    │ 20 / 20      │
   ├───────┼───────────────────────────┼────────────────┼──────────────┤
-  │ 2     │ Token Lifecycle & Network │ 🔴 Not Started │ 0 / 12       │
+  │ 2     │ Token Lifecycle & Network │ 🟢 Complete    │ 12 / 12      │
   ├───────┼───────────────────────────┼────────────────┼──────────────┤
-  │ 3     │ Domain & Repository       │ 🔴 Not Started │ 0 / 17       │
+  │ 3     │ Domain & Repository       │ 🟢 Complete    │ 17 / 17      │
   ├───────┼───────────────────────────┼────────────────┼──────────────┤
-  │ 4     │ UI/UX Integration         │ 🔴 Not Started │ 0 / 25       │
+  │ 4     │ UI/UX Integration         │ 🟢 Complete    │ 16 / 16      │
   ├───────┼───────────────────────────┼────────────────┼──────────────┤
-  │ —     │ Overall                   │ 🔴 Not Started │ 0 / 74       │
+  │ —     │ Overall                   │ 🟢 Complete    │ 65 / 65      │
   └───────┴───────────────────────────┴────────────────┴──────────────┘

@@ -37,7 +37,7 @@ public class GamificationRepositoryImpl implements GamificationRepository {
         // the same ApiClient builder for base URL consistency. The interceptor will
         // silently skip the Authorization header when the token is absent.
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(GamificationApiService.class);
     }
 

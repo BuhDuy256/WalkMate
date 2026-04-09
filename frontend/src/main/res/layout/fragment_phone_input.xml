@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:orientation="vertical"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="56dp"
+    android:paddingBottom="40dp">
+
+    <!-- Back button -->
+    <ImageView
+        android:id="@+id/btn_back"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_back"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_back" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/phone_input_title"
+        android:textColor="@color/text_dark"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/phone_input_subtitle"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp" />
+
+    <com.walkmate.core.designsystem.view.WalkMateInputField
+        android:id="@+id/field_phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        app:wm_hint="@string/phone_input_hint"
+        app:wm_icon="@drawable/ic_phone"
+        app:wm_inputType="phone"
+        app:wm_label="Phone Number" />
+
+    <com.walkmate.core.designsystem.view.WalkMateButton
+        android:id="@+id/btn_send_otp"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="28dp"
+        app:wm_buttonStyle="filled"
+        app:wm_text="@string/btn_send_otp" />
+
+</LinearLayout>

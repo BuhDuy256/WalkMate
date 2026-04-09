@@ -29,7 +29,7 @@ public class SocialRepositoryImpl implements SocialRepository {
 
     public SocialRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(SocialApiService.class);
     }
 

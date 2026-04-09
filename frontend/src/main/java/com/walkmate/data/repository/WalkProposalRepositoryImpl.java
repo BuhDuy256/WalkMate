@@ -31,7 +31,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
 
     public WalkProposalRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(ProposalApiService.class);
     }
 

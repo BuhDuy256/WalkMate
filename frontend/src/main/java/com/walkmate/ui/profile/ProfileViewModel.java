@@ -4,8 +4,12 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.event.AuthEventBus;
+import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
+import com.walkmate.domain.user.UserRepository;
+import com.walkmate.domain.user.VisibilityMode;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,14 +24,18 @@ import java.util.List;
  * Edit flow:
  *   saveProfile(…) → calls updateProfile() → reloads profile on success.
  *   uploadAvatar(…) → calls uploadAvatar() → reloads profile on success.
+ *   setVisibility(…) → calls UserRepository.setVisibility() → reloads profile on success.
+ *   logoutAll() → calls UserRepository.logoutAll().
  */
 public class ProfileViewModel extends ViewModel {
 
     private final MutableLiveData<ProfileUiState> uiState = new MutableLiveData<>();
     private final UserProfileRepository profileRepo;
+    private final UserRepository userRepository;
 
-    public ProfileViewModel(UserProfileRepository profileRepo) {
+    public ProfileViewModel(UserProfileRepository profileRepo, UserRepository userRepository) {
         this.profileRepo = profileRepo;
+        this.userRepository = userRepository;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -101,6 +109,45 @@ public class ProfileViewModel extends ViewModel {
                 });
     }
 
+    /**
+     * Sets the user's profile visibility and reloads the profile on success.
+     */
+    public void setVisibility(VisibilityMode mode) {
+        userRepository.setVisibility(mode, new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadProfile();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // SILENT errors (already public/private) are swallowed — no UI change needed.
+                // TOAST errors show a transient message via the error field.
+                uiState.postValue(ProfileUiState.error(friendlyError(e)));
+            }
+        });
+    }
+
+    /**
+     * Logs out the user from all devices. Clears the session in UserRepositoryImpl, then
+     * posts FORCE_LOGOUT on AuthEventBus so MainActivity can relaunch AuthActivity.
+     */
+    public void logoutAll() {
+        userRepository.logoutAll(new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // Session already cleared by UserRepositoryImpl.
+                // Signal MainActivity to navigate to AuthActivity.
+                AuthEventBus.getInstance().postForceLogout();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                uiState.postValue(ProfileUiState.error(friendlyError(e)));
+            }
+        });
+    }
+
     /** Navigation signals — wired to real destinations in a future nav phase. */
     public void onWalkHistoryClicked()  { /* Phase D: emit navigation signal */ }
     public void onMyBadgesClicked()     { /* Phase D: emit navigation signal */ }
@@ -122,6 +169,7 @@ public class ProfileViewModel extends ViewModel {
                 p.getTotalSessions(),
                 0,                       // currentStreak: requires session analytics (future phase)
                 Collections.emptyList(), // badges: loaded separately via GamificationRepository
+                null,                    // visibilityMode: not yet returned by UserProfile API
                 null
         );
     }

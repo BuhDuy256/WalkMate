@@ -4,6 +4,7 @@ import android.app.Application;
 import android.util.Log;
 
 import com.google.firebase.FirebaseApp;
+import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
@@ -58,6 +59,10 @@ public class WalkMateApplication extends Application {
         // and any authenticated network call don't pay a cold-start penalty.
         database = WalkMateDatabase.getInstance(this);
         sessionManager = new SessionManager(this);
+
+        // Eagerly initialize AuthEventBus so the singleton exists before any
+        // background OkHttp thread could invoke TokenRefreshAuthenticator.
+        AuthEventBus.getInstance();
     }
 
     // ── Singletons ────────────────────────────────────────────────────────────

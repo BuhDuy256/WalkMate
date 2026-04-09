@@ -239,10 +239,12 @@ res/values/
 | `WalkMateStatColumn`  | `core.designsystem.view` | Vertical icon/emoji → value (bold) → label (muted)       | `wm_statIcon`, `wm_statEmoji`, `wm_statValue`, `wm_statLabel`, `wm_statValueSize` |
 | `TagChipGroup`        | `core.designsystem.view` | ChipGroup subclass: `setTags(List<String>)` single call  | `wm_chipStyle` (display / selectable)                                  |
 | `WalkMateCardHeader`  | `core.designsystem.view` | Flat ConstraintLayout header: emoji + title + chevron?   | `wm_headerEmoji`, `wm_headerTitle`, `wm_navigable`                     |
+| `OtpInputView`        | `core.designsystem.view` | 6-digit OTP input: auto-focus-advance + backspace-to-prev | No XML attrs — fully programmatic. API: `getOtp()`, `clear()`, `setEnabled()` |
 | `GlideHelper`         | `core.util`              | Utility: all Glide calls centralised (no layout file)    | N/A — static methods only                                              |
 
-**Note:** `TagChipGroup` and `GlideHelper` are documented exceptions to the "view_name.xml layout required" rule:
+**Note:** `TagChipGroup`, `OtpInputView`, and `GlideHelper` are documented exceptions to the "view_name.xml layout required" rule:
 - `TagChipGroup` extends `ChipGroup` directly — no extra ViewGroup layer needed.
+- `OtpInputView` is fully programmatic — all 6 child `EditText` boxes are created in `init()`.
 - `GlideHelper` is a static utility class, not a view.
 
 *Cập nhật bảng này mỗi khi thêm Custom View mới.*

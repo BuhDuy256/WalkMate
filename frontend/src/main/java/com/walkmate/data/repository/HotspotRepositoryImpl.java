@@ -33,7 +33,7 @@ public class HotspotRepositoryImpl implements HotspotRepository {
     public HotspotRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
         this.hotspotApiService = ApiClient
-                .buildAuthenticatedRetrofit(sessionManager)
+                .buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(HotspotApiService.class);
     }
 

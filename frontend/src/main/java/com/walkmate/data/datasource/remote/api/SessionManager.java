@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.util.Base64;
 import android.util.Log;
 
+import java.util.UUID;
+
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
@@ -26,6 +28,8 @@ public class SessionManager {
 
     private static final String PREFS_NAME = "walkmate_secure_session";
     private static final String KEY_ACCESS_TOKEN = "access_token";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
+    private static final String KEY_DEVICE_ID = "device_id";
 
     private final SharedPreferences prefs;
 
@@ -41,6 +45,26 @@ public class SessionManager {
         return prefs.getString(KEY_ACCESS_TOKEN, null);
     }
 
+    public void saveRefreshToken(String token) {
+        prefs.edit().putString(KEY_REFRESH_TOKEN, token).apply();
+    }
+
+    public String getRefreshToken() {
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
+    }
+
+    /**
+     * Returns the persisted device ID, generating and saving a new UUID if none exists.
+     * This ID is intentionally NOT cleared on logout — it survives session changes.
+     */
+    public String getOrGenerateDeviceId() {
+        String existingId = prefs.getString(KEY_DEVICE_ID, null);
+        if (existingId != null) return existingId;
+        String newId = UUID.randomUUID().toString();
+        prefs.edit().putString(KEY_DEVICE_ID, newId).commit();
+        return newId;
+    }
+
     /**
      * Returns true only when a non-blank, non-expired JWT is available.
      */
@@ -53,7 +77,11 @@ public class SessionManager {
     }
 
     public void clearSession() {
-        prefs.edit().clear().apply();
+        prefs.edit()
+                .remove(KEY_ACCESS_TOKEN)
+                .remove(KEY_REFRESH_TOKEN)
+                .apply();
+        // KEY_DEVICE_ID is intentionally preserved — survives logout
     }
 
     /**

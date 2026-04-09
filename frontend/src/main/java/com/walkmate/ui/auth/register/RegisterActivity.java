@@ -105,8 +105,9 @@ public class RegisterActivity extends AppCompatActivity {
             }
 
             if (state.isSuccess()) {
-                Toast.makeText(this, "Account created! Please sign in.", Toast.LENGTH_LONG).show();
-                finish();
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
             }
         });
     }

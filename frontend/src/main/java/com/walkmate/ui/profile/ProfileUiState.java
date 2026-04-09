@@ -1,5 +1,7 @@
 package com.walkmate.ui.profile;
 
+import com.walkmate.domain.user.VisibilityMode;
+
 import java.util.List;
 
 /**
@@ -42,6 +44,7 @@ public class ProfileUiState {
     private final int totalSessions;
     private final int currentStreak;
     private final List<Badge> badges;    // max 3 shown in the Milestones card
+    private final VisibilityMode visibilityMode;
     private final String error;
 
     // ── Constructor ───────────────────────────────────────────────────────────
@@ -57,6 +60,7 @@ public class ProfileUiState {
             int totalSessions,
             int currentStreak,
             List<Badge> badges,
+            VisibilityMode visibilityMode,
             String error) {
         this.isLoading = isLoading;
         this.name = name;
@@ -68,6 +72,7 @@ public class ProfileUiState {
         this.totalSessions = totalSessions;
         this.currentStreak = currentStreak;
         this.badges = badges;
+        this.visibilityMode = visibilityMode;
         this.error = error;
     }
 
@@ -77,27 +82,28 @@ public class ProfileUiState {
     public static ProfileUiState loading() {
         return new ProfileUiState(
                 true, null, null, false,
-                0f, null, 0.0, 0, 0, null, null);
+                0f, null, 0.0, 0, 0, null, null, null);
     }
 
     /** Returns an error state. */
     public static ProfileUiState error(String message) {
         return new ProfileUiState(
                 false, null, null, false,
-                0f, null, 0.0, 0, 0, null, message);
+                0f, null, 0.0, 0, 0, null, null, message);
     }
 
     // ── Getters ───────────────────────────────────────────────────────────────
 
-    public boolean isLoading()              { return isLoading; }
-    public String getName()                 { return name; }
-    public String getAvatarUrl()            { return avatarUrl; }
-    public boolean isOnline()               { return isOnline; }
-    public float getTrustScore()            { return trustScore; }
+    public boolean isLoading()               { return isLoading; }
+    public String getName()                  { return name; }
+    public String getAvatarUrl()             { return avatarUrl; }
+    public boolean isOnline()                { return isOnline; }
+    public float getTrustScore()             { return trustScore; }
     public List<String> getPersonalityTags() { return personalityTags; }
-    public double getTotalDistanceKm()      { return totalDistanceKm; }
-    public int getTotalSessions()           { return totalSessions; }
-    public int getCurrentStreak()           { return currentStreak; }
-    public List<Badge> getBadges()          { return badges; }
-    public String getError()               { return error; }
+    public double getTotalDistanceKm()       { return totalDistanceKm; }
+    public int getTotalSessions()            { return totalSessions; }
+    public int getCurrentStreak()            { return currentStreak; }
+    public List<Badge> getBadges()           { return badges; }
+    public VisibilityMode getVisibilityMode() { return visibilityMode; }
+    public String getError()                 { return error; }
 }

@@ -3,6 +3,8 @@ package com.walkmate.ui.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,8 +25,11 @@ import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.designsystem.view.WalkMateButton;
 import com.walkmate.core.designsystem.view.WalkMateInputField;
+import com.walkmate.core.event.AuthEvent;
+import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.ui.auth.login.LoginViewModel;
 import com.walkmate.ui.auth.login.LoginViewModelFactory;
+import com.walkmate.ui.auth.phone.PhoneInputFragment;
 import com.walkmate.ui.auth.register.RegisterActivity;
 import com.walkmate.ui.main.MainActivity;
 
@@ -36,11 +41,12 @@ public class AuthActivity extends AppCompatActivity {
     private WalkMateInputField fieldPassword;
     private WalkMateButton btnSignIn;
     private MaterialButton btnGoogleSignIn;
+    private View authContentContainer;
+    private FrameLayout fragmentContainer;
 
     private LoginViewModel loginViewModel;
     private GoogleSignInClient googleSignInClient;
 
-    // Registered before onCreate per Jetpack best-practice — safe to call startActivityForResult
     private final ActivityResultLauncher<Intent> googleSignInLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::handleGoogleSignInResult);
 
@@ -48,15 +54,12 @@ public class AuthActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // ── Login persistence: skip to Home if already authenticated ──
         WalkMateApplication app = (WalkMateApplication) getApplication();
         if (app.getSessionManager().hasUsableAccessToken()) {
             onLoginSuccess();
             return;
         }
 
-        // Stored token exists but is unusable (blank/expired/invalid) — clear it
-        // so the app does not repeatedly attempt auto-login with stale credentials.
         if (app.getSessionManager().getAccessToken() != null) {
             app.getSessionManager().clearSession();
         }
@@ -66,8 +69,6 @@ public class AuthActivity extends AppCompatActivity {
         LoginViewModelFactory factory = new LoginViewModelFactory(this);
         loginViewModel = new ViewModelProvider(this, factory).get(LoginViewModel.class);
 
-        // Configure Google Sign-In: request ID token using the server's Web Client ID.
-        // The Web Client ID comes from google-services.json (oauth_client type 3).
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -77,13 +78,16 @@ public class AuthActivity extends AppCompatActivity {
         initViews();
         initClickListeners();
         observeUiState();
+        observeAuthEventBus();
     }
 
     private void initViews() {
-        fieldEmail     = findViewById(R.id.field_email);
-        fieldPassword  = findViewById(R.id.field_password);
-        btnSignIn      = findViewById(R.id.btn_signin_action);
-        btnGoogleSignIn = findViewById(R.id.btn_google_signin);
+        authContentContainer = findViewById(R.id.auth_content_container);
+        fragmentContainer     = findViewById(R.id.auth_fragment_container);
+        fieldEmail            = findViewById(R.id.field_email);
+        fieldPassword         = findViewById(R.id.field_password);
+        btnSignIn             = findViewById(R.id.btn_signin_action);
+        btnGoogleSignIn       = findViewById(R.id.btn_google_signin);
     }
 
     private void initClickListeners() {
@@ -91,7 +95,6 @@ public class AuthActivity extends AppCompatActivity {
                 loginViewModel.login(fieldEmail.getText(), fieldPassword.getText()));
 
         btnGoogleSignIn.setOnClickListener(v -> {
-            // Disable to prevent double-tap while the picker is open
             btnGoogleSignIn.setEnabled(false);
             googleSignInLauncher.launch(googleSignInClient.getSignInIntent());
         });
@@ -104,6 +107,9 @@ public class AuthActivity extends AppCompatActivity {
         TextView tvCreateAccount = findViewById(R.id.tv_create_account);
         tvCreateAccount.setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class)));
+
+        TextView tvPhoneSignIn = findViewById(R.id.tv_phone_signin);
+        tvPhoneSignIn.setOnClickListener(v -> showPhoneInputFragment());
     }
 
     private void observeUiState() {
@@ -111,9 +117,15 @@ public class AuthActivity extends AppCompatActivity {
             if (state == null) return;
 
             btnSignIn.setLoading(state.isLoading());
-            // Re-enable Google button whenever loading ends (success or error)
             if (!state.isLoading()) {
                 btnGoogleSignIn.setEnabled(true);
+            }
+
+            if (state.isForcedLogout()) {
+                // Account suspended mid-login attempt — show message and stay on auth screen.
+                Toast.makeText(this, state.getError(), Toast.LENGTH_LONG).show();
+                loginViewModel.consumeError();
+                return;
             }
 
             if (state.getError() != null) {
@@ -126,6 +138,51 @@ public class AuthActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * Observes AuthEventBus for forced-logout events triggered by TokenRefreshAuthenticator.
+     * Clears the session and relaunches this Activity with a clean back stack.
+     */
+    private void observeAuthEventBus() {
+        AuthEventBus.getInstance().observe().observe(this, event -> {
+            if (event == AuthEvent.FORCE_LOGOUT) {
+                ((WalkMateApplication) getApplication()).getSessionManager().clearSession();
+                AuthEventBus.getInstance().consumeEvent();
+                Intent intent = new Intent(this, AuthActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        });
+    }
+
+    // ── Phone OTP flow ────────────────────────────────────────────────────────
+
+    private void showPhoneInputFragment() {
+        authContentContainer.setVisibility(View.GONE);
+        fragmentContainer.setVisibility(View.VISIBLE);
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.auth_fragment_container, new PhoneInputFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+            // If no more fragments, restore auth content
+            if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
+                fragmentContainer.setVisibility(View.GONE);
+                authContentContainer.setVisibility(View.VISIBLE);
+            }
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    // ── Google Sign-In ────────────────────────────────────────────────────────
 
     private void handleGoogleSignInResult(ActivityResult result) {
         Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
@@ -142,21 +199,14 @@ public class AuthActivity extends AppCompatActivity {
         } catch (ApiException e) {
             Log.w(TAG, "Google Sign-In failed, status code: " + e.getStatusCode());
             btnGoogleSignIn.setEnabled(true);
-            // Status code 12501 = user cancelled the picker — show no toast
             if (e.getStatusCode() != 12501) {
                 Toast.makeText(this, "Google Sign-In failed. Please try again.", Toast.LENGTH_LONG).show();
             }
         }
     }
 
-    /**
-     * Launches MainActivity and removes AuthActivity from the back stack entirely.
-     *
-     * FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK together ensure that:
-     * - A new task is started with MainActivity as its root.
-     * - The existing task (containing AuthActivity) is cleared.
-     * Pressing Back from MainActivity will exit the app, not return to login.
-     */
+    // ── Navigation ────────────────────────────────────────────────────────────
+
     private void onLoginSuccess() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
