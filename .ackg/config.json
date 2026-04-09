@@ -1,0 +1,21 @@
+{
+  "projectId": "ackg-project",
+  "language": "java",
+  "features": {
+    "astParsing": true,
+    "crossFileResolution": true
+  },
+  "ignore": [
+    ".git",
+    ".ackg",
+    ".gradle",
+    "build",
+    "target",
+    "node_modules",
+    "dist",
+    ".idea",
+    ".vscode",
+    "out",
+    "bin"
+  ]
+}
