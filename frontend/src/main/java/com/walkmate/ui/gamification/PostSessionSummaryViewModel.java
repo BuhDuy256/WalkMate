@@ -8,6 +8,8 @@ import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.gamification.LeaderboardEntry;
 import com.walkmate.domain.gamification.UserBadge;
 import com.walkmate.domain.gamification.UserStats;
+import com.walkmate.domain.walksession.SessionSummary;
+import com.walkmate.domain.walksession.WalkSessionRepository;
 
 import java.util.List;
 
@@ -25,25 +27,30 @@ public class PostSessionSummaryViewModel extends ViewModel {
 
     public enum LoadState { IDLE, LOADING, SUCCESS, ERROR }
 
-    private final GamificationRepository repository;
+    private final GamificationRepository gamificationRepo;
+    private final WalkSessionRepository  sessionRepo;
 
-    private final MutableLiveData<LoadState>          statsState       = new MutableLiveData<>(LoadState.IDLE);
-    private final MutableLiveData<UserStats>          userStats        = new MutableLiveData<>();
-    private final MutableLiveData<List<UserBadge>>   badges           = new MutableLiveData<>();
-    private final MutableLiveData<List<LeaderboardEntry>> leaderboard  = new MutableLiveData<>();
-    private final MutableLiveData<String>             error            = new MutableLiveData<>();
+    private final MutableLiveData<LoadState>              statsState       = new MutableLiveData<>(LoadState.IDLE);
+    private final MutableLiveData<UserStats>              userStats        = new MutableLiveData<>();
+    private final MutableLiveData<List<UserBadge>>       badges           = new MutableLiveData<>();
+    private final MutableLiveData<List<LeaderboardEntry>> leaderboard     = new MutableLiveData<>();
+    private final MutableLiveData<String>                 error            = new MutableLiveData<>();
+    private final MutableLiveData<SessionSummary>         sessionSummary   = new MutableLiveData<>();
 
-    public PostSessionSummaryViewModel(GamificationRepository repository) {
-        this.repository = repository;
+    public PostSessionSummaryViewModel(GamificationRepository gamificationRepo,
+                                       WalkSessionRepository sessionRepo) {
+        this.gamificationRepo = gamificationRepo;
+        this.sessionRepo      = sessionRepo;
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
 
-    public LiveData<LoadState>            getStatsState()   { return statsState; }
-    public LiveData<UserStats>            getUserStats()     { return userStats; }
-    public LiveData<List<UserBadge>>      getBadges()        { return badges; }
-    public LiveData<List<LeaderboardEntry>> getLeaderboard() { return leaderboard; }
-    public LiveData<String>               getError()         { return error; }
+    public LiveData<LoadState>              getStatsState()     { return statsState; }
+    public LiveData<UserStats>              getUserStats()       { return userStats; }
+    public LiveData<List<UserBadge>>        getBadges()          { return badges; }
+    public LiveData<List<LeaderboardEntry>> getLeaderboard()     { return leaderboard; }
+    public LiveData<String>                 getError()           { return error; }
+    public LiveData<SessionSummary>         getSessionSummary()  { return sessionSummary; }
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -54,7 +61,7 @@ public class PostSessionSummaryViewModel extends ViewModel {
     public void loadUserSummary(String userId) {
         statsState.postValue(LoadState.LOADING);
 
-        repository.getStats(userId, new com.walkmate.domain.shared.DomainCallback<UserStats>() {
+        gamificationRepo.getStats(userId, new com.walkmate.domain.shared.DomainCallback<UserStats>() {
             @Override
             public void onSuccess(UserStats result) {
                 userStats.postValue(result);
@@ -68,7 +75,7 @@ public class PostSessionSummaryViewModel extends ViewModel {
             }
         });
 
-        repository.getBadges(userId, new com.walkmate.domain.shared.DomainCallback<List<UserBadge>>() {
+        gamificationRepo.getBadges(userId, new com.walkmate.domain.shared.DomainCallback<List<UserBadge>>() {
             @Override
             public void onSuccess(List<UserBadge> result) {
                 badges.postValue(result);
@@ -83,7 +90,7 @@ public class PostSessionSummaryViewModel extends ViewModel {
     }
 
     public void loadLeaderboard() {
-        repository.getLeaderboard(new com.walkmate.domain.shared.DomainCallback<List<LeaderboardEntry>>() {
+        gamificationRepo.getLeaderboard(new com.walkmate.domain.shared.DomainCallback<List<LeaderboardEntry>>() {
             @Override
             public void onSuccess(List<LeaderboardEntry> result) {
                 leaderboard.postValue(result);
@@ -91,6 +98,35 @@ public class PostSessionSummaryViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
+                error.postValue(e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Fetches session history and finds the matching {@link SessionSummary}
+     * for {@code sessionId}. Posts the result to {@link #getSessionSummary()}.
+     * Non-fatal: a null value is posted if the session cannot be found.
+     */
+    public void loadSummary(String sessionId) {
+        sessionRepo.getSessionHistory(new com.walkmate.domain.shared.DomainCallback<List<SessionSummary>>() {
+            @Override
+            public void onSuccess(List<SessionSummary> sessions) {
+                SessionSummary found = null;
+                if (sessions != null) {
+                    for (SessionSummary s : sessions) {
+                        if (sessionId.equals(s.getSessionId())) {
+                            found = s;
+                            break;
+                        }
+                    }
+                }
+                sessionSummary.postValue(found);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Non-fatal: summary card simply won't populate if history fails.
                 error.postValue(e.getMessage());
             }
         });

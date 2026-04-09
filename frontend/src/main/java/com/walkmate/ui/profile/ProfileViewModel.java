@@ -133,7 +133,20 @@ public class ProfileViewModel extends ViewModel {
         navigateToEditEvent.postValue(null);
     }
 
-    public void onWalkHistoryClicked() { /* Phase D: emit navigation signal */ }
+    private final MutableLiveData<Void> navigateToHistoryEvent = new MutableLiveData<>();
+
+    public LiveData<Void> getNavigateToHistoryEvent() {
+        return navigateToHistoryEvent;
+    }
+
+    public void consumeNavigateToHistory() {
+        navigateToHistoryEvent.postValue(null);
+    }
+
+    public void onWalkHistoryClicked() {
+        navigateToHistoryEvent.postValue(null);
+    }
+
     public void onMyBadgesClicked()    { /* Phase D: emit navigation signal */ }
     public void onSettingsClicked()    { /* Phase D: emit navigation signal */ }
 

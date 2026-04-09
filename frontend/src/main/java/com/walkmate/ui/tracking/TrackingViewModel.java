@@ -94,6 +94,16 @@ public class TrackingViewModel extends AndroidViewModel {
 
     public LiveData<String> getCompletionError() { return completionErrorLiveData; }
 
+    /** True if the last terminal action was abortWalk(); false if requestCompleteWalk(). */
+    private boolean lastActionWasAbort = false;
+
+    /**
+     * Returns true if the session ended via an abort (safety concern, emergency, etc.)
+     * rather than a normal completion. Used by TrackingScreenActivity to decide whether
+     * to show the "Report Incident" button on the post-session summary.
+     */
+    public boolean wasLastActionAbort() { return lastActionWasAbort; }
+
     // ── Repository + route cache ──────────────────────────────────────────────
 
     private final TrackingRepository repository;
@@ -257,6 +267,7 @@ public class TrackingViewModel extends AndroidViewModel {
      * Transitions ACTIVE → FINISHING → FINISHED (or back to ACTIVE on error).
      */
     public void abortWalk(AbortReason reason) {
+        lastActionWasAbort = true;
         stopTimer();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHING);

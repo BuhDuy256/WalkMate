@@ -33,6 +33,7 @@ import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.domain.tracking.WalkState;
 import com.walkmate.domain.walksession.AbortReason;
 import com.walkmate.service.WalkTrackerService;
+import com.walkmate.ui.gamification.PostSessionSummaryFragment;
 
 import java.util.List;
 import java.util.Locale;
@@ -307,7 +308,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         if (state.getWalkState() == WalkState.FINISHED && !finishDialogShown) {
             finishDialogShown = true;
-            showWalkCompletedDialog(state);
+            showPostSessionSummary(state);
         }
     }
 
@@ -451,20 +452,29 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 CameraUpdateFactory.newLatLngZoom(latest, MAP_TRACKING_ZOOM));
     }
 
-    // ── Walk completed dialog ─────────────────────────────────────────────────
+    // ── Walk completed → Post-Session Summary ─────────────────────────────────
 
-    private void showWalkCompletedDialog(TrackingUiState state) {
-        String message = getString(R.string.walk_completed_message,
-                formatDistance(state.getDistanceKm()),
-                formatDuration(state.getElapsedSeconds()),
-                formatPace(state.getPaceMinPerKm()));
+    /**
+     * Replaces the old summary dialog with a full PostSessionSummaryFragment.
+     * The Fragment is added over android.R.id.content so it covers the tracking
+     * UI without the user seeing the map underneath.
+     *
+     * The {@code isAborted} flag is determined by whether the current walk state
+     * transitioned through FINISHING via an abort action (tracked via the ViewModel's
+     * last abortWalk() call). We derive it from the walk state: FINISHED after
+     * requestCompleteWalk() → not aborted; FINISHED after abortWalk() → aborted.
+     * Since the Activity cannot distinguish these directly from WalkState alone, we
+     * use the abortPending flag on TrackingUiState (default: false for completed).
+     */
+    private void showPostSessionSummary(TrackingUiState state) {
+        boolean isAborted = viewModel.wasLastActionAbort();
+        PostSessionSummaryFragment fragment =
+                PostSessionSummaryFragment.newInstance(sessionId, partnerName, isAborted);
 
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.walk_completed_title)
-                .setMessage(message)
-                .setPositiveButton(R.string.btn_done, (d, w) -> finish())
-                .setCancelable(false)
-                .show();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(android.R.id.content, fragment, PostSessionSummaryFragment.TAG)
+                .commit();
     }
 
     // ── Stat formatters ───────────────────────────────────────────────────────

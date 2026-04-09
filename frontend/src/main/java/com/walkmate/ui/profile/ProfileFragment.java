@@ -18,6 +18,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.ui.history.SessionHistoryFragment;
 import com.walkmate.ui.profile.edit.EditProfileFragment;
 
 import java.util.List;
@@ -96,6 +97,16 @@ public class ProfileFragment extends Fragment {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new EditProfileFragment(), EditProfileFragment.TAG)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        viewModel.getNavigateToHistoryEvent().observe(getViewLifecycleOwner(), unused -> {
+            viewModel.consumeNavigateToHistory();
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new SessionHistoryFragment(),
+                            SessionHistoryFragment.TAG)
                     .addToBackStack(null)
                     .commit();
         });
