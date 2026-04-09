@@ -119,7 +119,10 @@ public class ProfileFragment extends Fragment {
 
     private void setupViewModel() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
-        ProfileViewModelFactory factory = new ProfileViewModelFactory(app.getUserProfileRepository());
+        ProfileViewModelFactory factory = new ProfileViewModelFactory(
+                app.getUserProfileRepository(),
+                app.getGamificationRepository(),
+                app.getReviewRepository());
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
     }
 
@@ -192,18 +195,23 @@ public class ProfileFragment extends Fragment {
     /**
      * Populates up to 3 static badge slots with icon + label.
      * Hides any slot that has no corresponding badge.
-     * Uses resource IDs directly — no string comparison at runtime.
+     *
+     * Badge labels are plain strings from the backend (e.g. "First Walk").
+     * Icon drawables are resource IDs; 0 means no specific asset yet — the slot
+     * keeps whatever placeholder the layout XML defines.
      */
     private void renderBadges(List<ProfileUiState.Badge> badges) {
-        ImageView[] iconSlots = {imgBadge1, imgBadge2, imgBadge3};
-        TextView[] labelSlots = {lblBadge1, lblBadge2, lblBadge3};
+        ImageView[] iconSlots  = {imgBadge1, imgBadge2, imgBadge3};
+        TextView[]  labelSlots = {lblBadge1, lblBadge2, lblBadge3};
 
         for (int i = 0; i < iconSlots.length; i++) {
             View parent = (View) iconSlots[i].getParent();
             if (badges != null && i < badges.size()) {
                 ProfileUiState.Badge badge = badges.get(i);
-                iconSlots[i].setImageResource(badge.iconDrawableResId);
-                labelSlots[i].setText(badge.labelStringResId);
+                labelSlots[i].setText(badge.label);
+                if (badge.iconDrawableResId != 0) {
+                    iconSlots[i].setImageResource(badge.iconDrawableResId);
+                }
                 parent.setVisibility(View.VISIBLE);
             } else {
                 parent.setVisibility(View.GONE);

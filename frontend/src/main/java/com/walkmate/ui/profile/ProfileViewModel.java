@@ -4,18 +4,29 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.gamification.UserBadge;
+import com.walkmate.domain.gamification.UserStats;
+import com.walkmate.domain.review.ReviewRepository;
+import com.walkmate.domain.review.WalkReview;
+import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * ViewModel for the Profile screen.
  *
  * Data flow:
- *   loadProfile() → posts loading state → calls UserProfileRepository.getMyProfile()
- *   → maps UserProfile → ProfileUiState → postValue() → ProfileFragment renders.
+ *   loadProfile() → posts loading state → fetches base profile
+ *   → on profile success, fires 3 parallel calls (badges, stats, reviews)
+ *   → merges all results into a single ProfileUiState → postValue().
  *
  * Edit flow:
  *   saveProfile(…) → calls updateProfile() → reloads profile on success.
@@ -24,10 +35,17 @@ import java.util.List;
 public class ProfileViewModel extends ViewModel {
 
     private final MutableLiveData<ProfileUiState> uiState = new MutableLiveData<>();
-    private final UserProfileRepository profileRepo;
 
-    public ProfileViewModel(UserProfileRepository profileRepo) {
-        this.profileRepo = profileRepo;
+    private final UserProfileRepository  profileRepo;
+    private final GamificationRepository gamificationRepo;
+    private final ReviewRepository       reviewRepo;
+
+    public ProfileViewModel(UserProfileRepository profileRepo,
+                            GamificationRepository gamificationRepo,
+                            ReviewRepository reviewRepo) {
+        this.profileRepo      = profileRepo;
+        this.gamificationRepo = gamificationRepo;
+        this.reviewRepo       = reviewRepo;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -37,16 +55,19 @@ public class ProfileViewModel extends ViewModel {
     }
 
     /**
-     * Loads the authenticated user's profile from the backend.
-     * Safe to call multiple times (e.g. on tab resume).
+     * Loads the authenticated user's full profile.
+     *
+     * Phase 1 — base profile: fetched first (needed for userId).
+     * Phase 2 — 3 parallel calls keyed on userId: badges, stats, reviews.
+     * All 3 failures are non-fatal; the last-completed call publishes final state.
      */
     public void loadProfile() {
         uiState.postValue(ProfileUiState.loading());
 
-        profileRepo.getMyProfile(new com.walkmate.domain.shared.DomainCallback<UserProfile>() {
+        profileRepo.getMyProfile(new DomainCallback<UserProfile>() {
             @Override
             public void onSuccess(UserProfile profile) {
-                uiState.postValue(toUiState(profile));
+                loadSupplementalData(profile);
             }
 
             @Override
@@ -58,17 +79,16 @@ public class ProfileViewModel extends ViewModel {
 
     /**
      * Persists profile changes to the backend then reloads the profile.
-     * Called from a future Edit Profile screen.
      */
     public void saveProfile(String fullName, String gender, String dateOfBirth,
                             String bio, int searchRadius, List<String> tags) {
         uiState.postValue(ProfileUiState.loading());
 
         profileRepo.updateProfile(fullName, gender, dateOfBirth, bio, searchRadius, tags,
-                new com.walkmate.domain.shared.DomainCallback<UserProfile>() {
+                new DomainCallback<UserProfile>() {
                     @Override
                     public void onSuccess(UserProfile profile) {
-                        uiState.postValue(toUiState(profile));
+                        loadSupplementalData(profile);
                     }
 
                     @Override
@@ -80,17 +100,12 @@ public class ProfileViewModel extends ViewModel {
 
     /**
      * Uploads a new avatar image then reloads the profile.
-     *
-     * @param imageBytes raw JPEG/PNG bytes from the image picker
-     * @param filename   original filename (used for MIME detection on the server)
-     * @param mimeType   e.g. "image/jpeg"
      */
     public void uploadAvatar(byte[] imageBytes, String filename, String mimeType) {
         profileRepo.uploadAvatar(imageBytes, filename, mimeType,
-                new com.walkmate.domain.shared.DomainCallback<String>() {
+                new DomainCallback<String>() {
                     @Override
                     public void onSuccess(String avatarUrl) {
-                        // Reload full profile so the avatar change is reflected
                         loadProfile();
                     }
 
@@ -106,28 +121,124 @@ public class ProfileViewModel extends ViewModel {
     public void onMyBadgesClicked()     { /* Phase D: emit navigation signal */ }
     public void onSettingsClicked()     { /* Phase D: emit navigation signal */ }
 
-    // ── Mapping ───────────────────────────────────────────────────────────────
+    // ── Private helpers ───────────────────────────────────────────────────────
 
-    private static ProfileUiState toUiState(UserProfile p) {
-        List<String> tags = p.getTags() != null ? p.getTags() : Collections.emptyList();
+    /**
+     * After the base profile is available, fires badges, stats, and reviews in
+     * parallel. AtomicInteger(3) acts as a barrier: the last call to return
+     * publishes the merged final state.
+     */
+    private void loadSupplementalData(UserProfile profile) {
+        final String userId = profile.getUserId();
 
-        return new ProfileUiState(
-                false,
-                p.getFullName(),
-                p.getAvatarUrl(),
-                true,                    // isOnline: presence service not yet available
-                (float) p.getTrustScore(),
-                tags,
-                p.getTotalDistanceKm(),
-                p.getTotalSessions(),
-                0,                       // currentStreak: requires session analytics (future phase)
-                Collections.emptyList(), // badges: loaded separately via GamificationRepository
-                null
-        );
+        // Mutable holders populated by whichever callback arrives first.
+        final AtomicReference<List<ProfileUiState.Badge>> badgesHolder =
+                new AtomicReference<>(Collections.emptyList());
+        final AtomicReference<UserStats> statsHolder = new AtomicReference<>(null);
+        final AtomicReference<List<WalkReview>> reviewsHolder =
+                new AtomicReference<>(Collections.emptyList());
+
+        final AtomicInteger doneCount = new AtomicInteger(0);
+
+        // Called by whichever of the 3 parallel calls completes last.
+        Runnable publish = () -> {
+            if (doneCount.incrementAndGet() == 3) {
+                UserStats stats = statsHolder.get();
+                // Prefer API stats if available; fall back to values on UserProfile.
+                double distanceKm  = stats != null ? stats.getTotalDistanceKm()   : profile.getTotalDistanceKm();
+                int    sessions    = stats != null ? stats.getCompletedSessions()  : profile.getTotalSessions();
+
+                uiState.postValue(new ProfileUiState(
+                        false,
+                        profile.getFullName(),
+                        profile.getAvatarUrl(),
+                        false,                   // Gap 2.2: isOnline — no presence system yet; always false
+                        (float) profile.getTrustScore(),
+                        profile.getTags() != null ? profile.getTags() : Collections.emptyList(),
+                        distanceKm,
+                        sessions,
+                        0,                       // currentStreak — no backend endpoint yet
+                        badgesHolder.get(),
+                        reviewsHolder.get(),
+                        null));
+            }
+        };
+
+        // ── Badges ────────────────────────────────────────────────────────────
+        gamificationRepo.getBadges(userId, new DomainCallback<List<UserBadge>>() {
+            @Override
+            public void onSuccess(List<UserBadge> userBadges) {
+                badgesHolder.set(mapBadges(userBadges));
+                publish.run();
+            }
+            @Override
+            public void onError(Exception e) {
+                // Badges failure is non-fatal — Milestones card shows empty.
+                publish.run();
+            }
+        });
+
+        // ── Stats ─────────────────────────────────────────────────────────────
+        gamificationRepo.getStats(userId, new DomainCallback<UserStats>() {
+            @Override
+            public void onSuccess(UserStats stats) {
+                statsHolder.set(stats);
+                publish.run();
+            }
+            @Override
+            public void onError(Exception e) {
+                // Stats failure is non-fatal — profile values used as fallback.
+                publish.run();
+            }
+        });
+
+        // ── Reviews ───────────────────────────────────────────────────────────
+        reviewRepo.getReviewsForUser(userId, new DomainCallback<List<WalkReview>>() {
+            @Override
+            public void onSuccess(List<WalkReview> reviews) {
+                reviewsHolder.set(reviews != null ? reviews : Collections.emptyList());
+                publish.run();
+            }
+            @Override
+            public void onError(Exception e) {
+                // Reviews failure is non-fatal — feed shows empty.
+                publish.run();
+            }
+        });
+    }
+
+    /**
+     * Converts backend {@link UserBadge} objects to UI badges.
+     * Badge names are formatted for display (e.g. "FIRST_WALK" → "First Walk").
+     * Icon drawable IDs are intentionally 0 for now — Phase 14 will wire specific
+     * drawables per badge name once the asset library is finalised.
+     */
+    private static List<ProfileUiState.Badge> mapBadges(List<UserBadge> userBadges) {
+        if (userBadges == null || userBadges.isEmpty()) return Collections.emptyList();
+        List<ProfileUiState.Badge> result = new ArrayList<>(userBadges.size());
+        for (UserBadge b : userBadges) {
+            result.add(new ProfileUiState.Badge(formatBadgeName(b.getBadgeName()), 0));
+        }
+        return result;
+    }
+
+    /** Converts "FIRST_WALK" → "First Walk". */
+    private static String formatBadgeName(String name) {
+        if (name == null || name.isEmpty()) return "";
+        String[] words = name.toLowerCase(Locale.ROOT).split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String word : words) {
+            if (sb.length() > 0) sb.append(' ');
+            if (!word.isEmpty()) {
+                sb.append(Character.toUpperCase(word.charAt(0)));
+                sb.append(word.substring(1));
+            }
+        }
+        return sb.toString();
     }
 
     private static String friendlyError(Exception e) {
         String msg = e.getMessage();
-        return (msg != null && !msg.isBlank()) ? msg : "Failed to load profile";
+        return (msg != null && !msg.isEmpty()) ? msg : "Failed to load profile";
     }
 }

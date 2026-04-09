@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
@@ -23,6 +24,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.domain.tracking.SessionTrackingService;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
 
@@ -120,7 +122,21 @@ public class WalkTrackerService extends Service {
 
         // ── Wire domain service ────────────────────────────────────────────────
         WalkMateApplication app = (WalkMateApplication) getApplicationContext();
-        sessionTrackingService = new SessionTrackingService(app.getTrackingRepository());
+        TrackingRepositoryImpl trackingRepository =
+                (TrackingRepositoryImpl) app.getTrackingRepository();
+        sessionTrackingService = new SessionTrackingService(trackingRepository);
+
+        // ── PHASE 10: Register SessionEndedListener ────────────────────────────
+        // When the backend signals the session is terminal (SESSION_NOT_ACTIVE /
+        // SESSION_NOT_FOUND) during any periodic sync, we update the notification
+        // and stop the foreground service cleanly on the main thread.
+        trackingRepository.setSessionEndedListener(errorCode -> {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                updateNotification("Your walk session has ended.");
+                stopSelf();
+            });
+        });
+
         sessionTrackingService.startSession(sessionId);
 
         // ── Move to foreground immediately ─────────────────────────────────────
@@ -236,6 +252,25 @@ public class WalkTrackerService extends Service {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
         } else {
             startForeground(NOTIFICATION_ID, notification);
+        }
+    }
+
+    /**
+     * Updates the foreground notification text in-place.
+     * Must be called on the main thread.
+     */
+    private void updateNotification(String contentText) {
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Walk in progress")
+                .setContentText(contentText)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build();
+
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.notify(NOTIFICATION_ID, notification);
         }
     }
 

@@ -22,10 +22,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.core.util.GlideHelper;
+import com.walkmate.core.util.LocationHelper;
 import com.walkmate.ui.home.quickinvite.QuickInviteAdapter;
 
 /**
@@ -91,11 +94,13 @@ public class HomeFragment extends Fragment {
         setupClickListeners(view);
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
-        // Only trigger a load when there is no cached data yet (Activity-scoped VM
-        // survives tab switches, so subsequent navigations reuse the cached state).
-        if (viewModel.getUiState().getValue() == null) {
-            viewModel.loadDashboard();
-        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        viewModel.loadDashboard();
+        resolveLocationName();
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
@@ -134,8 +139,11 @@ public class HomeFragment extends Fragment {
         HomeViewModelFactory factory = new HomeViewModelFactory(
                 app.getWalkSessionRepository(),
                 app.getUserRepository(),
-            app.getUserProfileRepository(),
-            app.getNotificationRepository());
+                app.getUserProfileRepository(),
+                app.getNotificationRepository(),
+                app.getHotspotRepository(),
+                app.getGamificationRepository(),
+                app.getSocialRepository());
         // Scope to Activity so the VM survives tab switches — fixes reload-on-every-navigate.
         viewModel = new ViewModelProvider(requireActivity(), factory).get(HomeViewModel.class);
     }
@@ -148,6 +156,27 @@ public class HomeFragment extends Fragment {
         // Navigate to NotificationFragment when the bell icon is tapped.
         btnNotification.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_notifications));
+    }
+
+    // ── Location resolution ───────────────────────────────────────────────────
+
+    /**
+     * Gets the last known device location and resolves it to a city name via
+     * {@link LocationHelper}, then forwards the result to the ViewModel.
+     * Silently skips if location permission has not been granted.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void resolveLocationName() {
+        FusedLocationProviderClient locationClient =
+                LocationServices.getFusedLocationProviderClient(requireContext());
+        locationClient.getLastLocation().addOnSuccessListener(location -> {
+            if (location != null) {
+                LocationHelper.resolveCity(
+                        requireContext().getApplicationContext(),
+                        location,
+                        cityName -> viewModel.onLocationResolved(cityName));
+            }
+        });
     }
 
     // ── State rendering ───────────────────────────────────────────────────────

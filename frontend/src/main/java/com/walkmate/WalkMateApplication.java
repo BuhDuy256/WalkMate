@@ -9,6 +9,7 @@ import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
 import com.walkmate.data.repository.HotspotRepositoryImpl;
 import com.walkmate.data.repository.NotificationRepositoryImpl;
+import com.walkmate.data.repository.ReviewRepositoryImpl;
 import com.walkmate.data.repository.SocialRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserProfileRepositoryImpl;
@@ -19,6 +20,7 @@ import com.walkmate.data.repository.WalkSessionRepositoryImpl;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.notification.NotificationRepository;
+import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.user.UserProfileRepository;
@@ -53,6 +55,7 @@ public class WalkMateApplication extends Application {
     private GamificationRepository gamificationRepository;
     private SocialRepository socialRepository;
     private NotificationRepository notificationRepository;
+    private ReviewRepository reviewRepository;
 
     @Override
     public void onCreate() {
@@ -147,5 +150,12 @@ public class WalkMateApplication extends Application {
             notificationRepository = new NotificationRepositoryImpl(this);
         }
         return notificationRepository;
+    }
+
+    public ReviewRepository getReviewRepository() {
+        if (reviewRepository == null) {
+            reviewRepository = new ReviewRepositoryImpl(this);
+        }
+        return reviewRepository;
     }
 }
