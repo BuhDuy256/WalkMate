@@ -18,6 +18,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.ui.profile.edit.EditProfileFragment;
 
 import java.util.List;
 
@@ -58,6 +59,9 @@ public class ProfileFragment extends Fragment {
     private TextView lblBadge2;
     private TextView lblBadge3;
 
+    // Edit profile entry point
+    private View btnEditProfile;
+
     // Menu rows
     private View menuWalkHistory;
     private View menuMyBadges;
@@ -87,6 +91,14 @@ public class ProfileFragment extends Fragment {
 
         viewModel.loadProfile();
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+        viewModel.getNavigateToEditEvent().observe(getViewLifecycleOwner(), unused -> {
+            viewModel.consumeNavigateToEdit();
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new EditProfileFragment(), EditProfileFragment.TAG)
+                    .addToBackStack(null)
+                    .commit();
+        });
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
@@ -112,6 +124,8 @@ public class ProfileFragment extends Fragment {
         lblBadge2 = root.findViewById(R.id.lblBadge2);
         lblBadge3 = root.findViewById(R.id.lblBadge3);
 
+        btnEditProfile  = root.findViewById(R.id.btnEditProfile);
+
         menuWalkHistory = root.findViewById(R.id.menuWalkHistory);
         menuMyBadges    = root.findViewById(R.id.menuMyBadges);
         menuSettings    = root.findViewById(R.id.menuSettings);
@@ -127,6 +141,9 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupClickListeners() {
+        if (btnEditProfile != null) {
+            btnEditProfile.setOnClickListener(v -> viewModel.onEditProfileClicked());
+        }
         menuWalkHistory.setOnClickListener(v -> viewModel.onWalkHistoryClicked());
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
         menuSettings.setOnClickListener(v -> viewModel.onSettingsClicked());

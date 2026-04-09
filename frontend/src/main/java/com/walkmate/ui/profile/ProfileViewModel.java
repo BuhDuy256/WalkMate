@@ -116,10 +116,26 @@ public class ProfileViewModel extends ViewModel {
                 });
     }
 
-    /** Navigation signals — wired to real destinations in a future nav phase. */
-    public void onWalkHistoryClicked()  { /* Phase D: emit navigation signal */ }
-    public void onMyBadgesClicked()     { /* Phase D: emit navigation signal */ }
-    public void onSettingsClicked()     { /* Phase D: emit navigation signal */ }
+    // ── Navigation signals ────────────────────────────────────────────────────
+
+    private final MutableLiveData<Void> navigateToEditEvent = new MutableLiveData<>();
+
+    public LiveData<Void> getNavigateToEditEvent() {
+        return navigateToEditEvent;
+    }
+
+    /** Called by ProfileFragment once the navigation has been handled. */
+    public void consumeNavigateToEdit() {
+        navigateToEditEvent.postValue(null);
+    }
+
+    public void onEditProfileClicked() {
+        navigateToEditEvent.postValue(null);
+    }
+
+    public void onWalkHistoryClicked() { /* Phase D: emit navigation signal */ }
+    public void onMyBadgesClicked()    { /* Phase D: emit navigation signal */ }
+    public void onSettingsClicked()    { /* Phase D: emit navigation signal */ }
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
