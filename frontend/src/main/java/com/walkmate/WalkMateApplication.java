@@ -6,6 +6,8 @@ import android.util.Log;
 import com.google.firebase.FirebaseApp;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.datasource.remote.api.AuthInterceptor;
+import com.walkmate.data.repository.ChatRepositoryImpl;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
 import com.walkmate.data.repository.HotspotRepositoryImpl;
 import com.walkmate.data.repository.NotificationRepositoryImpl;
@@ -17,6 +19,7 @@ import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkIntentRepositoryImpl;
 import com.walkmate.data.repository.WalkProposalRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
+import com.walkmate.domain.chat.ChatRepository;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.notification.NotificationRepository;
@@ -28,6 +31,9 @@ import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.domain.walkproposal.WalkProposalRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
+
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
  * Application-level Service Locator.
@@ -45,6 +51,8 @@ public class WalkMateApplication extends Application {
 
     private WalkMateDatabase database;
     private SessionManager sessionManager;
+    private OkHttpClient sharedOkHttpClient;
+    private ChatRepository chatRepository;
     private HotspotRepository hotspotRepository;
     private TrackingRepository trackingRepository;
     private WalkIntentRepository walkIntentRepository;
@@ -80,6 +88,43 @@ public class WalkMateApplication extends Application {
 
     public SessionManager getSessionManager() {
         return sessionManager;
+    }
+
+    /**
+     * Returns a lazily-created shared OkHttpClient with the AuthInterceptor attached.
+     * Reused by ChatRepositoryImpl so we don't spin up a second connection pool.
+     */
+    public OkHttpClient getOkHttpClient() {
+        if (sharedOkHttpClient == null) {
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor()
+                    .setLevel(HttpLoggingInterceptor.Level.BASIC);
+            sharedOkHttpClient = new OkHttpClient.Builder()
+                    .addInterceptor(logging)
+                    .addInterceptor(new AuthInterceptor(sessionManager))
+                    .build();
+        }
+        return sharedOkHttpClient;
+    }
+
+    /**
+     * Derives the WebSocket base URL from the HTTP base URL defined in BuildConfig.
+     * e.g. "http://192.168.x.x:8080/" → "ws://192.168.x.x:8080/api/v1/sessions/"
+     */
+    public String getBaseWsUrl() {
+        String httpBase = com.walkmate.BuildConfig.BASE_URL;
+        String wsBase = httpBase
+                .replace("https://", "wss://")
+                .replace("http://",  "ws://");
+        // Ensure trailing slash before appending path
+        if (!wsBase.endsWith("/")) wsBase += "/";
+        return wsBase + "api/v1/sessions/";
+    }
+
+    public ChatRepository getChatRepository() {
+        if (chatRepository == null) {
+            chatRepository = new ChatRepositoryImpl(getOkHttpClient(), getBaseWsUrl());
+        }
+        return chatRepository;
     }
 
     public HotspotRepository getHotspotRepository() {

@@ -54,4 +54,20 @@
         android:name="com.walkmate.ui.notification.NotificationFragment"
         android:label="Notifications" />
 
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.walkmate.ui.chat.ChatFragment"
+        android:label="Chat">
+
+        <argument
+            android:name="SESSION_ID"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <argument
+            android:name="CURRENT_USER_ID"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
 </navigation>

@@ -15,11 +15,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.walkmate.R;
+import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.walksession.WalkSession;
+import com.walkmate.ui.chat.ChatFragment;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
@@ -71,9 +74,19 @@ public class SessionFragment extends Fragment {
         txtEmpty     = view.findViewById(R.id.txtEmpty);
 
         adapter = new SessionAdapter();
-        adapter.setOnChatClickListener(session ->
-                Toast.makeText(requireContext(),
-                        R.string.session_chat_coming_soon, Toast.LENGTH_SHORT).show());
+        adapter.setOnChatClickListener(session -> {
+            if (session.getStatus() == WalkSession.Status.ACTIVE ||
+                    session.getStatus() == WalkSession.Status.PENDING) {
+                WalkMateApplication app =
+                        (WalkMateApplication) requireActivity().getApplication();
+                String currentUserId = app.getSessionManager().getUserId();
+                Bundle args = new Bundle();
+                args.putString(ChatFragment.ARG_SESSION_ID,      session.getSessionId());
+                args.putString(ChatFragment.ARG_CURRENT_USER_ID, currentUserId);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.chatFragment, args);
+            }
+        });
         adapter.setOnCancelClickListener(session ->
                 showCancelReasonDialog(session.getSessionId()));
         adapter.setSessionActionListener(new SessionAdapter.SessionActionListener() {
