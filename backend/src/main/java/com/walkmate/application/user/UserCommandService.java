@@ -121,6 +121,13 @@ public class UserCommandService {
                 .orElseThrow(() -> new DomainException(UserErrorCode.INVALID_USER_DATA,
                         "Refresh token not found"));
 
+        // Reuse detection: a previously rotated token being re-presented is a compromise signal.
+        if (existing.isRevoked()) {
+            refreshTokenRepository.deleteAllByUserId(existing.getUserId());
+            throw new DomainException(UserErrorCode.INVALID_USER_DATA,
+                    "Refresh token reuse detected — all sessions revoked");
+        }
+
         if (Instant.now().isAfter(existing.getExpiresAt())) {
             refreshTokenRepository.deleteByUserIdAndDeviceId(existing.getUserId(), existing.getDeviceId());
             throw new DomainException(UserErrorCode.INVALID_USER_DATA, "Refresh token has expired");
@@ -129,7 +136,9 @@ public class UserCommandService {
         User user = userRepository.findById(existing.getUserId().toString())
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
-        refreshTokenRepository.deleteByUserIdAndDeviceId(existing.getUserId(), existing.getDeviceId());
+        // Rotate: mark old token revoked (keeps it detectable), issue new token.
+        existing.revoke();
+        refreshTokenRepository.save(existing);
 
         TokenPair tokenPair    = tokenProvider.generateTokenPair(user);
         Instant   refreshExpiry = Instant.now().plusSeconds(tokenPair.refreshTokenExpiresIn());
@@ -171,6 +180,15 @@ public class UserCommandService {
     @Transactional
     public void sendOtp(SendOtpCommand command) {
         Phone phone = new Phone(command.phone());
+
+        // Rate-limit: block resend if a non-used OTP was issued less than 60 seconds ago.
+        // expiresAt = issuedAt + 300s, so issuedAt = expiresAt - 300s.
+        // "Less than 60s ago" ↔ now < issuedAt + 60 ↔ now < expiresAt - 240.
+        otpRecordRepository.findLatestByPhone(phone.value()).ifPresent(existing -> {
+            if (!existing.isUsed() && Instant.now().isBefore(existing.getExpiresAt().minusSeconds(240))) {
+                throw new DomainException(UserErrorCode.USER_OTP_RATE_LIMITED);
+            }
+        });
 
         String  rawCode   = String.format("%06d", secureRandom.nextInt(1_000_000));
         String  codeHash  = passwordEncoder.encode(rawCode);

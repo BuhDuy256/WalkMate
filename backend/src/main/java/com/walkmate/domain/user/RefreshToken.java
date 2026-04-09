@@ -15,18 +15,20 @@ public class RefreshToken {
     private String  tokenValue;
     private Instant createdAt;
     private Instant expiresAt;
+    private boolean revoked;
 
     protected RefreshToken() {}
 
     /** Rehydration constructor (repository → domain). */
     public RefreshToken(UUID tokenId, UUID userId, String deviceId,
-                        String tokenValue, Instant createdAt, Instant expiresAt) {
+                        String tokenValue, Instant createdAt, Instant expiresAt, boolean revoked) {
         this.tokenId    = tokenId;
         this.userId     = userId;
         this.deviceId   = deviceId;
         this.tokenValue = tokenValue;
         this.createdAt  = createdAt;
         this.expiresAt  = expiresAt;
+        this.revoked    = revoked;
     }
 
     private RefreshToken(UUID userId, String deviceId, String tokenValue, Instant expiresAt) {
@@ -35,10 +37,16 @@ public class RefreshToken {
         this.tokenValue = requireText(tokenValue, "Refresh token value is required");
         this.createdAt  = Instant.now();
         this.expiresAt  = expiresAt;
+        this.revoked    = false;
     }
 
     public static RefreshToken issue(UUID userId, String deviceId, String tokenValue, Instant expiresAt) {
         return new RefreshToken(userId, deviceId, tokenValue, expiresAt);
+    }
+
+    /** Marks this token as revoked (rotated-away). Enables reuse detection. */
+    public void revoke() {
+        this.revoked = true;
     }
 
     private static UUID requireUserId(UUID value) {

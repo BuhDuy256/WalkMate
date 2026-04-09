@@ -40,7 +40,9 @@
       "Bash(cmd /c \"gradlew.bat compileJava 2>&1\")",
       "Bash(cmd /c \"gradlew.bat compileJava\")",
       "Bash(powershell:*)",
-      "Bash(bash gradlew:*)"
+      "Bash(bash gradlew:*)",
+      "Bash(gradlew.bat test:*)",
+      "Bash(./gradlew :backend:test --info)"
     ]
   }
 }

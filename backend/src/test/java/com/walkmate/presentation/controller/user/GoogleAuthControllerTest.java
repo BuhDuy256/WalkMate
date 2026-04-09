@@ -61,7 +61,9 @@ class GoogleAuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token-xyz"))
-                .andExpect(jsonPath("$.data.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token-xyz"))
+                .andExpect(jsonPath("$.data.refreshTokenExpiresIn").value(2592000));
     }
 
     /**

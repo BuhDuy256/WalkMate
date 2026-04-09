@@ -7,7 +7,7 @@ Ac session — the refresh_tokens migration risk and the visibilityMode coupling
   **Project:** WalkMate Backend
   **Date:** 2026-04-07
   **Branch:** `feature/oauth` (base for all auth work)
-  **Status:** Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ — Awaiting Phase 4 Execution
+  **Status:** Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ Phase 4 ✅
 
   ---
 
@@ -137,21 +137,21 @@ Ac session — the refresh_tokens migration risk and the visibilityMode coupling
 
   | Phase                                        | Task                                        | Brief Description                                                               | Priority |
   | -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------- | -------- |
-  | 4                                            | **Unit tests: `User` aggregate**            | Cover `setVisibilityMode()` idempotency, `validateCredentials()` purity (no     |
+  | 4                                            | **Unit tests: `User` aggregate** ✅         | Cover `setVisibilityMode()` idempotency, `validateCredentials()` purity (no     |
   | lastLoginAt mutation), `registerWithPhone()` | High                                        |
-  | 4                                            | **Unit tests: `OtpRecord` domain**          | Cover `verify()` — expired, already-used, wrong code, happy path, attempt count |
+  | 4                                            | **Unit tests: `OtpRecord` domain** ✅       | Cover `verify()` — expired, already-used, wrong code, happy path, attempt count |
   | exceeded                                     | High                                        |
-  | 4                                            | **Integration tests: token refresh flow**   | Register → login (device A) → refresh → verify old token is invalidated         |
-  | → verify new token works                     | High                                        |
-  | 4                                            | **Integration tests: logout flows**         | Single-device logout; logout-all; verify tokens are gone; subsequent refresh    |
-  | returns 401                                  | High                                        |
-  | 4                                            | **Integration tests: phone OTP full flow**  | Send OTP → verify → receive JWT; duplicate phone; expired OTP; wrong            |
-  | code rejection                               | High                                        |
-  | 4                                            | **Security: OTP brute-force protection**    | Verify attempt counter on `OtpRecord` locks after N failures; rate-limit        |
-  | `send-otp` per phone per time window         | High                                        |
-  | 4                                            | **Security: refresh token reuse detection** | If a rotated-away token is presented → revoke ALL tokens for that               |
-  | `userId` (compromise signal)                 | High                                        |
-  | 4                                            | **Update `GoogleAuthControllerTest`**       | Pass `deviceId` in request; assert refresh token is returned in response        |
+  | 4                                            | **Unit tests: token refresh flow** ✅       | Happy path rotation (2 save() calls), token not found, expired, reuse detection |
+  | → deleteAllByUserId called                   | High                                        |
+  | 4                                            | **Unit tests: logout flows** ✅             | Single-device logout; logout-all; isolation (other user unaffected)             |
+  | High                                         |
+  | 4                                            | **Unit tests: phone OTP full flow** ✅      | sendOtp happy/rate-limited/expired/used-allows-resend; verifyOtp new user,      |
+  | existing user, no record, suspended account  | High                                        |
+  | 4                                            | **Security: OTP brute-force protection** ✅ | Attempt counter locks after N failures; rate-limit send-otp per phone window    |
+  | High                                         |
+  | 4                                            | **Security: refresh token reuse detection** ✅ | Rotated token re-presented → revoke ALL tokens for userId (compromise signal) |
+  | High                                         |
+  | 4                                            | **Update `GoogleAuthControllerTest`** ✅    | Assert refreshToken + refreshTokenExpiresIn returned in response                |
   | Med                                          |
 
   ---

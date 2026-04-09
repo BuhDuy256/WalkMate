@@ -29,15 +29,17 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
                         refreshToken.getDeviceId(),
                         refreshToken.getTokenValue(),
                         refreshToken.getCreatedAt(),
-                        refreshToken.getExpiresAt());
+                        refreshToken.getExpiresAt(),
+                        refreshToken.isRevoked());
 
         jdbcClient.sql("""
-                        INSERT INTO refresh_token (token_id, user_id, device_id, token_value, created_at, expires_at)
-                        VALUES (:tokenId, :userId, :deviceId, :tokenValue, :createdAt, :expiresAt)
+                        INSERT INTO refresh_token (token_id, user_id, device_id, token_value, created_at, expires_at, revoked)
+                        VALUES (:tokenId, :userId, :deviceId, :tokenValue, :createdAt, :expiresAt, :revoked)
                         ON CONFLICT (token_id) DO UPDATE SET
                             device_id   = EXCLUDED.device_id,
                             token_value = EXCLUDED.token_value,
-                            expires_at  = EXCLUDED.expires_at
+                            expires_at  = EXCLUDED.expires_at,
+                            revoked     = EXCLUDED.revoked
                         """)
                 .param("tokenId",    persisted.getTokenId())
                 .param("userId",     persisted.getUserId())
@@ -45,6 +47,7 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
                 .param("tokenValue", persisted.getTokenValue())
                 .param("createdAt",  Timestamp.from(persisted.getCreatedAt()))
                 .param("expiresAt",  Timestamp.from(persisted.getExpiresAt()))
+                .param("revoked",    persisted.isRevoked())
                 .update();
 
         return persisted;
@@ -53,7 +56,7 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
     @Override
     public Optional<RefreshToken> findByTokenValue(String tokenValue) {
         return jdbcClient.sql("""
-                        SELECT token_id, user_id, device_id, token_value, created_at, expires_at
+                        SELECT token_id, user_id, device_id, token_value, created_at, expires_at, revoked
                         FROM refresh_token
                         WHERE token_value = :tokenValue
                         """)
@@ -90,7 +93,8 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
                 rs.getString("device_id"),
                 rs.getString("token_value"),
                 rs.getTimestamp("created_at").toInstant(),
-                expiresAt != null ? expiresAt.toInstant() : null
+                expiresAt != null ? expiresAt.toInstant() : null,
+                rs.getBoolean("revoked")
         );
     }
 }

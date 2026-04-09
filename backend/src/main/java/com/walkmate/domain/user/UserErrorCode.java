@@ -21,7 +21,8 @@ public enum UserErrorCode implements ErrorCode {
     USER_OTP_EXPIRED("OTP has expired"),
     USER_OTP_ALREADY_USED("OTP has already been used"),
     USER_OTP_INVALID("OTP code is incorrect"),
-    USER_OTP_ATTEMPTS_EXCEEDED("Too many incorrect OTP attempts");
+    USER_OTP_ATTEMPTS_EXCEEDED("Too many incorrect OTP attempts"),
+    USER_OTP_RATE_LIMITED("Please wait before requesting a new OTP");
 
     private final String message;
 
