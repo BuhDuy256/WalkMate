@@ -10,6 +10,7 @@ constraintlayout = "2.2.1"
 viewpager2 = "1.1.0"
 retrofit = "3.0.0"
 okhttp = "5.3.2"
+coroutines = "1.9.0"
 gson = "2.13.2"
 playServicesLocation = "21.3.0"
 playServicesMaps = "20.0.0"
@@ -48,6 +49,7 @@ roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = 
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 navigationFragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
 navigationUi = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
+coroutinesAndroid = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 firebaseBom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebaseMessaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebaseAuth = { group = "com.google.firebase", name = "firebase-auth" }

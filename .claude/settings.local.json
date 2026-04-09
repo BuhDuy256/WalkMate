@@ -42,7 +42,8 @@
       "Bash(powershell:*)",
       "Bash(bash gradlew:*)",
       "Bash(gradlew.bat test:*)",
-      "Bash(./gradlew :backend:test --info)"
+      "Bash(./gradlew :backend:test --info)",
+      "Bash(./gradlew :frontend:clean)"
     ]
   }
 }
