@@ -6,12 +6,15 @@ import lombok.Getter;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Getter
 public class User {
 
     private static final AuthProvider  DEFAULT_PROVIDER = AuthProvider.LOCAL;
     private static final AccountStatus DEFAULT_STATUS   = AccountStatus.ACTIVE;
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
 
     private UUID           userId;
     private String         email;
@@ -75,7 +78,11 @@ public class User {
     }
 
     public static User register(String email, String passwordHash) {
-        return new User(email, passwordHash);
+        String normalized = normalizeEmail(email);
+        if (!EMAIL_PATTERN.matcher(normalized).matches()) {
+            throw new DomainException(UserErrorCode.USER_INVALID_EMAIL_FORMAT);
+        }
+        return new User(normalized, passwordHash);
     }
 
     /** Factory for brand-new Google Sign-In users (no password). */

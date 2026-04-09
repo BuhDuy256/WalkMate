@@ -35,7 +35,12 @@
       "Bash(./gradlew :backend:compileJava)",
       "Bash(./gradlew :backend:test)",
       "Bash(./gradlew :backend:compileJava :backend:compileTestJava)",
-      "Bash(./gradlew :backend:test --tests \"com.walkmate.application.*\" --tests \"com.walkmate.presentation.*\")"
+      "Bash(./gradlew :backend:test --tests \"com.walkmate.application.*\" --tests \"com.walkmate.presentation.*\")",
+      "mcp__grapuco__list_projects",
+      "Bash(cmd /c \"gradlew.bat compileJava 2>&1\")",
+      "Bash(cmd /c \"gradlew.bat compileJava\")",
+      "Bash(powershell:*)",
+      "Bash(bash gradlew:*)"
     ]
   }
 }

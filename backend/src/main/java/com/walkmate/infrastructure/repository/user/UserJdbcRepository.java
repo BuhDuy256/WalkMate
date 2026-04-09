@@ -47,6 +47,14 @@ public class UserJdbcRepository implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByPhone(String phone) {
+        return jdbcClient.sql(selectAll() + "WHERE phone = :phone")
+                .param("phone", phone)
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
     public List<User> findTopByPoints(int limit) {
         return jdbcClient.sql(selectAll() + """
                 ORDER BY total_points DESC, trust_score DESC

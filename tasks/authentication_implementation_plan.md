@@ -7,7 +7,7 @@ Ac session — the refresh_tokens migration risk and the visibilityMode coupling
   **Project:** WalkMate Backend
   **Date:** 2026-04-07
   **Branch:** `feature/oauth` (base for all auth work)
-  **Status:** Phase 1 ✅ Phase 2 ✅ — Awaiting Phase 3 Execution
+  **Status:** Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ — Awaiting Phase 4 Execution
 
   ---
 
@@ -111,23 +111,23 @@ Ac session — the refresh_tokens migration risk and the visibilityMode coupling
 
   | Phase                                                  | Task                                                 | Brief Description                                                              | Priority |
   | ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------ | -------- |
-  | 3                                                      | **Update `POST /auth/register` request/response**    | Accept `deviceId`; ensure `UserProfile` created atomically;                    |
+  | 3                                                      | **Update `POST /auth/register` request/response** ✅  | Accept `deviceId`; ensure `UserProfile` created atomically;                    |
   | return refresh token in response                       | High                                                 |
-  | 3                                                      | **Implement `POST /auth/refresh`**                   | Validate token → check expiry → rotate: delete old `(userId, deviceId)` token, |
+  | 3                                                      | **Implement `POST /auth/refresh`** ✅                 | Validate token → check expiry → rotate: delete old `(userId, deviceId)` token, |
   | issue new pair → return `LoginUserResponse`            | High                                                 |
-  | 3                                                      | **Implement `POST /auth/logout`**                    | Accept `deviceId`; delete `RefreshToken` by `(userId, deviceId)`; return 204   |
+  | 3                                                      | **Implement `POST /auth/logout`** ✅                  | Accept `deviceId`; delete `RefreshToken` by `(userId, deviceId)`; return 204   |
   | High                                                   |
-  | 3                                                      | **Implement `POST /auth/logout-all`**                | Delete all refresh tokens for `userId`; invalidates all devices; return 204    |
+  | 3                                                      | **Implement `POST /auth/logout-all`** ✅              | Delete all refresh tokens for `userId`; invalidates all devices; return 204    |
   | Med                                                    |
-  | 3                                                      | **Implement `PATCH /users/me/visibility`**           | Body `{ "mode": "PUBLIC" \| "PRIVATE" }`; calls                                |
+  | 3                                                      | **Implement `PATCH /users/me/visibility`** ✅         | Body `{ "mode": "PUBLIC" \| "PRIVATE" }`; calls                                |
   | `user.setVisibilityMode()`; returns updated user state | High                                                 |
-  | 3                                                      | **Implement `POST /auth/phone/send-otp`**            | Rate-limited by phone; generate OTP, hash + store in `OtpRecord`,              |
+  | 3                                                      | **Implement `POST /auth/phone/send-otp`** ✅          | Rate-limited by phone; generate OTP, hash + store in `OtpRecord`,              |
   | dispatch via `SmsGateway` interface                    | High                                                 |
-  | 3                                                      | **Implement `POST /auth/phone/verify`**              | Validate OTP → find-or-create `User` by phone; issue `LoginResult` with        |
+  | 3                                                      | **Implement `POST /auth/phone/verify`** ✅            | Validate OTP → find-or-create `User` by phone; issue `LoginResult` with        |
   | refresh token                                          | High                                                 |
-  | 3                                                      | **Add email format validation to `User.register()`** | Validate against RFC 5322 pattern; throw                                       |
+  | 3                                                      | **Add email format validation to `User.register()`** ✅ | Validate against RFC 5322 pattern; throw                                     |
   | `USER_INVALID_EMAIL_FORMAT`                            | Med                                                  |
-  | 3                                                      | **Add `displayName` blank guard**                    | Guard in `User.register()` / `registerWithPhone()`: throw                      |
+  | 3                                                      | **Add `displayName` blank guard** ✅                  | Guard in `UserProfile.createForLocal()`: throw                                 |
   | `USER_DISPLAY_NAME_BLANK` if blank                     | Med                                                  |
 
   ---

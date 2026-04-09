@@ -13,6 +13,9 @@ public interface UserRepository {
     /** Looks up a user by their OAuth provider subject (Google's stable {@code sub} claim). */
     Optional<User> findByProviderSubject(String providerSubject);
 
+    /** Looks up a user by their verified phone number (E.164 format). */
+    Optional<User> findByPhone(String phone);
+
     User save(User user);
 
     /** Returns the top {@code limit} users ordered by total_points DESC, trust_score DESC. */

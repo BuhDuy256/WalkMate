@@ -48,9 +48,11 @@ class UserCommandServiceGoogleTest {
     @Mock private UserRepository userRepository;
     @Mock private UserProfileRepository profileRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private com.walkmate.domain.user.OtpRecordRepository otpRecordRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private TokenProvider tokenProvider;
     @Mock private GoogleTokenVerifier googleTokenVerifier;
+    @Mock private SmsGateway smsGateway;
 
     private UserCommandService service;
 
@@ -69,9 +71,11 @@ class UserCommandServiceGoogleTest {
                 userRepository,
                 profileRepository,
                 refreshTokenRepository,
+                otpRecordRepository,
                 passwordEncoder,
                 tokenProvider,
-                googleTokenVerifier
+                googleTokenVerifier,
+                smsGateway
         );
         when(tokenProvider.generateTokenPair(any())).thenReturn(new TokenPair("access-token", 3600L, "refresh-token", 2592000L));
     }
