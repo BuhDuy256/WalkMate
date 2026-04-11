@@ -1,15 +1,20 @@
 package com.walkmate.data.repository;
 
 import com.walkmate.data.datasource.remote.api.ProfileApiService;
+import com.walkmate.data.datasource.remote.dto.ProfileAvatarUploadResponseDto;
 import com.walkmate.data.datasource.remote.dto.ProfileResponseDto;
 import com.walkmate.data.datasource.remote.dto.ProfileSetupAckResponseDto;
 import com.walkmate.data.datasource.remote.dto.SetupProfileRequestDto;
 import com.walkmate.data.mapper.ProfileDomainToDtoMapper;
 import com.walkmate.data.mapper.ProfileDtoToDomainMapper;
+import com.walkmate.domain.profile.ProfileAvatarUpload;
 import com.walkmate.domain.profile.Profile;
 import com.walkmate.domain.profile.ProfileErrorCode;
 import com.walkmate.domain.profile.ProfileException;
 import com.walkmate.domain.profile.ProfileRepository;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -29,6 +34,34 @@ public class ProfileRepositoryImpl implements ProfileRepository {
         this.apiService = apiService;
         this.domainToDtoMapper = domainToDtoMapper;
         this.dtoToDomainMapper = dtoToDomainMapper;
+    }
+
+    @Override
+    public String uploadAvatar(UUID userId, ProfileAvatarUpload avatarUpload) throws ProfileException {
+        String mimeType = avatarUpload.getMimeType() == null || avatarUpload.getMimeType().trim().isEmpty()
+                ? "image/*"
+                : avatarUpload.getMimeType();
+        RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), avatarUpload.getBytes());
+        MultipartBody.Part filePart = MultipartBody.Part.createFormData(
+                "file",
+                avatarUpload.getFileName(),
+                requestBody
+        );
+        Call<ProfileAvatarUploadResponseDto> call = apiService.uploadAvatar(userId, filePart);
+
+        try {
+            Response<ProfileAvatarUploadResponseDto> response = call.execute();
+            if (response.isSuccessful() && response.body() != null && response.body().getAvatarUrl() != null
+                    && !response.body().getAvatarUrl().trim().isEmpty()) {
+                return response.body().getAvatarUrl();
+            }
+
+            String errorBody = response.errorBody() != null ? response.errorBody().string() : "";
+            ProfileErrorCode code = mapHttpErrorToProfileError(response.code(), errorBody);
+            throw new ProfileException(code, "Failed to upload avatar: " + errorBody);
+        } catch (IOException e) {
+            throw new ProfileException(ProfileErrorCode.NETWORK_ERROR, "Network error", e);
+        }
     }
 
     @Override

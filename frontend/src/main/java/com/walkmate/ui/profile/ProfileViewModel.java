@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.walkmate.domain.profile.InfoVisibilityMode;
 import com.walkmate.domain.profile.Profile;
+import com.walkmate.domain.profile.ProfileAvatarUpload;
 import com.walkmate.domain.profile.ProfileErrorCode;
 import com.walkmate.domain.profile.ProfileException;
 import com.walkmate.domain.profile.ProfileMode;
@@ -21,6 +22,7 @@ public class ProfileViewModel extends ViewModel {
     private final UUID profileOwnerId;
     private final UUID viewerId;
     private final ExecutorService executor;
+    private ProfileAvatarUpload pendingAvatarUpload;
 
     private final MutableLiveData<ProfileUiState> _uiState = new MutableLiveData<>();
     public final LiveData<ProfileUiState> uiState = _uiState;
@@ -55,6 +57,8 @@ public class ProfileViewModel extends ViewModel {
             handleTagToggled(((ProfileUiEvent.TagToggled) event).getTagCode());
         } else if (event instanceof ProfileUiEvent.ProfileModeChanged) {
             handleProfileModeChanged(((ProfileUiEvent.ProfileModeChanged) event).getProfileMode());
+        } else if (event instanceof ProfileUiEvent.AvatarSelected) {
+            handleAvatarSelected(((ProfileUiEvent.AvatarSelected) event).getAvatarUpload());
         } else if (event instanceof ProfileUiEvent.InfoVisibilityChanged) {
             handleInfoVisibilityChanged(((ProfileUiEvent.InfoVisibilityChanged) event).getMode());
         } else if (event instanceof ProfileUiEvent.SaveClicked) {
@@ -153,6 +157,10 @@ public class ProfileViewModel extends ViewModel {
         updateData(state.getData().withProfileMode(mode));
     }
 
+    private void handleAvatarSelected(ProfileAvatarUpload avatarUpload) {
+        pendingAvatarUpload = avatarUpload;
+    }
+
     private void handleInfoVisibilityChanged(InfoVisibilityMode mode) {
         ProfileUiState state = _uiState.getValue();
         if (state == null) {
@@ -176,7 +184,26 @@ public class ProfileViewModel extends ViewModel {
 
         executor.execute(() -> {
             try {
-                Profile saved = profileService.setupProfile(domain);
+                Profile profileToSave = domain;
+
+                if (pendingAvatarUpload != null) {
+                    String uploadedAvatarUrl = profileService.uploadAvatar(domain.getUserId(), pendingAvatarUpload);
+                    pendingAvatarUpload = null;
+                    profileToSave = withAvatarUrl(domain, uploadedAvatarUrl);
+
+                    ProfileUiState current = _uiState.getValue();
+                    if (current != null) {
+                        _uiState.postValue(new ProfileUiState(
+                                current.isLoading(),
+                                true,
+                                current.getData().withAvatarUrl(uploadedAvatarUrl),
+                                null,
+                                current.getData().canSave()
+                        ));
+                    }
+                }
+
+                Profile saved = profileService.setupProfile(profileToSave);
                 ProfileViewData data = ProfileViewData.fromDomain(saved);
                 _uiState.postValue(new ProfileUiState(false, false, data, null, data.canSave()));
                 _uiEffect.postValue(new ProfileUiEffect.ShowToast("Profile saved"));
@@ -191,6 +218,23 @@ public class ProfileViewModel extends ViewModel {
                 _uiEffect.postValue(new ProfileUiEffect.ShowToast(error));
             }
         });
+    }
+
+    private Profile withAvatarUrl(Profile profile, String avatarUrl) {
+        return new Profile(
+                profile.getUserId(),
+                profile.getFullName(),
+                profile.getCity(),
+                avatarUrl,
+                profile.getBio(),
+                profile.getDateOfBirth(),
+                profile.getGender(),
+                profile.getProfileMode(),
+                profile.getInfoVisibilityMode(),
+                profile.getTags(),
+                profile.getEmail(),
+                profile.getPhone()
+        );
     }
 
     private Profile mapToDomain(ProfileViewData data) {

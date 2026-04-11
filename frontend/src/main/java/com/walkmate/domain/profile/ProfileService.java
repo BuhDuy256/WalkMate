@@ -7,6 +7,13 @@ public class ProfileService {
         this.repository = repository;
     }
 
+    public String uploadAvatar(java.util.UUID userId, ProfileAvatarUpload avatarUpload) throws ProfileException {
+        if (avatarUpload == null || avatarUpload.getBytes() == null || avatarUpload.getBytes().length == 0) {
+            throw new ProfileException(ProfileErrorCode.UNKNOWN_ERROR, "Avatar file is required");
+        }
+        return repository.uploadAvatar(userId, avatarUpload);
+    }
+
     public Profile setupProfile(Profile profile) throws ProfileException {
         if (profile.getFullName() == null || profile.getFullName().trim().isEmpty()) {
             throw new ProfileException(ProfileErrorCode.PROFILE_INVALID_NAME, "Display name is required");

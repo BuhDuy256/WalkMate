@@ -1,9 +1,13 @@
 package com.walkmate.ui.profile;
 
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.app.DatePickerDialog;
@@ -17,6 +21,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -28,9 +33,13 @@ import com.walkmate.data.mapper.ProfileDomainToDtoMapper;
 import com.walkmate.data.mapper.ProfileDtoToDomainMapper;
 import com.walkmate.data.network.ApiClient;
 import com.walkmate.data.repository.ProfileRepositoryImpl;
+import com.walkmate.domain.profile.ProfileAvatarUpload;
 import com.walkmate.domain.profile.ProfileMode;
 import com.walkmate.domain.profile.ProfileRepository;
 import com.walkmate.domain.profile.ProfileService;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.List;
@@ -39,9 +48,11 @@ import java.util.UUID;
 
 public class ProfileActivity extends AppCompatActivity {
     private static final int MAX_BIO_LENGTH = 120;
-    private static final UUID TEMP_PROFILE_USER_ID = UUID.fromString("d70c0cfd-ee5c-48d7-8e4e-d012573ac569");
+    private static final long MAX_AVATAR_BYTES = 10L * 1024L * 1024L;
+    private static final UUID TEMP_PROFILE_USER_ID = UUID.fromString("516943d0-ae62-41a0-b6e5-6ad9e933172a");
 
     private ProfileViewModel viewModel;
+    private Uri selectedAvatarUri;
 
     private ImageView ivAvatar;
     private ImageView ivAvatarCamera;
@@ -102,7 +113,15 @@ public class ProfileActivity extends AppCompatActivity {
                 new ActivityResultContracts.PickVisualMedia(),
                 uri -> {
                     if (uri != null) {
-                        ivAvatar.setImageURI(uri);
+                        ProfileAvatarUpload avatarUpload = buildAvatarUpload(uri);
+                        if (avatarUpload == null) {
+                            renderAvatar(viewModel == null ? null : viewModel.uiState.getValue());
+                            return;
+                        }
+
+                        selectedAvatarUri = uri;
+                        renderAvatar(viewModel == null ? null : viewModel.uiState.getValue());
+                        viewModel.onEvent(new ProfileUiEvent.AvatarSelected(avatarUpload));
                     }
                 }
         );
@@ -231,7 +250,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void renderState(ProfileUiState state) {
         ProfileViewData data = state.getData();
 
-        progressLoading.setVisibility(View.GONE);
+        progressLoading.setVisibility(state.isLoading() || state.isSaving() ? View.VISIBLE : View.GONE);
         btnSave.setEnabled(state.isSaveEnabled() && !state.isLoading() && !state.isSaving());
 
         setTextIfDifferent(etDisplayName, data.getFullName());
@@ -240,6 +259,7 @@ public class ProfileActivity extends AppCompatActivity {
         setAutoCompleteTextIfDifferent(acGender, data.getGender());
         setTextIfDifferent(etBio, data.getBio());
         tvBioCount.setText(data.getBio().length() + "/" + MAX_BIO_LENGTH);
+        renderAvatar(state);
 
         if (swProfileMode != null) {
             swProfileMode.setChecked(data.getProfileMode() == ProfileMode.PUBLIC);
@@ -422,8 +442,105 @@ public class ProfileActivity extends AppCompatActivity {
         } else if (effect instanceof ProfileUiEffect.NavigateBack) {
             finish();
         } else if (effect instanceof ProfileUiEffect.SaveSuccess) {
+            selectedAvatarUri = null;
+            renderAvatar(viewModel == null ? null : viewModel.uiState.getValue());
             // Keep screen visible after saving; success is already shown via toast.
         }
+    }
+
+    private void renderAvatar(ProfileUiState state) {
+        if (ivAvatar == null) {
+            return;
+        }
+
+        Object avatarSource = null;
+        if (selectedAvatarUri != null) {
+            avatarSource = selectedAvatarUri;
+        } else if (state != null && state.getData() != null) {
+            String avatarUrl = state.getData().getAvatarUrl();
+            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+                avatarSource = avatarUrl;
+            }
+        }
+
+        if (avatarSource == null) {
+            ivAvatar.setImageResource(R.drawable.profile_avatar_placeholder);
+            return;
+        }
+
+        Glide.with(this)
+                .load(avatarSource)
+                .centerCrop()
+                .placeholder(R.drawable.profile_avatar_placeholder)
+                .error(R.drawable.profile_avatar_placeholder)
+                .into(ivAvatar);
+    }
+
+    private ProfileAvatarUpload buildAvatarUpload(Uri uri) {
+        try {
+            byte[] bytes = readBytes(uri);
+            if (bytes.length == 0) {
+                Toast.makeText(this, "Selected image is empty", Toast.LENGTH_SHORT).show();
+                return null;
+            }
+            if (bytes.length > MAX_AVATAR_BYTES) {
+                Toast.makeText(this, "Avatar must be 10 MB or smaller", Toast.LENGTH_SHORT).show();
+                return null;
+            }
+
+            String mimeType = getContentResolver().getType(uri);
+            if (mimeType == null || mimeType.trim().isEmpty()) {
+                mimeType = "image/*";
+            }
+
+            String fileName = queryDisplayName(uri);
+            if (fileName == null || fileName.trim().isEmpty()) {
+                fileName = "avatar_" + System.currentTimeMillis() + resolveFileExtension(mimeType);
+            }
+
+            return new ProfileAvatarUpload(fileName, mimeType, bytes);
+        } catch (IOException e) {
+            Toast.makeText(this, "Cannot read selected image", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+    }
+
+    private byte[] readBytes(Uri uri) throws IOException {
+        try (InputStream inputStream = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            if (inputStream == null) {
+                throw new IOException("Cannot open input stream");
+            }
+
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            return outputStream.toByteArray();
+        }
+    }
+
+    private String queryDisplayName(Uri uri) {
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                return null;
+            }
+
+            int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            if (index < 0) {
+                return null;
+            }
+            return cursor.getString(index);
+        }
+    }
+
+    private String resolveFileExtension(String mimeType) {
+        String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+        if (extension == null || extension.trim().isEmpty()) {
+            return ".jpg";
+        }
+        return "." + extension;
     }
 
     private static class ChipVisualStyle {

@@ -1,6 +1,7 @@
 package com.walkmate.ui.profile;
 
 import com.walkmate.domain.profile.InfoVisibilityMode;
+import com.walkmate.domain.profile.ProfileAvatarUpload;
 import com.walkmate.domain.profile.ProfileMode;
 
 import java.time.LocalDate;
@@ -87,6 +88,18 @@ public interface ProfileUiEvent {
 
         public ProfileMode getProfileMode() {
             return profileMode;
+        }
+    }
+
+    class AvatarSelected implements ProfileUiEvent {
+        private final ProfileAvatarUpload avatarUpload;
+
+        public AvatarSelected(ProfileAvatarUpload avatarUpload) {
+            this.avatarUpload = avatarUpload;
+        }
+
+        public ProfileAvatarUpload getAvatarUpload() {
+            return avatarUpload;
         }
     }
 

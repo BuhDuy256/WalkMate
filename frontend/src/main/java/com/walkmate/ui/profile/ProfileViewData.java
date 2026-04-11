@@ -41,17 +41,17 @@ public class ProfileViewData {
             String phone
     ) {
         this.userId = userId;
-        this.fullName = fullName;
-        this.city = city;
-        this.avatarUrl = avatarUrl;
-        this.bio = bio;
+        this.fullName = normalizeString(fullName);
+        this.city = normalizeString(city);
+        this.avatarUrl = normalizeString(avatarUrl);
+        this.bio = normalizeString(bio);
         this.dateOfBirth = dateOfBirth;
-        this.gender = gender;
+        this.gender = normalizeString(gender);
         this.profileMode = profileMode;
         this.infoVisibilityMode = infoVisibilityMode;
-        this.tags = tags;
-        this.email = email;
-        this.phone = phone;
+        this.tags = tags == null ? new ArrayList<>() : tags;
+        this.email = normalizeString(email);
+        this.phone = normalizeString(phone);
     }
 
     public static ProfileViewData createInitial(UUID userId) {
@@ -248,6 +248,23 @@ public class ProfileViewData {
         );
     }
 
+    public ProfileViewData withAvatarUrl(String newAvatarUrl) {
+        return new ProfileViewData(
+                userId,
+                fullName,
+                city,
+                newAvatarUrl,
+                bio,
+                dateOfBirth,
+                gender,
+                profileMode,
+                infoVisibilityMode,
+                tags,
+                email,
+                phone
+        );
+    }
+
     public boolean canSave() {
         return fullName != null && !fullName.trim().isEmpty();
     }
@@ -356,5 +373,9 @@ public class ProfileViewData {
         public boolean isSelected() {
             return selected;
         }
+    }
+
+    private static String normalizeString(String value) {
+        return value == null ? "" : value;
     }
 }
