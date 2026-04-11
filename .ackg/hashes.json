@@ -248,7 +248,7 @@
   "frontend/src/main/java/com/walkmate/data/mapper/NotificationMapper.java": "46b4b5019b8b8da37f3d11b7c99897851ab6d5a06445f78cb3e924aa50e65221",
   "frontend/src/main/java/com/walkmate/data/mapper/RoutePointMapper.java": "694c03acd54cae8474ae3ded4967ce491f5c2aa6bd40d0d203fc0e407251e5a0",
   "frontend/src/main/java/com/walkmate/data/mapper/SocialMapper.java": "d9007b560be063a97a55984500e8976c312c9d09566cad2ca43a4a57c9e7f4d4",
-  "frontend/src/main/java/com/walkmate/data/mapper/UserMapper.java": "faf7b32895d1c70562d4be9fd5556e2841abbe4a4c455da9113718e6cc27c9b0",
+  "frontend/src/main/java/com/walkmate/data/mapper/UserMapper.java": "6811cbeddbd0cc2d0d40aa0d73a00bfded9235fffeaccab053045ea699e8176c",
   "frontend/src/main/java/com/walkmate/data/mapper/UserProfileMapper.java": "ab4b6f0fea6b1443112f6276465f529d25cfe6ab8fa2af11e01c8015134aaf47",
   "frontend/src/main/java/com/walkmate/data/mapper/WalkIntentMapper.java": "b4ddd55e1965f7773ca6ed7511dab26e006564d8022775fa0867ff3210f39978",
   "frontend/src/main/java/com/walkmate/data/mapper/WalkProposalMapper.java": "f537d5274394640768fe63267f04a513566d6066dae5822660d03f92a6010707",
