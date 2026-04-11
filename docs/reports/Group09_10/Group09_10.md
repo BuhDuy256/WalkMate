@@ -31,8 +31,9 @@
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Task 1 description
+- Implement push notification with FCM 
 - **Evidence:** _(Jira screenshot link / output document / artifact)_
+  - [Github](https://github.com/BuhDuy256/WalkMate/tree/implement/realtime)
 
 ### 23127539 – Nguyễn Thanh Tiến
 
@@ -46,7 +47,7 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-- Prompt 1: I can't find the prompt I had used.
+- I can't find the prompt I had used.
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
@@ -57,8 +58,7 @@
 
 ### 23127438 – Đặng Trường Nguyên
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Didn't have prompt.
 
 ### 23127539 – Nguyễn Thanh Tiến
 
