@@ -19,15 +19,15 @@
 - Restructure the state machine of main workflow + Redefine use cases.
 - Implement async to send the location information from frontend to backend.
 - Set up FCM
-- **Evidence:** 
-    - [GitHub](https://github.com/BuhDuy256/WalkMate.git)
+- **Evidence:**
+  - [GitHub](https://github.com/BuhDuy256/WalkMate.git)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
 - Implement OAuth feature
 - Review authentication domain, refactor, implement the missing APIs
 - **Evidence:**
-    - [Github](https://github.com/BuhDuy256/WalkMate/tree/feature/oauth)
+  - [Github](https://github.com/BuhDuy256/WalkMate/tree/feature/oauth)
 
 ### 23127438 – Đặng Trường Nguyên
 
@@ -36,8 +36,9 @@
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Implement the feature of uploading user profile picture to Cloudinary and saving the URL to the database.
+- **Evidence:**
+  - [GitHub](https://github.com/BuhDuy256/WalkMate/tree/feature/profile)
 
 ---
 
@@ -61,5 +62,5 @@
 
 ### 23127539 – Nguyễn Thanh Tiến
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- Prompt 1: how to upload image from mobile to cloudianary and get url to save into database
+- [Gemini](https://gemini.google.com/share/4f94275d7a43)
