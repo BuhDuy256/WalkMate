@@ -30,7 +30,7 @@ public class JwtTokenProvider implements TokenProvider {
     public TokenPair generateTokenPair(User user) {
         String accessToken = generateToken(user, accessTokenTtlSeconds, "access");
         String refreshToken = generateToken(user, refreshTokenTtlSeconds, "refresh");
-        return new TokenPair(accessToken, accessTokenTtlSeconds, refreshToken);
+        return new TokenPair(accessToken, accessTokenTtlSeconds, refreshToken, refreshTokenTtlSeconds);
     }
 
     private String generateToken(User user, long ttlSeconds, String tokenType) {

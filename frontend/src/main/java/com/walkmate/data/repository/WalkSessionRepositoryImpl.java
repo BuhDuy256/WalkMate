@@ -41,7 +41,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
 
     public WalkSessionRepositoryImpl(Context context) {
         this.sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(SessionApiService.class);
     }
 

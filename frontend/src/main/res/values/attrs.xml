@@ -112,6 +112,16 @@
     </declare-styleable>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
+         OtpInputView
+         Row of 6 single-digit EditText boxes with auto-focus-advance and
+         backspace-to-previous navigation. Fully programmatic — no custom XML
+         attributes. Use getOtp() / clear() / setEnabled() at runtime.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="OtpInputView">
+        <!-- No XML-configurable attributes; layout is generated programmatically. -->
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
          WalkMateCardHeader
          Single-row card header: [emoji] [title ──── spacer ──── ] [chevron?]
          Replaces the layout_weight=1 spacer antipattern with a flat

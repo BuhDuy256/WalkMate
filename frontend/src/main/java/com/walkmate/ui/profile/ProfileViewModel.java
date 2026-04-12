@@ -4,14 +4,17 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.event.AuthEventBus;
+import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.gamification.UserBadge;
 import com.walkmate.domain.gamification.UserStats;
 import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.review.WalkReview;
-import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
+import com.walkmate.domain.user.UserRepository;
+import com.walkmate.domain.user.VisibilityMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,19 +34,23 @@ import java.util.concurrent.atomic.AtomicReference;
  * Edit flow:
  *   saveProfile(…) → calls updateProfile() → reloads profile on success.
  *   uploadAvatar(…) → calls uploadAvatar() → reloads profile on success.
+ *   setVisibility(…) → calls UserRepository.setVisibility() → reloads profile on success.
+ *   logoutAll() → calls UserRepository.logoutAll().
  */
 public class ProfileViewModel extends ViewModel {
 
     private final MutableLiveData<ProfileUiState> uiState = new MutableLiveData<>();
-
-    private final UserProfileRepository  profileRepo;
+    private final UserProfileRepository profileRepo;
+    private final UserRepository userRepository;
     private final GamificationRepository gamificationRepo;
     private final ReviewRepository       reviewRepo;
 
     public ProfileViewModel(UserProfileRepository profileRepo,
+                            UserRepository userRepository,
                             GamificationRepository gamificationRepo,
                             ReviewRepository reviewRepo) {
         this.profileRepo      = profileRepo;
+        this.userRepository   = userRepository;
         this.gamificationRepo = gamificationRepo;
         this.reviewRepo       = reviewRepo;
     }
@@ -116,6 +123,45 @@ public class ProfileViewModel extends ViewModel {
                 });
     }
 
+    /**
+     * Sets the user's profile visibility and reloads the profile on success.
+     */
+    public void setVisibility(VisibilityMode mode) {
+        userRepository.setVisibility(mode, new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadProfile();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // SILENT errors (already public/private) are swallowed — no UI change needed.
+                // TOAST errors show a transient message via the error field.
+                uiState.postValue(ProfileUiState.error(friendlyError(e)));
+            }
+        });
+    }
+
+    /**
+     * Logs out the user from all devices. Clears the session in UserRepositoryImpl, then
+     * posts FORCE_LOGOUT on AuthEventBus so MainActivity can relaunch AuthActivity.
+     */
+    public void logoutAll() {
+        userRepository.logoutAll(new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // Session already cleared by UserRepositoryImpl.
+                // Signal MainActivity to navigate to AuthActivity.
+                AuthEventBus.getInstance().postForceLogout();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                uiState.postValue(ProfileUiState.error(friendlyError(e)));
+            }
+        });
+    }
+
     // ── Navigation signals ────────────────────────────────────────────────────
 
     private final MutableLiveData<Void> navigateToEditEvent = new MutableLiveData<>();
@@ -176,7 +222,6 @@ public class ProfileViewModel extends ViewModel {
                 // Prefer API stats if available; fall back to values on UserProfile.
                 double distanceKm  = stats != null ? stats.getTotalDistanceKm()   : profile.getTotalDistanceKm();
                 int    sessions    = stats != null ? stats.getCompletedSessions()  : profile.getTotalSessions();
-
                 uiState.postValue(new ProfileUiState(
                         false,
                         profile.getFullName(),
@@ -188,6 +233,7 @@ public class ProfileViewModel extends ViewModel {
                         sessions,
                         0,                       // currentStreak — no backend endpoint yet
                         badgesHolder.get(),
+                        null,                    // visibilityMode: not yet returned by UserProfile API
                         reviewsHolder.get(),
                         null));
             }

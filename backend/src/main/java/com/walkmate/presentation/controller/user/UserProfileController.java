@@ -1,5 +1,6 @@
 package com.walkmate.presentation.controller.user;
 
+import com.walkmate.application.user.SetVisibilityCommand;
 import com.walkmate.application.user.UpdateFcmTokenCommand;
 import com.walkmate.application.user.UpdateProfileCommand;
 import com.walkmate.application.user.UserCommandService;
@@ -7,13 +8,15 @@ import com.walkmate.application.user.UserProfileCommandService;
 import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserProfile;
-import com.walkmate.domain.user.UserProfileRepository;
+import com.walkmate.domain.user.VisibilityMode;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.infrastructure.storage.AvatarStorageService;
+import com.walkmate.presentation.dto.request.user.SetVisibilityRequest;
 import com.walkmate.presentation.dto.request.user.UpdateFcmTokenRequest;
 import com.walkmate.presentation.dto.request.user.UpdateProfileRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.user.AvatarUploadResponse;
+import com.walkmate.presentation.dto.response.user.SetVisibilityResponse;
 import com.walkmate.presentation.dto.response.user.UserProfileResponse;
 import com.walkmate.presentation.mapper.user.UserProfileMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +45,6 @@ public class UserProfileController {
     private final UserQueryService           queryService;
     private final UserCommandService         userCommandService;
     private final UserProfileCommandService  commandService;
-    private final UserProfileRepository      profileRepository;
     private final AvatarStorageService       storageService;
     private final UserProfileMapper          mapper;
 
@@ -55,7 +57,7 @@ public class UserProfileController {
         UUID userId  = UUID.fromString(principal.userId());
         UserProfile  profile = queryService.getMyProfile(userId);
         User         user    = queryService.getUser(userId);
-        List<String> tags    = profileRepository.findTagsByUserId(userId);
+        List<String> tags    = queryService.getTagsByUserId(userId);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(profile, user, tags)));
     }
@@ -86,7 +88,7 @@ public class UserProfileController {
 
         UserProfile  updated = commandService.updateProfile(command);
         User         user    = queryService.getUser(callerId);
-        List<String> tags    = profileRepository.findTagsByUserId(callerId);
+        List<String> tags    = queryService.getTagsByUserId(callerId);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated, user, tags)));
     }
@@ -114,9 +116,23 @@ public class UserProfileController {
         UUID         uid     = UUID.fromString(userId);
         UserProfile  profile = queryService.getProfile(uid);
         User         user    = queryService.getUser(uid);
-        List<String> tags    = profileRepository.findTagsByUserId(uid);
+        List<String> tags    = queryService.getTagsByUserId(uid);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(profile, user, tags)));
+    }
+
+    // ── PATCH /api/v1/users/me/visibility ────────────────────────────────────
+
+    @PatchMapping("/api/v1/users/me/visibility")
+    public ResponseEntity<ApiResponse<SetVisibilityResponse>> setVisibility(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody SetVisibilityRequest request) {
+
+        UUID           userId = UUID.fromString(principal.userId());
+        VisibilityMode mode   = userCommandService.setVisibilityMode(
+                new SetVisibilityCommand(userId, request.mode()));
+
+        return ResponseEntity.ok(ApiResponse.success(new SetVisibilityResponse(mode)));
     }
 
     // ── PATCH /api/v1/users/me/fcm-token ─────────────────────────────────────

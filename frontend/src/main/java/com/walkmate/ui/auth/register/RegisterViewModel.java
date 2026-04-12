@@ -1,10 +1,13 @@
 package com.walkmate.ui.auth.register;
 
+import android.content.Context;
 import android.util.Patterns;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.UserErrorMessageMapper;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.UserRepository;
 
@@ -13,10 +16,12 @@ import java.util.regex.Pattern;
 public class RegisterViewModel extends ViewModel {
 
     private final UserRepository userRepository;
+    private final Context appContext;
     private final MutableLiveData<RegisterUiState> uiState = new MutableLiveData<>(RegisterUiState.initial());
 
-    public RegisterViewModel(UserRepository userRepository) {
+    public RegisterViewModel(UserRepository userRepository, Context appContext) {
         this.userRepository = userRepository;
+        this.appContext = appContext.getApplicationContext();
     }
 
     public LiveData<RegisterUiState> getUiState() {
@@ -53,17 +58,23 @@ public class RegisterViewModel extends ViewModel {
 
         uiState.setValue(new RegisterUiState(true, false, null, null, null, null));
 
-        userRepository.register(fullName.trim(), email.trim(), password.trim(), new DomainCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                uiState.postValue(new RegisterUiState(false, true, null, null, null, null));
-            }
+        String deviceId = userRepository.getOrGenerateDeviceId();
+        userRepository.register(fullName.trim(), email.trim(), password.trim(), deviceId,
+                new DomainCallback<String>() {
+                    @Override
+                    public void onSuccess(String token) {
+                        uiState.postValue(new RegisterUiState(false, true, null, null, null, null));
+                    }
 
-            @Override
-            public void onError(Exception error) {
-                uiState.postValue(new RegisterUiState(false, false, error.getMessage(), null, null, null));
-            }
-        });
+                    @Override
+                    public void onError(Exception error) {
+                        UserErrorMessageMapper.ErrorResult result =
+                                UserErrorMessageMapper.map(error.getMessage());
+                        String message = appContext.getString(result.messageResId);
+                        uiState.postValue(
+                                new RegisterUiState(false, false, message, null, null, null));
+                    }
+                });
     }
 
     private boolean isValidPassword(String password) {

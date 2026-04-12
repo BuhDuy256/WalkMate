@@ -9,17 +9,20 @@ public final class UserMapper {
     private UserMapper() {
     }
 
-    public static LoginRequestDto toLoginRequest(String email, String password) {
+    public static LoginRequestDto toLoginRequest(String email, String password, String deviceId) {
         return new LoginRequestDto(
                 requireText(email, "Email is required"),
-                requireText(password, "Password is required"));
+                requireText(password, "Password is required"),
+                requireText(deviceId, "Device ID is required"));
     }
 
-    public static RegisterRequestDto toRegisterRequest(String fullName, String email, String password) {
+    public static RegisterRequestDto toRegisterRequest(String fullName, String email,
+                                                       String password, String deviceId) {
         return new RegisterRequestDto(
                 requireText(fullName, "Full name is required"),
                 requireText(email, "Email is required"),
-                requireText(password, "Password is required"));
+                requireText(password, "Password is required"),
+                requireText(deviceId, "Device ID is required"));
     }
 
     public static String toAccessToken(LoginResponseDto responseDto) {

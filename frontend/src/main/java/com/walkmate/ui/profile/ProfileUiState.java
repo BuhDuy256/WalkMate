@@ -1,5 +1,7 @@
 package com.walkmate.ui.profile;
 
+import com.walkmate.domain.user.VisibilityMode;
+
 import com.walkmate.domain.review.WalkReview;
 
 import java.util.List;
@@ -45,6 +47,7 @@ public class ProfileUiState {
     private final double totalDistanceKm;
     private final int totalSessions;
     private final int currentStreak;
+    private final VisibilityMode visibilityMode;
     private final List<Badge> badges;           // max 3 shown in the Milestones card
     private final List<WalkReview> reviews;     // received reviews for this user
     private final String error;
@@ -62,6 +65,7 @@ public class ProfileUiState {
             int totalSessions,
             int currentStreak,
             List<Badge> badges,
+            VisibilityMode visibilityMode,
             List<WalkReview> reviews,
             String error) {
         this.isLoading = isLoading;
@@ -74,6 +78,7 @@ public class ProfileUiState {
         this.totalSessions = totalSessions;
         this.currentStreak = currentStreak;
         this.badges = badges;
+        this.visibilityMode = visibilityMode;
         this.reviews = reviews;
         this.error = error;
     }
@@ -83,14 +88,15 @@ public class ProfileUiState {
     public static ProfileUiState loading() {
         return new ProfileUiState(
                 true, null, null, false,
-                0f, null, 0.0, 0, 0, null, null, null);
+                0f, null, 0.0, 0, 0, null, null, null, null);
     }
 
     public static ProfileUiState error(String message) {
         return new ProfileUiState(
                 false, null, null, false,
-                0f, null, 0.0, 0, 0, null, null, message);
+                0f, null, 0.0, 0, 0, null, null, null, message);
     }
+
 
     // ── Getters ───────────────────────────────────────────────────────────────
 
@@ -104,6 +110,7 @@ public class ProfileUiState {
     public int getTotalSessions()            { return totalSessions; }
     public int getCurrentStreak()            { return currentStreak; }
     public List<Badge> getBadges()           { return badges; }
-    public List<WalkReview> getReviews()     { return reviews; }
+    public VisibilityMode getVisibilityMode() { return visibilityMode; }
     public String getError()                 { return error; }
+    public List<WalkReview> getReviews()     { return reviews; }
 }

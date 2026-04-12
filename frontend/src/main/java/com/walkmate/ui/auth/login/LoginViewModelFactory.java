@@ -11,9 +11,11 @@ import com.walkmate.domain.user.UserRepository;
 public class LoginViewModelFactory implements ViewModelProvider.Factory {
 
     private final UserRepository userRepository;
+    private final Context appContext;
 
     public LoginViewModelFactory(Context context) {
-        this.userRepository = ((WalkMateApplication) context.getApplicationContext()).getUserRepository();
+        this.appContext = context.getApplicationContext();
+        this.userRepository = ((WalkMateApplication) appContext).getUserRepository();
     }
 
     @NonNull
@@ -21,7 +23,7 @@ public class LoginViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(LoginViewModel.class)) {
-            return (T) new LoginViewModel(userRepository);
+            return (T) new LoginViewModel(userRepository, appContext);
         }
         throw new IllegalArgumentException("Unknown ViewModel class");
     }

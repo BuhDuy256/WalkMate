@@ -138,7 +138,7 @@ public class TrackingRepositoryImpl implements TrackingRepository {
 
                 PushRoutePointsRequest request = new PushRoutePointsRequest(sessionId, payloads);
 
-                RoutePointSyncApiService api = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+                RoutePointSyncApiService api = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                         .create(RoutePointSyncApiService.class);
 
                 Response<ApiResponse<PushRoutePointsResponse>> response =

@@ -36,7 +36,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
 
     public WalkIntentRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(WalkIntentApiService.class);
     }
 

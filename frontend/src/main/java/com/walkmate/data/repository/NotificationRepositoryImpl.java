@@ -29,7 +29,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public NotificationRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
         this.apiService = ApiClient
-                .buildAuthenticatedRetrofit(sessionManager)
+                .buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(NotificationApiService.class);
     }
 

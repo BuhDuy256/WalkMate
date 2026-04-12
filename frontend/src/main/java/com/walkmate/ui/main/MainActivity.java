@@ -1,5 +1,6 @@
 package com.walkmate.ui.main;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
@@ -12,8 +13,12 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.walkmate.R;
+import com.walkmate.WalkMateApplication;
 import com.walkmate.core.event.AppEvent;
 import com.walkmate.core.event.AppEventBus;
+import com.walkmate.core.event.AuthEvent;
+import com.walkmate.core.event.AuthEventBus;
+import com.walkmate.ui.auth.AuthActivity;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
 
 /**
@@ -89,6 +94,25 @@ public class MainActivity extends AppCompatActivity {
         });
 
         observeAppEventBus();
+        observeAuthEventBus();
+    }
+
+    // ── Forced-logout handling ────────────────────────────────────────────────
+
+    /**
+     * When TokenRefreshAuthenticator can no longer refresh the session, it posts
+     * FORCE_LOGOUT on AuthEventBus. Clear the session and restart from AuthActivity.
+     */
+    private void observeAuthEventBus() {
+        AuthEventBus.getInstance().observe().observe(this, event -> {
+            if (event == AuthEvent.FORCE_LOGOUT) {
+                ((WalkMateApplication) getApplication()).getSessionManager().clearSession();
+                AuthEventBus.getInstance().consumeEvent();
+                Intent intent = new Intent(this, AuthActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        });
     }
 
     // ── FCM foreground event routing ──────────────────────────────────────────

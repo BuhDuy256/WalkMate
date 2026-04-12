@@ -1,5 +1,6 @@
 package com.walkmate.ui.profile;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,11 +14,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.walkmate.core.util.GlideHelper;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.GlideHelper;
+import com.walkmate.domain.user.VisibilityMode;
 import com.walkmate.ui.history.SessionHistoryFragment;
 import com.walkmate.ui.profile.edit.EditProfileFragment;
 
@@ -67,6 +70,13 @@ public class ProfileFragment extends Fragment {
     private View menuWalkHistory;
     private View menuMyBadges;
     private View menuSettings;
+
+    // Security section
+    private SwitchMaterial switchVisibility;
+    private View btnLogoutAll;
+
+    // Suppress the switch listener re-entry when we programmatically set its state
+    private boolean suppressSwitchListener = false;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -137,17 +147,20 @@ public class ProfileFragment extends Fragment {
 
         btnEditProfile  = root.findViewById(R.id.btnEditProfile);
 
-        menuWalkHistory = root.findViewById(R.id.menuWalkHistory);
-        menuMyBadges    = root.findViewById(R.id.menuMyBadges);
-        menuSettings    = root.findViewById(R.id.menuSettings);
+        menuWalkHistory  = root.findViewById(R.id.menuWalkHistory);
+        menuMyBadges     = root.findViewById(R.id.menuMyBadges);
+        menuSettings     = root.findViewById(R.id.menuSettings);
+        switchVisibility = root.findViewById(R.id.switchVisibility);
+        btnLogoutAll     = root.findViewById(R.id.btnLogoutAll);
     }
 
     private void setupViewModel() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
-        ProfileViewModelFactory factory = new ProfileViewModelFactory(
-                app.getUserProfileRepository(),
-                app.getGamificationRepository(),
-                app.getReviewRepository());
+        ProfileViewModelFactory factory =
+                new ProfileViewModelFactory(app.getUserProfileRepository(), 
+                                            requireContext(),
+                                            app.getGamificationRepository(),
+                                            app.getReviewRepository());
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
     }
 
@@ -158,6 +171,14 @@ public class ProfileFragment extends Fragment {
         menuWalkHistory.setOnClickListener(v -> viewModel.onWalkHistoryClicked());
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
         menuSettings.setOnClickListener(v -> viewModel.onSettingsClicked());
+
+        switchVisibility.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (suppressSwitchListener) return;
+            VisibilityMode mode = isChecked ? VisibilityMode.PUBLIC : VisibilityMode.PRIVATE;
+            viewModel.setVisibility(mode);
+        });
+
+        btnLogoutAll.setOnClickListener(v -> showLogoutAllConfirmation());
     }
 
     // ── State rendering ───────────────────────────────────────────────────────
@@ -168,7 +189,6 @@ public class ProfileFragment extends Fragment {
      */
     private void renderState(ProfileUiState state) {
         if (state.isLoading()) {
-            // Content stays at its initial state while loading.
             return;
         }
 
@@ -202,6 +222,13 @@ public class ProfileFragment extends Fragment {
 
         // ── Badges (up to 3 slots in the layout) ──
         renderBadges(state.getBadges());
+
+        // ── Visibility switch ──
+        if (state.getVisibilityMode() != null) {
+            suppressSwitchListener = true;
+            switchVisibility.setChecked(state.getVisibilityMode() == VisibilityMode.PUBLIC);
+            suppressSwitchListener = false;
+        }
     }
 
     /**
@@ -245,5 +272,15 @@ public class ProfileFragment extends Fragment {
                 parent.setVisibility(View.GONE);
             }
         }
+    }
+
+    private void showLogoutAllConfirmation() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.profile_logout_all_confirm_title)
+                .setMessage(R.string.profile_logout_all_confirm_message)
+                .setPositiveButton(R.string.profile_logout_all_confirm_yes,
+                        (dialog, which) -> viewModel.logoutAll())
+                .setNegativeButton(R.string.profile_logout_all_confirm_no, null)
+                .show();
     }
 }

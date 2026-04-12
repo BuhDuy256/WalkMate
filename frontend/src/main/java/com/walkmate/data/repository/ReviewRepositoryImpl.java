@@ -33,7 +33,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     public ReviewRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(ReviewApiService.class);
     }
 

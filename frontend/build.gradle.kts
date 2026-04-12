@@ -84,6 +84,9 @@ dependencies {
     // Khối Architecture Components (ViewModel, LiveData)
     implementation(libs.lifecycleViewmodel)
     implementation(libs.lifecycleLivedata)
+    // Kotlin coroutines runtime — required by lifecycle 2.8+ (LifecycleRegistry uses StateFlow)
+    // and transitively needed by OkHttp 5.x / Retrofit 3.x in a pure-Java project
+    implementation(libs.coroutinesAndroid)
 
     // Secure local token storage
     implementation(libs.securityCrypto)
@@ -99,7 +102,11 @@ dependencies {
     implementation(libs.navigationFragment)
     implementation(libs.navigationUi)
 
-    // Firebase Cloud Messaging
+    // Firebase (BOM pins all firebase versions)
     implementation(platform(libs.firebaseBom))
     implementation(libs.firebaseMessaging)
+    implementation(libs.firebaseAuth)
+
+    // Google Sign-In (provides GoogleSignIn, GoogleSignInClient, GoogleSignInAccount)
+    implementation(libs.playServicesAuth)
 }

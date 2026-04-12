@@ -167,6 +167,54 @@
     <string name="notification_error">Could not load notifications.\nPlease try again.</string>
     <string name="notification_back_cd">Go back</string>
 
+    <!-- Auth: phone sign-in -->
+    <string name="btn_phone_signin">Continue with Phone Number</string>
+    <string name="phone_input_title">Enter your phone number</string>
+    <string name="phone_input_subtitle">We\'ll send a verification code to this number</string>
+    <string name="phone_input_hint">+84 xxx xxx xxx</string>
+    <string name="btn_send_otp">Send Code</string>
+    <string name="otp_verify_title">Enter verification code</string>
+    <string name="otp_verify_subtitle_format">We sent a 6-digit code to %1$s</string>
+    <string name="btn_verify_otp">Verify</string>
+    <string name="otp_resend_format">Resend code in %1$ds</string>
+    <string name="otp_resend_ready">Resend code</string>
+    <!-- Required by GoogleSignInOptions.requestIdToken(); replace with real Web client ID from Firebase config. -->
+    <string name="default_web_client_id"></string>
+
+    <!-- Profile: visibility toggle -->
+    <string name="profile_visibility_title">Profile Visibility</string>
+    <string name="profile_visibility_public">Public</string>
+    <string name="profile_visibility_private">Private</string>
+    <string name="profile_visibility_subtitle_public">Anyone can see your profile</string>
+    <string name="profile_visibility_subtitle_private">Only matched users can see you</string>
+
+    <!-- Profile: security section -->
+    <string name="profile_security_title">Security</string>
+    <string name="profile_logout_all">Log Out All Devices</string>
+    <string name="profile_logout_all_confirm_title">Log out everywhere?</string>
+    <string name="profile_logout_all_confirm_message">You will be signed out on all devices, including this one.</string>
+    <string name="profile_logout_all_confirm_yes">Log Out All</string>
+    <string name="profile_logout_all_confirm_no">Cancel</string>
+
+    <!-- Auth error messages — keyed by UserErrorCode value -->
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_user_not_found">Account not found. Please check your details.</string>
+    <string name="error_user_email_already_exists">This email is already registered.</string>
+    <string name="error_user_phone_already_exists">This phone number is already registered.</string>
+    <string name="error_user_invalid_credentials">Incorrect email or password.</string>
+    <string name="error_invalid_user_data">Invalid information provided.</string>
+    <string name="error_user_provider_conflict">This Google account is linked to a different WalkMate account.</string>
+    <string name="error_user_display_name_blank">Display name must not be blank.</string>
+    <string name="error_user_already_private">Your profile is already set to Private.</string>
+    <string name="error_user_already_public">Your profile is already set to Public.</string>
+    <string name="error_user_invalid_email_format">Please enter a valid email address.</string>
+    <string name="error_user_account_suspended">Your account has been suspended. You have been signed out.</string>
+    <string name="error_user_otp_expired">The verification code has expired. Please request a new one.</string>
+    <string name="error_user_otp_already_used">This verification code has already been used.</string>
+    <string name="error_user_otp_invalid">Incorrect verification code. Please try again.</string>
+    <string name="error_user_otp_attempts_exceeded">Too many incorrect attempts. Please request a new code.</string>
+    <string name="error_user_otp_rate_limited">Please wait a moment before requesting a new code.</string>
+
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>
     <string name="hotspot_2">Hồ Con Rùa</string>
