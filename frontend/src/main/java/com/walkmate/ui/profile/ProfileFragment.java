@@ -11,6 +11,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -71,6 +73,9 @@ public class ProfileFragment extends Fragment {
     private View menuMyBadges;
     private View menuSettings;
 
+    // Content root (receives dynamic bottom padding from window insets)
+    private View profileContentRoot;
+
     // Security section
     private SwitchMaterial switchVisibility;
     private View btnLogoutAll;
@@ -97,12 +102,14 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         bindViews(view);
+        applyWindowInsets(view);
         setupViewModel();
         setupClickListeners();
 
         viewModel.loadProfile();
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
-        viewModel.getNavigateToEditEvent().observe(getViewLifecycleOwner(), unused -> {
+        viewModel.getNavigateToEditEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
             viewModel.consumeNavigateToEdit();
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -111,7 +118,8 @@ public class ProfileFragment extends Fragment {
                     .commit();
         });
 
-        viewModel.getNavigateToHistoryEvent().observe(getViewLifecycleOwner(), unused -> {
+        viewModel.getNavigateToHistoryEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
             viewModel.consumeNavigateToHistory();
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -123,6 +131,28 @@ public class ProfileFragment extends Fragment {
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
+
+    private void applyWindowInsets(View root) {
+        profileContentRoot = root.findViewById(R.id.profileContentRoot);
+        View bottomSpacer = root.findViewById(R.id.bottomSpacer);
+
+        // Set spacer to 1/4 screen height once the view is laid out
+        int screenHeight = root.getResources().getDisplayMetrics().heightPixels;
+        android.view.ViewGroup.LayoutParams lp = bottomSpacer.getLayoutParams();
+        lp.height = screenHeight / 4;
+        bottomSpacer.setLayoutParams(lp);
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            int bottomNavHeightPx = (int) (56 * root.getResources().getDisplayMetrics().density);
+            profileContentRoot.setPadding(
+                    profileContentRoot.getPaddingLeft(),
+                    profileContentRoot.getPaddingTop(),
+                    profileContentRoot.getPaddingRight(),
+                    bottomNavHeightPx + bottomInset);
+            return insets;
+        });
+    }
 
     private void bindViews(View root) {
         imgProfileAvatar    = root.findViewById(R.id.imgProfileAvatar);

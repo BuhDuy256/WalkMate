@@ -22,8 +22,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.walkmate.ui.main.MainActivity;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
@@ -98,6 +102,9 @@ public class EditProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        ((MainActivity) requireActivity()).setBottomNavVisibility(false);
+        applyWindowInsets(view);
+
         bindViews(view);
         setupViewModel();
         setupClickListeners();
@@ -105,6 +112,24 @@ public class EditProfileFragment extends Fragment {
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.loadCurrentProfile();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        ((MainActivity) requireActivity()).setBottomNavVisibility(true);
+    }
+
+    private void applyWindowInsets(View root) {
+        View contentRoot = root.findViewById(R.id.editProfileContentRoot);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int topInset    = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            int sidePadding = (int) (20 * root.getResources().getDisplayMetrics().density);
+            contentRoot.setPadding(sidePadding, topInset + sidePadding,
+                                   sidePadding, bottomInset + sidePadding);
+            return insets;
+        });
     }
 
     // ── Setup ─────────────────────────────────────────────────────────────────
