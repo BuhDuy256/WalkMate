@@ -11,7 +11,7 @@
 
 | Domain | File | Use Cases |
 |--------|------|-----------|
-| Auth & Profile | [auth_profile_use_cases.md](auth_profile_use_cases.md) | UC-01 to UC-06 |
+| Auth & Profile | [auth_profile_use_cases.md](auth_profile_use_cases.md) | UC-01 to UC-13 |
 | Discovery | [discovery_use_cases.md](discovery_use_cases.md) | UC-07 |
 | Walk Intent | [intent_use_cases.md](intent_use_cases.md) | UC-08 to UC-11 |
 | Proposal Negotiation | [proposal_use_cases.md](proposal_use_cases.md) | UC-12 to UC-15 |
@@ -36,6 +36,13 @@
 | UC-04 | Profile | Edit My Profile | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-04--edit-my-profile) |
 | UC-05 | Profile | Upload Avatar | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-05--upload-avatar) |
 | UC-06 | Device | Register FCM Token | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-06--register-fcm-token) |
+| UC-07 | Auth | Login with Google (OAuth) | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-07--login-with-google-oauth) |
+| UC-08 | Auth | Phone Sign-In — Send OTP | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-08--phone-sign-in--send-otp) |
+| UC-09 | Auth | Phone Sign-In — Verify OTP | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-09--phone-sign-in--verify-otp) |
+| UC-10 | Auth | Logout (This Device) | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-10--logout-this-device) |
+| UC-11 | Auth | Logout All Devices | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-11--logout-all-devices) |
+| UC-12 | Auth | Silent Token Refresh | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-12--silent-token-refresh) |
+| UC-13 | Profile | Set Profile Visibility | [auth_profile_use_cases.md](auth_profile_use_cases.md#uc-13--set-profile-visibility) |
 | **DISCOVERY** | | | |
 | UC-07 | Hotspots | Browse Hotspot Map | [discovery_use_cases.md](discovery_use_cases.md#uc-07--browse-hotspot-map) |
 | **WALK INTENT** | | | |
