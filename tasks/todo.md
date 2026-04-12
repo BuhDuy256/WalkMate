@@ -51,11 +51,11 @@
 - [x] `expireProposal(proposalId)` — UPDATE expires_at = now() - 1 second
 - [x] `TestDataSeederTest` (5 tests) — all methods acceptance-tested; `rewindSessionStartedAt` and `expireProposal` use minimal raw JDBC chain setup
 
-### P0-6: Verify API Response Envelope Shape (Contract Smoke Test)
-- [ ] Write a single test that calls any authenticated endpoint without a token
-- [ ] Assert HTTP 401 is returned (Spring Security, not a `DomainException`)
-- [ ] Assert the body follows `{ success, data, error, timestamp }` shape on a **400** DomainException path
-- [ ] Assert the body follows the same shape on a **422** validation error, and that `error.message` is a **single comma-separated string** (not an array) — per Appendix A
+### P0-6: Verify API Response Envelope Shape (Contract Smoke Test) ✅
+- [x] `GET /api/v1/profile/me` without token → HTTP 401 (Spring Security gate)
+- [x] `POST /api/v1/auth/login` with wrong credentials → HTTP 400 DomainException; verified `{ success: false, data: null, error: { code, message }, timestamp }` envelope
+- [x] `POST /api/v1/auth/register` with blank `fullname` → HTTP 422; `error.code = VALIDATION_ERROR`, `error.message` is a String containing `"field: reason"` format
+- [x] Multi-field validation error → `error.message` is a single comma-separated string, not a JSON array
 
 ---
 
