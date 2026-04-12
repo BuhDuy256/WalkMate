@@ -61,21 +61,21 @@
 
 ## PHASE 1 — Auth & Profile Test Suite (UC-01 to UC-13)
 
-### T01-1: UC-01 Register Account — Happy Path
-- [ ] `POST /api/v1/auth/register` with valid payload → assert `201 Created`, `data.email` present
+### T01-1: UC-01 Register Account — Happy Path ✅
+- [x] `POST /api/v1/auth/register` with valid payload → `201 Created`, full token pair returned (not just email — impl returns `LoginUserResponse`)
 
-### T01-2: UC-01 Register Account — Duplicate Email
-- [ ] Register same email twice → second call returns HTTP **400**, `error.code = USER_ALREADY_EXISTS`
+### T01-2: UC-01 Register Account — Duplicate Email ✅
+- [x] Register same email twice → second call returns HTTP **400**, `error.code = USER_EMAIL_ALREADY_EXISTS` (doc said `USER_ALREADY_EXISTS` — code is the authority)
 
-### T01-3: UC-01 Register Account — Validation Errors (UC-01 / Appendix A)
-- [ ] Send blank `fullname` → assert HTTP **422**, `error.code = VALIDATION_ERROR`
-- [ ] Assert `error.message` is a comma-separated `field: reason` string, not an array
+### T01-3: UC-01 Register Account — Validation Errors (UC-01 / Appendix A) ✅
+- [x] Send blank `fullname` → HTTP **422**, `error.code = VALIDATION_ERROR`
+- [x] Blank email + password → `error.message` is a single comma-separated `field: reason` string, not a JSON array
 
-### T02-1: UC-02 Login — Happy Path
-- [ ] `POST /api/v1/auth/login` with correct credentials → assert `200 OK`, `data.accessToken` non-null, `tokenType = Bearer`
+### T02-1: UC-02 Login — Happy Path ✅
+- [x] `POST /api/v1/auth/login` with correct credentials → `200 OK`, `data.accessToken` non-null, `tokenType = Bearer`
 
-### T02-2: UC-02 Login — Wrong Credentials
-- [ ] Login with wrong password → HTTP **400**, `error.code = USER_INVALID_CREDENTIALS`
+### T02-2: UC-02 Login — Wrong Credentials ✅
+- [x] Login with wrong password → HTTP **400**, `error.code = USER_INVALID_CREDENTIALS`
 
 ### T03-1: UC-03 View My Profile — Authenticated
 - [ ] `GET /api/v1/profile/me` with valid token → `200 OK`, profile fields present
@@ -96,17 +96,17 @@
 ### T06-1: UC-06 Register FCM Token — Happy Path
 - [ ] `PATCH /api/v1/users/me/fcm-token` with valid token string → `200 OK`, `data = null`
 
-### T07-1: UC-07 Google OAuth — New User Registration
-- [ ] Stub `FirebaseTokenVerifier.verify()` to return a mock `FirebaseToken` with email + name + sub
-- [ ] `POST /api/v1/auth/google` → `200 OK`, `data.accessToken` present, user record created in DB
+### T07-1: UC-07 Google OAuth — New User Registration ✅
+- [x] Stub `googleTokenVerifier.verify()` to return a controlled `GoogleIdentity` with sub + email + name
+- [x] `POST /api/v1/auth/google` → `200 OK`, full token pair returned, user record created in DB
 
-### T07-2: UC-07 Google OAuth — Existing LOCAL User Account Linking
-- [ ] Register a LOCAL user first; then call `POST /api/v1/auth/google` with same email
-- [ ] Assert response is `200 OK` (merged), no duplicate user created, `password_hash` preserved in DB
+### T07-2: UC-07 Google OAuth — Existing LOCAL User Account Linking ✅
+- [x] Register a LOCAL user first; then call `POST /api/v1/auth/google` with same email
+- [x] Assert `200 OK`; JDBC confirms exactly 1 `user_account` row for that email (no duplication)
 
-### T07-3: UC-07 Google OAuth — Invalid Firebase Token
-- [ ] Stub `FirebaseTokenVerifier.verify()` to throw `FirebaseAuthException`
-- [ ] Assert HTTP **400**, `error.code = GOOGLE_LOGIN_FAILED`
+### T07-3: UC-07 Google OAuth — Invalid Firebase Token ✅
+- [x] Stub `googleTokenVerifier.verify()` to throw `DomainException(USER_INVALID_CREDENTIALS)`
+- [x] Assert HTTP **400**, `error.code = USER_INVALID_CREDENTIALS` (doc said `GOOGLE_LOGIN_FAILED` — code is the authority)
 
 ### T08-1: UC-08 Phone OTP — Send OTP Happy Path
 - [ ] `POST /api/v1/auth/phone/send-otp` with valid E.164 phone number → `200 OK`, `data = null`

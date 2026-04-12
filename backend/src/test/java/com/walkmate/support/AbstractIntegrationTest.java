@@ -117,7 +117,7 @@ public abstract class AbstractIntegrationTest {
     protected ObjectMapper objectMapper;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    protected JdbcTemplate jdbcTemplate;
 
     /** Ready-to-use token factory; re-created before each test. */
     protected AuthTokenFactory authFactory;
