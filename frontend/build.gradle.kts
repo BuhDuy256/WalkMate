@@ -50,6 +50,12 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -64,6 +70,8 @@ dependencies {
     implementation(libs.swiperefreshlayout)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidxTestCore)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 

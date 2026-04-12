@@ -2,6 +2,8 @@ package com.walkmate.ui.auth.phone;
 
 import android.content.Context;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -18,8 +20,7 @@ public class PhoneOtpViewModel extends ViewModel {
     private final UserRepository userRepository;
     private final Context appContext;
 
-    private final MutableLiveData<PhoneOtpUiState> uiState =
-            new MutableLiveData<>(PhoneOtpUiState.initial());
+    private final MutableLiveData<PhoneOtpUiState> uiState = new MutableLiveData<>(PhoneOtpUiState.initial());
 
     private String lastPhone;
     private CountDownTimer countDownTimer;
@@ -39,14 +40,14 @@ public class PhoneOtpViewModel extends ViewModel {
             return;
         }
 
-        lastPhone = phone.trim();
+        lastPhone = toE164Vietnam(phone.trim());
         uiState.setValue(new PhoneOtpUiState(true, false, false, null, 0));
 
         userRepository.sendOtp(lastPhone, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 uiState.postValue(new PhoneOtpUiState(false, true, false, null, RESEND_COOLDOWN_SECONDS));
-                startResendCountdown();
+                new Handler(Looper.getMainLooper()).post(() -> startResendCountdown());
             }
 
             @Override
@@ -81,8 +82,7 @@ public class PhoneOtpViewModel extends ViewModel {
             public void onError(Exception error) {
                 PhoneOtpUiState cur = uiState.getValue();
                 int cd = cur != null ? cur.getResendCooldownSeconds() : 0;
-                UserErrorMessageMapper.ErrorResult result =
-                        UserErrorMessageMapper.map(error.getMessage());
+                UserErrorMessageMapper.ErrorResult result = UserErrorMessageMapper.map(error.getMessage());
                 String message = appContext.getString(result.messageResId);
                 uiState.postValue(new PhoneOtpUiState(false, true, false, message, cd));
             }
@@ -146,6 +146,15 @@ public class PhoneOtpViewModel extends ViewModel {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Converts a Vietnamese local number (0xxxxxxxxx) to E.164 (+84xxxxxxxxx). */
+    private static String toE164Vietnam(String phone) {
+        if (phone.startsWith("+"))
+            return phone; // already E.164
+        if (phone.startsWith("0"))
+            return "+84" + phone.substring(1);
+        return "+" + phone; // assume country code present but missing +
+    }
 
     private void postError(String message) {
         uiState.setValue(new PhoneOtpUiState(false, false, false, message, 0));
