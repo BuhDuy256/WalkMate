@@ -255,7 +255,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                   AND wi.status              = 'OPEN'
                   AND wi.user_id            != :excludeUserId
                   AND (wi.is_private = false OR wi.invited_friend_id = :callerId)
-                  AND CAST(:callerId AS uuid) != ALL(wi.excluded_user_ids)
+                  AND :callerId != ALL(wi.excluded_user_ids)
                   AND (wi.matching_constraints->>'age_min')::int <= :ageMax
                   AND (wi.matching_constraints->>'age_max')::int >= :ageMin
                   AND wi.time_window_start   < :boundaryEnd
@@ -266,7 +266,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
         return jdbcClient.sql(sql)
                 .param("hotspotId",     UUID.fromString(hotspotId))
                 .param("excludeUserId", UUID.fromString(excludeUserId))
-                .param("callerId",      excludeUserId)
+                .param("callerId",      UUID.fromString(excludeUserId))
                 .param("ageMin",        ageMin)
                 .param("ageMax",        ageMax)
                 .param("boundaryEnd",   Timestamp.from(boundaryEnd))

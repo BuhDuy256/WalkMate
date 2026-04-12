@@ -35,9 +35,10 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
         jdbcClient.sql("""
                         INSERT INTO refresh_token (token_id, user_id, device_id, token_value, created_at, expires_at, revoked)
                         VALUES (:tokenId, :userId, :deviceId, :tokenValue, :createdAt, :expiresAt, :revoked)
-                        ON CONFLICT (token_id) DO UPDATE SET
-                            device_id   = EXCLUDED.device_id,
+                        ON CONFLICT (user_id, device_id) WHERE revoked = false DO UPDATE SET
+                            token_id    = EXCLUDED.token_id,
                             token_value = EXCLUDED.token_value,
+                            created_at  = EXCLUDED.created_at,
                             expires_at  = EXCLUDED.expires_at,
                             revoked     = EXCLUDED.revoked
                         """)
