@@ -77,24 +77,24 @@
 ### T02-2: UC-02 Login — Wrong Credentials ✅
 - [x] Login with wrong password → HTTP **400**, `error.code = USER_INVALID_CREDENTIALS`
 
-### T03-1: UC-03 View My Profile — Authenticated
-- [ ] `GET /api/v1/profile/me` with valid token → `200 OK`, profile fields present
+### T03-1: UC-03 View My Profile — Authenticated ✅
+- [x] `GET /api/v1/profile/me` with valid token → `200 OK`, `data.userId`, `data.fullName`, `data.searchRadius = 5000` (default) present
 
-### T03-2: UC-03 View My Profile — Unauthenticated
-- [ ] Call without token → HTTP **401** (Spring Security, not a domain error)
+### T03-2: UC-03 View My Profile — Unauthenticated ✅
+- [x] Call without token → HTTP **401** (Spring Security gate, not a domain error)
 
-### T04-1: UC-04 Edit My Profile — Happy Path
-- [ ] `PUT /api/v1/profile/me` with valid payload → `200 OK`, returned DTO reflects changes
+### T04-1: UC-04 Edit My Profile — Happy Path ✅
+- [x] `PUT /api/v1/profile/me` with `fullName`, `bio`, `searchRadius`, `tags` → `200 OK`, returned DTO reflects all changes
 
-### T04-2: UC-04 Edit My Profile — Validation Errors
-- [ ] Send `bio` > 500 chars → HTTP **422**, `error.code = VALIDATION_ERROR`
-- [ ] Send `tags` with 11 items → HTTP **422**
+### T04-2: UC-04 Edit My Profile — Validation Errors ✅
+- [x] Send `bio` > 500 chars → HTTP **422**, `error.code = VALIDATION_ERROR`
+- [x] Send `tags` with 11 items → HTTP **422**, `error.code = VALIDATION_ERROR`
 
-### T05-1: UC-05 Upload Avatar — Happy Path
-- [ ] `POST /api/v1/profile/avatar` with valid image bytes as `multipart/form-data` → `200 OK`, `data.avatarUrl` non-null
+### T05-1: UC-05 Upload Avatar — Happy Path ✅
+- [x] `POST /api/v1/profile/avatar` with minimal JPEG bytes as `multipart/form-data` → `200 OK`, `data.avatarUrl` non-null
 
-### T06-1: UC-06 Register FCM Token — Happy Path
-- [ ] `PATCH /api/v1/users/me/fcm-token` with valid token string → `200 OK`, `data = null`
+### T06-1: UC-06 Register FCM Token — Happy Path ✅
+- [x] `PATCH /api/v1/users/me/fcm-token` with valid token string → `200 OK`, `data = null`
 
 ### T07-1: UC-07 Google OAuth — New User Registration ✅
 - [x] Stub `googleTokenVerifier.verify()` to return a controlled `GoogleIdentity` with sub + email + name
@@ -108,39 +108,44 @@
 - [x] Stub `googleTokenVerifier.verify()` to throw `DomainException(USER_INVALID_CREDENTIALS)`
 - [x] Assert HTTP **400**, `error.code = USER_INVALID_CREDENTIALS` (doc said `GOOGLE_LOGIN_FAILED` — code is the authority)
 
-### T08-1: UC-08 Phone OTP — Send OTP Happy Path
-- [ ] `POST /api/v1/auth/phone/send-otp` with valid E.164 phone number → `200 OK`, `data = null`
-- [ ] Assert the OTP record was created in the DB
+### T08-1: UC-08 Phone OTP — Send OTP Happy Path ✅
+- [x] `POST /api/v1/auth/phone/send-otp` with valid E.164 phone number → `200 OK`, `data = null`
+- [x] Assert OTP record created in DB via JDBC (`SELECT COUNT(*) FROM otp_record WHERE phone = ?`)
 
-### T08-2: UC-08 Phone OTP — Invalid Phone Format
-- [ ] Send phone not in E.164 format → HTTP **400**, `error.code = INVALID_USER_DATA`
+### T08-2: UC-08 Phone OTP — Invalid Phone Format ✅
+- [x] Send `"0702341568"` (missing `+` prefix) → HTTP **400**, `error.code = INVALID_USER_DATA`
 
-### T09-1: UC-09 Phone OTP — Verify OTP Happy Path
-- [ ] Seed an OTP record directly in the DB; call `POST /api/v1/auth/phone/verify` with correct code
-- [ ] Assert `200 OK`, `data.accessToken` present, `data.refreshToken` present
+### T09-1: UC-09 Phone OTP — Verify OTP Happy Path ✅
+- [x] Call send-otp; `ArgumentCaptor` on `SmsGateway` mock captures "Your WalkMate OTP is: XXXXXX"; strip non-digits for raw code
+- [x] Call verify-otp with captured code → `200 OK`, `data.accessToken` + `data.refreshToken` present
+- [x] **Production bug fixed:** `JwtTokenProvider.generateToken()` called `.claim("email", null)` for phone-only users; `JwtClaimsSet.Builder` throws `IllegalArgumentException: value cannot be null` — fixed with null guard
 
-### T09-2: UC-09 Phone OTP — Wrong OTP Code
-- [ ] Call verify with wrong 6-digit code → HTTP **400**, `error.code = USER_OTP_INVALID`
+### T09-2: UC-09 Phone OTP — Wrong OTP Code ✅
+- [x] Create valid OTP via send-otp; call verify with `"000000"` → HTTP **400**, `error.code = USER_OTP_INVALID`
 
-### T10-1: UC-10 Logout (This Device)
-- [ ] Login to get a refresh token; call `POST /api/v1/auth/logout` with `deviceId`
-- [ ] Assert `200 OK`; assert the refresh token row for that device is marked invalid/deleted in DB
+### T10-1: UC-10 Logout (This Device) ✅
+- [x] Login to get a refresh token; call `POST /api/v1/auth/logout` with `deviceId`
+- [x] Assert `204 No Content`; assert the refresh token row for that device is deleted from DB
+- [x] **Correction:** controller returns `ResponseEntity.noContent().build()` (204) — fixed from `ResponseEntity.ok()` (200)
 
-### T11-1: UC-11 Logout All Devices
-- [ ] Login from two simulated `deviceId`s; call `POST /api/v1/auth/logout-all`
-- [ ] Assert `200 OK`; assert **all** refresh token rows for that user are invalidated in DB
+### T11-1: UC-11 Logout All Devices ✅
+- [x] Login from two simulated `deviceId`s; call `POST /api/v1/auth/logout-all`
+- [x] Assert `204 No Content`; assert **all** refresh token rows for that user are deleted from DB
+- [x] **Correction:** same — fixed to return 204
 
-### T12-1: UC-12 Silent Token Refresh — Happy Path
-- [ ] Issue a refresh token; call `POST /api/v1/auth/refresh` with it
-- [ ] Assert `200 OK`, new `accessToken` and `refreshToken` returned, old refresh token invalidated (rotation)
+### T12-1: UC-12 Silent Token Refresh — Happy Path ✅
+- [x] Issue a refresh token; call `POST /api/v1/auth/refresh` with it
+- [x] Assert `200 OK`, new `accessToken` and `refreshToken` returned, old token `revoked=true` in DB, new token `revoked=false` in DB
+- [x] **Production bug fixed:** `ON CONFLICT (user_id, device_id) WHERE revoked = false DO UPDATE` does not fire when the new row being inserted has `revoked = true`; partial index predicate is evaluated against the new row, so inserting with `revoked=true` bypasses ON CONFLICT and hits the PK constraint. Fixed by adding `revokeById(UUID tokenId)` (plain `UPDATE SET revoked=true WHERE token_id=?`) and using it in `refreshToken()` instead of `save(existing)`.
 
-### T12-2: UC-12 Silent Token Refresh — Revoked Token
-- [ ] Call `/auth/refresh` with an already-invalidated refresh token → HTTP **401**
+### T12-2: UC-12 Silent Token Refresh — Revoked Token ✅
+- [x] Call `/auth/refresh` with an already-rotated (revoked=true) refresh token → HTTP **400**, `error.code = INVALID_USER_DATA`
+- [x] **Correction:** 400 (DomainException → GlobalExceptionHandler), not 401
 
-### T13-1: UC-13 Set Profile Visibility
-- [ ] `PATCH /api/v1/users/me/visibility` with `"visibility": "PRIVATE"` → `200 OK`
-- [ ] Verify DB row reflects `PRIVATE`
-- [ ] Toggle back to `PUBLIC` → `200 OK`, DB reflects `PUBLIC`
+### T13-1: UC-13 Set Profile Visibility ✅
+- [x] `PATCH /api/v1/users/me/visibility` with `{"mode": "PRIVATE"}` → `200 OK`, `data.visibilityMode = PRIVATE`
+- [x] JDBC confirms `visibility_mode = PRIVATE` in `user_account` table
+- [x] Toggle back to `PUBLIC` → `200 OK`, DB reflects `PUBLIC`
 
 ---
 

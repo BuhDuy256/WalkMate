@@ -9,6 +9,9 @@ public interface RefreshTokenRepository {
 
     Optional<RefreshToken> findByTokenValue(String tokenValue);
 
+    /** Marks the token with the given id as revoked without deleting it (enables reuse detection). */
+    void revokeById(UUID tokenId);
+
     void deleteByUserIdAndDeviceId(UUID userId, String deviceId);
 
     void deleteAllByUserId(UUID userId);

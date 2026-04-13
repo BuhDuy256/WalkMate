@@ -136,9 +136,11 @@ public class UserCommandService {
         User user = userRepository.findById(existing.getUserId().toString())
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
-        // Rotate: mark old token revoked (keeps it detectable), issue new token.
-        existing.revoke();
-        refreshTokenRepository.save(existing);
+        // Rotate: mark old token revoked (keeps it detectable for reuse detection), issue new token.
+        // Uses a direct UPDATE rather than the UPSERT save() — the UPSERT ON CONFLICT predicate
+        // (WHERE revoked = false) is only evaluated against the NEW row being inserted; a row
+        // with revoked=true would bypass the conflict target and hit the primary key constraint.
+        refreshTokenRepository.revokeById(existing.getTokenId());
 
         TokenPair tokenPair    = tokenProvider.generateTokenPair(user);
         Instant   refreshExpiry = Instant.now().plusSeconds(tokenPair.refreshTokenExpiresIn());

@@ -137,8 +137,10 @@ public abstract class AbstractIntegrationTest {
      */
     @BeforeEach
     void resetDatabase() {
+        // hotspot + user_account are FK roots — CASCADE wipes all dependent tables.
+        // otp_record has no FK to either root, so it must be listed explicitly.
         jdbcTemplate.execute(
-                "TRUNCATE TABLE public.hotspot, public.user_account RESTART IDENTITY CASCADE"
+                "TRUNCATE TABLE public.hotspot, public.user_account, public.otp_record RESTART IDENTITY CASCADE"
         );
         authFactory = new AuthTokenFactory(mockMvc, objectMapper);
         dataSeeder  = new TestDataSeeder(jdbcTemplate);

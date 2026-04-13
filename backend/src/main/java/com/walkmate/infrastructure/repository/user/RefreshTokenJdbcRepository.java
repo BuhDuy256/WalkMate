@@ -36,7 +36,6 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
                         INSERT INTO refresh_token (token_id, user_id, device_id, token_value, created_at, expires_at, revoked)
                         VALUES (:tokenId, :userId, :deviceId, :tokenValue, :createdAt, :expiresAt, :revoked)
                         ON CONFLICT (user_id, device_id) WHERE revoked = false DO UPDATE SET
-                            token_id    = EXCLUDED.token_id,
                             token_value = EXCLUDED.token_value,
                             created_at  = EXCLUDED.created_at,
                             expires_at  = EXCLUDED.expires_at,
@@ -64,6 +63,13 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
                 .param("tokenValue", tokenValue)
                 .query((rs, rowNum) -> mapRow(rs))
                 .optional();
+    }
+
+    @Override
+    public void revokeById(UUID tokenId) {
+        jdbcClient.sql("UPDATE refresh_token SET revoked = true WHERE token_id = :tokenId")
+                .param("tokenId", tokenId)
+                .update();
     }
 
     @Override

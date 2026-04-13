@@ -86,3 +86,51 @@ static { postgres.start(); }
 **Rule going forward:** Always start Docker Desktop before running any test class that extends `AbstractIntegrationTest`. This is a developer environment prerequisite, not a code problem.
 
 ---
+
+## 2026-04-13 · Phase 1 · otp_record has no FK — not covered by CASCADE TRUNCATE
+
+### Lesson: Standalone tables with no FK to root tables must be listed explicitly in the TRUNCATE statement
+**What happened:** `PhoneOtpIntegrationTest` tests ran in non-deterministic order. When a test that called `send-otp` ran first, the `otp_record` row was NOT cleaned by the next `@BeforeEach` (TRUNCATE only covered `hotspot` + `user_account`). The subsequent test hit the 60-second OTP rate-limit guard (`USER_OTP_RATE_LIMITED`).
+**Root cause:** `otp_record` has no foreign key to `user_account` or `hotspot`, so `TRUNCATE ... CASCADE` never touches it.
+**Fix:** Added `public.otp_record` explicitly to the TRUNCATE statement in `AbstractIntegrationTest.resetDatabase()`.
+**Rule going forward:** When a new standalone table is added to the schema (no FK to either root), it MUST be added to the TRUNCATE list immediately. Review FK graph whenever adding a migration.
+
+---
+
+## 2026-04-13 · Phase 1 · JwtClaimsSet.Builder.claim() rejects null values
+
+### Lesson: `JwtClaimsSet.Builder.claim(name, value)` throws `IllegalArgumentException: value cannot be null` — phone-only users have no email
+**What happened:** `PhoneOtpIntegrationTest.t09_1` received HTTP 400 `INVALID_ARGUMENT: value cannot be null` when calling `POST /api/v1/auth/phone/verify`. Root cause: `JwtTokenProvider.generateToken()` called `.claim("email", user.getEmail())` unconditionally. Phone-only users (`User.registerWithPhone()`) have `email = null`. Spring Security's `JwtClaimsSet.Builder` uses `Assert.notNull(value, "value cannot be null")` and throws.
+**Fix:** Added a null guard in `JwtTokenProvider.generateToken()` — only add the `email` claim if `user.getEmail() != null`.
+**Production impact:** This was a latent production bug — any phone-registered user attempting to log in would have received a 500-level error on JWT generation.
+**Rule going forward:** Never call `.claim(name, value)` on a `JwtClaimsSet.Builder` with a potentially null value. Guard all optional claims with an explicit null check.
+
+---
+
+## 2026-04-13 · Phase 1 · Logout endpoints return 204, not 200
+
+### Lesson: `POST /auth/logout` and `POST /auth/logout-all` must return `ResponseEntity.noContent().build()` (204 No Content)
+**What happened:** Controllers returned `ResponseEntity.ok(ApiResponse.success(null))` (200). Tests expected 204.
+**Fix:** Changed both logout handlers to `return ResponseEntity.noContent().build()`.
+**Rule going forward:** Endpoints that perform an action with no response body should return 204 No Content. Never return 200 with a null body.
+
+---
+
+## 2026-04-13 · Phase 1 · Partial unique index ON CONFLICT predicate is evaluated against the NEW row
+
+### Lesson: `ON CONFLICT (cols) WHERE predicate DO UPDATE` only fires if the NEW row satisfies the partial index predicate
+**What happened:** `refreshToken()` called `refreshTokenRepository.save(existing)` after `existing.revoke()`. The UPSERT was `ON CONFLICT (user_id, device_id) WHERE revoked = false DO UPDATE`. Since the new row being inserted had `revoked = true`, the partial index predicate evaluated to `false` for the new row, so ON CONFLICT never fired. The INSERT proceeded as a plain INSERT and hit the PRIMARY KEY constraint (`token_id` already existed), throwing `DuplicateKeyException` (HTTP 500).
+**Root cause:** PostgreSQL evaluates the partial index predicate against the PROPOSED new row (EXCLUDED), not the existing row. If the new row does not satisfy `WHERE revoked = false`, the partial index is not an arbiter and ON CONFLICT is not triggered.
+**Fix:** Added `RefreshTokenRepository.revokeById(UUID tokenId)` → `UPDATE refresh_token SET revoked = true WHERE token_id = ?`. Used this direct UPDATE in `refreshToken()` instead of `save(existing)`.
+**Rule going forward:** Never use an UPSERT with a partial index conflict target to UPDATE an existing row to a value that would EXCLUDE it from the partial index. Use a direct UPDATE by primary key instead. This applies to any `ON CONFLICT ... WHERE predicate` pattern where the intended update changes the column(s) in the predicate.
+
+---
+
+## 2026-04-13 · Phase 1 · @MockitoBean in subclass creates a separate Spring context
+
+### Lesson: Declaring `@MockitoBean` in a subclass (not the abstract base) forces Spring to spin up a new application context for that test class
+**What happened:** `PhoneOtpIntegrationTest` declared `@MockitoBean SmsGateway smsGateway` — different from the other Phase 1 test classes that only use the mocks from `AbstractIntegrationTest`. This caused a separate Spring Boot context to boot (new Flyway run, new container port bindings).
+**Trade-off accepted:** The design is intentional (per user instruction — SmsGateway mock belongs in `PhoneOtpIntegrationTest` only). The extra context startup cost (~25s) is acceptable for correct separation of concerns.
+**Rule going forward:** Document when a test class introduces a new `@MockitoBean` beyond what `AbstractIntegrationTest` provides — it always creates a new context. If startup time becomes a problem, consolidate mocks into the base class.
+
+---

@@ -36,15 +36,20 @@ public class JwtTokenProvider implements TokenProvider {
     private String generateToken(User user, long ttlSeconds, String tokenType) {
         Instant now = Instant.now();
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer("walkmate-backend")
                 .subject(user.getUserId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ttlSeconds))
-                .claim("email", user.getEmail())
                 .claim("token_type", tokenType)
-                .claim("jti", UUID.randomUUID().toString())
-                .build();
+                .claim("jti", UUID.randomUUID().toString());
+
+        // Phone-only users have no email — JwtClaimsSet.Builder.claim() rejects null values.
+        if (user.getEmail() != null) {
+            claimsBuilder.claim("email", user.getEmail());
+        }
+
+        JwtClaimsSet claims = claimsBuilder.build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
