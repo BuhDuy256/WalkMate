@@ -436,13 +436,30 @@ Add `isPrivateInvite` parameter to `MatchesViewModel.passProposal()` signature t
 
 ---
 
+### Task 5.5 — Optimistic Locking Error Handling in `acceptProposal()` (UC-20 / Invariant X-5)
+
+**File to modify:** `ui/matches/MatchesViewModel.java` — `acceptProposal()` `onError` callback
+
+**Steps:**
+1. In `MatchesViewModel.acceptProposal()`, after the existing success path, expand the `onError` dispatch to handle the following error codes from `error.code`:
+   - `"PROPOSAL_CONCURRENT_MODIFICATION"` → show Toast "A conflict occurred while confirming the walk. The list has been refreshed." then call `loadAll()` to re-fetch proposals (Invariant X-5: optimistic locking violation).
+   - `"PROPOSAL_INTENT_NO_LONGER_OPEN"` → show Toast "Could not confirm the walk — the intent is no longer available." then call `loadAll()`.
+   - `"PROPOSAL_ALREADY_TERMINAL"` → show Toast "This proposal has already been decided." then post `navigateBackEvent` to exit the proposal detail.
+   - `"PROPOSAL_NOT_PARTICIPANT"` → show Toast "Permission denied." (defensive; should not occur in normal flow).
+   - `"PROPOSAL_NOT_FOUND"` → show Toast "Proposal not found." then post `navigateBackEvent`.
+   - All other codes → generic error Toast.
+2. Confirm that `loadAll()` is already a method on `MatchesViewModel` (or that a re-fetch mechanism exists) — reuse it; do not create a duplicate.
+3. No ViewModel state changes are needed beyond the toast + refresh — the list LiveData will update automatically on `loadAll()` completion.
+
+---
+
 ## Phase 6 — Session Lifecycle Enhancements
 
 **Addresses:** GAP-13, GAP-14, GAP-15, GAP-18, GAP-19
 **Prerequisite:** Phase 0 complete.
 **Goal:** Enforce session invariants in the UI (activation window, 5-min minimum), wire the Chat button, broaden the Report Incident entry points, and add a celebration animation.
 
-### Task 6.1 — Chat Button on Session Detail (GAP-13)
+### Task 6.1 — Chat Button on Session Detail + Cancel Walk Reason Validation (GAP-13, UC-25)
 
 **File to modify:** `ui/matches/session/SessionFragment.java`
 **Layout to modify:** `fragment_session.xml`
@@ -454,6 +471,11 @@ Add `isPrivateInvite` parameter to `MatchesViewModel.passProposal()` signature t
    - Disable and visually grey out when session is in a terminal state (`COMPLETED`, `ABORTED`, `CANCELLED`, `NO_SHOW`).
 3. On click: navigate to `ChatFragment` passing `sessionId` as an argument. Wire `NavController` route from Session to Chat in `nav_graph.xml`.
 4. `ChatViewModel` already exists — confirm it accepts a `sessionId` constructor argument and update `ChatViewModelFactory` if needed.
+5. **Cancel Walk reason validation (UC-25, client-side guard):** In `SessionFragment.showCancelReasonDialog()`, inside the positive button `OnClickListener`:
+   - Read the reason text from the `EditText` input field.
+   - If the trimmed text is `null`, empty, or blank: call `reasonInput.setError("Please provide a reason.")` and **keep the dialog open** (do not dismiss or call the ViewModel).
+   - Only call `viewModel.cancelSession(sessionId, reason.trim())` when the reason is non-empty after trimming.
+6. **Defense-in-depth:** In `MatchesViewModel.cancelSession()` `onError` callback, if `error.code == "VALIDATION_ERROR"`, show a Toast with the parsed error message from `ValidationErrorParser.parse(error.message)` so that any server-side validation failure is surfaced to the user.
 
 ---
 
@@ -503,8 +525,25 @@ Add `isPrivateInvite` parameter to `MatchesViewModel.passProposal()` signature t
 1. In `fragment_session.xml`, add a "Report an Issue" overflow menu item or secondary button. Show it when `session.status == "ACTIVE"`.
 2. In `SessionFragment`, on this action: navigate to `ReportIncidentFragment` passing `sessionId` and `reportedUserId` (partner's ID).
 3. In `SessionHistoryFragment`'s adapter, for each history card with status `COMPLETED`, `ABORTED`, or `NO_SHOW`: show a "Report" option (e.g., in an overflow menu). Navigate to `ReportIncidentFragment` with the same arguments.
-4. Update `ReportIncidentFragment` to accept `sessionId` and `reportedUserId` as navigation arguments (instead of being hard-wired to PostSessionSummary context). No logic changes needed — the ViewModel already accepts these as parameters.
-5. Apply reporting-window guard in `ReportIncidentFragment.onViewCreated()`: if `session.status == "COMPLETED"` and time since completion > 72 hours, show "The reporting window for this session has closed." and disable the form.
+4. Update `ReportIncidentFragment` to accept `sessionId`, `reportedUserId`, `sessionStatus` (String), and `sessionTerminalAtMs` (long) as navigation arguments. All three call sites (SessionFragment active button, SessionHistoryFragment card menu, PostSessionSummary deep-link) must pass these four values.
+5. Apply a **tiered reporting-window guard** in `ReportIncidentFragment.onViewCreated()` (UC-32, Invariant R):
+   ```java
+   long nowMs = System.currentTimeMillis();
+   boolean windowExpired = false;
+   if ("COMPLETED".equals(sessionStatus)) {
+       windowExpired = (nowMs - sessionTerminalAtMs) > 72 * 60 * 60 * 1000L;
+   } else if ("ABORTED".equals(sessionStatus) || "NO_SHOW".equals(sessionStatus)) {
+       windowExpired = (nowMs - sessionTerminalAtMs) > 24 * 60 * 60 * 1000L;
+   }
+   // ACTIVE sessions: windowExpired remains false — reporting always allowed
+   if (windowExpired) {
+       showClosedBanner("The reporting window for this session has closed.");
+       disableForm();
+   }
+   ```
+   - `COMPLETED` sessions: 72-hour window from terminal timestamp.
+   - `ABORTED` / `NO_SHOW` sessions: 24-hour window from terminal timestamp.
+   - `ACTIVE` sessions: no gate — reporting is always open.
 
 ---
 
