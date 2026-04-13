@@ -1,6 +1,7 @@
 package com.walkmate.domain.social;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,4 +46,18 @@ public interface SocialRepository {
      * Used to validate private WalkIntent creation (I-7).
      */
     boolean areAcceptedFriends(UUID userId1, UUID userId2);
+
+    void saveFriendship(Friendship friendship);
+
+    Optional<Friendship> findFriendshipById(String friendshipId);
+
+    Optional<Friendship> findPendingFriendship(UUID requesterId, UUID addresseeId);
+
+    List<Friendship> findIncomingPendingRequests(UUID addresseeId);
+
+    List<Friendship> findOutgoingPendingRequests(UUID requesterId);
+
+    List<UUID> getAcceptedFriendIds(UUID userId);
+
+    void removeFriendship(UUID userId1, UUID userId2);
 }

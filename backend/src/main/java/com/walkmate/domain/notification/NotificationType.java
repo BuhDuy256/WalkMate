@@ -14,5 +14,13 @@ public enum NotificationType {
     PROPOSAL_RECEIVED,
     SESSION_CONFIRMED,
     SESSION_ACTIVE,
-    REVIEW_REQUESTED
+    REVIEW_REQUESTED,
+    /** Sent to the private-invite sender to confirm their invite was dispatched. */
+    INVITE_SENT,
+    /** Sent to the addressee when a user sends a friend request (UC-34). */
+    FRIEND_REQUEST_RECEIVED,
+    /** Sent to the requester when the addressee accepts the friend request (UC-35). */
+    FRIEND_REQUEST_ACCEPTED,
+    /** Sent to the requester when the addressee declines the friend request (UC-35). */
+    FRIEND_REQUEST_DECLINED
 }

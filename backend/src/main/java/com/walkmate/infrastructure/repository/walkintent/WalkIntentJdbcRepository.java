@@ -173,6 +173,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                 FROM walk_intent
                 WHERE user_id = :userId
                   AND status IN ('OPEN', 'MATCHING')
+                  AND is_private = false
                 ORDER BY created_at DESC
                 """;
 

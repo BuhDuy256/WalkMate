@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Domain:** Authentication, Profile Management, and Device Registration
-**Last Updated:** 2026-04-12 (UC-07 to UC-13 added)
+**Last Updated:** 2026-04-13 (synced with backend_use_cases.md auth updates)
 
 ---
 
@@ -38,10 +38,13 @@
 2. UI performs client-side validation (email format, password 8–72 chars, name 1–100 chars).
 3. UI calls `POST /api/v1/auth/register` with payload:
    ```json
-   { "fullname": "...", "email": "...", "password": "..." }
+   { "fullname": "...", "email": "...", "password": "...", "deviceId": "..." }
    ```
-4. Backend returns `201 Created` with `{ "data": { "email": "..." } }`.
-5. UI shows a success banner: "Account created! Please log in." and navigates to Login screen.
+4. Backend returns `201 Created` with a full token payload:
+   ```json
+   { "data": { "accessToken": "...", "tokenType": "Bearer", "expiresIn": 86400000 } }
+   ```
+5. UI stores `accessToken` securely and navigates directly to the Home / Hotspot Map screen (auto-login on register).
 
 **What can go wrong:**
 
@@ -51,9 +54,9 @@
 | Any field fails Jakarta validation | `VALIDATION_ERROR` (422) | Show field-level error messages from `error.message` (a comma-separated string of `field: reason` entries). |
 | Network failure / 500 | `INTERNAL_ERROR` | Show generic toast: "Something went wrong. Please try again." |
 
-**Other activities:** None.
+**Other activities:** Immediately after register, trigger FCM token registration (UC-06) in the background.
 
-**System state on completion:** User account exists in DB with no profile data. UI is on the Login screen.
+**System state on completion:** User account and profile exist in DB. `accessToken` persisted locally. UI is on the Home screen.
 
 ---
 
