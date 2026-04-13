@@ -31,7 +31,7 @@
 | UC-15 | Intent | Create Walk Intent |
 | UC-16 | Intent | View My Active Intents |
 | UC-17 | Intent | Cancel Walk Intent |
-| UC-18 | Intent | Trigger Match (POST /api/v1/intents/{intentId}/match) |
+| UC-18 | Intent | Trigger Match (Internal API, no UI button) |
 | **PROPOSAL NEGOTIATION** | | |
 | UC-19 | Proposal | View Incoming Proposals |
 | UC-20 | Proposal | Accept a Proposal |
@@ -438,7 +438,10 @@
 2. Backend returns `200 OK` with list of hotspots, each including `id`, `name`, `lat`, `lng`, `openIntentCount`.
 3. UI renders hotspot pins on the map. Each pin's visual weight (size or color) reflects `openIntentCount` — more intents = more prominent pin.
 4. User taps a pin to see the hotspot's detail card (name, intent count, "Create Intent" CTA).
-5. Optionally, user taps a hotspot to call `GET /api/v1/hotspots/{id}` for the detail view.
+5. If user taps "Create Intent":
+   - If authenticated and token is valid: navigate to UC-15 with selected hotspot.
+   - If unauthenticated or token expired: clear local session and navigate to Login. After login, return to Create Intent with selected hotspot prefilled.
+6. Optionally, user taps a hotspot to call `GET /api/v1/hotspots/{id}` for the detail view.
 
 **What can go wrong:**
 
@@ -446,10 +449,11 @@
 |-----------|-----------|-------------|
 | Specific hotspot not found | `HOTSPOT_NOT_FOUND` | Show toast: "This hotspot is no longer available." |
 | Network failure | — | Show cached hotspot list with a "Refresh" banner. |
+| User taps "Create Intent" while not authenticated | — (client-side guard) | Navigate to Login/Auth flow instead of calling intent APIs. |
 
 **Other activities:** Refresh hotspot list every time the screen gains focus or the user pulls to refresh.
 
-**System state on completion:** Map is populated with live hotspot data. User can navigate to UC-15 to create an intent at a chosen hotspot.
+**System state on completion:** Map is populated with live hotspot data. Intent creation is protected by auth gate (UC-15 requires authentication).
 
 ---
 
@@ -461,7 +465,7 @@
 
 **Use Case Name:** Create Walk Intent
 
-**Initial assumption:** User is authenticated. User has selected a hotspot from UC-14. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**).
+**Initial assumption:** User is authenticated. User has selected a hotspot from UC-14. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**). If token expired, app must force re-login before this flow.
 
 **Normal:**
 1. User fills in:
@@ -494,6 +498,7 @@
 6. **Case B — Invite Friend (`is_private = true`):**
    - Backend validates invited friend eligibility and overlap constraints for both users.
    - Backend atomically creates sender + receiver intents, sets both to `MATCHING`, creates proposal in `PENDING`.
+   - Receiver intent is a system-generated private intent (not user-authored) and must never appear in public OPEN wait list.
    - Backend auto-accepts sender side by calling `MatchingCommandService.acceptProposal(proposalId, senderId)`.
    - Backend sends push notifications:
      - Sender: invite sent successfully.
@@ -522,7 +527,7 @@
 **System state on completion:**
 - Public no-match: caller intent is `OPEN` and appears in Intent tab (wait list behavior).
 - Public match-found: caller intent is `MATCHING`; proposal exists in `PENDING` and appears in Proposal tab.
-- Private invite: sender and receiver intents are `MATCHING`; proposal exists in `PENDING`; sender is already accepted.
+- Private invite: sender and receiver intents are `MATCHING`; proposal exists in `PENDING`; sender is already accepted. If private proposal is later passed/expired, system-generated private intents are closed (not reopened to public `OPEN`).
 
 ---
 
@@ -538,7 +543,7 @@
 3. UI renders each OPEN intent card showing: hotspot name, time window, age range, and `expires_at` countdown timer.
 4. The Intent tab is the effective wait list: OPEN means "waiting for match".
 5. If a proposal is created for an intent, that intent transitions to `MATCHING` and is removed from this tab; user sees it in Proposal tab (UC-19).
-6. For OPEN intents on this tab: show "Cancel" button (UC-17). Do not show "Find Match" as a primary action.
+6. For OPEN intents on this tab: show only "Cancel" button (UC-17). Do not show any "Find Match"/"Trigger Match" action.
 
 **What can go wrong:**
 
@@ -584,15 +589,15 @@
 
 ### UC-18 — Trigger Match
 
-**Use Case Name:** Trigger Match (Fallback / Manual Non-Invite)
+**Use Case Name:** Trigger Match (Internal API / Non-UI)
 
-**Initial assumption:** This endpoint applies only to non-invite (`is_private = false`) intents and is used as a fallback/manual trigger path. Default product flow performs matching inline in UC-15.
+**Initial assumption:** This endpoint applies only to non-invite (`is_private = false`) intents and is not exposed as a mobile UI action. Android product flow performs matching in UC-15 create flow (inline + async), and Intent screen has no retrigger button.
 
 **Normal:**
 1. Caller invokes `POST /api/v1/intents/{intentId}/match` for an OPEN non-invite intent.
 2. **Case A — Match Found (200 OK):** Backend returns a `MatchProposalResponse` with `status: "PENDING"`.
    - Intent is now `MATCHING` (soft-locked per **I-4**).
-   - UI navigates to the Proposal Detail screen (UC-20/UC-21).
+   - Internal caller may notify client via existing push/channel flow.
 3. **Case B — No Match Yet (204 No Content):** Empty response.
    - Intent remains `OPEN`.
 
@@ -600,14 +605,14 @@
 
 | Condition | Error Code | Invariant | UI Reaction |
 |-----------|-----------|-----------|-------------|
-| Intent is not OPEN (e.g., user tapped too fast after match) | `INVALID_INTENT_DATA` | **I-4** | Show toast: "This intent is already being matched." Refresh list. |
-| Intent not found | `INTENT_NOT_FOUND` | — | Show toast: "Intent not found." Refresh list. |
-| Intent not owned by caller | `INTENT_NOT_OWNER` | — | Show toast: "Permission denied." |
-| Network failure | — | — | Show toast: "Connection error. Please try again." |
+| Intent is not OPEN | `INVALID_INTENT_DATA` | **I-4** | Caller treats as no-op/invalid retry and refreshes state. |
+| Intent not found | `INTENT_NOT_FOUND` | — | Caller refreshes state and aborts retry. |
+| Intent not owned by caller | `INTENT_NOT_OWNER` | — | Caller logs and aborts action. |
+| Network failure | — | — | Retry policy depends on internal caller. |
 
 **Other activities:**
-- This endpoint should not be called immediately after create in normal flow.
-- Backend can push `PROPOSAL_RECEIVED` via FCM when async matching finds a compatible partner.
+- Endpoint is retained for internal retry/ops/testing scenarios only.
+- Android app must not expose this endpoint as a user-triggerable button.
 
 **System state on completion (Case A):** Intent transitions from `OPEN` → `MATCHING`. A `MatchProposal` in `PENDING` status now exists. The 5-minute proposal timeout (**P-4**) has started.
 
@@ -642,7 +647,7 @@
 | Proposal disappears between list and action (expired/rejected concurrently) | Handled at action time by UC-20/UC-21. |
 
 **Other activities:**
-- Show a live countdown timer for each proposal's `expires_at`. If it reaches 0, refresh the list. The proposal will be gone (expired); the intent reverts to `OPEN` (**P-4**).
+- Show a live countdown timer for each proposal's `expires_at`. If it reaches 0, refresh the list. The proposal will be gone (expired); intents transition per **P-4** (public path reopens to `OPEN`, private-invite path closes private intents).
 - Listen to FCM events: `PROPOSAL_RECEIVED` to add proposals, `SESSION_CONFIRMED` to clear proposals and navigate to Session Detail (`PENDING`) when `session_id` is provided in payload.
 
 **System state on completion:** User sees all PENDING proposals. The intent associated with each proposal is in `MATCHING` state (invariant **I-4**).
@@ -704,11 +709,18 @@
 
 **Normal:**
 1. User taps "Pass" (not interested in this match).
-2. UI shows confirmation dialog: "Pass on this match? Your intent will stay active and we'll keep looking for other partners."
+2. UI shows confirmation dialog:
+   - Public proposal: "Pass on this match? Your intent will stay active and we'll keep looking for other partners."
+   - Private invite proposal: "Decline this private invite? This invite will be closed and you will not be added to the public wait list."
 3. User confirms.
 4. UI calls `POST /api/v1/proposals/{proposalId}/pass`.
-5. Backend returns `200 OK` with `{ "data": null }`. Proposal moves to `REJECTED`. Both intents revert to `OPEN` (per state-transition: `MATCHING → OPEN`). The partner's intent is also added to the exclude list per invariant **X-3**, so the matching engine won't pair them again on this intent.
-6. UI navigates back to the Intent tab. The intent now shows as `OPEN` again and waits for another match.
+5. Backend returns `200 OK` with `{ "data": null }`. Proposal moves to `REJECTED`.
+   - Public matching proposal: both intents revert to `OPEN` (`MATCHING → OPEN`).
+   - Private invite proposal: both private intents are closed (`MATCHING → CANCELLED`) and are not surfaced in public wait list.
+   - Exclude list per invariant **X-3** is updated for this proposal pair.
+6. UI navigation:
+   - Public matching: navigate back to Intent tab; intent appears in `OPEN`.
+   - Private invite: navigate back to Proposal/Social context with "Invite declined" state; do not surface receiver in Intent wait list.
 
 **What can go wrong:**
 
@@ -720,7 +732,7 @@
 
 **Other activities:** None.
 
-**System state on completion:** Proposal is `REJECTED`. Both intents revert to `OPEN`. The exclude list is updated (**X-3**) — these two users won't be matched again on this intent run.
+**System state on completion:** Proposal is `REJECTED`. Public path reopens intents to `OPEN`; private-invite path closes private intents (`CANCELLED`) without creating any public wait-list intent. The exclude list is updated (**X-3**) — these two users won't be matched again on this intent run.
 
 ---
 
@@ -861,7 +873,7 @@
 
 **Other activities:** Partner receives a push notification that the session was cancelled.
 
-**System state on completion:** Session is `CANCELLED` (terminal). Chat write access is revoked for `session_id` (**S-7**). User's trust score may be affected (**X-4**).
+**System state on completion:** Session is `CANCELLED` (terminal). Chat write access is revoked for `session_id` (**S-7**). Session-outcome reputation signals are updated per **X-4**.
 
 ---
 
@@ -892,7 +904,8 @@
 **Other activities:**
 - GPS sync loop (UC-28) stops after completion.
 - Gamification: `SessionCompletedEvent` is published server-side; badges may be awarded. Refresh profile stats after a short delay.
-- Trust score update (**X-4**) is applied server-side.
+- Session-outcome reputation update (**X-4**) is applied immediately at terminal transition.
+- Review-based trust adjustment is applied later only if UC-31 review is submitted.
 
 **System state on completion:** Session is `COMPLETED` (terminal). Chat write access is revoked (**S-7**). User can now submit a review (UC-31) and/or report (UC-32, 72-hour window). GPS route data is available (UC-30).
 
@@ -931,7 +944,7 @@
 **Other activities:**
 - GPS sync loop (UC-28) stops.
 - Partner receives push notification about abort.
-- Gamification: `SessionAbortedEvent` published; trust/penalty scores updated (**X-4**).
+- Gamification: `SessionAbortedEvent` published; outcome penalty signals are updated (**X-4**).
 
 **System state on completion:** Session is `ABORTED` (terminal). Chat write access is revoked (**S-7**). User can submit a report within 24 hours (UC-32).
 
@@ -1071,10 +1084,10 @@
 | Rating not 1–5 | `REVIEW_INVALID_RATING` | Enforce client-side with star widget. |
 
 **Other activities:**
-- Server atomically updates reviewee's `trustScore` and evaluates badge eligibility.
+- Server stores review and applies review-based trust adjustment, then recalculates `trustScore`.
 - Optionally refresh the partner's public profile page to show the new trust score.
 
-**System state on completion:** Review exists in DB. Reviewee's trust score is updated (**X-4**). Review appears in `GET /api/v1/users/{revieweeId}/reviews`.
+**System state on completion:** Review exists in DB. Reviewee's trust score is recalculated from session-outcome baseline + review adjustment (**X-4**). Review appears in `GET /api/v1/users/{revieweeId}/reviews`.
 
 ---
 
@@ -1496,7 +1509,7 @@ All API responses follow the `ApiResponse<T>` envelope. This is the **only** err
 | **I-3** | An intent can only reach `CONSUMED` via the proposal acceptance flow (P-3). `CONSUMED` means the intent has been spent to create a WalkSession — it is permanently locked and cannot be cancelled, re-opened, or reused. It is **not** a user-facing error state; it is a silent terminal state. | Never show any action button for a `CONSUMED` intent. Do not surface the word "CONSUMED" to end users — these intents should disappear from active lists. If the API returns `INTENT_NOT_OPEN` for an intent the user tries to act on, refresh silently: the intent has likely been consumed by concurrent proposal acceptance. |
 | **I-4** | MATCHING intents are soft-locked and move out of Intent tab | In Intent tab, only render OPEN intents. Route MATCHING handling to Proposal tab with lock/wait states |
 | **I-6** | Terminal states are immutable | Hide all action buttons for CONSUMED, CANCELLED, EXPIRED intents and COMPLETED, NO_SHOW, CANCELLED, ABORTED sessions |
-| **I-7** | Private intents need accepted friendship | Validate friend selection client-side before submit |
+| **I-7** | Private intents need accepted friendship and must never be publicized | Validate friend selection client-side; if private invite is passed/expired, do not surface receiver in OPEN wait list |
 | **P-2** | Both users must accept proposal | Show "Waiting for partner..." state when only one has accepted |
 | **P-3** | Session creation is atomic on double-accept | Navigate to session screen only when `status: "CONFIRMED"` and `session_id` is present in response |
 | **P-4** | Proposal TTL is 5 minutes | Show live countdown; auto-refresh list when timer hits 0 |
@@ -1507,5 +1520,5 @@ All API responses follow the `ApiResponse<T>` envelope. This is the **only** err
 | **S-7** | Chat locked after terminal state | Disable chat input immediately upon session terminal state |
 | **S-8** | Session time/location are immutable snapshots | Never offer "edit session time" after session creation |
 | **X-3** | Exclude list updated on rejection | After passing a proposal, the same pair won't appear again — no UI action needed |
-| **X-4** | Reputation updated on terminal session | Refresh user stats after session ends |
+| **X-4** | Reputation is updated in 2 stages: session outcome first, review adjustment later | Refresh user stats after session ends, and refresh again after UC-31 review submission |
 | **X-5** | Optimistic locking on all state changes | Handle `PROPOSAL_CONCURRENT_MODIFICATION` with retry toast; never silently discard |

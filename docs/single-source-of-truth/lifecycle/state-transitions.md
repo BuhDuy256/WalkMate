@@ -16,9 +16,10 @@ The **WalkIntent** domain declares a user's availability and intent to participa
 
 | From         | To            | Trigger                                                                      |
 | :----------- | :------------ | :--------------------------------------------------------------------------- |
-| **OPEN**     | **MATCHING**  | System creates a `MatchProposal` from public matching (inline on create, manual trigger, or async matching). |
+| **OPEN**     | **MATCHING**  | System creates a `MatchProposal` from public matching (inline on create or async/internal retry matching). |
 | [None]       | **MATCHING**  | Private invite flow atomically creates paired intents and proposal `PENDING`. |
-| **MATCHING** | **OPEN**      | `MatchProposal` is REJECTED or EXPIRED (User chooses to continue searching). |
+| **MATCHING** | **OPEN**      | Public `MatchProposal` is REJECTED or EXPIRED (user continues searching). |
+| **MATCHING** | **CANCELLED** | Private-invite `MatchProposal` is REJECTED or EXPIRED (close private intents, do not publicize). |
 | **MATCHING** | **CONSUMED**  | `MatchProposal` becomes CONFIRMED (Session created).                         |
 | **MATCHING** | **CANCELLED** | User rejects proposal and chooses to withdraw intent.                        |
 | **OPEN**     | **CANCELLED** | User manually withdraws the intent.                                          |

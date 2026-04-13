@@ -124,7 +124,7 @@
 
 **Other activities:** Partner receives a push notification that the session was cancelled.
 
-**System state on completion:** Session is `CANCELLED` (terminal). Chat write access is revoked for `session_id` (**S-7**). User's trust score may be affected (**X-4**).
+**System state on completion:** Session is `CANCELLED` (terminal). Chat write access is revoked for `session_id` (**S-7**). Session-outcome reputation signals are updated per **X-4**.
 
 ---
 
@@ -155,7 +155,8 @@
 **Other activities:**
 - GPS sync loop (UC-28) stops after completion.
 - Gamification: `SessionCompletedEvent` is published server-side; badges may be awarded. Refresh profile stats after a short delay.
-- Trust score update (**X-4**) is applied server-side.
+- Session-outcome reputation update (**X-4**) is applied immediately at terminal transition.
+- Review-based trust adjustment is applied later only if UC-31 review is submitted.
 
 **System state on completion:** Session is `COMPLETED` (terminal). Chat write access is revoked (**S-7**). User can now submit a review (UC-31) and/or report (UC-32, 72-hour window). GPS route data is available (UC-30).
 
@@ -194,6 +195,6 @@
 **Other activities:**
 - GPS sync loop (UC-28) stops.
 - Partner receives push notification about abort.
-- Gamification: `SessionAbortedEvent` published; trust/penalty scores updated (**X-4**).
+- Gamification: `SessionAbortedEvent` published; outcome penalty signals are updated (**X-4**).
 
 **System state on completion:** Session is `ABORTED` (terminal). Chat write access is revoked (**S-7**). User can submit a report within 24 hours (UC-32).

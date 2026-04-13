@@ -157,6 +157,12 @@
 
 ## PHASE 3 — Walk Intent Test Suite (UC-15 to UC-18)
 
+> Note: UC-18 is internal API only. Android Intent screen must not expose any manual "Trigger Match" button.
+
+### T15-0: UC-15 Create Walk Intent — Unauthenticated Guard
+- [ ] Call `POST /api/v1/intents` without token → HTTP **401** (security gate)
+- [ ] This is the backend contract that supports UC-14 map CTA auth redirect behavior
+
 ### T15-1: UC-15 Create Walk Intent — Happy Path
 - [ ] Authenticated user calls `POST /api/v1/intents` with valid payload (seeded hotspot)
 - [ ] Assert `201 Created`, `data.status = OPEN`, `data.expires_at` non-null
@@ -183,7 +189,7 @@
 
 ### T16-1: UC-16 View My Active Intents
 - [ ] Create two `OPEN` intents; `GET /api/v1/intents` → `200 OK`, list contains both
-- [ ] Assert only `OPEN`/`MATCHING` statuses appear (no `CANCELLED`/`EXPIRED` in response)
+- [ ] Assert only `OPEN` intents are returned (no `MATCHING`/`CANCELLED`/`EXPIRED` in response)
 
 ### T17-1: UC-17 Cancel Walk Intent — Happy Path
 - [ ] Create an `OPEN` intent; `DELETE /api/v1/intents/{intentId}` → `200 OK`
@@ -198,18 +204,18 @@
 - [ ] Create intent as User A; attempt to delete as User B
 - [ ] Assert HTTP **400**, `error.code = INTENT_NOT_OWNER`
 
-### T18-1: UC-18 Trigger Match — No Match Found (204 No Content)
+### T18-1: UC-18 Trigger Match (Internal API) — No Match Found (204 No Content)
 - [ ] Create an `OPEN` intent with no compatible counterpart in DB
 - [ ] `POST /api/v1/intents/{intentId}/match` → `204 No Content`
 - [ ] Intent remains `OPEN` in DB
 
-### T18-2: UC-18 Trigger Match — Match Found (200 OK with Proposal)
+### T18-2: UC-18 Trigger Match (Internal API) — Match Found (200 OK with Proposal)
 - [ ] Seed two compatible `OPEN` intents (User A and User B, same hotspot, overlapping time)
 - [ ] Trigger match for User A's intent → `200 OK`, `data.status = PENDING`
 - [ ] Assert User A's intent status changed to `MATCHING` in DB (Invariant I-4)
 - [ ] Assert a `MatchProposal` row with `PENDING` status exists in DB
 
-### T18-3: UC-18 Trigger Match — Intent Not OPEN (Invariant I-4)
+### T18-3: UC-18 Trigger Match (Internal API) — Intent Not OPEN (Invariant I-4)
 - [ ] Seed a `MATCHING` intent; trigger match again → HTTP **400**, `error.code = INVALID_INTENT_DATA`
 
 ---
@@ -247,8 +253,15 @@
 ### T21-1: UC-21 Pass Proposal — Happy Path (Invariant X-3)
 - [ ] Seed a `PENDING` proposal; User A calls `POST /api/v1/proposals/{proposalId}/pass`
 - [ ] Assert `200 OK`; proposal moves to `REJECTED` in DB
-- [ ] Assert **both** intents revert to `OPEN` in DB
+- [ ] Public proposal path: assert **both** intents revert to `OPEN` in DB
 - [ ] Assert the exclude list is updated (User B should not appear in next match for User A's intent)
+
+### T21-3: UC-21 Pass Private Invite — Do Not Publicize Receiver Intent
+- [ ] Seed private-invite proposal (`is_private = true`) between User A and User B
+- [ ] User B passes proposal via `POST /api/v1/proposals/{proposalId}/pass`
+- [ ] Assert `200 OK`; proposal is `REJECTED`
+- [ ] Assert system-generated private intents are closed (`CANCELLED`) instead of reopening to public `OPEN`
+- [ ] Assert User B does not gain any new public OPEN wait-list intent as a side effect
 
 ### T21-2: UC-21 Pass Proposal — Already Terminal
 - [ ] Pass on a `REJECTED` proposal → HTTP **400**, `error.code = PROPOSAL_ALREADY_TERMINAL`
@@ -357,7 +370,7 @@
 
 ### T31-1: UC-31 Submit Review — Happy Path
 - [ ] Seed a `COMPLETED` session; User A calls `POST /api/v1/sessions/{id}/review` with `rating_stars: 5`
-- [ ] Assert `200 OK`; review row exists in DB; reviewee's `trustScore` updated (Invariant X-4)
+- [ ] Assert `200 OK`; review row exists in DB; reviewee's `trustScore` adjusted by review stage of Invariant X-4
 
 ### T31-2: UC-31 Submit Review — Duplicate Review
 - [ ] Submit review twice → second call returns HTTP **400**, `error.code = REVIEW_ALREADY_SUBMITTED`
@@ -487,7 +500,7 @@
 - [ ] Assert HTTP **400**, `error.code = INTENT_NOT_OPEN` (cannot cancel a CONSUMED intent)
 
 ### INV-I4: MATCHING State Locks Intent
-- [ ] Set an intent to `MATCHING` (via trigger match); attempt `DELETE /api/v1/intents/{id}`
+- [ ] Set an intent to `MATCHING` (via create flow match or internal UC-18); attempt `DELETE /api/v1/intents/{id}`
 - [ ] Assert HTTP **400**, `error.code = INTENT_NOT_OPEN` — the cancel button must be locked
 
 ### INV-I6: Terminal States Are Immutable
@@ -503,7 +516,9 @@
 ### INV-P4: Proposal TTL Expiry
 - [ ] Create a proposal; use `TestDataSeeder` to set `expires_at` to the past
 - [ ] Run the expiry scheduler (or call the scheduled job directly)
-- [ ] Assert proposal is `EXPIRED` in DB; associated intents revert to `OPEN`
+- [ ] Assert proposal is `EXPIRED` in DB
+- [ ] For public proposal: associated intents revert to `OPEN`
+- [ ] For private-invite proposal: associated private intents are closed (`CANCELLED`) and not publicized
 
 ### INV-S3: Activation Window Boundaries
 - [ ] Attempt activation exactly at `scheduledStart − 10 min` → `200 OK` (window just opened)
@@ -515,9 +530,9 @@
 - [ ] Set `started_at` to exactly 5m 00s ago → call complete → `200 OK`, `COMPLETED`
 
 ### INV-X4: Reputation Updated on Session Terminal State
-- [ ] Record User B's `trustScore` before a completed session with a 5-star review
-- [ ] Complete session + submit review; re-fetch User B's stats
-- [ ] Assert `trustScore` has increased
+- [ ] Stage 1 (session outcome): record User B's stats/trust baseline, then transition session to terminal (`COMPLETED`/`ABORTED`/`NO_SHOW`); assert outcome signals are updated immediately
+- [ ] Stage 2 (review adjustment): submit UC-31 review and re-fetch User B's stats
+- [ ] Assert `trustScore` reflects post-review adjustment on top of stage-1 baseline
 
 ### INV-X5: Optimistic Locking on Proposal Acceptance
 - [ ] Simulate two concurrent `accept` calls on the same proposal from both users
@@ -533,21 +548,21 @@
 ### E2E-1: Full Happy Path — Register to Completed Session
 - [ ] **Step 1:** Register User A and User B (UC-01 × 2)
 - [ ] **Step 2:** Login both users, obtain tokens (UC-02 × 2)
-- [ ] **Step 3:** Both users seed hotspot; each creates a compatible `OPEN` intent (UC-15 × 2)
-- [ ] **Step 4:** User A triggers match → proposal created (UC-18), both intents become `MATCHING` (I-4)
+- [ ] **Step 3:** User A creates intent (UC-15)
+- [ ] **Step 4:** User B creates compatible intent (UC-15); assert proposal is created by create-flow matching (no UI trigger call to UC-18)
 - [ ] **Step 5:** User A accepts proposal → `PENDING` (partial, P-2)
 - [ ] **Step 6:** User B accepts proposal → `CONFIRMED`, `WalkSession PENDING` created (P-3), both intents `CONSUMED` (I-3)
 - [ ] **Step 7:** Both users activate within window → session becomes `ACTIVE` (S-2)
 - [ ] **Step 8:** Advance `started_at` 6 min into the past; User A calls complete → `COMPLETED` (S-5)
-- [ ] **Step 9:** User A submits a 5-star review (UC-31); assert User B's `trustScore` updated (X-4)
+- [ ] **Step 9:** User A submits a 5-star review (UC-31); assert User B's `trustScore` reflects review-adjusted X-4 stage
 - [ ] **Final Assert:** Session in `COMPLETED` state; chat is locked (S-7); intents are `CONSUMED` (I-3)
 
 ### E2E-2: Proposal Rejection → Intent Reverts and Rematches
-- [ ] **Step 1:** User A and User B both have `OPEN` intents; match triggered → proposal created
+- [ ] **Step 1:** User A and User B both create compatible intents via UC-15; proposal created through create-flow matching
 - [ ] **Step 2:** User A passes the proposal (UC-21)
-- [ ] **Step 3:** Assert both intents are back to `OPEN`; exclude list updated (X-3)
+- [ ] **Step 3:** Assert public-path intents are back to `OPEN`; exclude list updated (X-3)
 - [ ] **Step 4:** Seed User C with a compatible `OPEN` intent
-- [ ] **Step 5:** User A triggers match again → User C is matched (User B excluded)
+- [ ] **Step 5:** Let create-flow/async matching run; assert User C is matched with User A (User B excluded)
 - [ ] **Final Assert:** New proposal exists between User A and User C
 
 ### E2E-3: Emergency Abort → Report Window

@@ -105,11 +105,18 @@
 
 **Normal:**
 1. User taps "Pass" (not interested in this match).
-2. UI shows confirmation dialog: "Pass on this match? Your intent will stay active and we'll keep looking for other partners."
+2. UI shows confirmation dialog:
+   - Public proposal: "Pass on this match? Your intent will stay active and we'll keep looking for other partners."
+   - Private invite proposal: "Decline this private invite? This invite will be closed and you will not be added to the public wait list."
 3. User confirms.
 4. UI calls `POST /api/v1/proposals/{proposalId}/pass`.
-5. Backend returns `200 OK` with `{ "data": null }`. Proposal moves to `REJECTED`. Both intents revert to `OPEN` (per state-transition: `MATCHING → OPEN`). The partner's intent is also added to the exclude list per invariant **X-3**, so the matching engine won't pair them again on this intent.
-6. UI navigates back to the Intent tab. The intent now shows as `OPEN` again and waits for another match.
+5. Backend returns `200 OK` with `{ "data": null }`. Proposal moves to `REJECTED`.
+   - Public matching proposal: both intents revert to `OPEN` (`MATCHING → OPEN`).
+   - Private invite proposal: both private intents are closed (`MATCHING → CANCELLED`) and are not surfaced in public wait list.
+   - Exclude list per invariant **X-3** is updated for this proposal pair.
+6. UI navigation:
+   - Public matching: navigate back to Intent tab; intent appears in `OPEN`.
+   - Private invite: navigate back to Proposal/Social context with "Invite declined" state; do not surface receiver in Intent wait list.
 
 **What can go wrong:**
 
@@ -121,7 +128,7 @@
 
 **Other activities:** None.
 
-**System state on completion:** Proposal is `REJECTED`. Both intents revert to `OPEN`. The exclude list is updated (**X-3**) — these two users won't be matched again on this intent run.
+**System state on completion:** Proposal is `REJECTED`. Public path reopens intents to `OPEN`; private-invite path closes private intents (`CANCELLED`) without creating any public wait-list intent. The exclude list is updated (**X-3**) — these two users won't be matched again on this intent run.
 
 ---
 

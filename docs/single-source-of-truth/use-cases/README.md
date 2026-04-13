@@ -49,7 +49,7 @@
 | UC-15 | Intent | Create Walk Intent | [intent_use_cases.md](intent_use_cases.md#uc-15--create-walk-intent) |
 | UC-16 | Intent | View My Active Intents | [intent_use_cases.md](intent_use_cases.md#uc-16--view-my-active-intents) |
 | UC-17 | Intent | Cancel Walk Intent | [intent_use_cases.md](intent_use_cases.md#uc-17--cancel-walk-intent) |
-| UC-18 | Intent | Trigger Match | [intent_use_cases.md](intent_use_cases.md#uc-18--trigger-match) |
+| UC-18 | Intent | Trigger Match (Internal API) | [intent_use_cases.md](intent_use_cases.md#uc-18--trigger-match) |
 | **PROPOSAL NEGOTIATION** | | | |
 | UC-19 | Proposal | View Incoming Proposals | [proposal_use_cases.md](proposal_use_cases.md#uc-19--view-incoming-proposals) |
 | UC-20 | Proposal | Accept a Proposal | [proposal_use_cases.md](proposal_use_cases.md#uc-20--accept-a-proposal) |

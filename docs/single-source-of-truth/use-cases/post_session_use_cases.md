@@ -103,10 +103,10 @@
 | Rating not 1–5 | `REVIEW_INVALID_RATING` | Enforce client-side with star widget. |
 
 **Other activities:**
-- Server atomically updates reviewee's `trustScore` and evaluates badge eligibility.
+- Server stores review and applies review-based trust adjustment, then recalculates `trustScore`.
 - Optionally refresh the partner's public profile page to show the new trust score.
 
-**System state on completion:** Review exists in DB. Reviewee's trust score is updated (**X-4**). Review appears in `GET /api/v1/users/{revieweeId}/reviews`.
+**System state on completion:** Review exists in DB. Reviewee's trust score is recalculated from session-outcome baseline + review adjustment (**X-4**). Review appears in `GET /api/v1/users/{revieweeId}/reviews`.
 
 ---
 

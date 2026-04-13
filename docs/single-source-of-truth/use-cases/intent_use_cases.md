@@ -14,7 +14,7 @@
 | UC-15 | [Create Walk Intent](#uc-15--create-walk-intent) | `POST /api/v1/intents` |
 | UC-16 | [View My Active Intents](#uc-16--view-my-active-intents) | `GET /api/v1/intents` |
 | UC-17 | [Cancel Walk Intent](#uc-17--cancel-walk-intent) | `DELETE /api/v1/intents/{intentId}` |
-| UC-18 | [Trigger Match](#uc-18--trigger-match) | `POST /api/v1/intents/{intentId}/match` |
+| UC-18 | [Trigger Match (Internal API)](#uc-18--trigger-match) | `POST /api/v1/intents/{intentId}/match` |
 
 ---
 
@@ -22,7 +22,7 @@
 
 **Use Case Name:** Create Walk Intent
 
-**Initial assumption:** User is authenticated. User has selected a hotspot from UC-14. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**).
+**Initial assumption:** User is authenticated. User has selected a hotspot from UC-14. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**). If token expired, app must force re-login before this flow.
 
 **Normal:**
 1. User fills in:
@@ -55,6 +55,7 @@
 6. **Case B — Invite Friend (`is_private = true`):**
    - Backend validates invited friend eligibility and overlap constraints for both users.
    - Backend atomically creates sender + receiver intents, sets both to `MATCHING`, creates proposal in `PENDING`.
+   - Receiver intent is a system-generated private intent (not user-authored) and must never appear in public OPEN wait list.
    - Backend auto-accepts sender side by calling `MatchingCommandService.acceptProposal(proposalId, senderId)`.
    - Backend sends push notifications:
      - Sender: invite sent successfully.
@@ -83,7 +84,7 @@
 **System state on completion:**
 - Public no-match: caller intent is `OPEN` and appears in Intent tab (wait list behavior).
 - Public match-found: caller intent is `MATCHING`; proposal exists in `PENDING` and appears in Proposal tab.
-- Private invite: sender and receiver intents are `MATCHING`; proposal exists in `PENDING`; sender is already accepted.
+- Private invite: sender and receiver intents are `MATCHING`; proposal exists in `PENDING`; sender is already accepted. If private proposal is later passed/expired, system-generated private intents are closed (not reopened to public `OPEN`).
 
 ---
 
@@ -99,7 +100,7 @@
 3. UI renders each OPEN intent card showing: hotspot name, time window, age range, and `expires_at` countdown timer.
 4. The Intent tab is the effective wait list: OPEN means "waiting for match".
 5. If a proposal is created for an intent, that intent transitions to `MATCHING` and is removed from this tab; user sees it in Proposal tab (UC-19).
-6. For OPEN intents on this tab: show "Cancel" button (UC-17). Do not show "Find Match" as a primary action.
+6. For OPEN intents on this tab: show only "Cancel" button (UC-17). Do not show any "Find Match"/"Trigger Match" action.
 
 **What can go wrong:**
 
@@ -145,15 +146,15 @@
 
 ### UC-18 — Trigger Match
 
-**Use Case Name:** Trigger Match (Fallback / Manual Non-Invite)
+**Use Case Name:** Trigger Match (Internal API / Non-UI)
 
-**Initial assumption:** This endpoint applies only to non-invite (`is_private = false`) intents and is used as a fallback/manual trigger path. Default product flow performs matching inline in UC-15.
+**Initial assumption:** This endpoint applies only to non-invite (`is_private = false`) intents and is not exposed as a mobile UI action. Android product flow performs matching in UC-15 create flow (inline + async), and Intent screen has no retrigger button.
 
 **Normal:**
 1. Caller invokes `POST /api/v1/intents/{intentId}/match` for an OPEN non-invite intent.
 2. **Case A — Match Found (200 OK):** Backend returns a `MatchProposalResponse` with `status: "PENDING"`.
    - Intent is now `MATCHING` (soft-locked per **I-4**).
-   - UI navigates to the Proposal Detail screen (UC-20/UC-21).
+   - Internal caller may notify client via existing push/channel flow.
 3. **Case B — No Match Yet (204 No Content):** Empty response.
    - Intent remains `OPEN`.
 
@@ -161,13 +162,13 @@
 
 | Condition | Error Code | Invariant | UI Reaction |
 |-----------|-----------|-----------|-------------|
-| Intent is not OPEN (e.g., user tapped too fast after match) | `INVALID_INTENT_DATA` | **I-4** | Show toast: "This intent is already being matched." Refresh list. |
-| Intent not found | `INTENT_NOT_FOUND` | — | Show toast: "Intent not found." Refresh list. |
-| Intent not owned by caller | `INTENT_NOT_OWNER` | — | Show toast: "Permission denied." |
-| Network failure | — | — | Show toast: "Connection error. Please try again." |
+| Intent is not OPEN | `INVALID_INTENT_DATA` | **I-4** | Caller treats as no-op/invalid retry and refreshes state. |
+| Intent not found | `INTENT_NOT_FOUND` | — | Caller refreshes state and aborts retry. |
+| Intent not owned by caller | `INTENT_NOT_OWNER` | — | Caller logs and aborts action. |
+| Network failure | — | — | Retry policy depends on internal caller. |
 
 **Other activities:**
-- This endpoint should not be called immediately after create in normal flow.
-- Backend can push `PROPOSAL_RECEIVED` via FCM when async matching finds a compatible partner.
+- Endpoint is retained for internal retry/ops/testing scenarios only.
+- Android app must not expose this endpoint as a user-triggerable button.
 
 **System state on completion (Case A):** Intent transitions from `OPEN` → `MATCHING`. A `MatchProposal` in `PENDING` status now exists. The 5-minute proposal timeout (**P-4**) has started.

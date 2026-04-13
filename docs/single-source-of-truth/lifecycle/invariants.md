@@ -12,7 +12,7 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 - **I-4 Khóa ghép đôi (Matching Lock):** Khi một Intent chuyển sang trạng thái `MATCHING`, nó phải được đánh dấu để loại khỏi kết quả của Matching Engine.
 - **I-5 Lan tỏa hết hạn:** Khi một `WalkIntent` chuyển sang `EXPIRED`, tất cả các `MatchProposal` liên quan đang ở trạng thái `PENDING` phải tự động chuyển sang `EXPIRED`.
 - **I-6 Trạng thái cuối bất biến:** Các trạng thái `CONSUMED`, `CANCELLED`, và `EXPIRED` là trạng thái cuối. Không được phép có bất kỳ sự thay đổi trạng thái nào sau khi đã đạt đến các mức này.
-- **I-7 Tính riêng tư (Bổ sung):** Nếu `is_private = true`, Intent này tuyệt đối không được xuất hiện trong kết quả tìm kiếm công khai. Nó chỉ có thể được kết nối thông qua `invited_friend_id`.
+- **I-7 Tính riêng tư (Bổ sung):** Nếu `is_private = true`, Intent này tuyệt đối không được xuất hiện trong kết quả tìm kiếm công khai. Nó chỉ có thể được kết nối thông qua `invited_friend_id`. Với private invite, intent phía receiver do hệ thống tạo cũng bị ràng buộc tương tự và không bao giờ được đẩy sang waitlist `OPEN` công khai.
 
 ---
 
@@ -25,7 +25,7 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
   2. Tạo `WalkSession` (Copy/Snapshot dữ liệu từ Intent sang).
   3. Tạo Chat Room ảo trên MongoDB (Sử dụng `session_id` làm khóa).
   4. Chuyển cả 2 Intent sang trạng thái `CONSUMED`.
-- **P-4 Giới hạn thời gian chờ (Timeout):** Giữ nguyên tối đa 5 phút. Nếu quá hạn mà chưa đủ 2 bên chấp nhận, lời mời chuyển sang `EXPIRED`, trả Intent về `OPEN` và xóa đánh dấu Matching Lock.
+- **P-4 Giới hạn thời gian chờ (Timeout):** Giữ nguyên tối đa 5 phút. Nếu quá hạn mà chưa đủ 2 bên chấp nhận, lời mời chuyển sang `EXPIRED` và xóa đánh dấu Matching Lock. Hậu quả intent theo ngữ cảnh: public matching thì trả về `OPEN`; private invite thì đóng intent private về `CANCELLED` (không public hóa).
 - **P-5 Tính duy nhất của Session:** Một lời mời chỉ được phép tạo ra tối đa một `WalkSession`.
 
 ---
@@ -48,5 +48,7 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 - **X-1 Nguồn sự thật (Xóa bỏ/Thay thế):** Xóa bỏ ràng buộc dựa trên bảng `UserSchedule`. Thay thế bằng: Logic Overlap Check tập trung tại Domain Service. Mọi hành động tạo Intent hoặc Session đều phải gọi qua Service này để kiểm tra chéo giữa bảng `WalkIntent` và `WalkSession`.
 - **X-2 Bàn giao trách nhiệm lịch trình (Hand-off):** Khi Intent chuyển sang `CONSUMED`, bản ghi lịch trình tương ứng phải được cập nhật ngay lập tức để trỏ tới `WalkSession` mới tạo. Tuyệt đối không được xóa và tạo mới để tránh làm mất "khóa" thời gian (Time Lock).
 - **X-3 Danh sách loại trừ (Exclude List):** Nếu User A từ chối lời mời từ User B, hệ thống phải cập nhật danh sách loại trừ của Intent đó để Matching Engine không ghép cặp hai người này lại trong cùng một yêu cầu.
-- **X-4 Hệ thống uy tín:** Kết quả của Session (`COMPLETED`, `NO_SHOW`, `ABORTED`) phải được cập nhật vào hồ sơ uy tín của người dùng ngay lập tức để phục vụ các lần ghép đôi sau này.
+- **X-4 Hệ thống uy tín (2 giai đoạn):**
+  1. **Session-outcome update (ngay lập tức):** Khi Session đi vào trạng thái kết thúc (`COMPLETED`, `NO_SHOW`, `ABORTED`, `CANCELLED`), hệ thống cập nhật tín hiệu uy tín nền tảng để phục vụ matching.
+  2. **Review-based adjustment (hậu kiểm):** Khi có review (UC-31), hệ thống áp dụng điều chỉnh theo `rating_stars` và tính lại `trustScore` hiển thị.
 - **X-5 Versioning (Bổ sung):** Mọi hành động cập nhật trạng thái trên `WalkIntent`, `MatchProposal`, và `WalkSession` phải kiểm tra trường `version` (Optimistic Locking). Nếu `version` ở DB khác với `version` ở Request, hệ thống phải từ chối thao tác để tránh xung đột dữ liệu khi 2 người dùng thao tác cùng lúc.
