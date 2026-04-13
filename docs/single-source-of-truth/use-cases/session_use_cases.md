@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Domain:** Walk Session Lifecycle Management
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -11,19 +11,19 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-16 | [View Active Sessions](#uc-16--view-active-sessions) | `GET /api/v1/sessions/active` |
-| UC-17 | [Activate Session (Arrive at Hotspot)](#uc-17--activate-session-arrive-at-hotspot) | `POST /api/v1/sessions/{sessionId}/activate` |
-| UC-18 | [Cancel a Pending Session](#uc-18--cancel-a-pending-session) | `POST /api/v1/sessions/{sessionId}/cancel` |
-| UC-19 | [Complete Walk Session (User-initiated)](#uc-19--complete-walk-session-user-initiated) | `POST /api/v1/sessions/{sessionId}/complete` |
-| UC-20 | [Abort Active Session (Emergency)](#uc-20--abort-active-session-emergency) | `POST /api/v1/sessions/{sessionId}/abort` |
+| UC-23 | [View Active Sessions](#uc-23--view-active-sessions) | `GET /api/v1/sessions/active` |
+| UC-24 | [Activate Session (Arrive at Hotspot)](#uc-24--activate-session-arrive-at-hotspot) | `POST /api/v1/sessions/{sessionId}/activate` |
+| UC-25 | [Cancel a Pending Session](#uc-25--cancel-a-pending-session) | `POST /api/v1/sessions/{sessionId}/cancel` |
+| UC-26 | [Complete Walk Session (User-initiated)](#uc-26--complete-walk-session-user-initiated) | `POST /api/v1/sessions/{sessionId}/complete` |
+| UC-27 | [Abort Active Session (Emergency)](#uc-27--abort-active-session-emergency) | `POST /api/v1/sessions/{sessionId}/abort` |
 
 ---
 
-### UC-16 — View Active Sessions
+### UC-23 — View Active Sessions
 
 **Use Case Name:** View Active Sessions
 
-**Initial assumption:** User is authenticated. User has at least one session in `PENDING` or `ACTIVE` status (navigated here after UC-13 success, or from bottom nav).
+**Initial assumption:** User is authenticated. User has at least one session in `PENDING` or `ACTIVE` status (navigated here after UC-20 success, or from bottom nav).
 
 **Normal:**
 1. UI calls `GET /api/v1/sessions/active`.
@@ -33,13 +33,14 @@
    - `scheduled_start` countdown timer
    - Partner's name/avatar
    - Activation window: `[scheduledStart − 10 min, scheduledStart + 15 min]` (invariant **S-3**)
-   - "I'm Here!" button (enabled only within activation window) → triggers UC-17
-   - "Cancel Walk" button → triggers UC-18
+   - "I'm Here!" button (enabled only within activation window) → triggers UC-24
+   - "Cancel Walk" button → triggers UC-25
 4. For each `ACTIVE` session, UI shows:
    - Live map with partner's last known location
    - Walk duration timer (started at `started_at`)
-   - "Complete Walk" button (enabled only after 5 minutes of walking, per **S-5**) → triggers UC-19
-   - "Emergency Abort" button → triggers UC-20
+   - "Complete Walk" button (enabled only after 5 minutes of walking, per **S-5**) → triggers UC-26
+   - "Emergency Abort" button → triggers UC-27
+   - "Report an Issue" action → triggers UC-32
 
 **What can go wrong:**
 
@@ -49,14 +50,16 @@
 | Network failure | Show last cached session state. |
 
 **Other activities:**
-- Poll `GET /api/v1/sessions/active` every 30 seconds, OR listen for FCM `SESSION_ACTIVE` to detect when partner activates and session transitions to `ACTIVE`.
-- When session is `ACTIVE`, start the background GPS sync task (UC-21).
+- Poll `GET /api/v1/sessions/active` every 30 seconds.
+- Listen for FCM `SESSION_CONFIRMED` to refresh and surface newly created `PENDING` sessions.
+- Listen for FCM `SESSION_ACTIVE` to detect when partner activates and a `PENDING` session transitions to `ACTIVE`.
+- When session is `ACTIVE`, start the background GPS sync task (UC-28).
 
 **System state on completion:** UI reflects live session states. Chat icon is enabled for sessions in `PENDING` or `ACTIVE` status (invariant **S-7**).
 
 ---
 
-### UC-17 — Activate Session (Arrive at Hotspot)
+### UC-24 — Activate Session (Arrive at Hotspot)
 
 **Use Case Name:** Activate Session (Arrive at Hotspot)
 
@@ -72,7 +75,7 @@
 5. **Case B — Mutual Activation (200 OK, `status: "ACTIVE"`):** Both users have now activated.
    - `started_at` is set. Walk timer begins.
    - UI transitions to the Active Walk view (map, timer, abort/complete buttons).
-   - GPS sync loop (UC-21) starts.
+   - GPS sync loop (UC-28) starts.
    - Chat is confirmed open (**S-7**).
 
 **What can go wrong:**
@@ -87,13 +90,13 @@
 
 **Other activities:**
 - After Case A, poll `GET /api/v1/sessions/active` every 15 seconds to detect when partner activates (or listen to FCM `SESSION_ACTIVE` notification).
-- On Case B, start GPS sync (UC-21).
+- On Case B, start GPS sync (UC-28).
 
 **System state on completion (Case B):** Session moves `PENDING` → `ACTIVE` (invariant **S-2**). `started_at` is set. 4-hour auto-close safety limit begins (**S-6**). Chat remains open (**S-7**).
 
 ---
 
-### UC-18 — Cancel a Pending Session
+### UC-25 — Cancel a Pending Session
 
 **Use Case Name:** Cancel a Pending Session
 
@@ -108,7 +111,7 @@
    { "reason": "I can't make it today." }
    ```
 5. Backend returns `200 OK`. Session moves to `CANCELLED` (terminal). Chat room is closed server-side.
-6. UI navigates to Session History (UC-22). Chat input is locked.
+6. UI navigates to Session History (UC-29). Chat input is locked.
 
 **What can go wrong:**
 
@@ -125,7 +128,7 @@
 
 ---
 
-### UC-19 — Complete Walk Session (User-initiated)
+### UC-26 — Complete Walk Session (User-initiated)
 
 **Use Case Name:** Complete Walk Session
 
@@ -137,7 +140,7 @@
 3. UI calls `POST /api/v1/sessions/{sessionId}/complete`.
 4. Backend validates the 5-minute minimum (**S-5**) and returns `200 OK` with the final `WalkSessionResponse`.
 5. UI navigates to a "Walk Completed!" summary screen showing total distance, duration, and partner's name.
-6. UI prompts user to leave a review (navigates to UC-24 flow).
+6. UI prompts user to leave a review (navigates to UC-31 flow).
 7. Chat input is locked (**S-7**).
 
 **What can go wrong:**
@@ -150,15 +153,15 @@
 | User not a participant | `SESSION_NOT_PARTICIPANT` | — | Show toast: "Permission denied." |
 
 **Other activities:**
-- GPS sync loop (UC-21) stops after completion.
+- GPS sync loop (UC-28) stops after completion.
 - Gamification: `SessionCompletedEvent` is published server-side; badges may be awarded. Refresh profile stats after a short delay.
 - Trust score update (**X-4**) is applied server-side.
 
-**System state on completion:** Session is `COMPLETED` (terminal). Chat write access is revoked (**S-7**). User can now submit a review (UC-24) and/or report (UC-25, 72-hour window). GPS route data is available (UC-23).
+**System state on completion:** Session is `COMPLETED` (terminal). Chat write access is revoked (**S-7**). User can now submit a review (UC-31) and/or report (UC-32, 72-hour window). GPS route data is available (UC-30).
 
 ---
 
-### UC-20 — Abort Active Session (Emergency)
+### UC-27 — Abort Active Session (Emergency)
 
 **Use Case Name:** Abort Active Session
 
@@ -177,7 +180,7 @@
    { "reason": "SAFETY_CONCERN" }
    ```
 5. Backend returns `200 OK`. Session moves to `ABORTED` (terminal). `SessionAbortedEvent` is published.
-6. UI navigates to a "Walk Aborted" screen with a safety message and option to submit a report (UC-25, 24-hour window).
+6. UI navigates to a "Walk Aborted" screen with a safety message and option to submit a report (UC-32, 24-hour window).
 
 **What can go wrong:**
 
@@ -189,8 +192,8 @@
 | User not a participant | `SESSION_NOT_PARTICIPANT` | — | Show toast: "Permission denied." |
 
 **Other activities:**
-- GPS sync loop (UC-21) stops.
+- GPS sync loop (UC-28) stops.
 - Partner receives push notification about abort.
 - Gamification: `SessionAbortedEvent` published; trust/penalty scores updated (**X-4**).
 
-**System state on completion:** Session is `ABORTED` (terminal). Chat write access is revoked (**S-7**). User can submit a report within 24 hours (UC-25).
+**System state on completion:** Session is `ABORTED` (terminal). Chat write access is revoked (**S-7**). User can submit a report within 24 hours (UC-32).

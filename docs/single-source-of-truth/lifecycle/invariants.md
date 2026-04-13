@@ -7,7 +7,7 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 ## 1. Ràng buộc đối với WalkIntent (Nhu cầu)
 
 - **I-1 Cấm chồng lấn thời gian (Cập nhật):** Vì đã bỏ bảng UserSchedule, logic kiểm tra chồng lấn (Overlap) phải thực hiện truy vấn đồng thời trên bảng `WalkIntent` (status `OPEN`, `MATCHING`) và `WalkSession` (status `PENDING`, `ACTIVE`) của cùng một người dùng.
-- **I-2 Điều kiện ghép đôi:** Một `MatchProposal` chỉ được phép khởi tạo khi cả hai `WalkIntent` tham gia đều đang ở trạng thái `OPEN`, có vị trí (Hotspot) phù hợp và khung giờ giao nhau hợp lệ.
+- **I-2 Điều kiện ghép đôi:** Một `MatchProposal` có thể khởi tạo theo 2 đường hợp lệ: (a) Public matching: cả hai `WalkIntent` đang `OPEN` và tương thích hotspot/khung giờ; (b) Private invite: hệ thống atomically tạo cặp intent cho sender/receiver rồi đưa vào `MATCHING` để gắn với proposal `PENDING`.
 - **I-3 Quy trình tiêu thụ (Consumption):** Một `WalkIntent` chỉ có thể chuyển sang trạng thái `CONSUMED` từ trạng thái `MATCHING`. Luồng chuyển đổi trực tiếp từ `OPEN` sang `CONSUMED` bị nghiêm cấm để đảm bảo tính an toàn của giao dịch.
 - **I-4 Khóa ghép đôi (Matching Lock):** Khi một Intent chuyển sang trạng thái `MATCHING`, nó phải được đánh dấu để loại khỏi kết quả của Matching Engine.
 - **I-5 Lan tỏa hết hạn:** Khi một `WalkIntent` chuyển sang `EXPIRED`, tất cả các `MatchProposal` liên quan đang ở trạng thái `PENDING` phải tự động chuyển sang `EXPIRED`.
@@ -18,8 +18,8 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 
 ## 2. Ràng buộc đối với MatchProposal (Lời mời)
 
-- **P-1 Bối cảnh khởi tạo:** Tại thời điểm tạo lời mời, cả hai Intent liên quan bắt buộc phải ở trạng thái `OPEN`. Ngay sau khi tạo, hệ thống phải chuyển cả hai Intent sang `MATCHING`.
-- **P-2 Điều kiện xác nhận (Confirmation):** Lời mời chỉ được chuyển sang `CONFIRMED` khi và chỉ khi cả hai người dùng đã nhấn Chấp nhận (Accept) VÀ cả hai Intent vẫn đang ở trạng thái `MATCHING`.
+- **P-1 Bối cảnh khởi tạo:** Lời mời có thể được tạo từ 2 ngữ cảnh hợp lệ: (a) Match Engine ghép hai intent `OPEN`; (b) luồng private invite tạo proposal ngay trong transaction tạo intent. Sau khi tạo proposal, cả hai intent phải ở `MATCHING`.
+- **P-2 Điều kiện xác nhận (Confirmation):** Lời mời chỉ được chuyển sang `CONFIRMED` khi và chỉ khi cả hai phía đã ở trạng thái accepted (bao gồm cả auto-accept của sender trong private invite flow) VÀ cả hai Intent vẫn đang ở trạng thái `MATCHING`.
 - **P-3 Giao dịch nguyên tử (Cập nhật):** Việc chuyển lời mời sang `CONFIRMED` phải là một Atomic Transaction bao gồm:
   1. Kiểm tra trạng thái `MATCHING` của 2 Intent.
   2. Tạo `WalkSession` (Copy/Snapshot dữ liệu từ Intent sang).

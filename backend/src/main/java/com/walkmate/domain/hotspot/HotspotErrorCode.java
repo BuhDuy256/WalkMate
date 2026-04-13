@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum HotspotErrorCode implements ErrorCode {
-    HOTSPOT_NOT_FOUND("Hotspot not found");
+    HOTSPOT_NOT_FOUND("Hotspot not found"),
+    NO_HOTSPOT_AVAILABLE("No hotspots available");
 
     private final String message;
 

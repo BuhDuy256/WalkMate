@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Domain:** Session History, Route Replay, Reviews, and Incident Reports
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -11,14 +11,14 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-22 | [View Session History](#uc-22--view-session-history) | `GET /api/v1/sessions/history` |
-| UC-23 | [View Session Route Replay](#uc-23--view-session-route-replay) | `GET /api/v1/sessions/{sessionId}/route` |
-| UC-24 | [Submit a Review](#uc-24--submit-a-review) | `POST /api/v1/sessions/{sessionId}/review` |
-| UC-25 | [Submit an Incident Report](#uc-25--submit-an-incident-report) | `POST /api/v1/sessions/{sessionId}/report` |
+| UC-29 | [View Session History](#uc-29--view-session-history) | `GET /api/v1/sessions/history` |
+| UC-30 | [View Session Route Replay](#uc-30--view-session-route-replay) | `GET /api/v1/sessions/{sessionId}/route` |
+| UC-31 | [Submit a Review](#uc-31--submit-a-review) | `POST /api/v1/sessions/{sessionId}/review` |
+| UC-32 | [Submit an Incident Report](#uc-32--submit-an-incident-report) | `POST /api/v1/sessions/{sessionId}/report` |
 
 ---
 
-### UC-22 — View Session History
+### UC-29 — View Session History
 
 **Use Case Name:** View Session History
 
@@ -32,7 +32,7 @@
    - Partner name (fetch from `GET /api/v1/users/{partner_id}` or cache)
    - Status badge (COMPLETED, NO_SHOW, CANCELLED, ABORTED)
    - Total distance and duration (shown for COMPLETED; "—" for others)
-4. Tapping a card navigates to session detail, with options for route replay (UC-23), review (UC-24), or report (UC-25) depending on status and time window.
+4. Tapping a card navigates to session detail, with options for route replay (UC-30), review (UC-31), or report (UC-32) depending on status and time window.
 
 **What can go wrong:**
 
@@ -46,11 +46,11 @@
 
 ---
 
-### UC-23 — View Session Route Replay
+### UC-30 — View Session Route Replay
 
 **Use Case Name:** View Session Route Replay
 
-**Initial assumption:** User is on the Session History detail screen. Session is in a terminal state (`COMPLETED`, `NO_SHOW`, `CANCELLED`, or `ABORTED`).
+**Initial assumption:** User is on the Session History detail screen. Session is `COMPLETED`.
 
 **Normal:**
 1. User taps "View Route" on a completed session card.
@@ -66,10 +66,10 @@
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| Session not in terminal state | `SESSION_NOT_FINISHED` | Show toast: "Route is only available after the walk has ended." |
+| Session is not COMPLETED | `SESSION_NOT_FINISHED` | Show toast: "Route replay is only available for completed walks." |
 | User not a participant | `SESSION_NOT_PARTICIPANT` | Show toast: "Permission denied." |
 | Session not found | `SESSION_NOT_FOUND` | Show toast: "Session not found." Navigate back. |
-| No GPS data (session was cancelled early) | (200 OK, empty polylines) | Show message: "No route data recorded for this session." |
+| No GPS data (tracking unavailable) | (200 OK, empty polylines) | Show message: "No route data recorded for this session." |
 
 **Other activities:** None.
 
@@ -77,7 +77,7 @@
 
 ---
 
-### UC-24 — Submit a Review
+### UC-31 — Submit a Review
 
 **Use Case Name:** Submit a Review
 
@@ -110,11 +110,11 @@
 
 ---
 
-### UC-25 — Submit an Incident Report
+### UC-32 — Submit an Incident Report
 
 **Use Case Name:** Submit an Incident Report
 
-**Initial assumption:** Session is in `ACTIVE`, `NO_SHOW`, `COMPLETED`, or `ABORTED` status. Reporting window is open (72h for COMPLETED, 24h for ABORTED/NO_SHOW). User has not yet submitted a report for this session.
+**Initial assumption:** Session is in `ACTIVE`, `NO_SHOW`, `COMPLETED`, or `ABORTED` status. Reporting window is open (72h for COMPLETED, 24h for ABORTED/NO_SHOW). For `ACTIVE`, report can be submitted immediately from the live session detail. User has not yet submitted a report for this session.
 
 **Normal:**
 1. User taps "Report an Issue" on the session detail or post-abort screen.
@@ -138,7 +138,7 @@
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| Session status not reportable | `REPORT_SESSION_INVALID_STATUS` | Hide "Report" button for non-reportable sessions (PENDING, CONSUMED). |
+| Session status not reportable | `REPORT_SESSION_INVALID_STATUS` | Hide "Report" button for non-reportable sessions (PENDING, CANCELLED). |
 | Reporting window has expired | `REPORT_WINDOW_EXPIRED` | Show toast: "The reporting window for this session has closed." Hide "Report" button. |
 | Already reported | `REPORT_ALREADY_SUBMITTED` | Show toast: "You've already submitted a report for this session." Hide button. |
 | User trying to report themselves | `REPORT_SELF_NOT_ALLOWED` | Should never happen in UI — `reportedUserId` is always the partner. |

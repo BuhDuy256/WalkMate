@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Document Purpose:** Shared reference material applicable across all domains — global error handling contract and the invariant-to-UI decision map.
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -42,8 +42,8 @@ All API responses follow the `ApiResponse<T>` envelope. This is the **only** err
 | Invariant | Rule Summary | UI Enforcement |
 |-----------|-------------|----------------|
 | **I-1** | No overlapping time windows | Show `INTENT_OVERLAPPING` / `INTENT_OVERLAPPING_SESSION` as blocking dialog, not toast |
-| **I-3** | An intent can only reach `CONSUMED` via the proposal acceptance flow (P-3). `CONSUMED` means the intent has been spent to create a WalkSession — it is permanently locked and cannot be cancelled, re-opened, or reused. It is **not** a user-facing error state; it is a silent terminal state. | Never show a "Cancel" or "Find Match" button for a `CONSUMED` intent. Do not surface the word "CONSUMED" to end users — these intents should simply disappear from the active intent list. If the API returns `INTENT_NOT_OPEN` for an intent the user tries to act on, refresh the list silently: the intent has likely been consumed by a concurrent proposal acceptance. |
-| **I-4** | MATCHING intents show lock badge | Disable "Cancel Intent" button; show "View Proposal" instead |
+| **I-3** | An intent can only reach `CONSUMED` via the proposal acceptance flow (P-3). `CONSUMED` means the intent has been spent to create a WalkSession — it is permanently locked and cannot be cancelled, re-opened, or reused. It is **not** a user-facing error state; it is a silent terminal state. | Never show any action button for a `CONSUMED` intent. Do not surface the word "CONSUMED" to end users — these intents should disappear from active lists. If the API returns `INTENT_NOT_OPEN` for an intent the user tries to act on, refresh silently: the intent has likely been consumed by concurrent proposal acceptance. |
+| **I-4** | MATCHING intents are soft-locked and move out of Intent tab | In Intent tab, render OPEN intents only. Route MATCHING handling to Proposal tab with lock/wait states |
 | **I-6** | Terminal states are immutable | Hide all action buttons for CONSUMED, CANCELLED, EXPIRED intents and COMPLETED, NO_SHOW, CANCELLED, ABORTED sessions |
 | **I-7** | Private intents need accepted friendship | Validate friend selection client-side before submit |
 | **P-2** | Both users must accept proposal | Show "Waiting for partner..." state when only one has accepted |

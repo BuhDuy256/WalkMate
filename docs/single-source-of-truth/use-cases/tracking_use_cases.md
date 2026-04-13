@@ -11,15 +11,15 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-21 | [Background GPS Route Sync](#uc-21--background-gps-route-sync) | `POST /api/v1/tracking/sync` |
+| UC-28 | [Background GPS Route Sync](#uc-28--background-gps-route-sync) | `POST /api/v1/tracking/sync` |
 
 ---
 
-### UC-21 — Background GPS Route Sync
+### UC-28 — Background GPS Route Sync
 
 **Use Case Name:** Background GPS Route Sync
 
-**Initial assumption:** Session is in `ACTIVE` status. This task starts automatically when UC-17 (Case B) completes. It runs entirely in the background — the user should not need to interact with it.
+**Initial assumption:** Session is in `ACTIVE` status. This task starts automatically when UC-24 (Case B) completes. It runs entirely in the background — the user should not need to interact with it.
 
 **Normal:**
 1. Android GPS service collects location fixes at regular intervals (e.g., every 5 seconds).
@@ -52,4 +52,4 @@
 - This task must respect Android battery optimization — use `FusedLocationProviderClient` with `PRIORITY_HIGH_ACCURACY` while ACTIVE, then stop.
 - The sync must stop when the session reaches any terminal state (`COMPLETED`, `ABORTED`, `CANCELLED`, `NO_SHOW`).
 
-**System state on completion:** GPS polyline data is stored server-side and available for route replay (UC-23) after the session ends.
+**System state on completion:** GPS polyline data is stored server-side and available for route replay (UC-30) after the session ends.

@@ -467,6 +467,6 @@
 | Network failure | `IOException` | Show toast. Switch reverts on reload. |
 | 401 (token expired) | — | `TokenRefreshAuthenticator` retries transparently (UC-12). |
 
-**Other activities:** A successful visibility change affects whether this user appears in other users' hotspot discovery results (UC-07 in discovery_use_cases.md).
+**Other activities:** A successful visibility change affects whether this user appears in other users' hotspot discovery results (UC-14 in discovery_use_cases.md).
 
 **System state on completion:** User's visibility preference updated in the backend. Profile screen reflects the new state after reload.

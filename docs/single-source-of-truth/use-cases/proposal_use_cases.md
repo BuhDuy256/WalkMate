@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Domain:** Match Proposal Negotiation
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -11,18 +11,18 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-12 | [View Incoming Proposals](#uc-12--view-incoming-proposals) | `GET /api/v1/proposals` |
-| UC-13 | [Accept a Proposal](#uc-13--accept-a-proposal) | `POST /api/v1/proposals/{proposalId}/accept` |
-| UC-14 | [Pass (Reject) a Proposal](#uc-14--pass-reject-a-proposal) | `POST /api/v1/proposals/{proposalId}/pass` |
-| UC-15 | [Cancel a Proposal (Withdraw Intent)](#uc-15--cancel-a-proposal-withdraw-intent) | `DELETE /api/v1/proposals/{proposalId}` |
+| UC-19 | [View Incoming Proposals](#uc-19--view-incoming-proposals) | `GET /api/v1/proposals` |
+| UC-20 | [Accept a Proposal](#uc-20--accept-a-proposal) | `POST /api/v1/proposals/{proposalId}/accept` |
+| UC-21 | [Pass (Reject) a Proposal](#uc-21--pass-reject-a-proposal) | `POST /api/v1/proposals/{proposalId}/pass` |
+| UC-22 | [Cancel a Proposal (Withdraw Intent)](#uc-22--cancel-a-proposal-withdraw-intent) | `DELETE /api/v1/proposals/{proposalId}` |
 
 ---
 
-### UC-12 — View Incoming Proposals
+### UC-19 — View Incoming Proposals
 
 **Use Case Name:** View Incoming Proposals
 
-**Initial assumption:** User is authenticated. User receives a FCM notification of type `PROPOSAL_RECEIVED`, or navigates to the Proposals screen.
+**Initial assumption:** User is authenticated. User receives a FCM notification of type `PROPOSAL_RECEIVED`/`INVITE_SENT`, or navigates to the Proposals screen.
 
 **Normal:**
 1. UI calls `GET /api/v1/proposals`.
@@ -31,7 +31,8 @@
    - Partner's name and avatar (fetch from `GET /api/v1/users/{matchedUserId}`)
    - Proposed time window and meeting lat/lng
    - Countdown timer to `expires_at` (5-minute TTL per invariant **P-4**)
-   - "Accept" (UC-13) and "Pass" (UC-14) action buttons
+   - "Accept" (UC-20) if user has not accepted yet; otherwise show waiting state with Accept disabled
+   - "Pass" (UC-21) remains available while proposal is still `PENDING`
 4. If no proposals, show "No pending proposals" empty state.
 
 **What can go wrong:**
@@ -39,35 +40,38 @@
 | Condition | UI Reaction |
 |-----------|------------|
 | Network failure | Show cached proposals with a "Could not refresh" banner. |
-| Proposal disappears between list and action (expired/rejected concurrently) | Handled at action time by UC-13/UC-14. |
+| Proposal disappears between list and action (expired/rejected concurrently) | Handled at action time by UC-20/UC-21. |
 
 **Other activities:**
 - Show a live countdown timer for each proposal's `expires_at`. If it reaches 0, refresh the list. The proposal will be gone (expired); the intent reverts to `OPEN` (**P-4**).
-- Listen to FCM events: `PROPOSAL_RECEIVED` to add proposals, `SESSION_ACTIVE` to clear proposals and navigate to session screen.
+- Listen to FCM events: `PROPOSAL_RECEIVED` to add proposals, `SESSION_CONFIRMED` to clear proposals and navigate to Session Detail (`PENDING`) when `session_id` is provided in payload.
 
 **System state on completion:** User sees all PENDING proposals. The intent associated with each proposal is in `MATCHING` state (invariant **I-4**).
 
 ---
 
-### UC-13 — Accept a Proposal
+### UC-20 — Accept a Proposal
 
 **Use Case Name:** Accept a Proposal
 
 **Initial assumption:** User is on the Proposal Detail screen. The proposal is in `PENDING` status. The user's intent is in `MATCHING` status (invariant **P-2**).
 
 **Normal:**
-1. User taps "Accept".
+1. If user has not accepted yet, user taps "Accept".
 2. UI disables the "Accept" button immediately to prevent double-tap.
 3. UI calls `POST /api/v1/proposals/{proposalId}/accept`.
-4. **Case A — Partial Acceptance (200 OK, `status: "PENDING"`):**
+4. **Special Case — Sender Auto-Accepted (private invite flow):**
+   - If proposal was created by private invite from this user, sender acceptance is already recorded during UC-15.
+   - UI opens directly in waiting state (equivalent to Case A) with Accept disabled and Pass still available.
+5. **Case A — Partial Acceptance (200 OK, `status: "PENDING"`):**
    - Partner has not yet accepted.
    - UI shows a waiting state: "You accepted! Waiting for your partner to accept..." with the countdown timer still visible.
-   - Disable both "Accept" and "Pass" buttons.
-5. **Case B — Both Accepted (200 OK, `status: "CONFIRMED"`, `session_id` is populated):**
+   - Disable "Accept" to prevent duplicate acceptance; keep "Pass" enabled if the user decides to stop waiting.
+6. **Case B — Both Accepted (200 OK, `status: "CONFIRMED"`, `session_id` is populated):**
    - A `WalkSession` has been atomically created (invariant **P-3**).
    - Both intents are now `CONSUMED` (invariant **I-3**).
    - A MongoDB chat room has been created with `session_id` as key.
-   - UI shows a celebration animation and navigates to the Session Detail screen (UC-16).
+   - UI shows a celebration animation and navigates to the Session Detail screen (UC-23).
 
 **What can go wrong:**
 
@@ -75,13 +79,13 @@
 |-----------|-----------|-----------|-------------|
 | Proposal already expired/rejected | `PROPOSAL_ALREADY_TERMINAL` | **I-6** | Show toast: "This proposal is no longer active." Navigate back to intents list. |
 | User is not a participant | `PROPOSAL_NOT_PARTICIPANT` | — | Show toast: "Permission denied." |
-| One intent is no longer MATCHING (e.g., it expired concurrently) | `PROPOSAL_INTENT_NO_LONGER_OPEN` | **P-2** | Show toast: "Could not confirm — one of the intents is no longer available. The proposal has been cancelled." Refresh intents list. |
+| One intent is no longer eligible for confirmation (e.g., no longer `MATCHING` due to concurrent expiry/cancel) | `PROPOSAL_INTENT_NO_LONGER_OPEN` | **P-2** | Show toast: "Could not confirm — one of the intents is no longer available. The proposal has been cancelled." Refresh intents list. |
 | Concurrent modification (two users accepted simultaneously, DB conflict) | `PROPOSAL_CONCURRENT_MODIFICATION` | **X-5** | Show toast: "A conflict occurred. Please refresh and try again." Refresh proposals. |
 | Proposal not found | `PROPOSAL_NOT_FOUND` | — | Show toast: "Proposal not found." Navigate back. |
 
 **Other activities:**
 - Partner receives `PROPOSAL_ACCEPTED` FCM notification when this user accepts.
-- When both accept, both users receive `SESSION_ACTIVE` FCM notification — navigate both to the Session screen automatically.
+- When both accept, both users receive `SESSION_CONFIRMED` FCM notification with `session_id` — navigate both to Session Detail (`PENDING`) automatically.
 
 **System state on completion (Case B):** Proposal is `CONFIRMED`. Both intents are `CONSUMED` (terminal, **I-6**). A `WalkSession` in `PENDING` status exists. Chat room is open. The session's `scheduled_start`, `scheduled_end`, and `meeting_point` are immutable snapshots (**S-8**).
 
@@ -93,7 +97,7 @@
 
 ---
 
-### UC-14 — Pass (Reject) a Proposal
+### UC-21 — Pass (Reject) a Proposal
 
 **Use Case Name:** Pass (Reject) a Proposal
 
@@ -105,7 +109,7 @@
 3. User confirms.
 4. UI calls `POST /api/v1/proposals/{proposalId}/pass`.
 5. Backend returns `200 OK` with `{ "data": null }`. Proposal moves to `REJECTED`. Both intents revert to `OPEN` (per state-transition: `MATCHING → OPEN`). The partner's intent is also added to the exclude list per invariant **X-3**, so the matching engine won't pair them again on this intent.
-6. UI navigates back to the "My Intents" list. The intent now shows as `OPEN` again with "Find Match" enabled.
+6. UI navigates back to the Intent tab. The intent now shows as `OPEN` again and waits for another match.
 
 **What can go wrong:**
 
@@ -121,7 +125,7 @@
 
 ---
 
-### UC-15 — Cancel a Proposal (Withdraw Intent)
+### UC-22 — Cancel a Proposal (Withdraw Intent)
 
 **Use Case Name:** Cancel a Proposal (Withdraw Intent)
 

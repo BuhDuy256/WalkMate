@@ -11,11 +11,11 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-07 | [Browse Hotspot Map](#uc-07--browse-hotspot-map) | `GET /api/v1/hotspots` |
+| UC-14 | [Browse Hotspot Map](#uc-14--browse-hotspot-map) | `GET /api/v1/hotspots` |
 
 ---
 
-### UC-07 — Browse Hotspot Map
+### UC-14 — Browse Hotspot Map
 
 **Use Case Name:** Browse Hotspot Map
 
@@ -37,4 +37,4 @@
 
 **Other activities:** Refresh hotspot list every time the screen gains focus or the user pulls to refresh.
 
-**System state on completion:** Map is populated with live hotspot data. User can navigate to UC-08 to create an intent at a chosen hotspot.
+**System state on completion:** Map is populated with live hotspot data. User can navigate to UC-15 to create an intent at a chosen hotspot.

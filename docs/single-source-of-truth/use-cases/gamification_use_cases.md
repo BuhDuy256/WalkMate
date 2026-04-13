@@ -11,13 +11,13 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-34 | [View User Badges](#uc-34--view-user-badges) | `GET /api/v1/users/{userId}/badges` |
-| UC-35 | [View User Stats](#uc-35--view-user-stats) | `GET /api/v1/users/{userId}/stats` |
-| UC-36 | [View Leaderboard](#uc-36--view-leaderboard) | `GET /api/v1/leaderboard` |
+| UC-41 | [View User Badges](#uc-41--view-user-badges) | `GET /api/v1/users/{userId}/badges` |
+| UC-42 | [View User Stats](#uc-42--view-user-stats) | `GET /api/v1/users/{userId}/stats` |
+| UC-43 | [View Leaderboard](#uc-43--view-leaderboard) | `GET /api/v1/leaderboard` |
 
 ---
 
-### UC-34 — View User Badges
+### UC-41 — View User Badges
 
 **Use Case Name:** View User Badges
 
@@ -42,7 +42,7 @@
 
 ---
 
-### UC-35 — View User Stats
+### UC-42 — View User Stats
 
 **Use Case Name:** View User Stats
 
@@ -57,7 +57,7 @@
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| User not found | `USER_NOT_FOUND` | Handle at the profile level (UC-26 already checks). |
+| User not found | `USER_NOT_FOUND` | Handle at the profile level (UC-33 already checks). |
 | Network failure | — | Show cached or skeleton stats. |
 
 **Other activities:** None.
@@ -66,7 +66,7 @@
 
 ---
 
-### UC-36 — View Leaderboard
+### UC-43 — View Leaderboard
 
 **Use Case Name:** View Leaderboard
 
@@ -75,7 +75,7 @@
 **Normal:**
 1. UI calls `GET /api/v1/leaderboard`.
 2. Backend returns top 50 users sorted by `totalPoints` descending, each entry including `rank`, `userId`, `totalPoints`, `totalDistanceKm`, `completedSessions`, `trustScore`.
-3. UI renders a ranked list. Each row is tappable and navigates to UC-26 (public profile).
+3. UI renders a ranked list. Each row is tappable and navigates to UC-33 (public profile).
 4. If the authenticated user is in the top 50, highlight their row.
 
 **What can go wrong:**

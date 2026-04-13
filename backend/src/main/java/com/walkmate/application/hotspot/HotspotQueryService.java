@@ -18,7 +18,8 @@ public class HotspotQueryService {
 
     @Transactional(readOnly = true)
     public List<Hotspot> getAllHotspots() {
-        return hotspotRepository.findAll();
+        return hotspotRepository.findAll()
+            .orElseThrow(() -> new DomainException(HotspotErrorCode.NO_HOTSPOT_AVAILABLE));
     }
 
     @Transactional(readOnly = true)

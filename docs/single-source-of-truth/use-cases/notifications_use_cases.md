@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Domain:** In-App Notification Feed
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -11,12 +11,12 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-32 | [View Notification Feed](#uc-32--view-notification-feed) | `GET /api/v1/notifications` |
-| UC-33 | [Mark Notification as Read](#uc-33--mark-notification-as-read) | `POST /api/v1/notifications/{notificationId}/read` |
+| UC-39 | [View Notification Feed](#uc-39--view-notification-feed) | `GET /api/v1/notifications` |
+| UC-40 | [Mark Notification as Read](#uc-40--mark-notification-as-read) | `POST /api/v1/notifications/{notificationId}/read` |
 
 ---
 
-### UC-32 — View Notification Feed
+### UC-39 — View Notification Feed
 
 **Use Case Name:** View Notification Feed
 
@@ -30,11 +30,16 @@
 
 | Notification Type | Description | Action |
 |---|---|---|
-| `PROPOSAL_RECEIVED` | New match proposal exists | Navigate to Proposal Detail (UC-12/UC-13) |
-| `PROPOSAL_ACCEPTED` | Partner accepted the proposal | Show status update; navigate to Proposal Detail |
-| `SESSION_ACTIVE` | Both users activated; walk is live | Navigate to Active Session screen (UC-16) |
+| `PROPOSAL_RECEIVED` | New match proposal exists | Navigate to Proposal tab (UC-19), then open Proposal Detail |
+| `INVITE_SENT` | Your private invite was created and is waiting for your friend | Navigate to Proposal tab (UC-19), then open Proposal Detail |
+| `PROPOSAL_ACCEPTED` | Partner accepted the proposal | Show status update; navigate to Proposal tab and open Proposal Detail |
+| `FRIEND_REQUEST_RECEIVED` | Someone sent you a friend request | Navigate to Social requests view (UC-36) |
+| `FRIEND_REQUEST_ACCEPTED` | Your friend request was accepted | Navigate to Friends list (UC-36) |
+| `FRIEND_REQUEST_DECLINED` | Your friend request was declined | Navigate to Sent Requests (UC-36) |
+| `SESSION_CONFIRMED` | Proposal confirmed; session created in `PENDING` | Navigate to Session Detail screen (UC-23) |
+| `SESSION_ACTIVE` | Both users activated; walk is live | Navigate to Active Session screen (UC-23) |
 
-5. Tapping a notification marks it as read (UC-33) and navigates to the relevant screen.
+5. Tapping a notification marks it as read (UC-40) and navigates to the relevant screen.
 
 **What can go wrong:**
 
@@ -50,7 +55,7 @@
 
 ---
 
-### UC-33 — Mark Notification as Read
+### UC-40 — Mark Notification as Read
 
 **Use Case Name:** Mark Notification as Read
 

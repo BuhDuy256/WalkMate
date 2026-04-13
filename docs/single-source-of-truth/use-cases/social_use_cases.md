@@ -2,8 +2,8 @@
 
 > Part of: [Use Cases Index](README.md)
 
-**Domain:** Social Graph — Profiles, Following, and Blocking
-**Last Updated:** 2026-04-12
+**Domain:** Friendship for Private Walk Invites + Blocking
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -11,20 +11,20 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-26 | [View a Public User Profile](#uc-26--view-a-public-user-profile) | `GET /api/v1/users/{userId}` |
-| UC-27 | [Follow a User](#uc-27--follow-a-user) | `POST /api/v1/users/{userId}/follow` |
-| UC-28 | [Unfollow a User](#uc-28--unfollow-a-user) | `DELETE /api/v1/users/{userId}/follow` |
-| UC-29 | [View Followers / Following Lists](#uc-29--view-followers--following-lists) | `GET /api/v1/users/{userId}/followers` / `following` |
-| UC-30 | [Block a User](#uc-30--block-a-user) | `POST /api/v1/users/{userId}/block` |
-| UC-31 | [Unblock a User](#uc-31--unblock-a-user) | `DELETE /api/v1/users/{userId}/block` |
+| UC-33 | [View a Public User Profile](#uc-33--view-a-public-user-profile) | `GET /api/v1/users/{userId}` |
+| UC-34 | [Send a Friend Request](#uc-34--send-a-friend-request) | `POST /api/v1/friends/{userId}/request` |
+| UC-35 | [Respond to a Friend Request (Accept/Decline)](#uc-35--respond-to-a-friend-request-acceptdecline) | `POST /api/v1/friends/requests/{requestId}/accept` / `decline` |
+| UC-36 | [View Friends and Friend Requests](#uc-36--view-friends-and-friend-requests) | `GET /api/v1/friends` + request lists + `DELETE /api/v1/friends/{userId}` |
+| UC-37 | [Block a User](#uc-37--block-a-user) | `POST /api/v1/users/{userId}/block` |
+| UC-38 | [Unblock a User](#uc-38--unblock-a-user) | `DELETE /api/v1/users/{userId}/block` |
 
 ---
 
-### UC-26 — View a Public User Profile
+### UC-33 — View a Public User Profile
 
 **Use Case Name:** View a Public User Profile
 
-**Initial assumption:** User taps on another user's name/avatar anywhere in the app (from session history, proposal, followers list, etc.). Authentication not required to **view** the profile; authentication is required to **act** (Follow/Block).
+**Initial assumption:** User taps on another user's name/avatar anywhere in the app (from session history, proposal, friends list, etc.). Authentication is not required to view profile data. Authentication is required for friendship actions and blocking.
 
 **Normal:**
 1. UI calls `GET /api/v1/users/{userId}`.
@@ -32,8 +32,13 @@
 3. UI calls `GET /api/v1/users/{userId}/badges` and `GET /api/v1/users/{userId}/stats` in parallel.
 4. UI calls `GET /api/v1/users/{userId}/reviews` to show review feed.
 5. UI renders full public profile page: avatar, name, bio, tags, trust score, stats, badges, reviews.
-6. If viewing another user's profile (not self): show "Follow" / "Unfollow" toggle and "Block" option.
-7. **Unauthenticated guard:** If the user is not logged in and taps "Follow" or "Block", do **not** call the API. Instead, navigate to the Login screen and show a prompt: "Log in to follow or block users." After successful login, return the user to this profile screen.
+6. If viewing another user's profile (not self), show friendship actions based on relationship state:
+   - Not connected: `Add Friend`
+   - Outgoing request pending: `Request Sent`
+   - Incoming request pending: `Accept` / `Decline`
+   - Already friends: `Invite Walk` and `Remove Friend`
+   - Always available in overflow: `Block`
+7. **Unauthenticated guard:** If user is not logged in and taps `Add Friend`, `Accept`, `Decline`, `Remove Friend`, or `Block`, do not call API. Navigate to Login and show: "Log in to manage friendships."
 
 **What can go wrong:**
 
@@ -43,124 +48,154 @@
 
 **Other activities:** None.
 
-**System state on completion:** Read-only profile view. Action buttons for follow/block are enabled.
+**System state on completion:** Read-only profile data is visible; friendship actions are available only for authenticated users.
 
 ---
 
-### UC-27 — Follow a User
+### UC-34 — Send a Friend Request
 
-**Use Case Name:** Follow a User
+**Use Case Name:** Send a Friend Request
 
-**Initial assumption:** User is **authenticated**. Viewing another user's public profile (UC-26). Not currently following them. (If user is unauthenticated and taps "Follow", redirect to Login — see UC-26 step 7.)
+**Initial assumption:** User is authenticated, viewing another user's profile, and both users are not already friends.
 
 **Normal:**
-1. User taps "Follow".
-2. UI optimistically updates the button to "Following".
-3. UI calls `POST /api/v1/users/{userId}/follow`.
-4. Backend returns `200 OK`. Follow relationship is created.
+1. User taps `Add Friend`.
+2. UI optimistically changes action to `Request Sent`.
+3. UI calls `POST /api/v1/friends/{userId}/request`.
+4. Backend returns `200 OK`. Friend request moves to `PENDING`.
 
 **What can go wrong:**
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| Target user not found | `SOCIAL_USER_NOT_FOUND` | Revert button. Show toast: "User not found." |
-| Trying to follow self | `FOLLOW_SELF_FOLLOW_FORBIDDEN` | Hide "Follow" button for the user's own profile. |
-| Already following | `FOLLOW_ALREADY_FOLLOWING` | Button should already show "Following" — this is a double-tap race. Ignore silently. |
+| Target user not found | `SOCIAL_USER_NOT_FOUND` | Revert UI state. Show toast: "User not found." |
+| Trying to add self | `FRIEND_REQUEST_SELF_FORBIDDEN` | Hide `Add Friend` on own profile. |
+| Already friends | `FRIEND_REQUEST_ALREADY_FRIENDS` | Show state `Already friends`. |
+| Request already pending | `FRIEND_REQUEST_ALREADY_PENDING` | Keep `Request Sent` state. |
+| Either side is blocked | `FRIEND_REQUEST_BLOCKED` | Show toast: "Cannot send friend request." |
 
-**Other activities:** None.
+**Other activities:** Target user receives a notification for incoming friend request.
 
-**System state on completion:** Follow relationship exists. User appears in target's followers list (`GET /api/v1/users/{userId}/followers`).
+**System state on completion:** Request is `PENDING`; users are not friends yet, so private walk invite is still unavailable.
 
 ---
 
-### UC-28 — Unfollow a User
+### UC-35 — Respond to a Friend Request (Accept/Decline)
 
-**Use Case Name:** Unfollow a User
+**Use Case Name:** Respond to a Friend Request
 
-**Initial assumption:** User is authenticated. Currently following the target user.
+**Initial assumption:** User is authenticated and has at least one incoming friend request in `PENDING` status.
 
 **Normal:**
-1. User taps "Following" (toggle to unfollow).
-2. UI shows confirmation: "Unfollow this user?"
-3. UI optimistically updates button to "Follow".
-4. UI calls `DELETE /api/v1/users/{userId}/follow`.
-5. Backend returns `200 OK`. Follow relationship is removed.
+1. User opens incoming friend requests list.
+2. For each request, user chooses `Accept` or `Decline`.
+3. UI calls:
+   - Accept: `POST /api/v1/friends/requests/{requestId}/accept`
+   - Decline: `POST /api/v1/friends/requests/{requestId}/decline`
+4. Backend returns `200 OK`.
+5. On Accept:
+   - Friendship becomes `ACCEPTED`.
+   - Both users appear in each other's friends list.
+   - Both users can use private walk invite flow in UC-15 (`invited_friend_id`).
+6. On Decline:
+   - Request moves to terminal declined state.
+   - No friendship is created.
 
 **What can go wrong:**
 
-| Condition | UI Reaction |
-|-----------|------------|
-| Network failure | Revert button state. Show toast: "Could not unfollow. Try again." |
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Request not found | `FRIEND_REQUEST_NOT_FOUND` | Show toast: "Request no longer exists." Refresh list. |
+| User not part of request | `FRIEND_REQUEST_NOT_PARTICIPANT` | Show toast: "Permission denied." |
+| Request already resolved | `FRIEND_REQUEST_ALREADY_RESOLVED` | Refresh list and remove stale item. |
 
-**Other activities:** None.
+**Other activities:** Request sender receives status notification (accepted/declined).
 
-**System state on completion:** Follow relationship removed. User no longer appears in target's followers list.
+**System state on completion:** Friendship is either established (`ACCEPTED`) or request is closed (`DECLINED`).
 
 ---
 
-### UC-29 — View Followers / Following Lists
+### UC-36 — View Friends and Friend Requests
 
-**Use Case Name:** View Followers / Following Lists
+**Use Case Name:** View Friends and Friend Requests
 
-**Initial assumption:** User is on a public profile page (own or another user's).
+**Initial assumption:** User is authenticated and opens social section from Profile.
 
 **Normal:**
-1. User taps "Followers" tab → UI calls `GET /api/v1/users/{userId}/followers`.
-2. User taps "Following" tab → UI calls `GET /api/v1/users/{userId}/following`.
-3. Each response returns a list of `{ userId, fullName, avatarUrl }`.
-4. UI renders the list; each item is tappable and navigates to UC-26.
+1. UI opens tabs:
+   - `Friends`
+   - `Incoming Requests`
+   - `Sent Requests`
+2. UI calls:
+   - `GET /api/v1/friends`
+   - `GET /api/v1/friends/requests/incoming`
+   - `GET /api/v1/friends/requests/outgoing`
+3. Backend returns lists with basic user card fields (`userId`, `fullName`, `avatarUrl`).
+4. `Friends` list items provide quick actions:
+   - `Invite Walk` (deep-link to UC-15 Create Intent with `is_private=true` and preselected `invited_friend_id`)
+   - `Remove Friend` (confirmation, then `DELETE /api/v1/friends/{userId}`)
+   - `View Profile` (UC-33)
+5. If user confirms `Remove Friend`:
+   - Backend returns `200 OK`.
+   - Both users are removed from each other's friends lists.
+   - Private invite is no longer available until a new friend request is accepted.
 
 **What can go wrong:**
 
-| Condition | UI Reaction |
-|-----------|------------|
-| Network failure | Show empty state with retry option. |
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Network failure | `N/A` | Show cached list (if available) and retry option. |
+| Remove target is not an accepted friend | `FRIEND_REMOVE_NOT_FRIENDS` | Refresh friends list and hide `Remove Friend` for that user. |
+| Target user not found | `SOCIAL_USER_NOT_FOUND` | Show toast: "User not found." Refresh list. |
 
 **Other activities:** None.
 
-**System state on completion:** User sees the social graph. Read-only.
+**System state on completion:** User can manage friendship network, remove existing friends, and quickly pick a friend for private invite flow.
 
 ---
 
-### UC-30 — Block a User
+### UC-37 — Block a User
 
 **Use Case Name:** Block a User
 
-**Initial assumption:** User is **authenticated**. Viewing another user's public profile. Has a "Block" option available (via overflow menu). (If user is unauthenticated and taps "Block", redirect to Login — see UC-26 step 7.)
+**Initial assumption:** User is authenticated and viewing another user's profile.
 
 **Normal:**
-1. User selects "Block User" from the overflow menu.
-2. UI shows a strong confirmation dialog: "Block [name]? They won't be able to see your activity and you won't be matched together."
+1. User selects `Block User` from overflow menu.
+2. UI shows confirmation dialog: "Block [name]? You cannot invite each other to private walks while blocked."
 3. User confirms.
 4. UI calls `POST /api/v1/users/{userId}/block`.
-5. Backend returns `200 OK`. Block relationship is created. Any existing follow relationships in both directions are silently removed.
-6. UI navigates back to the previous screen and removes the blocked user from visible lists.
+5. Backend returns `200 OK`.
+6. System side effects:
+   - Existing friendship is removed if present.
+   - Any pending friend requests between the two users are closed.
+7. UI navigates back and removes blocked user from visible friendship lists.
 
 **What can go wrong:**
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
 | Target user not found | `SOCIAL_USER_NOT_FOUND` | Show toast: "User not found." |
-| Trying to block self | `BLOCK_SELF_BLOCK_FORBIDDEN` | Hide "Block" on own profile. |
-| Already blocked | `BLOCK_ALREADY_BLOCKED` | Show "Blocked" state in UI already. Ignore. |
+| Trying to block self | `BLOCK_SELF_BLOCK_FORBIDDEN` | Hide `Block` on own profile. |
+| Already blocked | `BLOCK_ALREADY_BLOCKED` | Keep `Blocked` state; ignore duplicate action. |
 
 **Other activities:** None.
 
-**System state on completion:** Block relationship exists. Follow relationships are torn down. Matching engine will not pair blocked users.
+**System state on completion:** Block relationship exists. Friendship/request links are severed. Users cannot invite each other while blocked.
 
 ---
 
-### UC-31 — Unblock a User
+### UC-38 — Unblock a User
 
 **Use Case Name:** Unblock a User
 
-**Initial assumption:** User is authenticated. The blocked user appears in a "Blocked Users" settings list.
+**Initial assumption:** User is authenticated. The blocked user appears in a `Blocked Users` settings list.
 
 **Normal:**
-1. User taps "Unblock" next to the blocked user.
+1. User taps `Unblock`.
 2. UI calls `DELETE /api/v1/users/{userId}/block`.
 3. Backend returns `200 OK`. Block relationship is removed.
-4. UI removes the user from the "Blocked Users" list.
+4. UI removes user from blocked list.
 
 **What can go wrong:**
 
@@ -170,4 +205,4 @@
 
 **Other activities:** None.
 
-**System state on completion:** Block relationship removed. Users may be matched again.
+**System state on completion:** Block is removed. Friendship is not auto-restored; users must send a new friend request to reconnect.

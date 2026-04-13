@@ -3,7 +3,7 @@
 > Part of: [Use Cases Index](README.md)
 
 **Domain:** Walk Intent Creation and Management
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-13
 
 ---
 
@@ -11,18 +11,18 @@
 
 | UC# | Use Case | API Endpoint |
 |-----|----------|--------------|
-| UC-08 | [Create Walk Intent](#uc-08--create-walk-intent) | `POST /api/v1/intents` |
-| UC-09 | [View My Active Intents](#uc-09--view-my-active-intents) | `GET /api/v1/intents` |
-| UC-10 | [Cancel Walk Intent](#uc-10--cancel-walk-intent) | `DELETE /api/v1/intents/{intentId}` |
-| UC-11 | [Trigger Match](#uc-11--trigger-match) | `POST /api/v1/intents/{intentId}/match` |
+| UC-15 | [Create Walk Intent](#uc-15--create-walk-intent) | `POST /api/v1/intents` |
+| UC-16 | [View My Active Intents](#uc-16--view-my-active-intents) | `GET /api/v1/intents` |
+| UC-17 | [Cancel Walk Intent](#uc-17--cancel-walk-intent) | `DELETE /api/v1/intents/{intentId}` |
+| UC-18 | [Trigger Match](#uc-18--trigger-match) | `POST /api/v1/intents/{intentId}/match` |
 
 ---
 
-### UC-08 — Create Walk Intent
+### UC-15 — Create Walk Intent
 
 **Use Case Name:** Create Walk Intent
 
-**Initial assumption:** User is authenticated. User has selected a hotspot from UC-07. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**).
+**Initial assumption:** User is authenticated. User has selected a hotspot from UC-14. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**).
 
 **Normal:**
 1. User fills in:
@@ -31,9 +31,9 @@
    - End time (`time_end`: fractional hours)
    - Age preference range (`age_min`, `age_max`)
    - Optional: Description
-   - Optional: Toggle "Private" (if private, must pick a friend via `invited_friend_id`)
+   - Optional: Toggle "Private" (if private, must pick a friend via `invited_friend_id`, sourced from UC-36 Friends list)
 2. UI validates client-side: `time_start < time_end`, `age_min <= age_max`, if private then `invited_friend_id` is set.
-3. UI calls `POST /api/v1/intents`:
+3. UI calls `POST /api/v1/intents` (single request).
    ```json
    {
      "hotspot_id": "...",
@@ -47,8 +47,22 @@
      "description": "Looking for a morning jog partner!"
    }
    ```
-4. Backend returns `201 Created` with `WalkIntentResponse` including `id`, `status: "OPEN"`, `expires_at`.
-5. UI navigates to the "My Intents" list (UC-09) and highlights the newly created intent.
+4. Backend creates caller intent, then performs inline matching logic in the same use-case flow (no immediate follow-up call to UC-18 from UI).
+5. **Case A — Public Intent (`is_private = false`):**
+   - Backend tries to find a compatible partner during the create flow.
+   - **A1 Match Found:** return `201 Created` with caller intent now in `MATCHING` and a `MatchProposalResponse` (`status: "PENDING"`, `proposal_id`).
+   - **A2 No Match Found:** return `201 Created` with caller intent in `OPEN` and no proposal.
+6. **Case B — Invite Friend (`is_private = true`):**
+   - Backend validates invited friend eligibility and overlap constraints for both users.
+   - Backend atomically creates sender + receiver intents, sets both to `MATCHING`, creates proposal in `PENDING`.
+   - Backend auto-accepts sender side by calling `MatchingCommandService.acceptProposal(proposalId, senderId)`.
+   - Backend sends push notifications:
+     - Sender: invite sent successfully.
+     - Receiver: sender invited them to a walk proposal.
+7. UI shows loading spinner only while `POST /api/v1/intents` is pending (no fixed wait duration).
+8. UI routing after response:
+   - If response contains proposal (`proposal_id` present): switch to Proposal tab and open proposal detail.
+   - If response has no proposal: stay on Intent tab; intent remains in OPEN list.
 
 **What can go wrong:**
 
@@ -60,15 +74,20 @@
 | `time_start >= time_end` | `INVALID_TIME_RANGE` | — | Show inline error: "End time must be after start time." |
 | `age_min > age_max` | `INVALID_AGE_RANGE` | — | Show inline error: "Minimum age cannot exceed maximum age." |
 | Private intent but friendship not accepted | `INTENT_PRIVATE_FRIEND_NOT_ACCEPTED` | **I-7** | Show inline error: "You can only send a private invite to an accepted friend." |
+| Invited friend has overlapping intent/session | `INTENT_OVERLAPPING` / `INTENT_OVERLAPPING_SESSION` | **I-1** | Show blocking dialog: "Your friend is not available in this time window." |
 | Validation errors | `VALIDATION_ERROR` (422) | — | Parse `error.message` (comma-separated `field: reason` string) and show field-level errors. |
 
-**Other activities:** None.
+**Other activities:**
+- For public intent path, backend may continue asynchronous matching after create when no immediate match is found.
 
-**System state on completion:** A new `WalkIntent` exists in `OPEN` status. The overlap lock is now held (invariant **I-1**). The intent is eligible for matching. `expires_at` countdown begins.
+**System state on completion:**
+- Public no-match: caller intent is `OPEN` and appears in Intent tab (wait list behavior).
+- Public match-found: caller intent is `MATCHING`; proposal exists in `PENDING` and appears in Proposal tab.
+- Private invite: sender and receiver intents are `MATCHING`; proposal exists in `PENDING`; sender is already accepted.
 
 ---
 
-### UC-09 — View My Active Intents
+### UC-16 — View My Active Intents
 
 **Use Case Name:** View My Active Intents
 
@@ -76,10 +95,11 @@
 
 **Normal:**
 1. UI calls `GET /api/v1/intents`.
-2. Backend returns `200 OK` with a list of intents in `OPEN` or `MATCHING` status.
-3. UI renders each intent card showing: hotspot name, time window, age range, status badge, `expires_at` countdown timer.
-4. For `OPEN` intents: show "Find Match" button (triggers UC-11) and "Cancel" button (triggers UC-10).
-5. For `MATCHING` intents: show "View Proposal" button (navigates to UC-12) and disable "Cancel". Display a lock icon indicating the intent is soft-locked per invariant **I-4**.
+2. Backend returns `200 OK` with a list of intents in `OPEN` status for this screen.
+3. UI renders each OPEN intent card showing: hotspot name, time window, age range, and `expires_at` countdown timer.
+4. The Intent tab is the effective wait list: OPEN means "waiting for match".
+5. If a proposal is created for an intent, that intent transitions to `MATCHING` and is removed from this tab; user sees it in Proposal tab (UC-19).
+6. For OPEN intents on this tab: show "Cancel" button (UC-17). Do not show "Find Match" as a primary action.
 
 **What can go wrong:**
 
@@ -89,17 +109,17 @@
 
 **Other activities:**
 - Show a local countdown timer for each intent's `expires_at`. When it hits 0, refresh the list — the intent may have moved to `EXPIRED`.
-- If a push notification arrives for a new proposal, automatically refresh this list.
+- If a push notification arrives for a new proposal, automatically refresh this list so matched intents disappear from Intent tab.
 
 **System state on completion:** UI reflects live intent states. Expired intents disappear from the list after refresh.
 
 ---
 
-### UC-10 — Cancel Walk Intent
+### UC-17 — Cancel Walk Intent
 
 **Use Case Name:** Cancel Walk Intent
 
-**Initial assumption:** User is viewing an intent card in `OPEN` status (invariant **I-6**: only OPEN intents can be cancelled via this API; MATCHING intents require UC-15 via proposal flow).
+**Initial assumption:** User is viewing an intent card in `OPEN` status (invariant **I-6**: only OPEN intents can be cancelled via this API; MATCHING intents require UC-22 via proposal flow).
 
 **Normal:**
 1. User taps "Cancel Intent" on the intent card.
@@ -123,21 +143,18 @@
 
 ---
 
-### UC-11 — Trigger Match
+### UC-18 — Trigger Match
 
-**Use Case Name:** Trigger Match
+**Use Case Name:** Trigger Match (Fallback / Manual Non-Invite)
 
-**Initial assumption:** User has a `OPEN` intent. User is on the "My Intents" screen or the intent detail screen. The intent must be `OPEN` to trigger matching — `MATCHING` intents are already locked (invariant **I-4**).
+**Initial assumption:** This endpoint applies only to non-invite (`is_private = false`) intents and is used as a fallback/manual trigger path. Default product flow performs matching inline in UC-15.
 
 **Normal:**
-1. User taps "Find Match" button on an OPEN intent card.
-2. UI shows a loading spinner and calls `POST /api/v1/intents/{intentId}/match` (no request body required).
-3. **Case A — Match Found (200 OK):** Backend returns a `MatchProposalResponse` with `status: "PENDING"`.
+1. Caller invokes `POST /api/v1/intents/{intentId}/match` for an OPEN non-invite intent.
+2. **Case A — Match Found (200 OK):** Backend returns a `MatchProposalResponse` with `status: "PENDING"`.
    - Intent is now `MATCHING` (soft-locked per **I-4**).
-   - UI navigates immediately to the Proposal Detail screen (UC-13/UC-14).
-   - Show a push-like banner: "Match found! Respond within 5 minutes."
-4. **Case B — No Match Yet (204 No Content):** Empty response.
-   - UI shows a message: "No match found yet. We'll notify you when one is found!"
+   - UI navigates to the Proposal Detail screen (UC-20/UC-21).
+3. **Case B — No Match Yet (204 No Content):** Empty response.
    - Intent remains `OPEN`.
 
 **What can go wrong:**
@@ -150,7 +167,7 @@
 | Network failure | — | — | Show toast: "Connection error. Please try again." |
 
 **Other activities:**
-- The user does NOT need to constantly tap "Find Match." The backend can also push a `PROPOSAL_RECEIVED` notification via FCM when the matching engine finds a compatible intent asynchronously. The UI should listen for that FCM notification and navigate to the proposal when it arrives.
-- Implement a pull-to-refresh on the intents list to catch status changes.
+- This endpoint should not be called immediately after create in normal flow.
+- Backend can push `PROPOSAL_RECEIVED` via FCM when async matching finds a compatible partner.
 
 **System state on completion (Case A):** Intent transitions from `OPEN` → `MATCHING`. A `MatchProposal` in `PENDING` status now exists. The 5-minute proposal timeout (**P-4**) has started.

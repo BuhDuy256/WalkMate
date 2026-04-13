@@ -2,7 +2,7 @@
 
 **Document Purpose:** Comprehensive mapping of all backend APIs to UI Use Cases, cross-referenced against `invariants.md` and `state-transitions.md`. This is the single source of truth for UI engineers implementing the frontend refactor.
 
-**Last Updated:** 2026-04-08
+**Last Updated:** 2026-04-13
 **Backend Branch Analyzed:** `implement/realtime`
 
 ---
@@ -18,45 +18,52 @@
 | UC-04 | Profile | Edit My Profile |
 | UC-05 | Profile | Upload Avatar |
 | UC-06 | Device | Register FCM Token |
+| UC-07 | Auth | Login with Google (OAuth) |
+| UC-08 | Auth | Phone Sign-In — Send OTP |
+| UC-09 | Auth | Phone Sign-In — Verify OTP |
+| UC-10 | Auth | Logout (This Device) |
+| UC-11 | Auth | Logout All Devices |
+| UC-12 | Auth | Silent Token Refresh |
+| UC-13 | Profile | Set Profile Visibility |
 | **DISCOVERY** | | |
-| UC-07 | Hotspots | Browse Hotspot Map |
+| UC-14 | Hotspots | Browse Hotspot Map |
 | **WALK INTENT** | | |
-| UC-08 | Intent | Create Walk Intent |
-| UC-09 | Intent | View My Active Intents |
-| UC-10 | Intent | Cancel Walk Intent |
-| UC-11 | Intent | Trigger Match (POST /api/v1/intents/{intentId}/match) |
+| UC-15 | Intent | Create Walk Intent |
+| UC-16 | Intent | View My Active Intents |
+| UC-17 | Intent | Cancel Walk Intent |
+| UC-18 | Intent | Trigger Match (POST /api/v1/intents/{intentId}/match) |
 | **PROPOSAL NEGOTIATION** | | |
-| UC-12 | Proposal | View Incoming Proposals |
-| UC-13 | Proposal | Accept a Proposal |
-| UC-14 | Proposal | Pass (Reject) a Proposal |
-| UC-15 | Proposal | Cancel a Proposal (Withdraw Intent) |
+| UC-19 | Proposal | View Incoming Proposals |
+| UC-20 | Proposal | Accept a Proposal |
+| UC-21 | Proposal | Pass (Reject) a Proposal |
+| UC-22 | Proposal | Cancel a Proposal (Withdraw Intent) |
 | **SESSION LIFECYCLE** | | |
-| UC-16 | Session | View Active Sessions |
-| UC-17 | Session | Activate Session (Arrive at Hotspot) |
-| UC-18 | Session | Cancel a Pending Session |
-| UC-19 | Session | Complete Walk Session (User-initiated) |
-| UC-20 | Session | Abort Active Session (Emergency) |
+| UC-23 | Session | View Active Sessions |
+| UC-24 | Session | Activate Session (Arrive at Hotspot) |
+| UC-25 | Session | Cancel a Pending Session |
+| UC-26 | Session | Complete Walk Session (User-initiated) |
+| UC-27 | Session | Abort Active Session (Emergency) |
 | **GPS TRACKING** | | |
-| UC-21 | Tracking | Background GPS Route Sync |
+| UC-28 | Tracking | Background GPS Route Sync |
 | **POST-SESSION** | | |
-| UC-22 | History | View Session History |
-| UC-23 | History | View Session Route Replay |
-| UC-24 | Review | Submit a Review |
-| UC-25 | Report | Submit an Incident Report |
+| UC-29 | History | View Session History |
+| UC-30 | History | View Session Route Replay |
+| UC-31 | Review | Submit a Review |
+| UC-32 | Report | Submit an Incident Report |
 | **SOCIAL** | | |
-| UC-26 | Social | View a Public User Profile |
-| UC-27 | Social | Follow a User |
-| UC-28 | Social | Unfollow a User |
-| UC-29 | Social | View Followers / Following Lists |
-| UC-30 | Social | Block a User |
-| UC-31 | Social | Unblock a User |
+| UC-33 | Social | View a Public User Profile |
+| UC-34 | Social | Send a Friend Request |
+| UC-35 | Social | Respond to a Friend Request (Accept/Decline) |
+| UC-36 | Social | View Friends and Friend Requests |
+| UC-37 | Social | Block a User |
+| UC-38 | Social | Unblock a User |
 | **NOTIFICATIONS** | | |
-| UC-32 | Notifications | View Notification Feed |
-| UC-33 | Notifications | Mark Notification as Read |
+| UC-39 | Notifications | View Notification Feed |
+| UC-40 | Notifications | Mark Notification as Read |
 | **GAMIFICATION** | | |
-| UC-34 | Gamification | View User Badges |
-| UC-35 | Gamification | View User Stats |
-| UC-36 | Gamification | View Leaderboard |
+| UC-41 | Gamification | View User Badges |
+| UC-42 | Gamification | View User Stats |
+| UC-43 | Gamification | View Leaderboard |
 
 ---
 
@@ -243,11 +250,184 @@
 
 ---
 
+### UC-07 — Login with Google (OAuth)
+
+**Use Case Name:** Login with Google (OAuth)
+
+**Initial assumption:** User is unauthenticated. Google Sign-In and Firebase Auth client flow are available on device.
+
+**Normal:**
+1. UI calls `POST /api/v1/auth/google` with `idToken` and `deviceId`.
+2. Backend verifies Firebase ID token and resolves account.
+3. Backend returns `200 OK` with access token and refresh token pair.
+
+**What can go wrong:**
+
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| User cancels account picker | `N/A` (client-side) | No-op; remain on Auth screen. |
+| Firebase auth/token retrieval fails | `N/A` (Firebase exception) | Show toast: "Google sign-in failed. Please try again." |
+| Backend rejects Firebase token | `GOOGLE_LOGIN_FAILED` | Show toast: "Google sign-in failed. Please try again." |
+| Network failure | `N/A` (`IOException`) | Show toast: "Check your connection and try again." |
+
+**Other activities:** Trigger FCM token registration (UC-06) after successful login.
+
+**System state on completion:** User is authenticated; tokens are issued for this device.
+
+---
+
+### UC-08 — Phone Sign-In — Send OTP
+
+**Use Case Name:** Phone Sign-In — Send OTP
+
+**Initial assumption:** User is unauthenticated and enters phone number on auth screen.
+
+**Normal:**
+1. UI normalizes local VN phone to E.164 format (`+84...`).
+2. UI calls `POST /api/v1/auth/phone/send-otp` with phone number.
+3. Backend creates/stores OTP challenge and dispatches SMS.
+4. Backend returns `200 OK`.
+
+**What can go wrong:**
+
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Invalid phone format | `INVALID_USER_DATA` | Show inline error: "Invalid phone number format." |
+| Network failure | `N/A` (`IOException`) | Show toast: "Check your connection and try again." |
+| SMS delivery failure (backend) | `SEND_OTP_FAILED` | Show toast mapped from `UserErrorMessageMapper`. |
+
+**Other activities:** Resend action is time-gated (cooldown timer) and reuses this same endpoint.
+
+**System state on completion:** OTP challenge is active and ready for verification.
+
+---
+
+### UC-09 — Phone Sign-In — Verify OTP
+
+**Use Case Name:** Phone Sign-In — Verify OTP
+
+**Initial assumption:** User has an active OTP challenge from UC-08 and is on OTP verify screen.
+
+**Normal:**
+1. UI validates OTP format client-side (6 digits).
+2. UI calls `POST /api/v1/auth/phone/verify` with `phone`, `code`, and `deviceId`.
+3. Backend verifies OTP and resolves account (existing/create).
+4. Backend returns `200 OK` with access/refresh token pair.
+
+**What can go wrong:**
+
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Code is not 6 digits | `N/A` (client-side) | Disable submit until valid length. |
+| Wrong/expired OTP or phone-session mismatch | `USER_OTP_INVALID` | Show error mapped from `UserErrorMessageMapper`. |
+| Network failure | `N/A` (`IOException`) | Show toast: "Check your connection and try again." |
+
+**Other activities:** Trigger FCM token registration (UC-06) after successful verification.
+
+**System state on completion:** User is authenticated; tokens are issued.
+
+---
+
+### UC-10 — Logout (This Device)
+
+**Use Case Name:** Logout (This Device)
+
+**Initial assumption:** User is authenticated on current device; `deviceId` exists.
+
+**Normal:**
+1. UI calls `POST /api/v1/auth/logout` with `deviceId`.
+2. Backend invalidates refresh token bound to that device.
+3. App clears local session regardless of backend response.
+4. UI navigates to Login.
+
+**What can go wrong:**
+
+| Condition | UI Reaction |
+|-----------|------------|
+| Network failure / backend non-2xx | Clear local session anyway; treat logout as success from user perspective. |
+
+**Other activities:** None.
+
+**System state on completion:** Current device session is terminated.
+
+---
+
+### UC-11 — Logout All Devices
+
+**Use Case Name:** Logout All Devices
+
+**Initial assumption:** User is authenticated and requests global sign-out.
+
+**Normal:**
+1. UI calls `POST /api/v1/auth/logout-all`.
+2. Backend invalidates all refresh tokens for the user.
+3. App clears local session and navigates to Login/Auth flow.
+
+**What can go wrong:**
+
+| Condition | UI Reaction |
+|-----------|------------|
+| Network failure / backend non-2xx | Clear local session anyway; treat as local success. |
+
+**Other activities:** Other devices are forced to re-authenticate once refresh fails.
+
+**System state on completion:** All device sessions are invalidated server-side.
+
+---
+
+### UC-12 — Silent Token Refresh
+
+**Use Case Name:** Silent Token Refresh
+
+**Initial assumption:** Access token has expired; refresh token is still available.
+
+**Normal:**
+1. Client/authenticator calls `POST /api/v1/auth/refresh` with refresh token.
+2. Backend validates token and rotates to a new access/refresh token pair.
+3. Backend returns `200 OK` with new tokens.
+
+**What can go wrong:**
+
+| Condition | UI Reaction |
+|-----------|------------|
+| Refresh token invalid/revoked/expired | Clear session and force login. |
+
+**Other activities:** None.
+
+**System state on completion:** Session continues seamlessly with rotated tokens.
+
+---
+
+### UC-13 — Set Profile Visibility
+
+**Use Case Name:** Set Profile Visibility
+
+**Initial assumption:** User is authenticated and currently on profile screen.
+
+**Normal:**
+1. UI calls `PATCH /api/v1/users/me/visibility` with mode (`PUBLIC` or `PRIVATE`).
+2. Backend validates transition and updates user visibility mode.
+3. Backend returns `200 OK` with updated user visibility state.
+
+**What can go wrong:**
+
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Backend returns non-2xx | `SET_VISIBILITY_FAILED` | Show toast and revert switch on profile reload. |
+| Network failure | `N/A` (`IOException`) | Show toast and revert switch on profile reload. |
+| Unauthorized (401) | `N/A` | Token refresh flow handles retry (UC-12). |
+
+**Other activities:** Visibility affects user's eligibility in discovery/matching surfaces.
+
+**System state on completion:** Visibility preference is persisted.
+
+---
+
 ## Discovery
 
 ---
 
-### UC-07 — Browse Hotspot Map
+### UC-14 — Browse Hotspot Map
 
 **Use Case Name:** Browse Hotspot Map
 
@@ -269,7 +449,7 @@
 
 **Other activities:** Refresh hotspot list every time the screen gains focus or the user pulls to refresh.
 
-**System state on completion:** Map is populated with live hotspot data. User can navigate to UC-08 to create an intent at a chosen hotspot.
+**System state on completion:** Map is populated with live hotspot data. User can navigate to UC-15 to create an intent at a chosen hotspot.
 
 ---
 
@@ -277,11 +457,11 @@
 
 ---
 
-### UC-08 — Create Walk Intent
+### UC-15 — Create Walk Intent
 
 **Use Case Name:** Create Walk Intent
 
-**Initial assumption:** User is authenticated. User has selected a hotspot from UC-07. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**).
+**Initial assumption:** User is authenticated. User has selected a hotspot from UC-14. User is on the "Create Intent" form screen. The user currently has NO overlapping `OPEN`/`MATCHING` intent or `PENDING`/`ACTIVE` session in the chosen time window (invariant **I-1**).
 
 **Normal:**
 1. User fills in:
@@ -290,9 +470,9 @@
    - End time (`time_end`: fractional hours)
    - Age preference range (`age_min`, `age_max`)
    - Optional: Description
-   - Optional: Toggle "Private" (if private, must pick a friend via `invited_friend_id`)
+   - Optional: Toggle "Private" (if private, must pick a friend via `invited_friend_id`, sourced from UC-36 Friends list)
 2. UI validates client-side: `time_start < time_end`, `age_min <= age_max`, if private then `invited_friend_id` is set.
-3. UI calls `POST /api/v1/intents`:
+3. UI calls `POST /api/v1/intents` (single request).
    ```json
    {
      "hotspot_id": "...",
@@ -306,8 +486,22 @@
      "description": "Looking for a morning jog partner!"
    }
    ```
-4. Backend returns `201 Created` with `WalkIntentResponse` including `id`, `status: "OPEN"`, `expires_at`.
-5. UI navigates to the "My Intents" list (UC-09) and highlights the newly created intent.
+4. Backend creates caller intent, then performs inline matching logic in the same use-case flow (no immediate follow-up call to UC-18 from UI).
+5. **Case A — Public Intent (`is_private = false`):**
+   - Backend tries to find a compatible partner during the create flow.
+   - **A1 Match Found:** return `201 Created` with caller intent now in `MATCHING` and a `MatchProposalResponse` (`status: "PENDING"`, `proposal_id`).
+   - **A2 No Match Found:** return `201 Created` with caller intent in `OPEN` and no proposal.
+6. **Case B — Invite Friend (`is_private = true`):**
+   - Backend validates invited friend eligibility and overlap constraints for both users.
+   - Backend atomically creates sender + receiver intents, sets both to `MATCHING`, creates proposal in `PENDING`.
+   - Backend auto-accepts sender side by calling `MatchingCommandService.acceptProposal(proposalId, senderId)`.
+   - Backend sends push notifications:
+     - Sender: invite sent successfully.
+     - Receiver: sender invited them to a walk proposal.
+7. UI shows loading spinner only while `POST /api/v1/intents` is pending (no fixed wait duration).
+8. UI routing after response:
+   - If response contains proposal (`proposal_id` present): switch to Proposal tab and open proposal detail.
+   - If response has no proposal: stay on Intent tab; intent remains in OPEN list.
 
 **What can go wrong:**
 
@@ -319,15 +513,20 @@
 | `time_start >= time_end` | `INVALID_TIME_RANGE` | — | Show inline error: "End time must be after start time." |
 | `age_min > age_max` | `INVALID_AGE_RANGE` | — | Show inline error: "Minimum age cannot exceed maximum age." |
 | Private intent but friendship not accepted | `INTENT_PRIVATE_FRIEND_NOT_ACCEPTED` | **I-7** | Show inline error: "You can only send a private invite to an accepted friend." |
+| Invited friend has overlapping intent/session | `INTENT_OVERLAPPING` / `INTENT_OVERLAPPING_SESSION` | **I-1** | Show blocking dialog: "Your friend is not available in this time window." |
 | Validation errors | `VALIDATION_ERROR` (422) | — | Parse `error.message` (comma-separated `field: reason` string) and show field-level errors. |
 
-**Other activities:** None.
+**Other activities:**
+- For public intent path, backend may continue asynchronous matching after create when no immediate match is found.
 
-**System state on completion:** A new `WalkIntent` exists in `OPEN` status. The overlap lock is now held (invariant **I-1**). The intent is eligible for matching. `expires_at` countdown begins.
+**System state on completion:**
+- Public no-match: caller intent is `OPEN` and appears in Intent tab (wait list behavior).
+- Public match-found: caller intent is `MATCHING`; proposal exists in `PENDING` and appears in Proposal tab.
+- Private invite: sender and receiver intents are `MATCHING`; proposal exists in `PENDING`; sender is already accepted.
 
 ---
 
-### UC-09 — View My Active Intents
+### UC-16 — View My Active Intents
 
 **Use Case Name:** View My Active Intents
 
@@ -335,10 +534,11 @@
 
 **Normal:**
 1. UI calls `GET /api/v1/intents`.
-2. Backend returns `200 OK` with a list of intents in `OPEN` or `MATCHING` status.
-3. UI renders each intent card showing: hotspot name, time window, age range, status badge, `expires_at` countdown timer.
-4. For `OPEN` intents: show "Find Match" button (triggers UC-11) and "Cancel" button (triggers UC-10).
-5. For `MATCHING` intents: show "View Proposal" button (navigates to UC-12) and disable "Cancel". Display a lock icon indicating the intent is soft-locked per invariant **I-4**.
+2. Backend returns `200 OK` with a list of intents in `OPEN` status for this screen.
+3. UI renders each OPEN intent card showing: hotspot name, time window, age range, and `expires_at` countdown timer.
+4. The Intent tab is the effective wait list: OPEN means "waiting for match".
+5. If a proposal is created for an intent, that intent transitions to `MATCHING` and is removed from this tab; user sees it in Proposal tab (UC-19).
+6. For OPEN intents on this tab: show "Cancel" button (UC-17). Do not show "Find Match" as a primary action.
 
 **What can go wrong:**
 
@@ -348,17 +548,17 @@
 
 **Other activities:**
 - Show a local countdown timer for each intent's `expires_at`. When it hits 0, refresh the list — the intent may have moved to `EXPIRED`.
-- If a push notification arrives for a new proposal, automatically refresh this list.
+- If a push notification arrives for a new proposal, automatically refresh this list so matched intents disappear from Intent tab.
 
 **System state on completion:** UI reflects live intent states. Expired intents disappear from the list after refresh.
 
 ---
 
-### UC-10 — Cancel Walk Intent
+### UC-17 — Cancel Walk Intent
 
 **Use Case Name:** Cancel Walk Intent
 
-**Initial assumption:** User is viewing an intent card in `OPEN` status (invariant **I-6**: only OPEN intents can be cancelled via this API; MATCHING intents require UC-15 via proposal flow).
+**Initial assumption:** User is viewing an intent card in `OPEN` status (invariant **I-6**: only OPEN intents can be cancelled via this API; MATCHING intents require UC-22 via proposal flow).
 
 **Normal:**
 1. User taps "Cancel Intent" on the intent card.
@@ -382,21 +582,18 @@
 
 ---
 
-### UC-11 — Trigger Match
+### UC-18 — Trigger Match
 
-**Use Case Name:** Trigger Match
+**Use Case Name:** Trigger Match (Fallback / Manual Non-Invite)
 
-**Initial assumption:** User has a `OPEN` intent. User is on the "My Intents" screen or the intent detail screen. The intent must be `OPEN` to trigger matching — `MATCHING` intents are already locked (invariant **I-4**).
+**Initial assumption:** This endpoint applies only to non-invite (`is_private = false`) intents and is used as a fallback/manual trigger path. Default product flow performs matching inline in UC-15.
 
 **Normal:**
-1. User taps "Find Match" button on an OPEN intent card.
-2. UI shows a loading spinner and calls `POST /api/v1/intents/{intentId}/match` (no request body required).
-3. **Case A — Match Found (200 OK):** Backend returns a `MatchProposalResponse` with `status: "PENDING"`.
+1. Caller invokes `POST /api/v1/intents/{intentId}/match` for an OPEN non-invite intent.
+2. **Case A — Match Found (200 OK):** Backend returns a `MatchProposalResponse` with `status: "PENDING"`.
    - Intent is now `MATCHING` (soft-locked per **I-4**).
-   - UI navigates immediately to the Proposal Detail screen (UC-13/UC-14).
-   - Show a push-like banner: "Match found! Respond within 5 minutes."
-4. **Case B — No Match Yet (204 No Content):** Empty response.
-   - UI shows a message: "No match found yet. We'll notify you when one is found!"
+   - UI navigates to the Proposal Detail screen (UC-20/UC-21).
+3. **Case B — No Match Yet (204 No Content):** Empty response.
    - Intent remains `OPEN`.
 
 **What can go wrong:**
@@ -409,8 +606,8 @@
 | Network failure | — | — | Show toast: "Connection error. Please try again." |
 
 **Other activities:**
-- The user does NOT need to constantly tap "Find Match." The backend can also push a `PROPOSAL_RECEIVED` notification via FCM when the matching engine finds a compatible intent asynchronously. The UI should listen for that FCM notification and navigate to the proposal when it arrives.
-- Implement a pull-to-refresh on the intents list to catch status changes.
+- This endpoint should not be called immediately after create in normal flow.
+- Backend can push `PROPOSAL_RECEIVED` via FCM when async matching finds a compatible partner.
 
 **System state on completion (Case A):** Intent transitions from `OPEN` → `MATCHING`. A `MatchProposal` in `PENDING` status now exists. The 5-minute proposal timeout (**P-4**) has started.
 
@@ -420,11 +617,11 @@
 
 ---
 
-### UC-12 — View Incoming Proposals
+### UC-19 — View Incoming Proposals
 
 **Use Case Name:** View Incoming Proposals
 
-**Initial assumption:** User is authenticated. User receives a FCM notification of type `PROPOSAL_RECEIVED`, or navigates to the Proposals screen.
+**Initial assumption:** User is authenticated. User receives a FCM notification of type `PROPOSAL_RECEIVED`/`INVITE_SENT`, or navigates to the Proposals screen.
 
 **Normal:**
 1. UI calls `GET /api/v1/proposals`.
@@ -433,7 +630,8 @@
    - Partner's name and avatar (fetch from `GET /api/v1/users/{matchedUserId}`)
    - Proposed time window and meeting lat/lng
    - Countdown timer to `expires_at` (5-minute TTL per invariant **P-4**)
-   - "Accept" (UC-13) and "Pass" (UC-14) action buttons
+   - "Accept" (UC-20) if user has not accepted yet; otherwise show waiting state with Accept disabled
+   - "Pass" (UC-21) remains available while proposal is still `PENDING`
 4. If no proposals, show "No pending proposals" empty state.
 
 **What can go wrong:**
@@ -441,35 +639,38 @@
 | Condition | UI Reaction |
 |-----------|------------|
 | Network failure | Show cached proposals with a "Could not refresh" banner. |
-| Proposal disappears between list and action (expired/rejected concurrently) | Handled at action time by UC-13/UC-14. |
+| Proposal disappears between list and action (expired/rejected concurrently) | Handled at action time by UC-20/UC-21. |
 
 **Other activities:**
 - Show a live countdown timer for each proposal's `expires_at`. If it reaches 0, refresh the list. The proposal will be gone (expired); the intent reverts to `OPEN` (**P-4**).
-- Listen to FCM events: `PROPOSAL_RECEIVED` to add proposals, `SESSION_ACTIVE` to clear proposals and navigate to session screen.
+- Listen to FCM events: `PROPOSAL_RECEIVED` to add proposals, `SESSION_CONFIRMED` to clear proposals and navigate to Session Detail (`PENDING`) when `session_id` is provided in payload.
 
 **System state on completion:** User sees all PENDING proposals. The intent associated with each proposal is in `MATCHING` state (invariant **I-4**).
 
 ---
 
-### UC-13 — Accept a Proposal
+### UC-20 — Accept a Proposal
 
 **Use Case Name:** Accept a Proposal
 
 **Initial assumption:** User is on the Proposal Detail screen. The proposal is in `PENDING` status. The user's intent is in `MATCHING` status (invariant **P-2**).
 
 **Normal:**
-1. User taps "Accept".
+1. If user has not accepted yet, user taps "Accept".
 2. UI disables the "Accept" button immediately to prevent double-tap.
 3. UI calls `POST /api/v1/proposals/{proposalId}/accept`.
-4. **Case A — Partial Acceptance (200 OK, `status: "PENDING"`):**
+4. **Special Case — Sender Auto-Accepted (private invite flow):**
+   - If proposal was created by private invite from this user, sender acceptance is already recorded during UC-15.
+   - UI opens directly in waiting state (equivalent to Case A) with Accept disabled and Pass still available.
+5. **Case A — Partial Acceptance (200 OK, `status: "PENDING"`):**
    - Partner has not yet accepted.
    - UI shows a waiting state: "You accepted! Waiting for your partner to accept..." with the countdown timer still visible.
-   - Disable both "Accept" and "Pass" buttons.
-5. **Case B — Both Accepted (200 OK, `status: "CONFIRMED"`, `session_id` is populated):**
+   - Disable "Accept" to prevent duplicate acceptance; keep "Pass" enabled if the user decides to stop waiting.
+6. **Case B — Both Accepted (200 OK, `status: "CONFIRMED"`, `session_id` is populated):**
    - A `WalkSession` has been atomically created (invariant **P-3**).
    - Both intents are now `CONSUMED` (invariant **I-3**).
    - A MongoDB chat room has been created with `session_id` as key.
-   - UI shows a celebration animation and navigates to the Session Detail screen (UC-16).
+   - UI shows a celebration animation and navigates to the Session Detail screen (UC-23).
 
 **What can go wrong:**
 
@@ -477,13 +678,13 @@
 |-----------|-----------|-----------|-------------|
 | Proposal already expired/rejected | `PROPOSAL_ALREADY_TERMINAL` | **I-6** | Show toast: "This proposal is no longer active." Navigate back to intents list. |
 | User is not a participant | `PROPOSAL_NOT_PARTICIPANT` | — | Show toast: "Permission denied." |
-| One intent is no longer MATCHING (e.g., it expired concurrently) | `PROPOSAL_INTENT_NO_LONGER_OPEN` | **P-2** | Show toast: "Could not confirm — one of the intents is no longer available. The proposal has been cancelled." Refresh intents list. |
+| One intent is no longer eligible for confirmation (e.g., no longer `MATCHING` due to concurrent expiry/cancel) | `PROPOSAL_INTENT_NO_LONGER_OPEN` | **P-2** | Show toast: "Could not confirm — one of the intents is no longer available. The proposal has been cancelled." Refresh intents list. |
 | Concurrent modification (two users accepted simultaneously, DB conflict) | `PROPOSAL_CONCURRENT_MODIFICATION` | **X-5** | Show toast: "A conflict occurred. Please refresh and try again." Refresh proposals. |
 | Proposal not found | `PROPOSAL_NOT_FOUND` | — | Show toast: "Proposal not found." Navigate back. |
 
 **Other activities:**
 - Partner receives `PROPOSAL_ACCEPTED` FCM notification when this user accepts.
-- When both accept, both users receive `SESSION_ACTIVE` FCM notification — navigate both to the Session screen automatically.
+- When both accept, both users receive `SESSION_CONFIRMED` FCM notification with `session_id` — navigate both to Session Detail (`PENDING`) automatically.
 
 **System state on completion (Case B):** Proposal is `CONFIRMED`. Both intents are `CONSUMED` (terminal, **I-6**). A `WalkSession` in `PENDING` status exists. Chat room is open. The session's `scheduled_start`, `scheduled_end`, and `meeting_point` are immutable snapshots (**S-8**).
 
@@ -495,7 +696,7 @@
 
 ---
 
-### UC-14 — Pass (Reject) a Proposal
+### UC-21 — Pass (Reject) a Proposal
 
 **Use Case Name:** Pass (Reject) a Proposal
 
@@ -507,7 +708,7 @@
 3. User confirms.
 4. UI calls `POST /api/v1/proposals/{proposalId}/pass`.
 5. Backend returns `200 OK` with `{ "data": null }`. Proposal moves to `REJECTED`. Both intents revert to `OPEN` (per state-transition: `MATCHING → OPEN`). The partner's intent is also added to the exclude list per invariant **X-3**, so the matching engine won't pair them again on this intent.
-6. UI navigates back to the "My Intents" list. The intent now shows as `OPEN` again with "Find Match" enabled.
+6. UI navigates back to the Intent tab. The intent now shows as `OPEN` again and waits for another match.
 
 **What can go wrong:**
 
@@ -523,7 +724,7 @@
 
 ---
 
-### UC-15 — Cancel a Proposal (Withdraw Intent)
+### UC-22 — Cancel a Proposal (Withdraw Intent)
 
 **Use Case Name:** Cancel a Proposal (Withdraw Intent)
 
@@ -555,11 +756,11 @@
 
 ---
 
-### UC-16 — View Active Sessions
+### UC-23 — View Active Sessions
 
 **Use Case Name:** View Active Sessions
 
-**Initial assumption:** User is authenticated. User has at least one session in `PENDING` or `ACTIVE` status (navigated here after UC-13 success, or from bottom nav).
+**Initial assumption:** User is authenticated. User has at least one session in `PENDING` or `ACTIVE` status (navigated here after UC-20 success, or from bottom nav).
 
 **Normal:**
 1. UI calls `GET /api/v1/sessions/active`.
@@ -569,13 +770,14 @@
    - `scheduled_start` countdown timer
    - Partner's name/avatar
    - Activation window: `[scheduledStart − 10 min, scheduledStart + 15 min]` (invariant **S-3**)
-   - "I'm Here!" button (enabled only within activation window) → triggers UC-17
-   - "Cancel Walk" button → triggers UC-18
+   - "I'm Here!" button (enabled only within activation window) → triggers UC-24
+   - "Cancel Walk" button → triggers UC-25
 4. For each `ACTIVE` session, UI shows:
    - Live map with partner's last known location
    - Walk duration timer (started at `started_at`)
-   - "Complete Walk" button (enabled only after 5 minutes of walking, per **S-5**) → triggers UC-19
-   - "Emergency Abort" button → triggers UC-20
+   - "Complete Walk" button (enabled only after 5 minutes of walking, per **S-5**) → triggers UC-26
+   - "Emergency Abort" button → triggers UC-27
+   - "Report an Issue" action → triggers UC-32
 
 **What can go wrong:**
 
@@ -585,14 +787,16 @@
 | Network failure | Show last cached session state. |
 
 **Other activities:**
-- Poll `GET /api/v1/sessions/active` every 30 seconds, OR listen for FCM `SESSION_ACTIVE` to detect when partner activates and session transitions to `ACTIVE`.
-- When session is `ACTIVE`, start the background GPS sync task (UC-21).
+- Poll `GET /api/v1/sessions/active` every 30 seconds.
+- Listen for FCM `SESSION_CONFIRMED` to refresh and surface newly created `PENDING` sessions.
+- Listen for FCM `SESSION_ACTIVE` to detect when partner activates and a `PENDING` session transitions to `ACTIVE`.
+- When session is `ACTIVE`, start the background GPS sync task (UC-28).
 
 **System state on completion:** UI reflects live session states. Chat icon is enabled for sessions in `PENDING` or `ACTIVE` status (invariant **S-7**).
 
 ---
 
-### UC-17 — Activate Session (Arrive at Hotspot)
+### UC-24 — Activate Session (Arrive at Hotspot)
 
 **Use Case Name:** Activate Session (Arrive at Hotspot)
 
@@ -608,7 +812,7 @@
 5. **Case B — Mutual Activation (200 OK, `status: "ACTIVE"`):** Both users have now activated.
    - `started_at` is set. Walk timer begins.
    - UI transitions to the Active Walk view (map, timer, abort/complete buttons).
-   - GPS sync loop (UC-21) starts.
+   - GPS sync loop (UC-28) starts.
    - Chat is confirmed open (**S-7**).
 
 **What can go wrong:**
@@ -623,13 +827,13 @@
 
 **Other activities:**
 - After Case A, poll `GET /api/v1/sessions/active` every 15 seconds to detect when partner activates (or listen to FCM `SESSION_ACTIVE` notification).
-- On Case B, start GPS sync (UC-21).
+- On Case B, start GPS sync (UC-28).
 
 **System state on completion (Case B):** Session moves `PENDING` → `ACTIVE` (invariant **S-2**). `started_at` is set. 4-hour auto-close safety limit begins (**S-6**). Chat remains open (**S-7**).
 
 ---
 
-### UC-18 — Cancel a Pending Session
+### UC-25 — Cancel a Pending Session
 
 **Use Case Name:** Cancel a Pending Session
 
@@ -644,7 +848,7 @@
    { "reason": "I can't make it today." }
    ```
 5. Backend returns `200 OK`. Session moves to `CANCELLED` (terminal). Chat room is closed server-side.
-6. UI navigates to Session History (UC-22). Chat input is locked.
+6. UI navigates to Session History (UC-29). Chat input is locked.
 
 **What can go wrong:**
 
@@ -661,7 +865,7 @@
 
 ---
 
-### UC-19 — Complete Walk Session (User-initiated)
+### UC-26 — Complete Walk Session (User-initiated)
 
 **Use Case Name:** Complete Walk Session
 
@@ -673,7 +877,7 @@
 3. UI calls `POST /api/v1/sessions/{sessionId}/complete`.
 4. Backend validates the 5-minute minimum (**S-5**) and returns `200 OK` with the final `WalkSessionResponse`.
 5. UI navigates to a "Walk Completed!" summary screen showing total distance, duration, and partner's name.
-6. UI prompts user to leave a review (navigates to UC-24 flow).
+6. UI prompts user to leave a review (navigates to UC-31 flow).
 7. Chat input is locked (**S-7**).
 
 **What can go wrong:**
@@ -686,15 +890,15 @@
 | User not a participant | `SESSION_NOT_PARTICIPANT` | — | Show toast: "Permission denied." |
 
 **Other activities:**
-- GPS sync loop (UC-21) stops after completion.
+- GPS sync loop (UC-28) stops after completion.
 - Gamification: `SessionCompletedEvent` is published server-side; badges may be awarded. Refresh profile stats after a short delay.
 - Trust score update (**X-4**) is applied server-side.
 
-**System state on completion:** Session is `COMPLETED` (terminal). Chat write access is revoked (**S-7**). User can now submit a review (UC-24) and/or report (UC-25, 72-hour window). GPS route data is available (UC-23).
+**System state on completion:** Session is `COMPLETED` (terminal). Chat write access is revoked (**S-7**). User can now submit a review (UC-31) and/or report (UC-32, 72-hour window). GPS route data is available (UC-30).
 
 ---
 
-### UC-20 — Abort Active Session (Emergency)
+### UC-27 — Abort Active Session (Emergency)
 
 **Use Case Name:** Abort Active Session
 
@@ -713,7 +917,7 @@
    { "reason": "SAFETY_CONCERN" }
    ```
 5. Backend returns `200 OK`. Session moves to `ABORTED` (terminal). `SessionAbortedEvent` is published.
-6. UI navigates to a "Walk Aborted" screen with a safety message and option to submit a report (UC-25, 24-hour window).
+6. UI navigates to a "Walk Aborted" screen with a safety message and option to submit a report (UC-32, 24-hour window).
 
 **What can go wrong:**
 
@@ -725,11 +929,11 @@
 | User not a participant | `SESSION_NOT_PARTICIPANT` | — | Show toast: "Permission denied." |
 
 **Other activities:**
-- GPS sync loop (UC-21) stops.
+- GPS sync loop (UC-28) stops.
 - Partner receives push notification about abort.
 - Gamification: `SessionAbortedEvent` published; trust/penalty scores updated (**X-4**).
 
-**System state on completion:** Session is `ABORTED` (terminal). Chat write access is revoked (**S-7**). User can submit a report within 24 hours (UC-25).
+**System state on completion:** Session is `ABORTED` (terminal). Chat write access is revoked (**S-7**). User can submit a report within 24 hours (UC-32).
 
 ---
 
@@ -737,11 +941,11 @@
 
 ---
 
-### UC-21 — Background GPS Route Sync
+### UC-28 — Background GPS Route Sync
 
 **Use Case Name:** Background GPS Route Sync
 
-**Initial assumption:** Session is in `ACTIVE` status. This task starts automatically when UC-17 (Case B) completes. It runs entirely in the background — the user should not need to interact with it.
+**Initial assumption:** Session is in `ACTIVE` status. This task starts automatically when UC-24 (Case B) completes. It runs entirely in the background — the user should not need to interact with it.
 
 **Normal:**
 1. Android GPS service collects location fixes at regular intervals (e.g., every 5 seconds).
@@ -774,7 +978,7 @@
 - This task must respect Android battery optimization — use `FusedLocationProviderClient` with `PRIORITY_HIGH_ACCURACY` while ACTIVE, then stop.
 - The sync must stop when the session reaches any terminal state (`COMPLETED`, `ABORTED`, `CANCELLED`, `NO_SHOW`).
 
-**System state on completion:** GPS polyline data is stored server-side and available for route replay (UC-23) after the session ends.
+**System state on completion:** GPS polyline data is stored server-side and available for route replay (UC-30) after the session ends.
 
 ---
 
@@ -782,7 +986,7 @@
 
 ---
 
-### UC-22 — View Session History
+### UC-29 — View Session History
 
 **Use Case Name:** View Session History
 
@@ -796,7 +1000,7 @@
    - Partner name (fetch from `GET /api/v1/users/{partner_id}` or cache)
    - Status badge (COMPLETED, NO_SHOW, CANCELLED, ABORTED)
    - Total distance and duration (shown for COMPLETED; "—" for others)
-4. Tapping a card navigates to session detail, with options for route replay (UC-23), review (UC-24), or report (UC-25) depending on status and time window.
+4. Tapping a card navigates to session detail, with options for route replay (UC-30), review (UC-31), or report (UC-32) depending on status and time window.
 
 **What can go wrong:**
 
@@ -810,11 +1014,11 @@
 
 ---
 
-### UC-23 — View Session Route Replay
+### UC-30 — View Session Route Replay
 
 **Use Case Name:** View Session Route Replay
 
-**Initial assumption:** User is on the Session History detail screen. Session is in a terminal state (`COMPLETED`, `NO_SHOW`, `CANCELLED`, or `ABORTED`).
+**Initial assumption:** User is on the Session History detail screen. Session is `COMPLETED`.
 
 **Normal:**
 1. User taps "View Route" on a completed session card.
@@ -830,10 +1034,10 @@
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| Session not in terminal state | `SESSION_NOT_FINISHED` | Show toast: "Route is only available after the walk has ended." |
+| Session is not COMPLETED | `SESSION_NOT_FINISHED` | Show toast: "Route replay is only available for completed walks." |
 | User not a participant | `SESSION_NOT_PARTICIPANT` | Show toast: "Permission denied." |
 | Session not found | `SESSION_NOT_FOUND` | Show toast: "Session not found." Navigate back. |
-| No GPS data (session was cancelled early) | (200 OK, empty polylines) | Show message: "No route data recorded for this session." |
+| No GPS data (tracking unavailable) | (200 OK, empty polylines) | Show message: "No route data recorded for this session." |
 
 **Other activities:** None.
 
@@ -841,7 +1045,7 @@
 
 ---
 
-### UC-24 — Submit a Review
+### UC-31 — Submit a Review
 
 **Use Case Name:** Submit a Review
 
@@ -874,11 +1078,11 @@
 
 ---
 
-### UC-25 — Submit an Incident Report
+### UC-32 — Submit an Incident Report
 
 **Use Case Name:** Submit an Incident Report
 
-**Initial assumption:** Session is in `ACTIVE`, `NO_SHOW`, `COMPLETED`, or `ABORTED` status. Reporting window is open (72h for COMPLETED, 24h for ABORTED/NO_SHOW). User has not yet submitted a report for this session.
+**Initial assumption:** Session is in `ACTIVE`, `NO_SHOW`, `COMPLETED`, or `ABORTED` status. Reporting window is open (72h for COMPLETED, 24h for ABORTED/NO_SHOW). For `ACTIVE`, report can be submitted immediately from the live session detail. User has not yet submitted a report for this session.
 
 **Normal:**
 1. User taps "Report an Issue" on the session detail or post-abort screen.
@@ -902,7 +1106,7 @@
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| Session status not reportable | `REPORT_SESSION_INVALID_STATUS` | Hide "Report" button for non-reportable sessions (PENDING, CONSUMED). |
+| Session status not reportable | `REPORT_SESSION_INVALID_STATUS` | Hide "Report" button for non-reportable sessions (PENDING, CANCELLED). |
 | Reporting window has expired | `REPORT_WINDOW_EXPIRED` | Show toast: "The reporting window for this session has closed." Hide "Report" button. |
 | Already reported | `REPORT_ALREADY_SUBMITTED` | Show toast: "You've already submitted a report for this session." Hide button. |
 | User trying to report themselves | `REPORT_SELF_NOT_ALLOWED` | Should never happen in UI — `reportedUserId` is always the partner. |
@@ -919,11 +1123,11 @@
 
 ---
 
-### UC-26 — View a Public User Profile
+### UC-33 — View a Public User Profile
 
 **Use Case Name:** View a Public User Profile
 
-**Initial assumption:** User taps on another user's name/avatar anywhere in the app (from session history, proposal, followers list, etc.). Authentication not required to **view** the profile; authentication is required to **act** (Follow/Block).
+**Initial assumption:** User taps on another user's name/avatar anywhere in the app (from session history, proposal, friends list, etc.). Authentication is not required to view profile data. Authentication is required for friendship actions and blocking.
 
 **Normal:**
 1. UI calls `GET /api/v1/users/{userId}`.
@@ -931,8 +1135,13 @@
 3. UI calls `GET /api/v1/users/{userId}/badges` and `GET /api/v1/users/{userId}/stats` in parallel.
 4. UI calls `GET /api/v1/users/{userId}/reviews` to show review feed.
 5. UI renders full public profile page: avatar, name, bio, tags, trust score, stats, badges, reviews.
-6. If viewing another user's profile (not self): show "Follow" / "Unfollow" toggle and "Block" option.
-7. **Unauthenticated guard:** If the user is not logged in and taps "Follow" or "Block", do **not** call the API. Instead, navigate to the Login screen and show a prompt: "Log in to follow or block users." After successful login, return the user to this profile screen.
+6. If viewing another user's profile (not self), show friendship actions based on relationship state:
+   - Not connected: `Add Friend`
+   - Outgoing request pending: `Request Sent`
+   - Incoming request pending: `Accept` / `Decline`
+   - Already friends: `Invite Walk` and `Remove Friend`
+   - Always available in overflow: `Block`
+7. **Unauthenticated guard:** If user is not logged in and taps `Add Friend`, `Accept`, `Decline`, `Remove Friend`, or `Block`, do not call API. Navigate to Login and show: "Log in to manage friendships."
 
 **What can go wrong:**
 
@@ -942,98 +1151,128 @@
 
 **Other activities:** None.
 
-**System state on completion:** Read-only profile view. Action buttons for follow/block are enabled.
+**System state on completion:** Read-only profile data is visible; friendship actions are available only for authenticated users.
 
 ---
 
-### UC-27 — Follow a User
+### UC-34 — Send a Friend Request
 
-**Use Case Name:** Follow a User
+**Use Case Name:** Send a Friend Request
 
-**Initial assumption:** User is **authenticated**. Viewing another user's public profile (UC-26). Not currently following them. (If user is unauthenticated and taps "Follow", redirect to Login — see UC-26 step 7.)
+**Initial assumption:** User is authenticated, viewing another user's profile, and both users are not already friends.
 
 **Normal:**
-1. User taps "Follow".
-2. UI optimistically updates the button to "Following".
-3. UI calls `POST /api/v1/users/{userId}/follow`.
-4. Backend returns `200 OK`. Follow relationship is created.
+1. User taps `Add Friend`.
+2. UI optimistically changes action to `Request Sent`.
+3. UI calls `POST /api/v1/friends/{userId}/request`.
+4. Backend returns `200 OK`. Friend request moves to `PENDING`.
 
 **What can go wrong:**
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
 | Target user not found | `SOCIAL_USER_NOT_FOUND` | Revert button. Show toast: "User not found." |
-| Trying to follow self | `FOLLOW_SELF_FOLLOW_FORBIDDEN` | Hide "Follow" button for the user's own profile. |
-| Already following | `FOLLOW_ALREADY_FOLLOWING` | Button should already show "Following" — this is a double-tap race. Ignore silently. |
+| Trying to add self | `FRIEND_REQUEST_SELF_FORBIDDEN` | Hide `Add Friend` on own profile. |
+| Already friends | `FRIEND_REQUEST_ALREADY_FRIENDS` | Show state `Already friends`. |
+| Request already pending | `FRIEND_REQUEST_ALREADY_PENDING` | Keep `Request Sent` state. |
+| Either side is blocked | `FRIEND_REQUEST_BLOCKED` | Show toast: "Cannot send friend request." |
 
-**Other activities:** None.
+**Other activities:** Target user receives a notification for incoming friend request.
 
-**System state on completion:** Follow relationship exists. User appears in target's followers list (`GET /api/v1/users/{userId}/followers`).
+**System state on completion:** Request is `PENDING`; users are not friends yet, so private walk invite is still unavailable.
 
 ---
 
-### UC-28 — Unfollow a User
+### UC-35 — Respond to a Friend Request (Accept/Decline)
 
-**Use Case Name:** Unfollow a User
+**Use Case Name:** Respond to a Friend Request
 
-**Initial assumption:** User is authenticated. Currently following the target user.
+**Initial assumption:** User is authenticated and has at least one incoming friend request in `PENDING` status.
 
 **Normal:**
-1. User taps "Following" (toggle to unfollow).
-2. UI shows confirmation: "Unfollow this user?"
-3. UI optimistically updates button to "Follow".
-4. UI calls `DELETE /api/v1/users/{userId}/follow`.
-5. Backend returns `200 OK`. Follow relationship is removed.
+1. User opens incoming friend requests list.
+2. For each request, user chooses `Accept` or `Decline`.
+3. UI calls:
+   - Accept: `POST /api/v1/friends/requests/{requestId}/accept`
+   - Decline: `POST /api/v1/friends/requests/{requestId}/decline`
+4. Backend returns `200 OK`.
+5. On Accept:
+   - Friendship becomes `ACCEPTED`.
+   - Both users appear in each other's friends list.
+   - Both users can use private walk invite flow in UC-15 (`invited_friend_id`).
+6. On Decline:
+   - Request moves to terminal declined state.
+   - No friendship is created.
 
 **What can go wrong:**
 
-| Condition | UI Reaction |
-|-----------|------------|
-| Network failure | Revert button state. Show toast: "Could not unfollow. Try again." |
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Request not found | `FRIEND_REQUEST_NOT_FOUND` | Show toast: "Request no longer exists." Refresh list. |
+| User not part of request | `FRIEND_REQUEST_NOT_PARTICIPANT` | Show toast: "Permission denied." |
+| Request already resolved | `FRIEND_REQUEST_ALREADY_RESOLVED` | Refresh list and remove stale item. |
 
-**Other activities:** None.
+**Other activities:** Request sender receives status notification (accepted/declined).
 
-**System state on completion:** Follow relationship removed. User no longer appears in target's followers list.
+**System state on completion:** Friendship is either established (`ACCEPTED`) or request is closed (`DECLINED`).
 
 ---
 
-### UC-29 — View Followers / Following Lists
+### UC-36 — View Friends and Friend Requests
 
-**Use Case Name:** View Followers / Following Lists
+**Use Case Name:** View Friends and Friend Requests
 
-**Initial assumption:** User is on a public profile page (own or another user's).
+**Initial assumption:** User is authenticated and opens social section from Profile.
 
 **Normal:**
-1. User taps "Followers" tab → UI calls `GET /api/v1/users/{userId}/followers`.
-2. User taps "Following" tab → UI calls `GET /api/v1/users/{userId}/following`.
-3. Each response returns a list of `{ userId, fullName, avatarUrl }`.
-4. UI renders the list; each item is tappable and navigates to UC-26.
+1. UI opens tabs:
+   - `Friends`
+   - `Incoming Requests`
+   - `Sent Requests`
+2. UI calls:
+   - `GET /api/v1/friends`
+   - `GET /api/v1/friends/requests/incoming`
+   - `GET /api/v1/friends/requests/outgoing`
+3. Backend returns lists with basic user card fields (`userId`, `fullName`, `avatarUrl`).
+4. `Friends` list items provide quick actions:
+   - `Invite Walk` (deep-link to UC-15 Create Intent with `is_private=true` and preselected `invited_friend_id`)
+   - `Remove Friend` (confirmation, then `DELETE /api/v1/friends/{userId}`)
+   - `View Profile` (UC-33)
+5. If user confirms `Remove Friend`:
+   - Backend returns `200 OK`.
+   - Both users are removed from each other's friends lists.
+   - Private invite is no longer available until a new friend request is accepted.
 
 **What can go wrong:**
 
-| Condition | UI Reaction |
-|-----------|------------|
-| Network failure | Show empty state with retry option. |
+| Condition | Error Code | UI Reaction |
+|-----------|-----------|-------------|
+| Network failure | `N/A` | Show cached list (if available) and retry option. |
+| Remove target is not an accepted friend | `FRIEND_REMOVE_NOT_FRIENDS` | Refresh friends list and hide `Remove Friend` for that user. |
+| Target user not found | `SOCIAL_USER_NOT_FOUND` | Show toast: "User not found." Refresh list. |
 
 **Other activities:** None.
 
-**System state on completion:** User sees the social graph. Read-only.
+**System state on completion:** User can manage friendship network, remove existing friends, and quickly pick a friend for private invite flow.
 
 ---
 
-### UC-30 — Block a User
+### UC-37 — Block a User
 
 **Use Case Name:** Block a User
 
-**Initial assumption:** User is **authenticated**. Viewing another user's public profile. Has a "Block" option available (via overflow menu). (If user is unauthenticated and taps "Block", redirect to Login — see UC-26 step 7.)
+**Initial assumption:** User is authenticated and viewing another user's profile.
 
 **Normal:**
 1. User selects "Block User" from the overflow menu.
-2. UI shows a strong confirmation dialog: "Block [name]? They won't be able to see your activity and you won't be matched together."
+2. UI shows confirmation dialog: "Block [name]? You cannot invite each other to private walks while blocked."
 3. User confirms.
 4. UI calls `POST /api/v1/users/{userId}/block`.
-5. Backend returns `200 OK`. Block relationship is created. Any existing follow relationships in both directions are silently removed.
-6. UI navigates back to the previous screen and removes the blocked user from visible lists.
+5. Backend returns `200 OK`.
+6. System side effects:
+   - Existing friendship is removed if present.
+   - Any pending friend requests between the two users are closed.
+7. UI navigates back and removes blocked user from visible friendship lists.
 
 **What can go wrong:**
 
@@ -1045,11 +1284,11 @@
 
 **Other activities:** None.
 
-**System state on completion:** Block relationship exists. Follow relationships are torn down. Matching engine will not pair blocked users.
+**System state on completion:** Block relationship exists. Friendship/request links are severed. Users cannot invite each other while blocked.
 
 ---
 
-### UC-31 — Unblock a User
+### UC-38 — Unblock a User
 
 **Use Case Name:** Unblock a User
 
@@ -1069,7 +1308,7 @@
 
 **Other activities:** None.
 
-**System state on completion:** Block relationship removed. Users may be matched again.
+**System state on completion:** Block is removed. Friendship is not auto-restored; users must send a new friend request to reconnect.
 
 ---
 
@@ -1077,7 +1316,7 @@
 
 ---
 
-### UC-32 — View Notification Feed
+### UC-39 — View Notification Feed
 
 **Use Case Name:** View Notification Feed
 
@@ -1091,11 +1330,16 @@
 
 | Notification Type | Description | Action |
 |---|---|---|
-| `PROPOSAL_RECEIVED` | New match proposal exists | Navigate to Proposal Detail (UC-12/UC-13) |
-| `PROPOSAL_ACCEPTED` | Partner accepted the proposal | Show status update; navigate to Proposal Detail |
-| `SESSION_ACTIVE` | Both users activated; walk is live | Navigate to Active Session screen (UC-16) |
+| `PROPOSAL_RECEIVED` | New match proposal exists | Navigate to Proposal tab (UC-19), then open Proposal Detail |
+| `INVITE_SENT` | Your private invite was created and is waiting for your friend | Navigate to Proposal tab (UC-19), then open Proposal Detail |
+| `PROPOSAL_ACCEPTED` | Partner accepted the proposal | Show status update; navigate to Proposal tab and open Proposal Detail |
+| `FRIEND_REQUEST_RECEIVED` | Someone sent you a friend request | Navigate to Social requests view (UC-36) |
+| `FRIEND_REQUEST_ACCEPTED` | Your friend request was accepted | Navigate to Friends list (UC-36) |
+| `FRIEND_REQUEST_DECLINED` | Your friend request was declined | Navigate to Sent Requests (UC-36) |
+| `SESSION_CONFIRMED` | Proposal confirmed; session created in `PENDING` | Navigate to Session Detail screen (UC-23) |
+| `SESSION_ACTIVE` | Both users activated; walk is live | Navigate to Active Session screen (UC-23) |
 
-5. Tapping a notification marks it as read (UC-33) and navigates to the relevant screen.
+5. Tapping a notification marks it as read (UC-40) and navigates to the relevant screen.
 
 **What can go wrong:**
 
@@ -1111,7 +1355,7 @@
 
 ---
 
-### UC-33 — Mark Notification as Read
+### UC-40 — Mark Notification as Read
 
 **Use Case Name:** Mark Notification as Read
 
@@ -1141,7 +1385,7 @@
 
 ---
 
-### UC-34 — View User Badges
+### UC-41 — View User Badges
 
 **Use Case Name:** View User Badges
 
@@ -1166,7 +1410,7 @@
 
 ---
 
-### UC-35 — View User Stats
+### UC-42 — View User Stats
 
 **Use Case Name:** View User Stats
 
@@ -1181,7 +1425,7 @@
 
 | Condition | Error Code | UI Reaction |
 |-----------|-----------|-------------|
-| User not found | `USER_NOT_FOUND` | Handle at the profile level (UC-26 already checks). |
+| User not found | `USER_NOT_FOUND` | Handle at the profile level (UC-33 already checks). |
 | Network failure | Show cached or skeleton stats. |
 
 **Other activities:** None.
@@ -1190,7 +1434,7 @@
 
 ---
 
-### UC-36 — View Leaderboard
+### UC-43 — View Leaderboard
 
 **Use Case Name:** View Leaderboard
 
@@ -1199,7 +1443,7 @@
 **Normal:**
 1. UI calls `GET /api/v1/leaderboard`.
 2. Backend returns top 50 users sorted by `totalPoints` descending, each entry including `rank`, `userId`, `totalPoints`, `totalDistanceKm`, `completedSessions`, `trustScore`.
-3. UI renders a ranked list. Each row is tappable and navigates to UC-26 (public profile).
+3. UI renders a ranked list. Each row is tappable and navigates to UC-33 (public profile).
 4. If the authenticated user is in the top 50, highlight their row.
 
 **What can go wrong:**
@@ -1249,8 +1493,8 @@ All API responses follow the `ApiResponse<T>` envelope. This is the **only** err
 | Invariant | Rule Summary | UI Enforcement |
 |-----------|-------------|----------------|
 | **I-1** | No overlapping time windows | Show `INTENT_OVERLAPPING` / `INTENT_OVERLAPPING_SESSION` as blocking dialog, not toast |
-| **I-3** | An intent can only reach `CONSUMED` via the proposal acceptance flow (P-3). `CONSUMED` means the intent has been spent to create a WalkSession — it is permanently locked and cannot be cancelled, re-opened, or reused. It is **not** a user-facing error state; it is a silent terminal state. | Never show a "Cancel" or "Find Match" button for a `CONSUMED` intent. Do not surface the word "CONSUMED" to end users — these intents should simply disappear from the active intent list. If the API returns `INTENT_NOT_OPEN` for an intent the user tries to act on, refresh the list silently: the intent has likely been consumed by a concurrent proposal acceptance. |
-| **I-4** | MATCHING intents show lock badge | Disable "Cancel Intent" button; show "View Proposal" instead |
+| **I-3** | An intent can only reach `CONSUMED` via the proposal acceptance flow (P-3). `CONSUMED` means the intent has been spent to create a WalkSession — it is permanently locked and cannot be cancelled, re-opened, or reused. It is **not** a user-facing error state; it is a silent terminal state. | Never show any action button for a `CONSUMED` intent. Do not surface the word "CONSUMED" to end users — these intents should disappear from active lists. If the API returns `INTENT_NOT_OPEN` for an intent the user tries to act on, refresh silently: the intent has likely been consumed by concurrent proposal acceptance. |
+| **I-4** | MATCHING intents are soft-locked and move out of Intent tab | In Intent tab, only render OPEN intents. Route MATCHING handling to Proposal tab with lock/wait states |
 | **I-6** | Terminal states are immutable | Hide all action buttons for CONSUMED, CANCELLED, EXPIRED intents and COMPLETED, NO_SHOW, CANCELLED, ABORTED sessions |
 | **I-7** | Private intents need accepted friendship | Validate friend selection client-side before submit |
 | **P-2** | Both users must accept proposal | Show "Waiting for partner..." state when only one has accepted |
