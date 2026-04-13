@@ -151,12 +151,12 @@
 
 ## PHASE 2 — Discovery Test Suite (UC-14 Hotspots)
 
-### T14-1: UC-14 Browse Hotspot Map — Unauthenticated (Public Endpoint)
-- [ ] Seed two hotspot rows; `GET /api/v1/hotspots` without a token → `200 OK`, list of hotspots returned
-- [ ] Assert `openIntentCount` field is present on each hotspot
+### T14-1: UC-14 Browse Hotspot Map — Unauthenticated (Public Endpoint) ✅
+- [x] Seed two hotspot rows via JDBC; `GET /api/v1/hotspots` without a token → `200 OK`, `data` array length 2
+- [x] Assert `openIntentCount` field is present on each hotspot (value 0 for freshly seeded, no intents)
 
-### T14-2: UC-14 Get Single Hotspot — Not Found
-- [ ] `GET /api/v1/hotspots/{nonExistentId}` → HTTP **400**, `error.code = HOTSPOT_NOT_FOUND`
+### T14-2: UC-14 Get Single Hotspot — Not Found ✅
+- [x] `GET /api/v1/hotspots/{randomUUID}` → HTTP **400**, `error.code = HOTSPOT_NOT_FOUND` (DomainException → GlobalExceptionHandler)
 
 ---
 
@@ -164,37 +164,33 @@
 
 > Note: UC-18 is internal API only. Android Intent screen must not expose any manual "Trigger Match" button.
 
-### T15-0: UC-15 Create Walk Intent — Unauthenticated Guard
-- [ ] Call `POST /api/v1/intents` without token → HTTP **401** (security gate)
-- [ ] This is the backend contract that supports UC-14 map CTA auth redirect behavior
+### T15-0: UC-15 Create Walk Intent — Unauthenticated Guard ✅
+- [x] `POST /api/v1/intents` without token → HTTP **401** (Spring Security gate)
 
-### T15-1: UC-15 Create Walk Intent — Happy Path
-- [ ] Authenticated user calls `POST /api/v1/intents` with valid payload (seeded hotspot)
-- [ ] Assert `201 Created`, `data.status = OPEN`, `data.expires_at` non-null
+### T15-1: UC-15 Create Walk Intent — Happy Path ✅
+- [x] `POST /api/v1/intents` with valid payload (seeded hotspot, tomorrow 17:00-18:00) → `201 Created`
+- [x] `data.intent.status = OPEN`, `data.intent.expires_at` non-null, `data.intent.id` non-empty
 
-### T15-2: UC-15 Create Intent — Overlapping OPEN Intent (Invariant I-1)
-- [ ] Create a first intent for time window `[17:00, 18:00]`
-- [ ] Create a second overlapping intent `[17:30, 19:00]` for the same user
-- [ ] Assert HTTP **400**, `error.code = INTENT_OVERLAPPING`
+### T15-2: UC-15 Create Intent — Overlapping OPEN Intent (Invariant I-1) ✅
+- [x] First intent [17:00, 18:00]; second overlapping [17:30, 19:00] for same user → HTTP **400**, `INTENT_OVERLAPPING`
 
-### T15-3: UC-15 Create Intent — Overlapping PENDING Session (Invariant I-1)
-- [ ] Seed a `PENDING` WalkSession in the same time window for the user
-- [ ] Attempt to create an intent overlapping that window
-- [ ] Assert HTTP **400**, `error.code = INTENT_OVERLAPPING_SESSION`
+### T15-3: UC-15 Create Intent — Overlapping PENDING Session (Invariant I-1) ✅
+- [x] `seedPendingSession()` added to `TestDataSeeder` — seeds CONSUMED walk_intent rows + match_proposal (CONFIRMED) + walk_session (PENDING) via JDBC FK chain
+- [x] Intent rows seeded as CONSUMED (not OPEN/MATCHING) so guard 2a passes; guard 2b catches the PENDING session
+- [x] Attempt to create intent in same window → HTTP **400**, `INTENT_OVERLAPPING_SESSION`
 
-### T15-4: UC-15 Create Intent — Invalid Time Range
-- [ ] Send `time_start >= time_end` → HTTP **400**, `error.code = INVALID_TIME_RANGE`
+### T15-4: UC-15 Create Intent — Invalid Time Range ✅
+- [x] `time_start = 18.0, time_end = 17.0` (end before start) → HTTP **400**, `INVALID_TIME_RANGE`
 
-### T15-5: UC-15 Create Intent — Invalid Age Range
-- [ ] Send `age_min > age_max` → HTTP **400**, `error.code = INVALID_AGE_RANGE`
+### T15-5: UC-15 Create Intent — Invalid Age Range ✅
+- [x] `age_min = 40, age_max = 30` (min > max) → HTTP **400**, `INVALID_AGE_RANGE`
 
-### T15-6: UC-15 Create Private Intent — Friend Not Accepted (Invariant I-7)
-- [ ] Send `is_private = true` with `invited_friend_id` pointing to a non-friend user
-- [ ] Assert HTTP **400**, `error.code = INTENT_PRIVATE_FRIEND_NOT_ACCEPTED`
+### T15-6: UC-15 Create Private Intent — Friend Not Accepted (Invariant I-7) ✅
+- [x] `is_private = true`, `invited_friend_id = non-friend UUID` → HTTP **400**, `INTENT_PRIVATE_FRIEND_NOT_ACCEPTED`
 
-### T16-1: UC-16 View My Active Intents
-- [ ] Create two `OPEN` intents; `GET /api/v1/intents` → `200 OK`, list contains both
-- [ ] Assert only `OPEN` intents are returned (no `MATCHING`/`CANCELLED`/`EXPIRED` in response)
+### T16-1: UC-16 View My Active Intents ✅
+- [x] Create two non-overlapping OPEN intents [09:00-10:00] and [11:00-12:00]; `GET /api/v1/intents` → `200 OK`, list length 2, both status `OPEN`
+- [x] Note: `findOpenByUserId` returns `status IN ('OPEN', 'MATCHING') AND is_private = false`
 
 ### T17-1: UC-17 Cancel Walk Intent — Happy Path
 - [ ] Create an `OPEN` intent; `DELETE /api/v1/intents/{intentId}` → `200 OK`

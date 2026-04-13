@@ -107,6 +107,15 @@ static { postgres.start(); }
 
 ---
 
+## 2026-04-13 · Phase 3 · seedPendingSession must use CONSUMED intent status, not OPEN
+
+### Lesson: Guard order matters — intent overlap (guard 2a) runs before session overlap (guard 2b)
+**What happened:** T15-3 expected `INTENT_OVERLAPPING_SESSION` but got `INTENT_OVERLAPPING`. The seeder inserted walk_intent rows with status `OPEN`. `WalkIntentCommandService.createIntent()` runs guard 2a first (`hasOverlappingActiveIntent` checks `OPEN/MATCHING`) — it fired immediately, masking guard 2b.
+**Fix:** Changed `seedPendingSession()` to insert intent rows with `status = 'CONSUMED'::intent_status`. CONSUMED is not in the `('OPEN', 'MATCHING')` overlap check, so guard 2a passes and guard 2b (`hasOverlappingActiveSession`) can fire.
+**Rule going forward:** When testing a specific guard in a multi-guard chain, ensure all earlier guards are satisfied by the seeded data. Audit the guard order in the service before writing the seeder.
+
+---
+
 ## 2026-04-13 · Phase 1 · Logout endpoints return 204, not 200
 
 ### Lesson: `POST /auth/logout` and `POST /auth/logout-all` must return `ResponseEntity.noContent().build()` (204 No Content)

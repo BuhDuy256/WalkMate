@@ -65,6 +65,86 @@ public class TestDataSeeder {
         return seedHotspot("Test Hotspot", 10.775, 106.700);
     }
 
+    // ── Walk Session (direct seed) ────────────────────────────────────────────
+
+    /**
+     * Seeds a {@code PENDING} walk session for the given pair of users, bypassing the full
+     * match-proposal API flow.
+     *
+     * <p>Inserts the minimum FK chain:
+     * <ol>
+     *   <li>Two {@code walk_intent} rows (OPEN, one per user) referencing {@code hotspotId}.</li>
+     *   <li>One {@code match_proposal} row (CONFIRMED) referencing those intents.</li>
+     *   <li>One {@code walk_session} row (PENDING) referencing the proposal.</li>
+     * </ol>
+     *
+     * <p>Used by T15-3 to assert that {@code POST /intents} returns
+     * {@code INTENT_OVERLAPPING_SESSION} when a user already has a PENDING session
+     * that overlaps the requested time window.
+     *
+     * @param userIdA       UUID string of the first participant (the user under test)
+     * @param userIdB       UUID string of the second participant (placeholder)
+     * @param hotspotId     UUID string of the hotspot (must already exist in DB)
+     * @param scheduledStart overlapping window start (inclusive)
+     * @param scheduledEnd   overlapping window end (exclusive)
+     */
+    public void seedPendingSession(String userIdA, String userIdB, String hotspotId,
+                                   java.time.Instant scheduledStart, java.time.Instant scheduledEnd) {
+        java.sql.Timestamp start = java.sql.Timestamp.from(scheduledStart);
+        java.sql.Timestamp end   = java.sql.Timestamp.from(scheduledEnd);
+        java.sql.Timestamp far   = java.sql.Timestamp.from(scheduledEnd.plusSeconds(3600));
+
+        // 1. Seed intent rows — use CONSUMED status so hasOverlappingActiveIntent (which checks
+        //    OPEN/MATCHING) does NOT fire, allowing hasOverlappingActiveSession to be reached.
+        String intentIdA = jdbc.queryForObject(
+                """
+                INSERT INTO public.walk_intent
+                    (hotspot_id, user_id, time_window_start, time_window_end,
+                     matching_constraints, expires_at, status)
+                VALUES (?::uuid, ?::uuid, ?, ?, '{"age_min":18,"age_max":60}'::jsonb, ?,
+                        'CONSUMED'::intent_status)
+                RETURNING intent_id::text
+                """,
+                String.class, hotspotId, userIdA, start, end, far);
+
+        String intentIdB = jdbc.queryForObject(
+                """
+                INSERT INTO public.walk_intent
+                    (hotspot_id, user_id, time_window_start, time_window_end,
+                     matching_constraints, expires_at, status)
+                VALUES (?::uuid, ?::uuid, ?, ?, '{"age_min":18,"age_max":60}'::jsonb, ?,
+                        'CONSUMED'::intent_status)
+                RETURNING intent_id::text
+                """,
+                String.class, hotspotId, userIdB, start, end, far);
+
+        // 2. Seed match_proposal (CONFIRMED — both accepted, session already created)
+        String proposalId = jdbc.queryForObject(
+                """
+                INSERT INTO public.match_proposal
+                    (intent_id_a, intent_id_b,
+                     proposed_start_time, proposed_end_time,
+                     proposed_location_lat, proposed_location_lng,
+                     status, expires_at)
+                VALUES (?::uuid, ?::uuid, ?, ?, 10.775, 106.700,
+                        'CONFIRMED'::proposal_status, ?)
+                RETURNING proposal_id::text
+                """,
+                String.class, intentIdA, intentIdB, start, end, far);
+
+        // 3. Seed walk_session (PENDING — created after proposal confirmed)
+        jdbc.update(
+                """
+                INSERT INTO public.walk_session
+                    (proposal_id, user_id_a, user_id_b,
+                     meeting_point_lat, meeting_point_lng,
+                     scheduled_start, scheduled_end, status)
+                VALUES (?::uuid, ?::uuid, ?::uuid, 10.775, 106.700, ?, ?,
+                        'PENDING'::walk_session_status)
+                """,
+                proposalId, userIdA, userIdB, start, end);
+    }
+
     // ── Friendship ────────────────────────────────────────────────────────────
 
     /**
