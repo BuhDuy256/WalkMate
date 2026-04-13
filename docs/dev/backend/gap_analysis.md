@@ -20,16 +20,8 @@
 
 ## Feature 1 — Auth (UC-01 through UC-12)
 
-### 1.1 🔴 UC-01 Register returns full token payload instead of email-only confirmation
-**File:** `presentation/controller/user/UserController.java:47–53`
-
-`registerUser()` calls `userCommandService.registerUser()` which issues a `LoginResult` (containing access token + refresh token) and returns a full `LoginUserResponse`. The spec mandates:
-- Response: `201 Created` with `{ "data": { "email": "..." } }` only.
-- Client then navigates to **Login** screen separately. Auto-login on register is explicitly not the spec flow.
-
-The `RegisterUserCommand` also carries a `deviceId` field that does not appear in the UC-01 request payload spec.
-
-**Impact:** Client cannot implement the "Register → navigate to Login" flow; tokens are handed out prematurely. Security posture is also different (unverified account receives tokens immediately).
+### 1.1 ~~🔴 UC-01 Register returns full token payload instead of email-only confirmation~~ — CLOSED (SSOT corrected)
+**Resolution (2026-04-13):** The implementation is correct. `registerUser()` issues a `LoginResult` (access + refresh token) and the client auto-logs-in on register. The SSOT was wrong to remove `deviceId` from the request payload and to prescribe an email-only response. `backend_use_cases.md` UC-01 has been updated to reflect the actual and intended behaviour: `deviceId` is required in the request, and the response is a full token payload. No code change required.
 
 ---
 
@@ -178,7 +170,7 @@ Endpoints `POST /follow`, `DELETE /follow`, `GET /followers`, `GET /following` a
 
 | ID | Domain | Severity | Gap |
 |---|---|---|---|
-| 1.1 | Auth | 🔴 | UC-01 Register returns full token payload; spec requires email-only confirmation |
+| 1.1 | Auth | ~~🔴~~ | ~~UC-01 Register returns full token payload; spec requires email-only confirmation~~ — SSOT corrected; no code change |
 | 1.2 | Auth | 🟠 | UC-10/11 Logout returns 204 instead of 200 with null data |
 | 2.1 | Discovery | 🟠 | `HotspotQueryService` throws on empty list instead of returning `[]` |
 | 3.1 | Intent | 🔴 | UC-15 inline matching never triggered on create (public path) |

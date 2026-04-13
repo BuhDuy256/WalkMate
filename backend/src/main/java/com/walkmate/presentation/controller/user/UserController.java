@@ -87,22 +87,22 @@ public class UserController {
     // ── Logout ────────────────────────────────────────────────────────────────
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
+    public ResponseEntity<ApiResponse<Void>> logout(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody LogoutRequest request) {
 
         UUID userId = UUID.fromString(principal.userId());
         userCommandService.logout(userId, request.deviceId());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/logout-all")
-    public ResponseEntity<Void> logoutAll(
+    public ResponseEntity<ApiResponse<Void>> logoutAll(
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID userId = UUID.fromString(principal.userId());
         userCommandService.logoutAll(userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     // ── Phone OTP ─────────────────────────────────────────────────────────────
