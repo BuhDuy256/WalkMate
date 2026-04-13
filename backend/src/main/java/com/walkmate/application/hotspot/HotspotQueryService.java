@@ -18,8 +18,11 @@ public class HotspotQueryService {
 
     @Transactional(readOnly = true)
     public List<Hotspot> getAllHotspots() {
-        return hotspotRepository.findAll()
-            .orElseThrow(() -> new DomainException(HotspotErrorCode.NO_HOTSPOT_AVAILABLE));
+        List<Hotspot> hotspots = hotspotRepository.findAll();
+        if (hotspots.isEmpty()) {
+            throw new DomainException(HotspotErrorCode.NO_HOTSPOT_AVAILABLE);
+        }
+        return hotspots;
     }
 
     @Transactional(readOnly = true)

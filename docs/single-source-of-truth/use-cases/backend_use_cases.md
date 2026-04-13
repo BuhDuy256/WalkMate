@@ -1178,7 +1178,7 @@
 1. User taps `Add Friend`.
 2. UI optimistically changes action to `Request Sent`.
 3. UI calls `POST /api/v1/friends/{userId}/request`.
-4. Backend returns `200 OK`. Friend request moves to `PENDING`.
+4. Backend returns `201 Created`. Friend request moves to `PENDING`.
 
 **What can go wrong:**
 
