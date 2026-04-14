@@ -289,27 +289,27 @@
 
 ## PHASE 5 — Session Lifecycle Test Suite (UC-23 to UC-27)
 
-### T23-1: UC-23 View Active Sessions
-- [ ] Seed one `PENDING` and one `ACTIVE` session for User A; `GET /api/v1/sessions/active`
-- [ ] Assert both sessions are in the response; no terminal-state sessions included
+### T23-1: UC-23 View Active Sessions ✅
+- [x] Seed one `PENDING` and one `ACTIVE` session for User A; `GET /api/v1/sessions/active`
+- [x] Assert both sessions are in the response; no terminal-state sessions included
+- [x] **Seeder upgrade:** `seedPendingSession` now returns `String` (session_id); `seedActiveSession` added — seeds full FK chain then promotes to ACTIVE via UPDATE
 
-### T24-1: UC-24 Activate Session — Partial Activation (Invariant S-2)
-- [ ] Seed a `PENDING` session within activation window; User A calls `POST /api/v1/sessions/{id}/activate`
-- [ ] Assert `200 OK`, `data.status = PENDING` (User B not yet activated)
-- [ ] Assert `user_a_activated_at` is set in DB; `started_at` remains null
+### T24-1: UC-24 Activate Session — Partial Activation (Invariant S-2) ✅
+- [x] Seed a `PENDING` session with `scheduledStart = now + 5 min` (inside window); User A calls `POST /api/v1/sessions/{id}/activate`
+- [x] Assert `200 OK`, `data.status = PENDING` (User B not yet activated)
+- [x] JDBC: `user_a_activated_at` is set; `started_at` is null
 
-### T24-2: UC-24 Activate Session — Mutual Activation → ACTIVE (Invariants S-2, S-3)
-- [ ] User A and User B both activate within the window
-- [ ] Second activation returns `200 OK`, `data.status = ACTIVE`
-- [ ] Assert `started_at` is set in DB
-- [ ] Assert session is now queryable via `GET /api/v1/sessions/active` with `ACTIVE` status
+### T24-2: UC-24 Activate Session — Mutual Activation → ACTIVE (Invariants S-2, S-3) ✅
+- [x] User A activates → PENDING; User B activates → ACTIVE
+- [x] Second activation returns `200 OK`, `data.status = ACTIVE`, `started_at` non-empty in response
+- [x] JDBC: `started_at` is not null; `SESSION_ACTIVE` notifications published to both users
 
-### T24-3: UC-24 Activate Session — Outside Activation Window (Invariant S-3)
-- [ ] Seed a `PENDING` session with `scheduled_start` more than 15 minutes in the past
-- [ ] Call activate → HTTP **400**, `error.code = SESSION_ACTIVATION_WINDOW_CLOSED`
+### T24-3: UC-24 Activate Session — Outside Activation Window (Invariant S-3) ✅
+- [x] Seed `PENDING` session with `scheduledStart = now − 20 min` (window closed 5 min ago)
+- [x] Call activate → HTTP **400**, `error.code = SESSION_ACTIVATION_WINDOW_CLOSED`
 
-### T24-4: UC-24 Activate Session — Session Not PENDING
-- [ ] Call activate on an `ACTIVE` session → HTTP **400**, `error.code = SESSION_NOT_PENDING`
+### T24-4: UC-24 Activate Session — Session Not PENDING ✅
+- [x] `seedActiveSession` → call activate → HTTP **400**, `error.code = SESSION_NOT_PENDING`
 
 ### T25-1: UC-25 Cancel Pending Session — Happy Path
 - [ ] Seed a `PENDING` session; call `POST /api/v1/sessions/{id}/cancel` with a reason

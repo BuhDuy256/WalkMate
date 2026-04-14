@@ -89,23 +89,20 @@ public class TestDataSeeder {
      *
      * <p>Inserts the minimum FK chain:
      * <ol>
-     *   <li>Two {@code walk_intent} rows (OPEN, one per user) referencing {@code hotspotId}.</li>
+     *   <li>Two {@code walk_intent} rows (CONSUMED, one per user) referencing {@code hotspotId}.</li>
      *   <li>One {@code match_proposal} row (CONFIRMED) referencing those intents.</li>
      *   <li>One {@code walk_session} row (PENDING) referencing the proposal.</li>
      * </ol>
      *
-     * <p>Used by T15-3 to assert that {@code POST /intents} returns
-     * {@code INTENT_OVERLAPPING_SESSION} when a user already has a PENDING session
-     * that overlaps the requested time window.
-     *
-     * @param userIdA       UUID string of the first participant (the user under test)
-     * @param userIdB       UUID string of the second participant (placeholder)
-     * @param hotspotId     UUID string of the hotspot (must already exist in DB)
-     * @param scheduledStart overlapping window start (inclusive)
-     * @param scheduledEnd   overlapping window end (exclusive)
+     * @param userIdA        UUID string of the first participant
+     * @param userIdB        UUID string of the second participant
+     * @param hotspotId      UUID string of the hotspot (must already exist in DB)
+     * @param scheduledStart walk window start
+     * @param scheduledEnd   walk window end
+     * @return the generated session UUID as a {@code String}
      */
-    public void seedPendingSession(String userIdA, String userIdB, String hotspotId,
-                                   java.time.Instant scheduledStart, java.time.Instant scheduledEnd) {
+    public String seedPendingSession(String userIdA, String userIdB, String hotspotId,
+                                     java.time.Instant scheduledStart, java.time.Instant scheduledEnd) {
         java.sql.Timestamp start = java.sql.Timestamp.from(scheduledStart);
         java.sql.Timestamp end   = java.sql.Timestamp.from(scheduledEnd);
         java.sql.Timestamp far   = java.sql.Timestamp.from(scheduledEnd.plusSeconds(3600));
@@ -149,7 +146,7 @@ public class TestDataSeeder {
                 String.class, intentIdA, intentIdB, start, end, far);
 
         // 3. Seed walk_session (PENDING — created after proposal confirmed)
-        jdbc.update(
+        return jdbc.queryForObject(
                 """
                 INSERT INTO public.walk_session
                     (proposal_id, user_id_a, user_id_b,
@@ -157,8 +154,43 @@ public class TestDataSeeder {
                      scheduled_start, scheduled_end, status)
                 VALUES (?::uuid, ?::uuid, ?::uuid, 10.775, 106.700, ?, ?,
                         'PENDING'::walk_session_status)
+                RETURNING session_id::text
                 """,
-                proposalId, userIdA, userIdB, start, end);
+                String.class, proposalId, userIdA, userIdB, start, end);
+    }
+
+    /**
+     * Seeds an {@code ACTIVE} walk session for the given pair of users.
+     *
+     * <p>Builds the same FK chain as {@link #seedPendingSession}, then immediately
+     * promotes the session to {@code ACTIVE} by setting both activation timestamps
+     * and {@code started_at = now()}.
+     *
+     * <p>Use {@link #rewindSessionStartedAt} afterward if the test requires
+     * the walk to have been running for a specific duration (e.g. S-5 minimum
+     * 5-minute guard on {@code completeSession}).
+     *
+     * @param userIdA        UUID string of the first participant
+     * @param userIdB        UUID string of the second participant
+     * @param hotspotId      UUID string of the hotspot (must already exist in DB)
+     * @param scheduledStart walk window start
+     * @param scheduledEnd   walk window end
+     * @return the generated session UUID as a {@code String}
+     */
+    public String seedActiveSession(String userIdA, String userIdB, String hotspotId,
+                                    java.time.Instant scheduledStart, java.time.Instant scheduledEnd) {
+        String sessionId = seedPendingSession(userIdA, userIdB, hotspotId, scheduledStart, scheduledEnd);
+        jdbc.update(
+                """
+                UPDATE public.walk_session
+                SET status               = 'ACTIVE'::walk_session_status,
+                    user_a_activated_at  = now(),
+                    user_b_activated_at  = now(),
+                    started_at           = now()
+                WHERE session_id = ?::uuid
+                """,
+                sessionId);
+        return sessionId;
     }
 
     // ── Walk Intent (direct seed) — single OPEN intent ───────────────────────
