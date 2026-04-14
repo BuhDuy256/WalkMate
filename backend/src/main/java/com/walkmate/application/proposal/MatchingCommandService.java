@@ -274,21 +274,28 @@ public class MatchingCommandService {
         proposal.reject();
         matchProposalRepository.save(proposal);
 
-        // Return both intents to OPEN so they re-enter the matching pool (GAP-3)
         WalkIntent intentA = walkIntentRepository.findById(proposal.getIntentIdA())
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
         WalkIntent intentB = walkIntentRepository.findById(proposal.getIntentIdB())
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
-        intentA.unlock();
-        intentB.unlock();
 
-        // Caller excludes the matched user from their intent so the engine
-        // won't re-pair them in the same search session (X-3, GAP-11).
-        String callerIntentId = proposal.resolveIntentIdForUser(callerId);
-        String partnerUserId  = callerIntentId.equals(proposal.getIntentIdA())
-                ? proposal.getUserIdB() : proposal.getUserIdA();
-        WalkIntent callerIntent = callerIntentId.equals(proposal.getIntentIdA()) ? intentA : intentB;
-        callerIntent.excludeUser(UUID.fromString(partnerUserId));
+        // Private invite proposals: close both intents so the receiver's system-generated
+        // private intent is never surfaced in the public wait list (I-7, UC-21).
+        // Public matching proposals: return both intents to OPEN and update the caller's
+        // exclude list so the engine won't re-pair the same pair (X-3, GAP-3, GAP-11).
+        if (intentA.isPrivate() && intentB.isPrivate()) {
+            intentA.cancel();
+            intentB.cancel();
+        } else {
+            intentA.unlock();
+            intentB.unlock();
+
+            String callerIntentId = proposal.resolveIntentIdForUser(callerId);
+            String partnerUserId  = callerIntentId.equals(proposal.getIntentIdA())
+                    ? proposal.getUserIdB() : proposal.getUserIdA();
+            WalkIntent callerIntent = callerIntentId.equals(proposal.getIntentIdA()) ? intentA : intentB;
+            callerIntent.excludeUser(UUID.fromString(partnerUserId));
+        }
 
         walkIntentRepository.save(intentA);
         walkIntentRepository.save(intentB);

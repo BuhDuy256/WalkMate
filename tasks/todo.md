@@ -224,60 +224,66 @@
 
 ---
 
-## PHASE 4 — Proposal Negotiation Test Suite (UC-19 to UC-22)
+## PHASE 4 — Proposal Negotiation Test Suite (UC-19 to UC-22) ✅
 
-### T19-1: UC-19 View Incoming Proposals
-- [ ] Seed a `PENDING` proposal for User A; `GET /api/v1/proposals` as User A → `200 OK`, proposal in list
-- [ ] Assert `expires_at` is present on each proposal
+### T19-1: UC-19 View Incoming Proposals ✅
+- [x] Seed a `PENDING` proposal for User A; `GET /api/v1/proposals` as User A → `200 OK`, proposal in list
+- [x] Assert `expires_at` is present on each proposal
 
-### T20-1: UC-20 Accept Proposal — Partial (Only One User Accepts)
-- [ ] Seed a `PENDING` proposal; User A calls `POST /api/v1/proposals/{proposalId}/accept`
-- [ ] Assert `200 OK`, `data.status = PENDING` (partner has not yet accepted — Invariant P-2)
-- [ ] Assert no `WalkSession` row created yet
+### T20-1: UC-20 Accept Proposal — Partial (Only One User Accepts) ✅
+- [x] Seed a `PENDING` proposal; User A calls `POST /api/v1/proposals/{proposalId}/accept`
+- [x] Assert `200 OK`, `data.status = PENDING` (partner has not yet accepted — Invariant P-2)
+- [x] Assert no `WalkSession` row created yet
 
-### T20-2: UC-20 Accept Proposal — Both Accept → Session Created (Invariants P-2, P-3, I-3)
-- [ ] Seed a `PENDING` proposal; User A accepts, then User B accepts
-- [ ] Second acceptance returns `200 OK`, `data.status = CONFIRMED`, `data.session_id` non-null
-- [ ] Assert a `WalkSession` in `PENDING` status exists in DB
-- [ ] Assert **both** intents are now `CONSUMED` in DB (Invariant I-3 — terminal, immutable)
-- [ ] Assert a MongoDB chat room document exists keyed by `session_id`
+### T20-2: UC-20 Accept Proposal — Both Accept → Session Created (Invariants P-2, P-3, I-3) ✅
+- [x] Seed a `PENDING` proposal; User A accepts, then User B accepts
+- [x] Second acceptance returns `200 OK`, `data.status = CONFIRMED`, `data.session_id` non-null
+- [x] Assert a `WalkSession` in `PENDING` status exists in DB
+- [x] Assert **both** intents are now `CONSUMED` in DB (Invariant I-3 — terminal, immutable)
+- [x] Assert a MongoDB chat room document exists keyed by `session_id`
 
-### T20-3: UC-20 Accept Proposal — Proposal Already Terminal (Invariant I-6)
-- [ ] Seed an `EXPIRED` proposal; call accept → HTTP **400**, `error.code = PROPOSAL_ALREADY_TERMINAL`
+### T20-3: UC-20 Accept Proposal — Proposal Already Terminal (Invariant I-6) ✅
+- [x] Seed an `EXPIRED` proposal; call accept → HTTP **400**, `error.code = PROPOSAL_ALREADY_TERMINAL`
 
-### T20-4: UC-20 Accept Proposal — Intent No Longer MATCHING
-- [ ] Seed a proposal where one intent was concurrently cancelled; call accept
-- [ ] Assert HTTP **400**, `error.code = PROPOSAL_INTENT_NO_LONGER_OPEN`
+### T20-4: UC-20 Accept Proposal — Intent No Longer MATCHING ✅
+- [x] Seed a proposal where one intent was concurrently cancelled; call accept
+- [x] Assert HTTP **400**, `error.code = PROPOSAL_INTENT_NO_LONGER_OPEN`
 
-### T20-5: UC-20 Accept Proposal — Concurrent Modification (Invariant X-5)
-- [ ] Use two threads to simulate simultaneous acceptance by both users
-- [ ] Assert exactly one thread receives `CONFIRMED`; the other may receive `PROPOSAL_CONCURRENT_MODIFICATION`
-- [ ] Assert no duplicate `WalkSession` rows created (atomicity check)
+### T20-5: UC-20 Accept Proposal — Concurrent Modification (Invariant X-5) ✅
+- [x] Use two threads to simulate simultaneous acceptance by both users
+- [x] Assert exactly one thread receives `CONFIRMED`; the other may receive `PROPOSAL_CONCURRENT_MODIFICATION`
+- [x] Assert no duplicate `WalkSession` rows created (atomicity check)
 
-### T21-1: UC-21 Pass Proposal — Happy Path (Invariant X-3)
-- [ ] Seed a `PENDING` proposal; User A calls `POST /api/v1/proposals/{proposalId}/pass`
-- [ ] Assert `200 OK`; proposal moves to `REJECTED` in DB
-- [ ] Public proposal path: assert **both** intents revert to `OPEN` in DB
-- [ ] Assert the exclude list is updated (User B should not appear in next match for User A's intent)
+### T21-1: UC-21 Pass Proposal — Happy Path (Invariant X-3) ✅
+- [x] Seed a `PENDING` proposal; User A calls `POST /api/v1/proposals/{proposalId}/pass`
+- [x] Assert `200 OK`; proposal moves to `REJECTED` in DB
+- [x] Public proposal path: assert **both** intents revert to `OPEN` in DB
+- [x] Assert the exclude list is updated (User B should not appear in next match for User A's intent)
 
-### T21-3: UC-21 Pass Private Invite — Do Not Publicize Receiver Intent
-- [ ] Seed private-invite proposal (`is_private = true`) between User A and User B
-- [ ] User B passes proposal via `POST /api/v1/proposals/{proposalId}/pass`
-- [ ] Assert `200 OK`; proposal is `REJECTED`
-- [ ] Assert system-generated private intents are closed (`CANCELLED`) instead of reopening to public `OPEN`
-- [ ] Assert User B does not gain any new public OPEN wait-list intent as a side effect
+### T21-3: UC-21 Pass Private Invite — Do Not Publicize Receiver Intent ✅
+- [x] Seed private-invite proposal (`is_private = true`) between User A and User B
+- [x] User B passes proposal via `POST /api/v1/proposals/{proposalId}/pass`
+- [x] Assert `200 OK`; proposal is `REJECTED`
+- [x] Assert system-generated private intents are closed (`CANCELLED`) instead of reopening to public `OPEN`
+- [x] Assert User B does not gain any new public OPEN wait-list intent as a side effect
 
-### T21-2: UC-21 Pass Proposal — Already Terminal
-- [ ] Pass on a `REJECTED` proposal → HTTP **400**, `error.code = PROPOSAL_ALREADY_TERMINAL`
+### T21-2: UC-21 Pass Proposal — Already Terminal ✅
+- [x] Pass on a `REJECTED` proposal → HTTP **400**, `error.code = PROPOSAL_ALREADY_TERMINAL`
 
-### T22-1: UC-22 Cancel Proposal (Withdraw Intent) — Happy Path
-- [ ] Seed a `PENDING` proposal; User A calls `DELETE /api/v1/proposals/{proposalId}`
-- [ ] Assert `200 OK`; User A's intent moves to `CANCELLED` (terminal — Invariant I-6) in DB
-- [ ] Assert User B's intent reverts to `OPEN` in DB (eligible for re-matching)
+### T22-1: UC-22 Cancel Proposal (Withdraw Intent) — Happy Path ✅
+- [x] Seed a `PENDING` proposal; User A calls `DELETE /api/v1/proposals/{proposalId}`
+- [x] Assert `200 OK`; User A's intent moves to `CANCELLED` (terminal — Invariant I-6) in DB
+- [x] Assert User B's intent reverts to `OPEN` in DB (eligible for re-matching)
 
-### T22-2: UC-22 Cancel Proposal — Not Participant
-- [ ] Seed a proposal between User A and User B; User C calls delete
-- [ ] Assert HTTP **400**, `error.code = PROPOSAL_NOT_PARTICIPANT`
+### T22-2: UC-22 Cancel Proposal — Not Participant ✅
+- [x] Seed a proposal between User A and User B; User C calls delete
+- [x] Assert HTTP **400**, `error.code = PROPOSAL_NOT_PARTICIPANT`
+
+### Phase 4 Review
+**Status:** COMPLETE — 10/10 tests pass, 0 failures  
+**Production bug fixed:** `MatchingCommandService.passProposal()` — private invite proposals now cancel both intents (MATCHING → CANCELLED) instead of unlocking them to OPEN; satisfies Invariant I-7 and UC-21 private path.  
+**New seeder methods:** `TestDataSeeder.seedPendingProposal()`, `seedPendingPrivateProposal()`, `forceProposalStatus()`, and `ProposalSeed` record.  
+**Test classes:** `ProposalViewIntegrationTest`, `ProposalAcceptIntegrationTest`, `ProposalPassIntegrationTest`, `ProposalCancelIntegrationTest`.
 
 ---
 

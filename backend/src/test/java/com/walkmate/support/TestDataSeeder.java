@@ -23,6 +23,22 @@ import java.time.Duration;
  */
 public class TestDataSeeder {
 
+    /**
+     * Carries the generated IDs of a directly-seeded {@code PENDING} match proposal
+     * and its two {@code MATCHING} walk intents.
+     *
+     * <p>Returned by {@link #seedPendingProposal} and
+     * {@link #seedPendingPrivateProposal} so callers can reference individual IDs
+     * in API paths and JDBC assertions without re-querying the DB.
+     */
+    public record ProposalSeed(
+            String proposalId,
+            String intentIdA,
+            String intentIdB,
+            String userIdA,
+            String userIdB
+    ) {}
+
     private final JdbcTemplate jdbc;
 
     public TestDataSeeder(JdbcTemplate jdbc) {
@@ -227,6 +243,121 @@ public class TestDataSeeder {
                 VALUES (?::uuid, ?::uuid, 'ACCEPTED'::friend_status)
                 """,
                 requesterUserId, addresseeUserId
+        );
+    }
+
+    // ── Match Proposal (direct seed) ─────────────────────────────────────────
+
+    /**
+     * Seeds a {@code PENDING} public match proposal for the given pair of users,
+     * bypassing the full intent-creation and matching-engine API flow.
+     *
+     * <p>Inserts the minimum FK chain:
+     * <ol>
+     *   <li>Two {@code walk_intent} rows ({@code MATCHING, is_private = false},
+     *       one per user) referencing {@code hotspotId}.</li>
+     *   <li>One {@code match_proposal} row ({@code PENDING}, {@code expires_at = now() + 10 min})
+     *       referencing those intents.</li>
+     * </ol>
+     *
+     * <p>The intents are seeded as {@code MATCHING} (not {@code OPEN}) because
+     * {@link com.walkmate.application.proposal.MatchingCommandService#acceptProposal}
+     * re-verifies both intents are {@code MATCHING} before creating the session.
+     *
+     * @param userIdA       UUID string of user A
+     * @param userIdB       UUID string of user B
+     * @param hotspotId     UUID string of an existing hotspot
+     * @param scheduledStart walk window start
+     * @param scheduledEnd   walk window end
+     * @return {@link ProposalSeed} containing all generated IDs
+     */
+    public ProposalSeed seedPendingProposal(String userIdA, String userIdB, String hotspotId,
+                                             java.time.Instant scheduledStart,
+                                             java.time.Instant scheduledEnd) {
+        return seedProposal(userIdA, userIdB, hotspotId, scheduledStart, scheduledEnd, false);
+    }
+
+    /**
+     * Seeds a {@code PENDING} <em>private</em> match proposal for the given pair of users.
+     *
+     * <p>Identical to {@link #seedPendingProposal} but both walk intents are seeded
+     * with {@code is_private = true}.  Used by T21-3 to verify that passing a private
+     * invite cancels both intents instead of unlocking them to {@code OPEN}.
+     *
+     * @param userIdA       UUID string of the inviting user
+     * @param userIdB       UUID string of the invited user
+     * @param hotspotId     UUID string of an existing hotspot
+     * @param scheduledStart walk window start
+     * @param scheduledEnd   walk window end
+     * @return {@link ProposalSeed} containing all generated IDs
+     */
+    public ProposalSeed seedPendingPrivateProposal(String userIdA, String userIdB, String hotspotId,
+                                                    java.time.Instant scheduledStart,
+                                                    java.time.Instant scheduledEnd) {
+        return seedProposal(userIdA, userIdB, hotspotId, scheduledStart, scheduledEnd, true);
+    }
+
+    private ProposalSeed seedProposal(String userIdA, String userIdB, String hotspotId,
+                                       java.time.Instant scheduledStart,
+                                       java.time.Instant scheduledEnd,
+                                       boolean isPrivate) {
+        java.sql.Timestamp start = java.sql.Timestamp.from(scheduledStart);
+        java.sql.Timestamp end   = java.sql.Timestamp.from(scheduledEnd);
+
+        String intentIdA = jdbc.queryForObject(
+                """
+                INSERT INTO public.walk_intent
+                    (hotspot_id, user_id, time_window_start, time_window_end,
+                     matching_constraints, expires_at, status, is_private)
+                VALUES (?::uuid, ?::uuid, ?, ?, '{"age_min":18,"age_max":60}'::jsonb, ?,
+                        'MATCHING'::intent_status, ?)
+                RETURNING intent_id::text
+                """,
+                String.class, hotspotId, userIdA, start, end, end, isPrivate);
+
+        String intentIdB = jdbc.queryForObject(
+                """
+                INSERT INTO public.walk_intent
+                    (hotspot_id, user_id, time_window_start, time_window_end,
+                     matching_constraints, expires_at, status, is_private)
+                VALUES (?::uuid, ?::uuid, ?, ?, '{"age_min":18,"age_max":60}'::jsonb, ?,
+                        'MATCHING'::intent_status, ?)
+                RETURNING intent_id::text
+                """,
+                String.class, hotspotId, userIdB, start, end, end, isPrivate);
+
+        String proposalId = jdbc.queryForObject(
+                """
+                INSERT INTO public.match_proposal
+                    (proposal_id, intent_id_a, intent_id_b,
+                     proposed_start_time, proposed_end_time,
+                     proposed_location_lat, proposed_location_lng,
+                     accepted_by_a, accepted_by_b,
+                     status, created_at, expires_at, confirmed_at, version)
+                VALUES (gen_random_uuid(), ?::uuid, ?::uuid, ?, ?, 10.775, 106.700,
+                        false, false,
+                        'PENDING'::proposal_status, now(), now() + interval '10 minutes', null, 0)
+                RETURNING proposal_id::text
+                """,
+                String.class, intentIdA, intentIdB, start, end);
+
+        return new ProposalSeed(proposalId, intentIdA, intentIdB, userIdA, userIdB);
+    }
+
+    /**
+     * Bypasses domain logic to force a proposal into an arbitrary {@code proposal_status}.
+     *
+     * <p>Use sparingly — only in tests that need a specific terminal state that is
+     * impossible to reach via the public API (e.g. {@code EXPIRED} to test
+     * {@code PROPOSAL_ALREADY_TERMINAL} on the accept endpoint, or {@code REJECTED}).
+     *
+     * @param proposalId UUID string of the target proposal
+     * @param status     target status string (e.g. {@code "EXPIRED"}, {@code "REJECTED"})
+     */
+    public void forceProposalStatus(String proposalId, String status) {
+        jdbc.update(
+                "UPDATE public.match_proposal SET status = ?::proposal_status WHERE proposal_id = ?::uuid",
+                status, proposalId
         );
     }
 

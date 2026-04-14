@@ -135,6 +135,33 @@ static { postgres.start(); }
 
 ---
 
+## 2026-04-14 · Phase 4 · Private-invite pass must cancel intents, not unlock them
+
+### Lesson: `passProposal` must branch on `isPrivate` — unlocking private intents violates I-7
+**What happened:** `passProposal()` called `intentA.unlock()` + `intentB.unlock()` unconditionally, transitioning private invite intents from MATCHING → OPEN. UC-21 spec and Invariant I-7 require private intents to move MATCHING → CANCELLED so they never surface in the public wait list.
+**Root cause:** `WalkIntent.unlock()` has no awareness of whether an intent is private; the routing logic must live in `passProposal`.
+**Fix:** Added an `if (intentA.isPrivate() && intentB.isPrivate())` branch — private path calls `cancel()` on both; public path calls `unlock()` + `excludeUser()` as before.
+**Rule going forward:** Any proposal resolution path (pass, expire, concurrent cancellation) must handle the private/public fork on intent state transitions. Check `isPrivate` before calling `unlock()`.
+
+---
+
+## 2026-04-14 · Phase 4 · seedPendingProposal must use MATCHING intents, not OPEN
+
+### Lesson: Seeded proposals require MATCHING intents because `acceptProposal` critical section re-verifies MATCHING status
+**What happened:** Would have failed with `PROPOSAL_INTENT_NO_LONGER_OPEN` on T20-2 if intents were seeded as OPEN — the P-3 critical section checks `status == MATCHING` before consuming intents.
+**Fix:** `seedPendingProposal()` inserts both intents with `'MATCHING'::intent_status`.
+**Rule going forward:** When seeding a match_proposal row for acceptance tests, always set both walk_intent rows to MATCHING. OPEN intents will fail the P-3 guard and no session will be created.
+
+---
+
+## 2026-04-14 · Phase 4 · MockMvc is thread-safe for concurrent integration tests
+
+### Lesson: Two threads can safely call `MockMvc.perform()` simultaneously in a `@SpringBootTest` test
+**What happened:** T20-5 required two threads to call the accept endpoint concurrently to trigger the OCC guard. MockMvc dispatches each `perform()` through the full Spring MVC stack, and each request gets its own transaction. PostgreSQL's version-based OCC (`UPDATE ... WHERE version = ?`) correctly serialises double-acceptance.
+**Rule going forward:** For OCC / concurrency invariants in `@SpringBootTest` tests, use `CountDownLatch` + two `Thread` instances calling `MockMvc.perform()`. No need for `TestRestTemplate` or a separate HTTP client — MockMvc is thread-safe.
+
+---
+
 ## 2026-04-13 · Phase 1 · @MockitoBean in subclass creates a separate Spring context
 
 ### Lesson: Declaring `@MockitoBean` in a subclass (not the abstract base) forces Spring to spin up a new application context for that test class
