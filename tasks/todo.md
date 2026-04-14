@@ -364,47 +364,46 @@
 
 ## PHASE 7 — Post-Session Test Suite (UC-29 to UC-32)
 
-### T29-1: UC-29 View Session History
-- [ ] Seed one `COMPLETED` and one `ABORTED` session; `GET /api/v1/sessions/history`
-- [ ] Assert both appear; `COMPLETED` has `total_distance_km` and `duration_minutes`; `ABORTED` shows `"—"` equivalent
+### T29-1: UC-29 View Session History ✅
+- [x] Seed one `COMPLETED` (distance=2.5km, duration=30min) and one `ABORTED` session via JDBC promotion
+- [x] `GET /api/v1/sessions/history` → `200 OK`, both appear; COMPLETED has `total_distance_km > 0`, `duration_minutes > 0`; ABORTED has `0.0` / `0`
 
-### T30-1: UC-30 View Session Route Replay — Happy Path
-- [ ] Seed GPS points for a `COMPLETED` session; `GET /api/v1/sessions/{id}/route`
-- [ ] Assert `200 OK`, `user_a_polylines` and `user_b_polylines` present
+### T30-1: UC-30 View Session Route Replay — Happy Path ✅
+- [x] Seed ACTIVE session → call `POST /tracking/sync` with 3 past-timestamp points → force COMPLETED via JDBC
+- [x] `GET /sessions/{id}/route` → `200 OK`, `user_a_polylines.length ≥ 1`, `user_b_polylines` present (empty — userB did not sync)
 
-### T30-2: UC-30 Route Replay — Session Not Finished
-- [ ] Call route on an `ACTIVE` session → HTTP **400**, `error.code = SESSION_NOT_FINISHED`
+### T30-2: UC-30 Route Replay — Session Not Finished ✅
+- [x] Seed ACTIVE session → call route → HTTP **400**, `error.code = SESSION_NOT_FINISHED`
 
-### T30-3: UC-30 Route Replay — No GPS Data (Cancelled Early)
-- [ ] Seed a `CANCELLED` session with no GPS points; call route
-- [ ] Assert `200 OK`, empty polylines array (not an error)
+### T30-3: UC-30 Route Replay — No GPS Data (Cancelled Early) ✅
+- [x] Seed ACTIVE session → JDBC force to `CANCELLED` → call route
+- [x] Confirmed: `200 OK`, empty polylines (todo spec was correct — CANCELLED sessions are allowed, returning empty arrays)
 
-### T31-1: UC-31 Submit Review — Happy Path
-- [ ] Seed a `COMPLETED` session; User A calls `POST /api/v1/sessions/{id}/review` with `rating_stars: 5`
-- [ ] Assert `200 OK`; review row exists in DB; reviewee's `trustScore` adjusted by review stage of Invariant X-4
+### T31-1: UC-31 Submit Review — Happy Path ✅
+- [x] Seed COMPLETED session; User A calls `POST /sessions/{id}/review` with `rating_stars: 5`
+- [x] Assert `200 OK`, `review_id` non-null; JDBC confirms row in `walk_review`; User B trust score changed
 
-### T31-2: UC-31 Submit Review — Duplicate Review
-- [ ] Submit review twice → second call returns HTTP **400**, `error.code = REVIEW_ALREADY_SUBMITTED`
+### T31-2: UC-31 Submit Review — Duplicate Review ✅
+- [x] Submit review twice → second call returns HTTP **400**, `error.code = REVIEW_ALREADY_SUBMITTED`
 
-### T31-3: UC-31 Submit Review — Session Not Completed
-- [ ] Submit review on an `ABORTED` session → HTTP **400**, `error.code = REVIEW_SESSION_NOT_COMPLETED`
+### T31-3: UC-31 Submit Review — Session Not Completed ✅
+- [x] Force session to ABORTED via JDBC; submit review → HTTP **400**, `error.code = REVIEW_SESSION_NOT_COMPLETED`
 
-### T31-4: UC-31 Submit Review — Invalid Rating
-- [ ] Submit with `rating_stars: 6` → HTTP **400**, `error.code = REVIEW_INVALID_RATING`
+### T31-4: UC-31 Submit Review — Invalid Rating ✅
+- [x] Submit `rating_stars: 6` → HTTP **422**, `error.code = VALIDATION_ERROR`
+- [x] **Correction:** DTO has `@Max(5)` — Bean Validation fires at controller layer (HTTP 422), not service-level `REVIEW_INVALID_RATING` (HTTP 400). Same two-layer pattern as GPS coordinates and tracking.
 
-### T32-1: UC-32 Submit Incident Report — Happy Path
-- [ ] Seed a `COMPLETED` session; User A calls `POST /api/v1/sessions/{id}/report`
-- [ ] Assert `201 Created`, `data.reportId` non-null
+### T32-1: UC-32 Submit Incident Report — Happy Path ✅
+- [x] Seed COMPLETED session; User A reports User B → `201 Created`, `data.reportId` non-null
 
-### T32-2: UC-32 Submit Report — Window Expired
-- [ ] Seed a `COMPLETED` session with `completed_at` = 73 hours ago; call report
-- [ ] Assert HTTP **400**, `error.code = REPORT_WINDOW_EXPIRED`
+### T32-2: UC-32 Submit Report — Window Expired ✅
+- [x] JDBC set `ended_at = now() - interval '73 hours'`; call report → HTTP **400**, `error.code = REPORT_WINDOW_EXPIRED`
 
-### T32-3: UC-32 Submit Report — Duplicate Report
-- [ ] Submit two reports for the same session → HTTP **400**, `error.code = REPORT_ALREADY_SUBMITTED`
+### T32-3: UC-32 Submit Report — Duplicate Report ✅
+- [x] Submit two reports for the same session → HTTP **400**, `error.code = REPORT_ALREADY_SUBMITTED`
 
-### T32-4: UC-32 Submit Report — Non-Reportable Session Status
-- [ ] Call report on a `PENDING` session → HTTP **400**, `error.code = REPORT_SESSION_INVALID_STATUS`
+### T32-4: UC-32 Submit Report — Non-Reportable Session Status ✅
+- [x] Use `seedPendingSession` (session stays PENDING); call report → HTTP **400**, `error.code = REPORT_SESSION_INVALID_STATUS`
 
 ---
 

@@ -162,6 +162,49 @@ static { postgres.start(); }
 
 ---
 
+## 2026-04-14 · Phase 7 · rating_stars: 6 triggers HTTP 422, not HTTP 400 REVIEW_INVALID_RATING
+
+### Lesson: DTO `@Max(5)` on `rating_stars` fires before the service-level guard — same two-layer pattern as GPS coordinates
+**What happened:** Todo said `rating_stars: 6 → HTTP 400, REVIEW_INVALID_RATING`. The request DTO `SubmitReviewRequest` has `@Min(1)` and `@Max(5)` on `rating_stars`. Bean Validation at the controller catches out-of-range values first → HTTP 422, `VALIDATION_ERROR`.
+**Pattern:** This is the same design as `PushRoutePointsRequest.lat` with `@DecimalMax(90.0)` from Phase 6. The service-level domain error code (`REVIEW_INVALID_RATING`) is unreachable for values blocked by the DTO validator.
+**Rule going forward:** Whenever a todo says "invalid field value → HTTP 400 DOMAIN_CODE", check if the DTO also annotates that field. If `@Min`/`@Max`/`@DecimalMax` is present, the actual response is HTTP 422 `VALIDATION_ERROR`, not 400.
+
+---
+
+## 2026-04-14 · Phase 7 · Report window test uses `ended_at`, not `completed_at` — column is `ended_at`
+
+### Lesson: The session terminal-time column is `ended_at`, not `completed_at`
+**What happened:** Todo said "seed a COMPLETED session with `completed_at = 73 hours ago`". No such column exists — the correct column used by `ReportCommandService` for window calculation is `ended_at` in `walk_session`.
+**Fix:** JDBC sets `ended_at = now() - interval '73 hours'` to expire the 72-hour reporting window.
+**Rule going forward:** Session terminal timestamp is always `walk_session.ended_at`. Never reference `completed_at` in any SQL for this schema.
+
+---
+
+## 2026-04-14 · Phase 7 · Route replay is allowed for ALL terminal sessions, not just COMPLETED
+
+### Lesson: `GET /sessions/{id}/route` returns 200 OK for CANCELLED (and other terminal) sessions
+**What was expected:** UC-30 spec says "Initial assumption: Session is COMPLETED" and error table lists SESSION_NOT_FINISHED for non-COMPLETED sessions — implying CANCELLED would also be rejected.
+**What actually happened:** T30-3 confirmed CANCELLED sessions return 200 OK with empty polyline arrays. The service only guards against non-terminal sessions (PENDING, ACTIVE) with SESSION_NOT_FINISHED.
+**Rule going forward:** Route replay endpoint accepts any terminal session status. Only non-terminal (PENDING/ACTIVE) sessions are rejected with SESSION_NOT_FINISHED. Document this gap in the use case spec.
+
+---
+
+## 2026-04-14 · Phase 7 · Promote sessions via JDBC — no seedCompletedSession helper exists
+
+### Lesson: Use `seedActiveSession` + raw JDBC UPDATE to create COMPLETED/ABORTED/CANCELLED sessions
+**What happened:** `TestDataSeeder` has no `seedCompletedSession` or `seedAbortedSession` methods.
+**Pattern established:** All Phase 7 terminal-state setups use:
+```sql
+UPDATE public.walk_session
+SET status = 'COMPLETED'::walk_session_status, ended_at = now(),
+    total_distance_km = 2.5, total_duration_seconds = 1800
+WHERE session_id = ?::uuid
+```
+For non-stats terminal states (ABORTED, CANCELLED) omit `total_distance_km` / `total_duration_seconds`.
+**Rule going forward:** Always promote via JDBC for terminal session states in tests. Do NOT add these to TestDataSeeder unless many tests need them — inline JDBC keeps test intent explicit.
+
+---
+
 ## 2026-04-14 · Phase 6 · GPS sync timestamps must be ≤ now() — no future offsets in test payloads
 
 ### Lesson: `TrackingCommandService` rejects any point whose `timestamp` is in the future
