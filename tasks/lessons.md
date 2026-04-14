@@ -162,6 +162,33 @@ static { postgres.start(); }
 
 ---
 
+## 2026-04-14 · Phase 6 · GPS sync timestamps must be ≤ now() — no future offsets in test payloads
+
+### Lesson: `TrackingCommandService` rejects any point whose `timestamp` is in the future
+**What happened:** T28-1 used `now + 5000`, `now + 10000` … offsets (simulating sequential GPS fixes) — all of those were in the future relative to the server clock. The service throws `IllegalArgumentException("Point timestamp is in the future: …")` → HTTP 400 `INVALID_ARGUMENT`, causing a false failure.
+**Fix:** Reversed the offsets to `now - 20000`, `now - 15000`, … `now - 1000` so every point is safely in the past.
+**Rule going forward:** GPS point payloads in integration tests must always use **past** `toEpochMilli()` offsets. Never use `now + N` for timestamp fields in tracking tests.
+
+---
+
+## 2026-04-14 · Phase 6 · Tracking data is stored in PostgreSQL, not MongoDB
+
+### Lesson: `session_point_chunks` is a PostgreSQL table, not a MongoDB collection
+**What happened:** The todo.md for T28-1 said "Assert GPS point documents exist in MongoDB". The actual implementation uses `TrackingChunkJdbcRepository` which writes to the `session_point_chunks` PostgreSQL table (Google Encoded Polyline + packed timestamp bytes).
+**Fix:** DB assertion uses `jdbcTemplate.queryForObject("SELECT COUNT(*) FROM public.session_point_chunks WHERE session_id = ?::uuid AND user_id = ?::uuid", ...)`.
+**Rule going forward:** GPS/route tracking is PostgreSQL-only. MongoDB in WalkMate is used exclusively for chat. Never assume tracking data lands in Mongo.
+
+---
+
+## 2026-04-14 · Phase 6 · lat=999.0 triggers HTTP 422, not HTTP 400 INVALID_ARGUMENT
+
+### Lesson: DTO `@DecimalMax(90.0)` fires before the service-level coordinate guard
+**What happened:** The todo said `lat = 999.0 → HTTP 400, INVALID_ARGUMENT`. In practice, `PushRoutePointsRequest.RoutePointPayload` has `@DecimalMax(value = "90.0")` on `lat`, so Bean Validation fires at the controller layer → HTTP 422 `VALIDATION_ERROR` before the service even runs.
+**The service-level `IllegalArgumentException`** (→ HTTP 400 `INVALID_ARGUMENT`) is only reachable for fields not covered by DTO annotations — e.g., future timestamps (`@Positive` only; no max-epoch check).
+**Rule going forward:** When testing `INVALID_ARGUMENT` from the tracking service, use a **future timestamp**, not out-of-bounds coordinates. Coordinate bounds are enforced at the DTO level (HTTP 422).
+
+---
+
 ## 2026-04-13 · Phase 1 · @MockitoBean in subclass creates a separate Spring context
 
 ### Lesson: Declaring `@MockitoBean` in a subclass (not the abstract base) forces Spring to spin up a new application context for that test class
