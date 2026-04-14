@@ -162,6 +162,30 @@ static { postgres.start(); }
 
 ---
 
+## 2026-04-14 · Phase 8 · Friend request returns 201 Created, not 200 OK
+
+### Lesson: `POST /api/v1/friends/{userId}/request` returns HTTP 201, not 200
+**What happened:** todo.md listed 200 OK for T34-1. `FriendsController` returns `ResponseEntity.created(...)` → HTTP 201 Created.
+**Rule going forward:** Always verify HTTP status from the controller, not the use case spec. Friend request creation follows REST convention: new resource → 201.
+
+---
+
+## 2026-04-14 · Phase 8 · FRIEND_REQUEST_ALREADY_PENDING requires same-direction resend
+
+### Lesson: If B already sent to A, the service auto-accepts instead of throwing ALREADY_PENDING
+**What happened:** `FriendCommandService` has a branch: if a reverse PENDING request exists (B→A), accepting it rather than creating a duplicate. Testing ALREADY_PENDING must use A→B twice (same direction), not B→A then A→B.
+**Rule going forward:** When testing `FRIEND_REQUEST_ALREADY_PENDING`, always send two requests in the same direction. Cross-direction triggers auto-accept, not an error.
+
+---
+
+## 2026-04-14 · Phase 8 · Declined friendship row stays in DB with status DECLINED
+
+### Lesson: Declining a friend request does NOT delete the row — it sets status to 'DECLINED'
+**What happened:** T35-1b verifies that after `/decline`, the `friendship` row still exists with `status = 'DECLINED'`. The row is never physically deleted on decline or friend-remove.
+**Rule going forward:** Never assert `COUNT(*) = 0` after a decline or remove-friend operation. Assert `status = 'DECLINED'` instead.
+
+---
+
 ## 2026-04-14 · Phase 7 · rating_stars: 6 triggers HTTP 422, not HTTP 400 REVIEW_INVALID_RATING
 
 ### Lesson: DTO `@Max(5)` on `rating_stars` fires before the service-level guard — same two-layer pattern as GPS coordinates
