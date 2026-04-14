@@ -72,6 +72,8 @@ public class ProfileFragment extends Fragment {
     private View menuWalkHistory;
     private View menuMyBadges;
     private View menuSettings;
+    private View menuFriends;
+    private View menuBlockedUsers;
 
     // Content root (receives dynamic bottom padding from window insets)
     private View profileContentRoot;
@@ -123,6 +125,20 @@ public class ProfileFragment extends Fragment {
             viewModel.consumeNavigateToHistory();
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_sessionHistoryFragment);
+        });
+
+        viewModel.getNavigateToFriendsEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            viewModel.consumeNavigateToFriends();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_friendsFragment);
+        });
+
+        viewModel.getNavigateToBlockedUsersEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            viewModel.consumeNavigateToBlockedUsers();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_blockedUsersFragment);
         });
     }
 
@@ -176,6 +192,8 @@ public class ProfileFragment extends Fragment {
         menuWalkHistory  = root.findViewById(R.id.menuWalkHistory);
         menuMyBadges     = root.findViewById(R.id.menuMyBadges);
         menuSettings     = root.findViewById(R.id.menuSettings);
+        menuFriends      = root.findViewById(R.id.menuFriends);
+        menuBlockedUsers = root.findViewById(R.id.menuBlockedUsers);
         switchVisibility = root.findViewById(R.id.switchVisibility);
         btnLogoutAll     = root.findViewById(R.id.btnLogoutAll);
     }
@@ -197,6 +215,8 @@ public class ProfileFragment extends Fragment {
         menuWalkHistory.setOnClickListener(v -> viewModel.onWalkHistoryClicked());
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
         menuSettings.setOnClickListener(v -> viewModel.onSettingsClicked());
+        menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());
+        menuBlockedUsers.setOnClickListener(v -> viewModel.onBlockedUsersClicked());
 
         switchVisibility.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (suppressSwitchListener) return;

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/bg_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
+
+        <!-- Avatar -->
+        <com.walkmate.core.designsystem.view.AvatarInitialView
+            android:id="@+id/avatarFriend"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Name -->
+        <TextView
+            android:id="@+id/txtFriendName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Nguyễn Văn A" />
+
+        <!-- Action buttons stacked vertically -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <com.walkmate.core.designsystem.view.WalkMateButton
+                android:id="@+id/btnFriendInviteWalk"
+                android:layout_width="120dp"
+                android:layout_height="36dp"
+                app:wm_buttonStyle="filled"
+                app:wm_text="Invite Walk" />
+
+            <com.walkmate.core.designsystem.view.WalkMateButton
+                android:id="@+id/btnFriendViewProfile"
+                android:layout_width="120dp"
+                android:layout_height="36dp"
+                android:layout_marginTop="4dp"
+                app:wm_buttonStyle="outlined"
+                app:wm_text="View Profile" />
+
+            <com.walkmate.core.designsystem.view.WalkMateButton
+                android:id="@+id/btnFriendRemove"
+                android:layout_width="120dp"
+                android:layout_height="36dp"
+                android:layout_marginTop="4dp"
+                app:wm_buttonStyle="outlined"
+                app:wm_text="Remove" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

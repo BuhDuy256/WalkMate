@@ -196,6 +196,34 @@ public class ProfileViewModel extends ViewModel {
     public void onMyBadgesClicked()    { /* Phase D: emit navigation signal */ }
     public void onSettingsClicked()    { /* Phase D: emit navigation signal */ }
 
+    private final MutableLiveData<Boolean> navigateToFriendsEvent = new MutableLiveData<>();
+
+    public LiveData<Boolean> getNavigateToFriendsEvent() {
+        return navigateToFriendsEvent;
+    }
+
+    public void consumeNavigateToFriends() {
+        navigateToFriendsEvent.setValue(false);
+    }
+
+    public void onFriendsClicked() {
+        navigateToFriendsEvent.postValue(true);
+    }
+
+    private final MutableLiveData<Boolean> navigateToBlockedUsersEvent = new MutableLiveData<>();
+
+    public LiveData<Boolean> getNavigateToBlockedUsersEvent() {
+        return navigateToBlockedUsersEvent;
+    }
+
+    public void consumeNavigateToBlockedUsers() {
+        navigateToBlockedUsersEvent.setValue(false);
+    }
+
+    public void onBlockedUsersClicked() {
+        navigateToBlockedUsersEvent.postValue(true);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**
