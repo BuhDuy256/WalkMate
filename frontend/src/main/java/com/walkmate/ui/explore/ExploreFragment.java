@@ -2,6 +2,7 @@ package com.walkmate.ui.explore;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -831,12 +832,21 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             LatLng position = new LatLng(hotspot.getLat(), hotspot.getLng());
             boundsBuilder.include(position);
 
+            // GAP-20: scale pin by open-intent count so busy hotspots stand out
+            int count = hotspot.getopenIntentCount();
+            float scale = count == 0 ? 1.0f : (count <= 4 ? 1.3f : 1.6f);
+            com.google.android.gms.maps.model.BitmapDescriptor pinIcon =
+                com.google.android.gms.maps.model.BitmapDescriptorFactory.fromBitmap(
+                    scaleBitmap(
+                        BitmapFactory.decodeResource(getResources(), R.drawable.ic_hotspot_pin),
+                        scale));
+
             Marker marker = googleMap.addMarker(
                 new MarkerOptions()
                     .position(position)
                     .title(hotspot.getName())
                     .anchor(0.5f, 1f)
-                    .icon(createMarkerIcon(hotspot.getName(), false))
+                    .icon(pinIcon)
             );
 
             if (marker != null) {
@@ -850,6 +860,16 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 180)
             );
         }
+    }
+
+    /**
+     * Scales {@code src} by the given factor using bilinear filtering.
+     * Used to reflect open-intent count as pin visual weight (GAP-20).
+     */
+    private Bitmap scaleBitmap(Bitmap src, float scale) {
+        int w = (int) (src.getWidth()  * scale);
+        int h = (int) (src.getHeight() * scale);
+        return Bitmap.createScaledBitmap(src, w, h, true);
     }
 
     /**

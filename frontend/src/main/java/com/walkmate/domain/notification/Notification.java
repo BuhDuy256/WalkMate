@@ -8,9 +8,14 @@ public class Notification {
 
     public enum Type {
         PROPOSAL_RECEIVED,
+        INVITE_SENT,
+        PROPOSAL_ACCEPTED,
         SESSION_CONFIRMED,
         SESSION_ACTIVE,
-        REVIEW_REQUESTED
+        REVIEW_REQUESTED,
+        FRIEND_REQUEST_RECEIVED,
+        FRIEND_REQUEST_ACCEPTED,
+        FRIEND_REQUEST_DECLINED
     }
 
     private final String             notificationId;

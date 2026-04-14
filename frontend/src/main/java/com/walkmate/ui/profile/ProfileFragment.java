@@ -71,6 +71,7 @@ public class ProfileFragment extends Fragment {
     // Menu rows
     private View menuWalkHistory;
     private View menuMyBadges;
+    private View menuLeaderboard;
     private View menuSettings;
     private View menuFriends;
     private View menuBlockedUsers;
@@ -140,6 +141,13 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_blockedUsersFragment);
         });
+
+        viewModel.getNavigateToLeaderboardEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            viewModel.consumeNavigateToLeaderboard();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_leaderboardFragment);
+        });
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
@@ -191,6 +199,7 @@ public class ProfileFragment extends Fragment {
 
         menuWalkHistory  = root.findViewById(R.id.menuWalkHistory);
         menuMyBadges     = root.findViewById(R.id.menuMyBadges);
+        menuLeaderboard  = root.findViewById(R.id.menuLeaderboard);
         menuSettings     = root.findViewById(R.id.menuSettings);
         menuFriends      = root.findViewById(R.id.menuFriends);
         menuBlockedUsers = root.findViewById(R.id.menuBlockedUsers);
@@ -214,6 +223,7 @@ public class ProfileFragment extends Fragment {
         }
         menuWalkHistory.setOnClickListener(v -> viewModel.onWalkHistoryClicked());
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
+        menuLeaderboard.setOnClickListener(v -> viewModel.onLeaderboardClicked());
         menuSettings.setOnClickListener(v -> viewModel.onSettingsClicked());
         menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());
         menuBlockedUsers.setOnClickListener(v -> viewModel.onBlockedUsersClicked());

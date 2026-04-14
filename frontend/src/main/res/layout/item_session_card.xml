@@ -192,6 +192,19 @@
                 app:strokeWidth="1.5dp"
                 app:cornerRadius="999dp" />
 
+            <!-- Report Issue — ACTIVE sessions only (GAP-15) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReportIssue"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="4dp"
+                android:text="Report an Issue"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
         </LinearLayout>
 
     </LinearLayout>

@@ -46,6 +46,11 @@ public class WalkProposalResponse {
     @SerializedName("my_acceptance_status")
     private String myAcceptanceStatus;
 
+    // True when this proposal was created via a private walk invite (UC-15).
+    // The backend auto-accepts the sender's side for private invites.
+    @SerializedName("is_private")
+    private boolean privateInvite;
+
     public String getProposalId()       { return proposalId; }
     public String getCallersIntentId()  { return callersIntentId; }
     public String getMatchedIntentId()  { return matchedIntentId; }
@@ -59,4 +64,5 @@ public class WalkProposalResponse {
     public String getExpiresAt()          { return expiresAt; }
     public String getSessionId()          { return sessionId; }
     public String getMyAcceptanceStatus() { return myAcceptanceStatus; }
+    public boolean isPrivateInvite()       { return privateInvite; }
 }

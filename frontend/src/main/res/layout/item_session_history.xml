@@ -58,4 +58,17 @@
 
     </LinearLayout>
 
+    <!-- Report action — visible for COMPLETED, ABORTED, NO_SHOW (GAP-15) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnReport"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="2dp"
+        android:text="Report"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
 </LinearLayout>

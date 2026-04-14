@@ -86,6 +86,7 @@ public class FindingFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (adapter != null) adapter.cancelAllTimers();
         recyclerView.setAdapter(null);
         swipeRefresh  = null;
         recyclerView  = null;

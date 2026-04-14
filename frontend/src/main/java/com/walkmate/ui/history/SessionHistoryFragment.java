@@ -18,8 +18,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.ui.history.routereplay.RouteReplayActivity;
 import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
+import com.walkmate.ui.report.ReportIncidentFragment;
 
 /**
  * Session History screen.
@@ -75,6 +77,15 @@ public class SessionHistoryFragment extends Fragment {
             args.putString(PublicProfileFragment.ARG_USER_ID, partnerId);
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_sessionHistory_to_publicProfileFragment, args);
+        });
+        adapter.setOnReportClickListener((sessionId, partnerId, status, terminalAtMs) -> {
+            Bundle args = new Bundle();
+            args.putString(ReportIncidentFragment.ARG_SESSION_ID,             sessionId);
+            args.putString(ReportIncidentFragment.ARG_REPORTED_UID,           partnerId);
+            args.putString(ReportIncidentFragment.ARG_SESSION_STATUS,         status != null ? status.name() : null);
+            args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS,   terminalAtMs);
+            NavHostFragment.findNavController(SessionHistoryFragment.this)
+                    .navigate(R.id.action_sessionHistory_to_reportIncidentFragment, args);
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));

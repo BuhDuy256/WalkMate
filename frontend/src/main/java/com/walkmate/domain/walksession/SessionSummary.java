@@ -8,10 +8,18 @@ public class SessionSummary {
     private final double totalDistanceKm;
     private final int durationMinutes;
     private final boolean isReviewed;
+    /** Epoch-ms when the session reached a terminal state (ended_at). 0 if unknown. */
+    private final long terminalAtMs;
 
     public SessionSummary(String sessionId, WalkSession.Status status, String partnerId,
                           String scheduledStart, double totalDistanceKm,
                           int durationMinutes, boolean isReviewed) {
+        this(sessionId, status, partnerId, scheduledStart, totalDistanceKm, durationMinutes, isReviewed, 0L);
+    }
+
+    public SessionSummary(String sessionId, WalkSession.Status status, String partnerId,
+                          String scheduledStart, double totalDistanceKm,
+                          int durationMinutes, boolean isReviewed, long terminalAtMs) {
         this.sessionId = sessionId;
         this.status = status;
         this.partnerId = partnerId;
@@ -19,6 +27,7 @@ public class SessionSummary {
         this.totalDistanceKm = totalDistanceKm;
         this.durationMinutes = durationMinutes;
         this.isReviewed = isReviewed;
+        this.terminalAtMs = terminalAtMs;
     }
 
     public String getSessionId() { return sessionId; }
@@ -28,4 +37,5 @@ public class SessionSummary {
     public double getTotalDistanceKm() { return totalDistanceKm; }
     public int getDurationMinutes() { return durationMinutes; }
     public boolean isReviewed() { return isReviewed; }
+    public long getTerminalAtMs() { return terminalAtMs; }
 }

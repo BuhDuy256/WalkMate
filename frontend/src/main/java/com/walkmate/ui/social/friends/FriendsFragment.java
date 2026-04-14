@@ -110,6 +110,15 @@ public class FriendsFragment extends Fragment {
 
         // ── Initial load ──────────────────────────────────────────────────────
         viewModel.loadAll();
+
+        // ── Deep-link tab scroll (e.g. from FCM or NotificationFragment) ──────
+        Bundle args = getArguments();
+        if (args != null) {
+            int scrollToTab = args.getInt("scrollToTab", -1);
+            if (scrollToTab >= 0 && scrollToTab < FriendsPagerAdapter.TAB_COUNT) {
+                viewPager.setCurrentItem(scrollToTab, false);
+            }
+        }
     }
 
     @Override

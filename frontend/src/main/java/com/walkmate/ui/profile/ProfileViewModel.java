@@ -224,6 +224,20 @@ public class ProfileViewModel extends ViewModel {
         navigateToBlockedUsersEvent.postValue(true);
     }
 
+    private final MutableLiveData<Boolean> navigateToLeaderboardEvent = new MutableLiveData<>();
+
+    public LiveData<Boolean> getNavigateToLeaderboardEvent() {
+        return navigateToLeaderboardEvent;
+    }
+
+    public void consumeNavigateToLeaderboard() {
+        navigateToLeaderboardEvent.setValue(false);
+    }
+
+    public void onLeaderboardClicked() {
+        navigateToLeaderboardEvent.postValue(true);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**

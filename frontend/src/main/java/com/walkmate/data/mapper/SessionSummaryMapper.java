@@ -4,6 +4,7 @@ import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionRespo
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,12 @@ public class SessionSummaryMapper {
                 ? response.getUserIdB()
                 : response.getUserIdA();
 
+        long terminalAtMs = 0L;
+        if (response.getEndedAt() != null) {
+            try { terminalAtMs = Instant.parse(response.getEndedAt()).toEpochMilli(); }
+            catch (Exception ignored) {}
+        }
+
         return new SessionSummary(
                 response.getSessionId(),
                 toStatus(response.getStatus()),
@@ -28,7 +35,8 @@ public class SessionSummaryMapper {
                 response.getScheduledStart(),
                 0.0,   // totalDistanceKm — not in WalkSessionResponse; use SessionRouteResponse
                 0,     // durationMinutes — not in WalkSessionResponse; use SessionRouteResponse
-                response.isReviewed()
+                response.isReviewed(),
+                terminalAtMs
         );
     }
 

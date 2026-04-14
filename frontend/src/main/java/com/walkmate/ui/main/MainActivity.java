@@ -1,10 +1,18 @@
 package com.walkmate.ui.main;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
@@ -20,6 +28,7 @@ import com.walkmate.core.event.AuthEvent;
 import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.ui.auth.AuthActivity;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
+import com.walkmate.ui.social.friends.FriendsPagerAdapter;
 
 /**
  * Global shell Activity. Hosts the four destinations via a NavHostFragment
@@ -34,8 +43,12 @@ import com.walkmate.ui.matches.MatchesPagerAdapter;
  *   1. Handling bottom-nav visibility requests from ExploreFragment.
  *   2. Observing AppEventBus for foreground FCM events and routing to the
  *      correct destination with arguments.
+ *   3. Handling background FCM deep-links via Intent extras placed by the
+ *      WalkMateFcmService PendingIntent (see handleFcmIntent).
  */
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     /** Intent extra key: pass a userId String to navigate directly to PublicProfileFragment. */
     public static final String EXTRA_NAVIGATE_USER_ID = "navigate_user_id";
@@ -43,6 +56,26 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private NavController navController;
     private int cachedBottomNavHeight = 0;
+
+    /**
+     * Handles the POST_NOTIFICATIONS runtime permission result (API 33+).
+     * Must be registered before onCreate() completes — defined as a field initialiser
+     * so it is registered at construction time, satisfying the Activity lifecycle contract.
+     */
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.RequestPermission(),
+                    isGranted -> {
+                        if (isGranted) {
+                            Log.d(TAG, "POST_NOTIFICATIONS permission granted.");
+                        } else {
+                            Toast.makeText(
+                                    this,
+                                    "Notification permission is required to receive walk updates.",
+                                    Toast.LENGTH_LONG
+                            ).show();
+                        }
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,10 +132,20 @@ public class MainActivity extends AppCompatActivity {
         observeAppEventBus();
         observeAuthEventBus();
 
-        // Handle deep-link from TrackingScreenActivity (or any external caller) that
-        // wants to open a public profile without using FragmentManager.
+        // Request POST_NOTIFICATIONS permission on API 33+ once the user has a valid
+        // session — avoids prompting the permission dialog on the auth/login screen.
+        WalkMateApplication app = (WalkMateApplication) getApplication();
+        if (app.getSessionManager().hasUsableAccessToken()) {
+            askNotificationPermission();
+        }
+
         if (savedInstanceState == null) {
+            // Handle deep-link from TrackingScreenActivity (or any external caller) that
+            // wants to open a public profile without using FragmentManager.
             handleNavigateIntent(getIntent());
+            // Handle background FCM tap: WalkMateFcmService places type/ID extras on the
+            // PendingIntent that launches this Activity from the system tray.
+            handleFcmIntent(getIntent());
         }
     }
 
@@ -111,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         handleNavigateIntent(intent);
+        handleFcmIntent(intent);
     }
 
     /**
@@ -126,6 +170,59 @@ public class MainActivity extends AppCompatActivity {
         Bundle args = new Bundle();
         args.putString("userId", userId);
         navController.navigate(R.id.publicProfileFragment, args);
+    }
+
+    /**
+     * Handles a background FCM deep-link. When the user taps a system-tray notification
+     * posted by {@code WalkMateFcmService}, the PendingIntent delivers
+     * {@link AppEvent#EXTRA_FCM_TYPE} (and optionally
+     * {@link AppEvent#EXTRA_FCM_PROPOSAL_ID} / {@link AppEvent#EXTRA_FCM_SESSION_ID})
+     * as Intent extras. This method reads those extras and routes to the same
+     * destination that the foreground AppEventBus handler would navigate to.
+     *
+     * <p>Extras are consumed immediately to prevent re-delivery on rotation.</p>
+     */
+    private void handleFcmIntent(Intent intent) {
+        if (intent == null) return;
+        String fcmTypeName = intent.getStringExtra(AppEvent.EXTRA_FCM_TYPE);
+        if (fcmTypeName == null) return;
+
+        intent.removeExtra(AppEvent.EXTRA_FCM_TYPE);
+        String proposalId = intent.getStringExtra(AppEvent.EXTRA_FCM_PROPOSAL_ID);
+        String sessionId  = intent.getStringExtra(AppEvent.EXTRA_FCM_SESSION_ID);
+        intent.removeExtra(AppEvent.EXTRA_FCM_PROPOSAL_ID);
+        intent.removeExtra(AppEvent.EXTRA_FCM_SESSION_ID);
+
+        AppEvent.Type eventType;
+        try {
+            eventType = AppEvent.Type.valueOf(fcmTypeName);
+        } catch (IllegalArgumentException e) {
+            return; // unknown type from a future backend version — ignore
+        }
+
+        routeToDestination(eventType, proposalId, sessionId);
+    }
+
+    // ── Notification permission (API 33+) ────────────────────────────────────
+
+    /**
+     * Requests the POST_NOTIFICATIONS runtime permission on Android 13+ (TIRAMISU).
+     *
+     * <p>On API < 33 the method is a no-op — the manifest declaration alone is
+     * sufficient for older SDKs and no runtime grant dialog exists.</p>
+     *
+     * <p>If the permission is already granted (user previously accepted, or API < 33)
+     * the launcher is not invoked, preventing an unwanted dialog on every launch.</p>
+     */
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return; // No runtime permission needed below API 33
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return; // Already granted — nothing to do
+        }
+        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
     }
 
     // ── Forced-logout handling ────────────────────────────────────────────────
@@ -149,34 +246,87 @@ public class MainActivity extends AppCompatActivity {
     // ── FCM foreground event routing ──────────────────────────────────────────
 
     /**
-     * Observes the process-singleton AppEventBus for foreground push events.
+     * Observes the process-singleton AppEventBus for foreground push events and
+     * routes each event type to the correct destination.
      *
-     * When a MATCH_FOUND push arrives while the app is visible, navigate to
-     * MatchesFragment and scroll directly to the Proposal sub-tab so the user
-     * can see the incoming match without any extra taps.
+     * <ul>
+     *   <li>MATCH_FOUND / PROPOSAL_RECEIVED / INVITE_SENT / PROPOSAL_ACCEPTED
+     *       → Matches → Proposal tab (proposalId forwarded if present)</li>
+     *   <li>SESSION_CONFIRMED / SESSION_ACTIVE
+     *       → Matches → Session tab (sessionId forwarded if present)</li>
+     *   <li>FRIEND_REQUEST_RECEIVED → Friends → Incoming tab</li>
+     *   <li>FRIEND_REQUEST_ACCEPTED → Friends → Friends tab</li>
+     *   <li>FRIEND_REQUEST_DECLINED → Friends → Outgoing (Sent) tab</li>
+     * </ul>
      */
     private void observeAppEventBus() {
         AppEventBus.get().observe().observe(this, event -> {
             if (event == null) return;
 
-            if (event.type == AppEvent.Type.MATCH_FOUND) {
+            String proposalId = event.payload.get(AppEvent.KEY_PROPOSAL_ID);
+            String sessionId  = event.payload.get(AppEvent.KEY_SESSION_ID);
+
+            routeToDestination(event.type, proposalId, sessionId);
+
+            // Consume so a config-change (rotation) doesn't re-trigger the navigation.
+            AppEventBus.get().consumeEvent();
+        });
+    }
+
+    /**
+     * Shared routing logic used by both the foreground AppEventBus observer and
+     * the background FCM Intent handler. All navigation uses
+     * {@code setPopUpTo(homeFragment, false)} so the user lands on a clean back stack.
+     *
+     * @param type       the FCM event type
+     * @param proposalId optional proposalId (included in the Bundle for MatchesFragment)
+     * @param sessionId  optional sessionId (included in the Bundle for MatchesFragment)
+     */
+    private void routeToDestination(AppEvent.Type type,
+                                    String proposalId,
+                                    String sessionId) {
+        NavOptions popToHome = new NavOptions.Builder()
+                .setPopUpTo(R.id.homeFragment, false)
+                .build();
+
+        switch (type) {
+            case MATCH_FOUND:
+            case PROPOSAL_RECEIVED:
+            case INVITE_SENT:
+            case PROPOSAL_ACCEPTED: {
                 Bundle args = new Bundle();
                 args.putInt("scrollToTab", MatchesPagerAdapter.TAB_PROPOSAL);
-
-                // Navigate to matchesFragment, popping the home back-stack to avoid
-                // accumulating duplicate entries.
-                navController.navigate(
-                        R.id.matchesFragment,
-                        args,
-                        new NavOptions.Builder()
-                                .setPopUpTo(R.id.homeFragment, false)
-                                .build()
-                );
-
-                // Consume so a config-change (rotation) doesn't re-trigger the navigation.
-                AppEventBus.get().consumeEvent();
+                if (proposalId != null) args.putString(AppEvent.KEY_PROPOSAL_ID, proposalId);
+                navController.navigate(R.id.matchesFragment, args, popToHome);
+                break;
             }
-        });
+            case SESSION_CONFIRMED:
+            case SESSION_ACTIVE: {
+                Bundle args = new Bundle();
+                args.putInt("scrollToTab", MatchesPagerAdapter.TAB_SESSION);
+                if (sessionId != null) args.putString(AppEvent.KEY_SESSION_ID, sessionId);
+                navController.navigate(R.id.matchesFragment, args, popToHome);
+                break;
+            }
+            case FRIEND_REQUEST_RECEIVED: {
+                Bundle args = new Bundle();
+                args.putInt("scrollToTab", FriendsPagerAdapter.TAB_INCOMING);
+                navController.navigate(R.id.friendsFragment, args, popToHome);
+                break;
+            }
+            case FRIEND_REQUEST_ACCEPTED: {
+                Bundle args = new Bundle();
+                args.putInt("scrollToTab", FriendsPagerAdapter.TAB_FRIENDS);
+                navController.navigate(R.id.friendsFragment, args, popToHome);
+                break;
+            }
+            case FRIEND_REQUEST_DECLINED: {
+                Bundle args = new Bundle();
+                args.putInt("scrollToTab", FriendsPagerAdapter.TAB_OUTGOING);
+                navController.navigate(R.id.friendsFragment, args, popToHome);
+                break;
+            }
+        }
     }
 
     // ── Public helper — called by ExploreFragment to control bottom-nav UI ─────

@@ -175,10 +175,12 @@ public class PostSessionSummaryFragment extends Fragment {
         });
 
         // Launch incident report screen.
+        // Status is ABORTED (isAborted=true) or COMPLETED; terminalAtMs=0 means "just happened".
+        final String reportStatus = isAborted ? "ABORTED" : "COMPLETED";
         btnReportIncident.setOnClickListener(v -> {
             if (sessionId == null) return;
             ReportIncidentFragment reportFragment =
-                    ReportIncidentFragment.newInstance(sessionId);
+                    ReportIncidentFragment.newInstance(sessionId, partnerId, reportStatus, 0L);
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(android.R.id.content, reportFragment, ReportIncidentFragment.TAG)

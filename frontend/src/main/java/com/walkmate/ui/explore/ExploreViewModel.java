@@ -63,12 +63,14 @@ public class ExploreViewModel extends ViewModel {
     private final Observer<AppEvent> appEventObserver = event -> {
         if (event == null)
             return;
+        String eventIntentId   = event.payload.get(AppEvent.KEY_INTENT_ID);
+        String eventProposalId = event.payload.get(AppEvent.KEY_PROPOSAL_ID);
         if (event.type == AppEvent.Type.MATCH_FOUND
-                && event.intentId != null
-                && event.intentId.equals(getOpenIntentId())) {
+                && eventIntentId != null
+                && eventIntentId.equals(getOpenIntentId())) {
             cancelScanningTimeout();
             setOpenIntentId(null); // Bug 4: clear session ID after match
-            post(current().withMatchFound(event.proposalId));
+            post(current().withMatchFound(eventProposalId));
             AppEventBus.get().consumeEvent();
         }
     };

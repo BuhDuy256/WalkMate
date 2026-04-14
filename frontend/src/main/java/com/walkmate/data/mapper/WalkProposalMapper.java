@@ -33,7 +33,8 @@ public class WalkProposalMapper {
                 response.getProposedLat(),
                 response.getProposedLng(),
                 response.getMyAcceptanceStatus(),
-                response.getSessionId()
+                response.getSessionId(),
+                response.isPrivateInvite()
         );
     }
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hotspot map pin — filled teardrop shape in brand orange -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="40dp"
+    android:viewportWidth="32"
+    android:viewportHeight="40">
+
+    <!-- Pin body -->
+    <path
+        android:fillColor="#FFFF7B3A"
+        android:pathData="M16,2C9.37,2 4,7.37 4,14c0,9 12,24 12,24S28,23 28,14C28,7.37 22.63,2 16,2Z" />
+
+    <!-- Inner white circle -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,10C13.79,10 12,11.79 12,14s1.79,4 4,4 4,-1.79 4,-4S18.21,10 16,10Z" />
+
+</vector>

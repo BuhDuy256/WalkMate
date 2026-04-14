@@ -137,7 +137,7 @@ public class GamificationRepositoryImpl implements GamificationRepository {
     private static List<LeaderboardEntry> toLeaderboardDomainList(List<LeaderboardEntryResponse> responses) {
         List<LeaderboardEntry> result = new ArrayList<>(responses.size());
         for (LeaderboardEntryResponse r : responses) {
-            result.add(new LeaderboardEntry(r.rank, r.userId, r.totalPoints,
+            result.add(new LeaderboardEntry(r.rank, r.userId, r.fullName, r.totalPoints,
                     r.totalDistanceKm, r.completedSessions, r.trustScore));
         }
         return result;

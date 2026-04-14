@@ -68,6 +68,7 @@ public class HomeFragment extends Fragment {
     private WalkMateStatColumn statStreak;
     private ProgressBar loadingIndicator;
     private NestedScrollView contentContainer;
+    private MaterialButton btnViewLeaderboard;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -125,6 +126,7 @@ public class HomeFragment extends Fragment {
         statStreak            = root.findViewById(R.id.statStreak);
         loadingIndicator      = root.findViewById(R.id.loadingIndicator);
         contentContainer      = root.findViewById(R.id.contentContainer);
+        btnViewLeaderboard    = root.findViewById(R.id.btnViewLeaderboard);
     }
 
     private void setupRecyclerView() {
@@ -162,6 +164,10 @@ public class HomeFragment extends Fragment {
         // Navigate to NotificationFragment when the bell icon is tapped.
         btnNotification.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_notifications));
+
+        // Navigate to Leaderboard screen.
+        btnViewLeaderboard.setOnClickListener(v ->
+                Navigation.findNavController(root).navigate(R.id.action_home_to_leaderboardFragment));
     }
 
     // ── Location resolution ───────────────────────────────────────────────────

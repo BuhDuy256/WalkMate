@@ -26,7 +26,7 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
     // -------------------------------------------------------------------------
 
     public interface ProposalActionListener {
-        void onPass(String proposalId);
+        void onPass(String proposalId, boolean isPrivateInvite);
         void onAccept(String proposalId);
         void onCancel(String proposalId);
         void onProposalExpired();
@@ -137,8 +137,8 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
                 if (actionListener != null) actionListener.onProposalExpired();
             });
 
-            // Case A: I accepted, waiting for partner → hide Accept/Pass, show waiting overlay
-            if (proposal.isAcceptedByMe() && proposal.getStatus() == WalkProposal.Status.PENDING) {
+            // Case A / private-invite sender pre-accepted → hide Accept/Pass, show waiting overlay
+            if (proposal.isCurrentUserAccepted() && proposal.getStatus() == WalkProposal.Status.PENDING) {
                 txtWaitingOverlay.setVisibility(View.VISIBLE);
                 btnAccept.setVisibility(View.GONE);
                 btnPass.setVisibility(View.GONE);
@@ -147,7 +147,8 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
                 btnAccept.setVisibility(View.VISIBLE);
                 btnPass.setVisibility(View.VISIBLE);
                 btnPass.setOnClickListener(v -> {
-                    if (actionListener != null) actionListener.onPass(proposal.getProposalId());
+                    if (actionListener != null)
+                        actionListener.onPass(proposal.getProposalId(), proposal.isPrivateInvite());
                 });
                 btnAccept.setOnClickListener(v -> {
                     if (actionListener != null) actionListener.onAccept(proposal.getProposalId());

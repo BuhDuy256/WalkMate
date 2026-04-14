@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
@@ -36,8 +37,15 @@ public class SessionHistoryAdapter
         void onPartnerClick(String partnerId);
     }
 
+    /** Callback for "Report" action on COMPLETED/ABORTED/NO_SHOW history items (GAP-15). */
+    public interface OnReportClickListener {
+        void onReportClick(String sessionId, String partnerId,
+                           WalkSession.Status status, long terminalAtMs);
+    }
+
     private OnSessionSelectedListener listener;
     private OnPartnerClickListener partnerClickListener;
+    private OnReportClickListener reportClickListener;
     private Map<String, String> partnerNames = Collections.emptyMap();
 
     public SessionHistoryAdapter() {
@@ -50,6 +58,10 @@ public class SessionHistoryAdapter
 
     public void setOnPartnerClickListener(OnPartnerClickListener listener) {
         this.partnerClickListener = listener;
+    }
+
+    public void setOnReportClickListener(OnReportClickListener listener) {
+        this.reportClickListener = listener;
     }
 
     /**
@@ -81,17 +93,36 @@ public class SessionHistoryAdapter
                 partnerClickListener.onPartnerClick(summary.getPartnerId());
             }
         });
+
+        // Report button — visible for reportable terminal statuses only
+        WalkSession.Status status = summary.getStatus();
+        boolean reportable = status == WalkSession.Status.COMPLETED
+                || status == WalkSession.Status.ABORTED
+                || status == WalkSession.Status.NO_SHOW;
+        holder.btnReport.setVisibility(reportable ? View.VISIBLE : View.GONE);
+        if (reportable) {
+            holder.btnReport.setOnClickListener(v -> {
+                if (reportClickListener != null) {
+                    reportClickListener.onReportClick(
+                            summary.getSessionId(),
+                            summary.getPartnerId(),
+                            status,
+                            summary.getTerminalAtMs());
+                }
+            });
+        }
     }
 
     // ── ViewHolder ────────────────────────────────────────────────────────────
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final TextView txtDate;
-        private final TextView txtPartner;
+        final TextView txtDate;
+        final TextView txtPartner;
         private final TextView txtStatus;
         private final TextView txtDistance;
         private final TextView txtDuration;
+        final MaterialButton btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -100,6 +131,7 @@ public class SessionHistoryAdapter
             txtStatus   = itemView.findViewById(R.id.txtSessionStatus);
             txtDistance = itemView.findViewById(R.id.txtSessionDistance);
             txtDuration = itemView.findViewById(R.id.txtSessionDuration);
+            btnReport   = itemView.findViewById(R.id.btnReport);
         }
 
         void bind(SessionSummary summary, Map<String, String> partnerNames) {

@@ -25,6 +25,7 @@ import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.ui.chat.ChatFragment;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
+import com.walkmate.ui.report.ReportIncidentFragment;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
 
 public class SessionFragment extends Fragment {
@@ -35,6 +36,11 @@ public class SessionFragment extends Fragment {
     private SessionAdapter adapter;
 
     private MatchesViewModel matchesViewModel;
+
+    /** Stores the sessionId of the most recent activateSession() call, used for WINDOW_CLOSED logic. */
+    private String lastActivatingSessionId;
+    /** Set to the sessionId when SESSION_ACTIVATION_WINDOW_CLOSED fires; cleared in renderState(). */
+    private String pendingWindowClosedSessionId;
 
     // ── Polling ───────────────────────────────────────────────────────────────
 
@@ -92,6 +98,7 @@ public class SessionFragment extends Fragment {
         adapter.setSessionActionListener(new SessionAdapter.SessionActionListener() {
             @Override
             public void onArriveClicked(String sessionId) {
+                lastActivatingSessionId = sessionId;
                 matchesViewModel.activateSession(sessionId);
             }
 
@@ -105,6 +112,17 @@ public class SessionFragment extends Fragment {
                 // Navigate to tracking screen where complete is handled properly
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
                         .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID, sessionId));
+            }
+
+            @Override
+            public void onReportClicked(String sessionId, String partnerId) {
+                Bundle args = new Bundle();
+                args.putString(ReportIncidentFragment.ARG_SESSION_ID,           sessionId);
+                args.putString(ReportIncidentFragment.ARG_REPORTED_UID,         partnerId);
+                args.putString(ReportIncidentFragment.ARG_SESSION_STATUS,       "ACTIVE");
+                args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS, 0L);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.reportIncidentFragment, args);
             }
         });
         recyclerView.setAdapter(adapter);
@@ -130,7 +148,13 @@ public class SessionFragment extends Fragment {
                 startActivationPolling();
             } else if ("SESSION_ACTIVATION_WINDOW_CLOSED".equals(result.errorCode)) {
                 Toast.makeText(requireContext(),
-                        "Activation window has closed.", Toast.LENGTH_SHORT).show();
+                        "Activation window closed. Waiting for status update.",
+                        Toast.LENGTH_LONG).show();
+                // After 5 s, reload; renderState() will navigate to History if the session is gone.
+                pendingWindowClosedSessionId = lastActivatingSessionId;
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (matchesViewModel != null) matchesViewModel.loadAll();
+                }, 5_000L);
             } else if (result.errorCode != null) {
                 Toast.makeText(requireContext(), result.errorCode, Toast.LENGTH_SHORT).show();
             }
@@ -172,6 +196,24 @@ public class SessionFragment extends Fragment {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
             matchesViewModel.consumeError();
         }
+
+        // WINDOW_CLOSED post-reload: navigate to History if the session disappeared.
+        if (pendingWindowClosedSessionId != null && !state.isLoading()) {
+            boolean found = false;
+            for (WalkSession s : state.getActiveSessions()) {
+                if (pendingWindowClosedSessionId.equals(s.getSessionId())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                pendingWindowClosedSessionId = null;
+                try {
+                    Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                            .navigate(R.id.action_matches_to_sessionHistoryFragment);
+                } catch (Exception ignored) { /* already navigated */ }
+            }
+        }
     }
 
     private void showCancelReasonDialog(String sessionId) {
@@ -193,6 +235,8 @@ public class SessionFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         pollHandler.removeCallbacks(pollRunnable);
+        pendingWindowClosedSessionId = null;
+        lastActivatingSessionId      = null;
         recyclerView.setAdapter(null);
         swipeRefresh = null;
         recyclerView = null;

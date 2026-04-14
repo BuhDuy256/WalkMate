@@ -34,6 +34,28 @@
             android:lineSpacingMultiplier="1.4"
             android:visibility="gone" />
 
+        <!-- Celebration overlay (GAP-19) — shown for 1.5 s on double-accept (Case B) -->
+        <FrameLayout
+            android:id="@+id/celebrationOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#CC000000"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/txtCelebration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="🎉 Match Confirmed!"
+                android:textColor="@android:color/white"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:padding="24dp" />
+
+        </FrameLayout>
+
     </FrameLayout>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

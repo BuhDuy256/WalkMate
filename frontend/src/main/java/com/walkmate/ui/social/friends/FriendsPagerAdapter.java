@@ -11,7 +11,7 @@ public class FriendsPagerAdapter extends FragmentStateAdapter {
     public static final int TAB_FRIENDS   = 0;
     public static final int TAB_INCOMING  = 1;
     public static final int TAB_OUTGOING  = 2;
-    private static final int TAB_COUNT    = 3;
+    public static final int TAB_COUNT    = 3;
 
     public FriendsPagerAdapter(@NonNull FragmentManager fm, @NonNull Lifecycle lifecycle) {
         super(fm, lifecycle);

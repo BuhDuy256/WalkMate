@@ -76,6 +76,15 @@ public class MatchesViewModel extends ViewModel {
         scrollToTabEvent.postValue(tabIndex);
     }
 
+    // ── Celebration event (GAP-19) ────────────────────────────────────────────
+
+    /** One-shot event: fires true when a proposal is double-accepted (Case B = CONFIRMED). */
+    private final MutableLiveData<Boolean> celebrationEvent = new MutableLiveData<>(null);
+
+    public LiveData<Boolean> getCelebrationEvent() { return celebrationEvent; }
+
+    public void consumeCelebration() { celebrationEvent.postValue(null); }
+
     // ── Activation result event ───────────────────────────────────────────────
 
     private final MutableLiveData<ActivationResult> activationResultEvent = new MutableLiveData<>(null);
@@ -205,14 +214,7 @@ public class MatchesViewModel extends ViewModel {
 
             @Override
             public void onError(Exception error) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        current.getProposals(),
-                        current.getActiveSessions(),
-                        error.getMessage()));
+                postError(error.getMessage());
             }
         });
     }
@@ -222,37 +224,40 @@ public class MatchesViewModel extends ViewModel {
     // -------------------------------------------------------------------------
 
     /**
-     * Optimistic pass: immediately removes the proposal from the list and posts
-     * the updated state — no full reload needed since no new entity is created.
+     * Passes (or declines) a proposal.
+     * <ul>
+     *   <li>Private invite: optimistic remove, stay on Proposal tab.</li>
+     *   <li>Public proposal: reload all data and navigate to Finding tab so the
+     *       re-opened intent is immediately visible.</li>
+     * </ul>
      */
-    public void passProposal(String proposalId) {
+    public void passProposal(String proposalId, boolean isPrivateInvite) {
         proposalRepository.passProposal(proposalId, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                List<WalkProposal> updated = new ArrayList<>();
-                for (WalkProposal p : current.getProposals()) {
-                    if (!p.getProposalId().equals(proposalId)) updated.add(p);
+                if (isPrivateInvite) {
+                    // Private invite declined — optimistic remove, stay on Proposal tab
+                    MatchesUiState current = uiState.getValue();
+                    if (current == null) return;
+                    List<WalkProposal> updated = new ArrayList<>();
+                    for (WalkProposal p : current.getProposals()) {
+                        if (!p.getProposalId().equals(proposalId)) updated.add(p);
+                    }
+                    uiState.postValue(new MatchesUiState(
+                            false,
+                            current.getActiveIntents(),
+                            updated,
+                            current.getActiveSessions(),
+                            null));
+                } else {
+                    // Public proposal passed — intent reverts to OPEN, navigate to Finding tab
+                    loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_FINDING));
                 }
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        updated,
-                        current.getActiveSessions(),
-                        null));
             }
 
             @Override
             public void onError(Exception error) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        current.getProposals(),
-                        current.getActiveSessions(),
-                        error.getMessage()));
+                postError(error.getMessage());
             }
         });
     }
@@ -270,14 +275,7 @@ public class MatchesViewModel extends ViewModel {
 
             @Override
             public void onError(Exception error) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        current.getProposals(),
-                        current.getActiveSessions(),
-                        error.getMessage()));
+                postError(error.getMessage());
             }
         });
     }
@@ -293,7 +291,8 @@ public class MatchesViewModel extends ViewModel {
             @Override
             public void onSuccess(WalkProposal result) {
                 if (result.isConfirmed()) {
-                    // Case B: both accepted — session created, navigate to Session tab
+                    // Case B: both accepted — fire celebration then navigate to Session tab
+                    celebrationEvent.postValue(true);
                     loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_SESSION));
                 } else {
                     // Case A: I accepted but partner has not — show waiting overlay in-place
@@ -303,14 +302,33 @@ public class MatchesViewModel extends ViewModel {
 
             @Override
             public void onError(Exception error) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        current.getProposals(),
-                        current.getActiveSessions(),
-                        error.getMessage()));
+                // UC-20 / Invariant X-5: domain-level concurrent-modification errors.
+                // error.getMessage() returns the error.code string from the API response.
+                String code = error.getMessage() != null ? error.getMessage() : "";
+                switch (code) {
+                    case "PROPOSAL_CONCURRENT_MODIFICATION":
+                        postError("A conflict occurred. Please refresh and try again.");
+                        loadAll();
+                        break;
+                    case "PROPOSAL_INTENT_NO_LONGER_OPEN":
+                        postError("Could not confirm — one of the intents is no longer available. The proposal has been cancelled.");
+                        loadAll();
+                        break;
+                    case "PROPOSAL_ALREADY_TERMINAL":
+                        postError("This proposal is no longer active.");
+                        loadAll();
+                        break;
+                    case "PROPOSAL_NOT_PARTICIPANT":
+                        postError("Permission denied.");
+                        break;
+                    case "PROPOSAL_NOT_FOUND":
+                        postError("Proposal not found.");
+                        loadAll();
+                        break;
+                    default:
+                        postError(code);
+                        break;
+                }
             }
         });
     }
@@ -349,14 +367,12 @@ public class MatchesViewModel extends ViewModel {
 
             @Override
             public void onError(Exception error) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        current.getProposals(),
-                        current.getActiveSessions(),
-                        error.getMessage()));
+                String code = error.getMessage() != null ? error.getMessage() : "";
+                if (code.startsWith("VALIDATION_ERROR")) {
+                    postError("Please provide a reason.");
+                } else {
+                    postError(code);
+                }
             }
         });
     }
@@ -385,6 +401,18 @@ public class MatchesViewModel extends ViewModel {
     // -------------------------------------------------------------------------
     // Error handling
     // -------------------------------------------------------------------------
+
+    /** Posts an error message into UiState without changing any list data. */
+    private void postError(String message) {
+        MatchesUiState current = uiState.getValue();
+        if (current == null) return;
+        uiState.postValue(new MatchesUiState(
+                false,
+                current.getActiveIntents(),
+                current.getProposals(),
+                current.getActiveSessions(),
+                message));
+    }
 
     public void consumeError() {
         MatchesUiState current = uiState.getValue();

@@ -18,6 +18,7 @@ import com.walkmate.core.designsystem.view.CountdownTimerView;
 import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkintent.WalkIntent;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -61,6 +62,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        if (!boundHolders.contains(holder)) boundHolders.add(holder);
         holder.bind(items.get(position));
     }
 
@@ -68,7 +70,22 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
         holder.countdown.cancelCountdown();
+        boundHolders.remove(holder);
     }
+
+    /**
+     * Cancels all active countdown timers. Call from
+     * {@code FindingFragment.onDestroyView()} to prevent leaked timers when the
+     * fragment's view is torn down before RecyclerView recycles every holder.
+     */
+    public void cancelAllTimers() {
+        for (ViewHolder holder : new ArrayList<>(boundHolders)) {
+            holder.countdown.cancelCountdown();
+        }
+        boundHolders.clear();
+    }
+
+    private final List<ViewHolder> boundHolders = new ArrayList<>();
 
     @Override
     public int getItemCount() {
@@ -119,6 +136,14 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
             bindStatusChip(intent.getStatus());
 
+            // Determine expiry state upfront so it can affect both countdown and button visibility
+            long millisUntilExpiry = Long.MAX_VALUE;
+            if (intent.getExpiresAt() != null) {
+                millisUntilExpiry = Instant.parse(intent.getExpiresAt()).toEpochMilli()
+                        - System.currentTimeMillis();
+            }
+            boolean isExpired = millisUntilExpiry <= 0;
+
             // Countdown timer
             if (intent.getExpiresAt() != null) {
                 countdown.setVisibility(View.VISIBLE);
@@ -133,6 +158,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
             // OPEN vs MATCHING state
             if (intent.isMatching()) {
+                btnFindMatch.setVisibility(View.VISIBLE);
                 btnFindMatch.setText(R.string.btn_view_proposal);
                 btnFindMatch.setOnClickListener(v -> {
                     if (actionListener != null) actionListener.onViewProposalClicked(intent.getId());
@@ -140,13 +166,15 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
                 btnCancelIntent.setVisibility(View.GONE);
                 imgLock.setVisibility(View.VISIBLE);
             } else {
-                // OPEN (default) — match is triggered server-side; button hidden
+                // OPEN — hide Cancel when already expired; show it otherwise
                 btnFindMatch.setVisibility(View.GONE);
-                btnCancelIntent.setVisibility(View.VISIBLE);
+                btnCancelIntent.setVisibility(isExpired ? View.GONE : View.VISIBLE);
                 imgLock.setVisibility(View.GONE);
-                btnCancelIntent.setOnClickListener(v -> {
-                    if (cancelListener != null) cancelListener.onCancelClick(intent);
-                });
+                if (!isExpired) {
+                    btnCancelIntent.setOnClickListener(v -> {
+                        if (cancelListener != null) cancelListener.onCancelClick(intent);
+                    });
+                }
             }
         }
 

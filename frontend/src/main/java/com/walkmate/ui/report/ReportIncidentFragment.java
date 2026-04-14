@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,30 +31,34 @@ import com.walkmate.domain.walksession.AbortReason;
  */
 public class ReportIncidentFragment extends Fragment {
 
-    public static final String TAG              = "ReportIncidentFragment";
-    public static final String ARG_SESSION_ID   = "SESSION_ID";
-    /**
-     * The ID of the user being reported. In practice this is the partner.
-     * PostSessionSummaryFragment should pass this; if absent the ViewModel
-     * will report a validation error.
-     */
-    public static final String ARG_REPORTED_UID = "REPORTED_UID";
+    public static final String TAG                      = "ReportIncidentFragment";
+    public static final String ARG_SESSION_ID           = "SESSION_ID";
+    public static final String ARG_REPORTED_UID         = "REPORTED_UID";
+    public static final String ARG_SESSION_STATUS       = "SESSION_STATUS";
+    /** Epoch-ms when the session reached a terminal state. 0 means "just happened". */
+    public static final String ARG_SESSION_TERMINAL_AT_MS = "SESSION_TERMINAL_AT_MS";
 
-    public static ReportIncidentFragment newInstance(String sessionId) {
+    /** Full constructor — passes all reporting-window context. */
+    public static ReportIncidentFragment newInstance(String sessionId, String reportedUserId,
+                                                      String sessionStatus, long terminalAtMs) {
         ReportIncidentFragment f = new ReportIncidentFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_SESSION_ID, sessionId);
+        args.putString(ARG_SESSION_ID,              sessionId);
+        args.putString(ARG_REPORTED_UID,            reportedUserId);
+        args.putString(ARG_SESSION_STATUS,          sessionStatus);
+        args.putLong(ARG_SESSION_TERMINAL_AT_MS,    terminalAtMs);
         f.setArguments(args);
         return f;
     }
 
+    /** Legacy 1-arg constructor — preserved for PostSessionSummaryFragment. */
+    public static ReportIncidentFragment newInstance(String sessionId) {
+        return newInstance(sessionId, null, null, 0L);
+    }
+
+    /** Legacy 2-arg constructor — preserved for PostSessionSummaryFragment. */
     public static ReportIncidentFragment newInstance(String sessionId, String reportedUserId) {
-        ReportIncidentFragment f = new ReportIncidentFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_SESSION_ID,   sessionId);
-        args.putString(ARG_REPORTED_UID, reportedUserId);
-        f.setArguments(args);
-        return f;
+        return newInstance(sessionId, reportedUserId, null, 0L);
     }
 
     // ── Views ─────────────────────────────────────────────────────────────────
@@ -62,6 +67,7 @@ public class ReportIncidentFragment extends Fragment {
     private EditText   etEvidenceUrl;
     private Button     btnSubmitReport;
     private View       btnBack;
+    private TextView   txtWindowClosedBanner;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -81,17 +87,39 @@ public class ReportIncidentFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        rgReason       = view.findViewById(R.id.rgReportReason);
-        etEvidenceUrl  = view.findViewById(R.id.etEvidenceUrl);
-        btnSubmitReport = view.findViewById(R.id.btnSubmitReport);
-        btnBack        = view.findViewById(R.id.btnBackReport);
+        rgReason            = view.findViewById(R.id.rgReportReason);
+        etEvidenceUrl       = view.findViewById(R.id.etEvidenceUrl);
+        btnSubmitReport     = view.findViewById(R.id.btnSubmitReport);
+        btnBack             = view.findViewById(R.id.btnBackReport);
+        txtWindowClosedBanner = view.findViewById(R.id.txtWindowClosedBanner);
 
         btnBack.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
-        Bundle args          = getArguments();
-        String sessionId     = args != null ? args.getString(ARG_SESSION_ID)   : null;
-        String reportedUserId = args != null ? args.getString(ARG_REPORTED_UID) : null;
+        Bundle args           = getArguments();
+        String sessionId      = args != null ? args.getString(ARG_SESSION_ID)             : null;
+        String reportedUserId = args != null ? args.getString(ARG_REPORTED_UID)           : null;
+        String sessionStatus  = args != null ? args.getString(ARG_SESSION_STATUS)         : null;
+        long terminalAtMs     = args != null ? args.getLong(ARG_SESSION_TERMINAL_AT_MS, 0L) : 0L;
+
+        // ── Reporting window guard (UC-32) ─────────────────────────────────────
+        // terminalAtMs == 0 → session just ended (PostSessionSummary path) → always open.
+        boolean windowExpired = false;
+        if (terminalAtMs > 0) {
+            long nowMs = System.currentTimeMillis();
+            long elapsed = nowMs - terminalAtMs;
+            if ("COMPLETED".equals(sessionStatus)) {
+                windowExpired = elapsed > 72L * 60L * 60L * 1000L;
+            } else if ("ABORTED".equals(sessionStatus) || "NO_SHOW".equals(sessionStatus)) {
+                windowExpired = elapsed > 24L * 60L * 60L * 1000L;
+            }
+            // ACTIVE sessions: no gate. CANCELLED: should not reach here.
+        }
+        if (windowExpired) {
+            showWindowClosedBanner("The reporting window for this session has closed.");
+            disableForm();
+            return;
+        }
 
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
         viewModel = new ViewModelProvider(this,
@@ -127,6 +155,25 @@ public class ReportIncidentFragment extends Fragment {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void showWindowClosedBanner(String message) {
+        if (txtWindowClosedBanner != null) {
+            txtWindowClosedBanner.setText(message);
+            txtWindowClosedBanner.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void disableForm() {
+        if (rgReason       != null) rgReason.setEnabled(false);
+        if (etEvidenceUrl  != null) etEvidenceUrl.setEnabled(false);
+        if (btnSubmitReport != null) btnSubmitReport.setEnabled(false);
+        // Disable each RadioButton individually
+        if (rgReason != null) {
+            for (int i = 0; i < rgReason.getChildCount(); i++) {
+                rgReason.getChildAt(i).setEnabled(false);
+            }
+        }
+    }
 
     /**
      * Maps the selected RadioButton to an {@link AbortReason} API value.
