@@ -145,6 +145,67 @@ public class TestDataSeeder {
                 proposalId, userIdA, userIdB, start, end);
     }
 
+    // ── Walk Intent (direct seed) — single OPEN intent ───────────────────────
+
+    /**
+     * Inserts a single {@code OPEN} walk intent for the given user, bypassing the
+     * public API and its inline-match side-effect.
+     *
+     * <p>Use this when you need a second intent in the DB but want to prevent the
+     * inline match that fires on {@code POST /intents} — e.g. to set up the
+     * candidate pool before explicitly calling {@code POST /intents/{id}/match}.
+     *
+     * <p>{@code expires_at} is set to {@code timeWindowEnd} (same as
+     * {@link com.walkmate.domain.walkintent.WalkIntent#create}).
+     *
+     * @param userId          UUID string of the intent owner (must exist in DB)
+     * @param hotspotId       UUID string of the hotspot (must exist in DB)
+     * @param timeWindowStart start of the walk window
+     * @param timeWindowEnd   end of the walk window
+     * @param ageMin          minimum preferred partner age
+     * @param ageMax          maximum preferred partner age
+     * @return the generated intent UUID as a {@code String}
+     */
+    public String seedOpenIntent(String userId, String hotspotId,
+                                 java.time.Instant timeWindowStart, java.time.Instant timeWindowEnd,
+                                 int ageMin, int ageMax) {
+        java.sql.Timestamp start       = java.sql.Timestamp.from(timeWindowStart);
+        java.sql.Timestamp end         = java.sql.Timestamp.from(timeWindowEnd);
+        String constraints = String.format("{\"age_min\":%d,\"age_max\":%d}", ageMin, ageMax);
+
+        return jdbc.queryForObject(
+                """
+                INSERT INTO public.walk_intent
+                    (hotspot_id, user_id, time_window_start, time_window_end,
+                     matching_constraints, expires_at, status, is_private)
+                VALUES (?::uuid, ?::uuid, ?, ?,
+                        ?::jsonb, ?,
+                        'OPEN'::intent_status, false)
+                RETURNING intent_id::text
+                """,
+                String.class,
+                hotspotId, userId, start, end, constraints, end
+        );
+    }
+
+    /**
+     * Bypasses domain logic to force an intent into an arbitrary {@code intent_status}.
+     *
+     * <p>Use sparingly — only in tests that need to start from a specific terminal or
+     * intermediate state that is impossible to reach via the public API alone
+     * (e.g. {@code CONSUMED} to test {@code INTENT_ALREADY_CONSUMED}, or
+     * {@code MATCHING} to test {@code INVALID_INTENT_DATA} on the match endpoint).
+     *
+     * @param intentId UUID string of the target intent
+     * @param status   target status string (e.g. {@code "CONSUMED"}, {@code "MATCHING"})
+     */
+    public void forceIntentStatus(String intentId, String status) {
+        jdbc.update(
+                "UPDATE public.walk_intent SET status = ?::intent_status WHERE intent_id = ?::uuid",
+                status, intentId
+        );
+    }
+
     // ── Friendship ────────────────────────────────────────────────────────────
 
     /**

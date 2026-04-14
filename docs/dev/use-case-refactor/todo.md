@@ -192,32 +192,35 @@
 - [x] Create two non-overlapping OPEN intents [09:00-10:00] and [11:00-12:00]; `GET /api/v1/intents` → `200 OK`, list length 2, both status `OPEN`
 - [x] Note: `findOpenByUserId` returns `status IN ('OPEN', 'MATCHING') AND is_private = false`
 
-### T17-1: UC-17 Cancel Walk Intent — Happy Path
-- [ ] Create an `OPEN` intent; `DELETE /api/v1/intents/{intentId}` → `200 OK`
-- [ ] Assert intent status in DB is `CANCELLED`
-- [ ] Assert the same user can now create a new intent in the same time window (overlap lock released)
+### T17-1: UC-17 Cancel Walk Intent — Happy Path ✅
+- [x] Create an `OPEN` intent; `DELETE /api/v1/intents/{intentId}` → `200 OK`
+- [x] Assert intent status in DB is `CANCELLED`
+- [x] Assert the same user can now create a new intent in the same time window (overlap lock released)
 
-### T17-2: UC-17 Cancel Intent — Not OPEN (Invariant I-4 / I-6)
-- [ ] Seed a `MATCHING` intent; call `DELETE /api/v1/intents/{intentId}`
-- [ ] Assert HTTP **400**, `error.code = INTENT_NOT_OPEN`
+### T17-2: UC-17 Cancel Intent — Terminal State (CONSUMED) ✅
+- [x] **Correction:** `WalkIntent.cancel()` explicitly allows `OPEN` and `MATCHING` — the user may
+      withdraw at any point before confirmation. Only `CANCELLED` and `CONSUMED` are terminal.
+      Original todo ("MATCHING → INTENT_NOT_OPEN") was wrong; correct test uses CONSUMED.
+- [x] Create intent via API → force status to `CONSUMED` via JDBC → `DELETE` → HTTP **400**, `error.code = INTENT_ALREADY_CONSUMED`
 
-### T17-3: UC-17 Cancel Intent — Not Owner
-- [ ] Create intent as User A; attempt to delete as User B
-- [ ] Assert HTTP **400**, `error.code = INTENT_NOT_OWNER`
+### T17-3: UC-17 Cancel Intent — Not Owner ✅
+- [x] Create intent as User A; attempt to delete as User B
+- [x] Assert HTTP **400**, `error.code = INTENT_NOT_OWNER`
 
-### T18-1: UC-18 Trigger Match (Internal API) — No Match Found (204 No Content)
-- [ ] Create an `OPEN` intent with no compatible counterpart in DB
-- [ ] `POST /api/v1/intents/{intentId}/match` → `204 No Content`
-- [ ] Intent remains `OPEN` in DB
+### T18-1: UC-18 Trigger Match (Internal API) — No Match Found (204 No Content) ✅
+- [x] Create an `OPEN` intent with no compatible counterpart in DB
+- [x] `POST /api/v1/intents/{intentId}/match` → `204 No Content`
+- [x] Intent remains `OPEN` in DB
 
-### T18-2: UC-18 Trigger Match (Internal API) — Match Found (200 OK with Proposal)
-- [ ] Seed two compatible `OPEN` intents (User A and User B, same hotspot, overlapping time)
-- [ ] Trigger match for User A's intent → `200 OK`, `data.status = PENDING`
-- [ ] Assert User A's intent status changed to `MATCHING` in DB (Invariant I-4)
-- [ ] Assert a `MatchProposal` row with `PENDING` status exists in DB
+### T18-2: UC-18 Trigger Match (Internal API) — Match Found (200 OK with Proposal) ✅
+- [x] User A creates intent via API (no candidates yet → stays OPEN). User B is registered via
+      API then their intent is seeded via JDBC (bypasses inline-match side-effect on POST /intents).
+- [x] Trigger match for User A → `200 OK`, `data.status = PENDING`, `data.proposal_id` non-empty
+- [x] Assert User A's intent status changed to `MATCHING` in DB (Invariant I-4)
+- [x] Assert a `MatchProposal` row with `PENDING` status exists in DB
 
-### T18-3: UC-18 Trigger Match (Internal API) — Intent Not OPEN (Invariant I-4)
-- [ ] Seed a `MATCHING` intent; trigger match again → HTTP **400**, `error.code = INVALID_INTENT_DATA`
+### T18-3: UC-18 Trigger Match (Internal API) — Intent Not OPEN (Invariant I-4) ✅
+- [x] Create intent via API → force status to `MATCHING` via JDBC → trigger match → HTTP **400**, `error.code = INVALID_INTENT_DATA`
 
 ---
 
