@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.ui.history.routereplay.RouteReplayActivity;
+import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 
 /**
  * Session History screen.
@@ -67,6 +68,17 @@ public class SessionHistoryFragment extends Fragment {
             Intent intent = new Intent(requireContext(), RouteReplayActivity.class);
             intent.putExtra(RouteReplayActivity.EXTRA_SESSION_ID, sessionId);
             startActivity(intent);
+        });
+        adapter.setOnPartnerClickListener(partnerId -> {
+            Bundle args = new Bundle();
+            args.putString(PublicProfileFragment.ARG_USER_ID, partnerId);
+            PublicProfileFragment fragment = new PublicProfileFragment();
+            fragment.setArguments(args);
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment, PublicProfileFragment.TAG)
+                    .addToBackStack(null)
+                    .commit();
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));

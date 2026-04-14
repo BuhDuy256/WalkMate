@@ -17,6 +17,7 @@ import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
+import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 import com.walkmate.ui.report.ReportIncidentFragment;
 import com.walkmate.ui.review.SubmitReviewFragment;
 
@@ -41,6 +42,7 @@ public class PostSessionSummaryFragment extends Fragment {
     public static final String TAG              = "PostSessionSummary";
     public static final String ARG_SESSION_ID   = "SESSION_ID";
     public static final String ARG_PARTNER_NAME = "PARTNER_NAME";
+    public static final String ARG_PARTNER_ID   = "PARTNER_ID";
     public static final String ARG_IS_ABORTED   = "IS_ABORTED";
 
     public static PostSessionSummaryFragment newInstance(String sessionId,
@@ -50,6 +52,20 @@ public class PostSessionSummaryFragment extends Fragment {
         Bundle args = new Bundle();
         args.putString(ARG_SESSION_ID,   sessionId);
         args.putString(ARG_PARTNER_NAME, partnerName);
+        args.putBoolean(ARG_IS_ABORTED,  isAborted);
+        f.setArguments(args);
+        return f;
+    }
+
+    public static PostSessionSummaryFragment newInstance(String sessionId,
+                                                          String partnerName,
+                                                          String partnerId,
+                                                          boolean isAborted) {
+        PostSessionSummaryFragment f = new PostSessionSummaryFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_SESSION_ID,   sessionId);
+        args.putString(ARG_PARTNER_NAME, partnerName);
+        args.putString(ARG_PARTNER_ID,   partnerId);
         args.putBoolean(ARG_IS_ABORTED,  isAborted);
         f.setArguments(args);
         return f;
@@ -94,6 +110,7 @@ public class PostSessionSummaryFragment extends Fragment {
         Bundle args = getArguments();
         String sessionId   = args != null ? args.getString(ARG_SESSION_ID)   : null;
         String partnerName = args != null ? args.getString(ARG_PARTNER_NAME)  : null;
+        String partnerId   = args != null ? args.getString(ARG_PARTNER_ID)    : null;
         boolean isAborted  = args != null && args.getBoolean(ARG_IS_ABORTED, false);
 
         // Intercept back press — finish the (dead) TrackingScreenActivity entirely
@@ -109,6 +126,22 @@ public class PostSessionSummaryFragment extends Fragment {
 
         // Immediately show partner name from args — available before any API call.
         if (partnerName != null) txtSummaryPartner.setText("Walk with " + partnerName);
+
+        // Tap on partner name → navigate to public profile (requires partnerId).
+        final String resolvedPartnerId = partnerId;
+        if (resolvedPartnerId != null) {
+            txtSummaryPartner.setOnClickListener(v -> {
+                Bundle profileArgs = new Bundle();
+                profileArgs.putString(PublicProfileFragment.ARG_USER_ID, resolvedPartnerId);
+                PublicProfileFragment fragment = new PublicProfileFragment();
+                fragment.setArguments(profileArgs);
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(android.R.id.content, fragment, PublicProfileFragment.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
 
         // Incident Report button only visible for aborted sessions.
         btnReportIncident.setVisibility(isAborted ? View.VISIBLE : View.GONE);

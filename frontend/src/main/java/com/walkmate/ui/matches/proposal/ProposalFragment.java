@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -59,6 +60,12 @@ public class ProposalFragment extends Fragment {
             }
             @Override public void onProposalExpired() {
                 matchesViewModel.loadAll();
+            }
+            @Override public void onViewProfile(String userId) {
+                Bundle args = new Bundle();
+                args.putString("userId", userId);
+                NavHostFragment.findNavController(ProposalFragment.this)
+                        .navigate(R.id.action_matches_to_publicProfileFragment, args);
             }
         });
         recyclerView.setAdapter(adapter);

@@ -24,6 +24,14 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_home_to_publicProfileFragment"
+            app:destination="@id/publicProfileFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -42,6 +50,14 @@
             android:defaultValue="0" />
 
         <deepLink app:uri="walkmate://matches/proposal/{proposalId}" />
+
+        <action
+            android:id="@+id/action_matches_to_publicProfileFragment"
+            app:destination="@id/publicProfileFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -66,6 +82,17 @@
 
         <argument
             android:name="CURRENT_USER_ID"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/publicProfileFragment"
+        android:name="com.walkmate.ui.profile.publicprofile.PublicProfileFragment"
+        android:label="Profile">
+
+        <argument
+            android:name="userId"
             app:argType="string"
             android:defaultValue="" />
     </fragment>

@@ -30,6 +30,8 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         void onAccept(String proposalId);
         void onCancel(String proposalId);
         void onProposalExpired();
+        /** Called when the user taps the partner avatar or name on a proposal card. */
+        void onViewProfile(String userId);
     }
 
     // -------------------------------------------------------------------------
@@ -108,6 +110,15 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
                     ? proposal.getMatchedUserName() : proposal.getMatchedUserId();
             avatarPartner.bind(displayName, null);
             txtName.setText(displayName);
+
+            // Tap on avatar or name → navigate to PublicProfileFragment
+            View.OnClickListener profileClick = v -> {
+                if (actionListener != null && proposal.getMatchedUserId() != null) {
+                    actionListener.onViewProfile(proposal.getMatchedUserId());
+                }
+            };
+            avatarPartner.setOnClickListener(profileClick);
+            txtName.setOnClickListener(profileClick);
             txtAge.setText("· " + proposal.getMatchedUserAge() + " tuổi");
             txtTrustScore.setText(itemView.getContext().getString(
                     R.string.proposal_trust_format, proposal.getTrustScore()));

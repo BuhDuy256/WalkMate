@@ -129,6 +129,12 @@ public class HomeFragment extends Fragment {
 
     private void setupRecyclerView() {
         quickInviteAdapter = new QuickInviteAdapter();
+        quickInviteAdapter.setOnUserClickListener(userId -> {
+            Bundle args = new Bundle();
+            args.putString("userId", userId);
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.action_home_to_publicProfileFragment, args);
+        });
         rvQuickInvite.setLayoutManager(
                 new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         rvQuickInvite.setAdapter(quickInviteAdapter);

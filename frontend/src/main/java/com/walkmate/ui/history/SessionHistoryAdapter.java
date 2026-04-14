@@ -31,7 +31,13 @@ public class SessionHistoryAdapter
         void onSessionSelected(String sessionId);
     }
 
+    /** Callback invoked when the partner name is tapped on a session history row. */
+    public interface OnPartnerClickListener {
+        void onPartnerClick(String partnerId);
+    }
+
     private OnSessionSelectedListener listener;
+    private OnPartnerClickListener partnerClickListener;
     private Map<String, String> partnerNames = Collections.emptyMap();
 
     public SessionHistoryAdapter() {
@@ -40,6 +46,10 @@ public class SessionHistoryAdapter
 
     public void setOnSessionSelectedListener(OnSessionSelectedListener listener) {
         this.listener = listener;
+    }
+
+    public void setOnPartnerClickListener(OnPartnerClickListener listener) {
+        this.partnerClickListener = listener;
     }
 
     /**
@@ -65,6 +75,11 @@ public class SessionHistoryAdapter
         holder.bind(summary, partnerNames);
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onSessionSelected(summary.getSessionId());
+        });
+        holder.txtPartner.setOnClickListener(v -> {
+            if (partnerClickListener != null && summary.getPartnerId() != null) {
+                partnerClickListener.onPartnerClick(summary.getPartnerId());
+            }
         });
     }
 

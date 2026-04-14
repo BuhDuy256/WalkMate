@@ -26,7 +26,17 @@ import java.util.List;
  */
 public class QuickInviteAdapter extends RecyclerView.Adapter<QuickInviteAdapter.ViewHolder> {
 
+    /** Callback invoked when a quick-invite card is tapped. */
+    public interface OnUserClickListener {
+        void onUserClick(String userId);
+    }
+
     private List<QuickInviteUser> items = new ArrayList<>();
+    private OnUserClickListener clickListener;
+
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.clickListener = listener;
+    }
 
     /** Called by HomeFragment.renderState() to refresh the list. */
     public void submitList(List<QuickInviteUser> newItems) {
@@ -44,7 +54,7 @@ public class QuickInviteAdapter extends RecyclerView.Adapter<QuickInviteAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(items.get(position));
+        holder.bind(items.get(position), clickListener);
     }
 
     @Override
@@ -65,10 +75,15 @@ public class QuickInviteAdapter extends RecyclerView.Adapter<QuickInviteAdapter.
             txtName   = itemView.findViewById(R.id.txtInviteName);
         }
 
-        void bind(QuickInviteUser user) {
+        void bind(QuickInviteUser user, OnUserClickListener listener) {
             txtName.setText(user.displayName);
-
             GlideHelper.loadCircle(imgAvatar, user.avatarUrl);
+
+            itemView.setOnClickListener(v -> {
+                if (listener != null && user.userId != null) {
+                    listener.onUserClick(user.userId);
+                }
+            });
         }
     }
 }

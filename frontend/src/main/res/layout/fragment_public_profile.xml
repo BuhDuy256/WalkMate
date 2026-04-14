@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:overScrollMode="never"
+    tools:context=".ui.profile.publicprofile.PublicProfileFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- ── TOP APP BAR ──────────────────────────────────────────────────── -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="48dp"
+            android:paddingBottom="8dp">
+
+            <ImageView
+                android:id="@+id/btnBackPublicProfile"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_back"
+                android:contentDescription="Back"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <ImageView
+                android:id="@+id/btnOverflowMenu"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_more_vert"
+                android:contentDescription="More options"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- ── LOADING / ERROR ──────────────────────────────────────────────── -->
+        <ProgressBar
+            android:id="@+id/progressPublicProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/txtPublicProfileError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:textColor="@color/color_danger"
+            android:visibility="gone"
+            tools:text="Something went wrong." />
+
+        <!-- ── CONTENT ──────────────────────────────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/contentPublicProfile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Avatar + Identity ───────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="16dp">
+
+                <com.walkmate.core.designsystem.view.AvatarInitialView
+                    android:id="@+id/avatarPublicProfile"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/txtPublicProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:gravity="center"
+                    tools:text="Nguyễn Văn A" />
+
+                <TextView
+                    android:id="@+id/txtPublicProfileBio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_muted"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    tools:text="Loves morning walks in the park" />
+
+                <com.walkmate.core.designsystem.view.TagChipGroup
+                    android:id="@+id/chipGroupPublicProfileTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_horizontal"
+                    app:chipSpacingHorizontal="6dp"
+                    app:chipSpacingVertical="4dp"
+                    app:wm_chipStyle="display" />
+
+            </LinearLayout>
+
+            <!-- Stats Row ───────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_rounded_32"
+                android:paddingVertical="16dp">
+
+                <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                    android:id="@+id/statPublicDistance"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:wm_statLabel="Total km"
+                    app:wm_statValue="—" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/handle_bar" />
+
+                <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                    android:id="@+id/statPublicSessions"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:wm_statLabel="Sessions"
+                    app:wm_statValue="—" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/handle_bar" />
+
+                <com.walkmate.core.designsystem.view.WalkMateStatColumn
+                    android:id="@+id/statPublicTrustScore"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:wm_statLabel="Trust Score"
+                    app:wm_statValue="—" />
+
+            </LinearLayout>
+
+            <!-- Badges ──────────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_rounded_32"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Badges"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupPublicBadges"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="6dp"
+                    app:chipSpacingVertical="4dp" />
+
+                <TextView
+                    android:id="@+id/txtNoBadges"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No badges yet."
+                    android:textSize="13sp"
+                    android:textColor="@color/text_muted"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- Reviews ─────────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_rounded_32"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reviews"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:layout_marginBottom="10dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvPublicProfileReviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+                <TextView
+                    android:id="@+id/txtNoReviews"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No reviews yet."
+                    android:textSize="13sp"
+                    android:textColor="@color/text_muted"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- Friendship Actions ───────────────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/layoutFriendshipActions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="32dp"
+                android:paddingTop="8dp">
+
+                <!-- NONE: Add Friend -->
+                <com.walkmate.core.designsystem.view.WalkMateButton
+                    android:id="@+id/btnAddFriend"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:visibility="gone"
+                    app:wm_buttonStyle="filled"
+                    app:wm_text="Add Friend" />
+
+                <!-- PENDING_SENT: Request Sent (disabled) -->
+                <com.walkmate.core.designsystem.view.WalkMateButton
+                    android:id="@+id/btnRequestSent"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:visibility="gone"
+                    android:enabled="false"
+                    app:wm_buttonStyle="outlined"
+                    app:wm_text="Request Sent" />
+
+                <!-- PENDING_RECEIVED: Accept + Decline -->
+                <com.walkmate.core.designsystem.view.WalkMateButton
+                    android:id="@+id/btnAcceptRequest"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:visibility="gone"
+                    app:wm_buttonStyle="filled"
+                    app:wm_text="Accept" />
+
+                <com.walkmate.core.designsystem.view.WalkMateButton
+                    android:id="@+id/btnDeclineRequest"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    app:wm_buttonStyle="outlined"
+                    app:wm_text="Decline" />
+
+                <!-- FRIENDS: Invite Walk + Remove Friend -->
+                <com.walkmate.core.designsystem.view.WalkMateButton
+                    android:id="@+id/btnInviteWalk"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:visibility="gone"
+                    app:wm_buttonStyle="filled"
+                    app:wm_text="Invite Walk" />
+
+                <com.walkmate.core.designsystem.view.WalkMateButton
+                    android:id="@+id/btnRemoveFriend"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    app:wm_buttonStyle="outlined"
+                    app:wm_text="Remove Friend" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>
