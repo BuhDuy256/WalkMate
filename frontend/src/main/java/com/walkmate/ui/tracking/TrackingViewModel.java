@@ -69,6 +69,7 @@ public class TrackingViewModel extends AndroidViewModel {
     // ── Session metadata (set once via startTrackingSession) ──────────────────
 
     private String sessionId;
+    private String partnerId;
     private String partnerName;
     private double meetingLat;
     private double meetingLng;
@@ -152,10 +153,11 @@ public class TrackingViewModel extends AndroidViewModel {
      * source.
      */
     public void startTrackingSession(
-            String sessionId, String partnerName,
+            String sessionId, String partnerId, String partnerName,
             double meetingLat, double meetingLng) {
 
         this.sessionId   = sessionId;
+        this.partnerId   = partnerId;
         this.partnerName = partnerName;
         this.meetingLat  = meetingLat;
         this.meetingLng  = meetingLng;
@@ -322,6 +324,7 @@ public class TrackingViewModel extends AndroidViewModel {
     private Intent buildServiceIntent() {
         Intent intent = new Intent(getApplication(), WalkTrackerService.class);
         intent.putExtra(WalkTrackerService.EXTRA_SESSION_ID,   sessionId);
+        intent.putExtra(WalkTrackerService.EXTRA_PARTNER_ID,   partnerId);
         intent.putExtra(WalkTrackerService.EXTRA_PARTNER_NAME, partnerName);
         intent.putExtra(WalkTrackerService.EXTRA_MEETING_LAT,  meetingLat);
         intent.putExtra(WalkTrackerService.EXTRA_MEETING_LNG,  meetingLng);

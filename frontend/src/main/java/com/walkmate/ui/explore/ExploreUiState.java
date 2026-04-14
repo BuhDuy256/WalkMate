@@ -31,8 +31,11 @@ public class ExploreUiState {
     private final AppState appState;
     private final String error;
     // Phase 4 — scanning lifecycle signals
-    private final boolean scanTimedOut;       // true = show "Still looking…" dialog
+    private final boolean scanTimedOut;        // true = show "Still looking…" dialog
     private final String matchFoundProposalId; // non-null = navigate to Matches; consume after use
+    // Phase 4 — auth gate: non-null when user tapped a hotspot but is not logged in.
+    // Fragment navigates to login then clears this via consumePendingHotspot().
+    private final String pendingHotspotId;
 
     /** Public constructor — filteredHotspots defaults to the full hotspots list. */
     public ExploreUiState(boolean isLoading, List<Hotspot> hotspots,
@@ -45,13 +48,15 @@ public class ExploreUiState {
         this.error                 = error;
         this.scanTimedOut          = false;
         this.matchFoundProposalId  = null;
+        this.pendingHotspotId      = null;
     }
 
     /** Full private constructor used by with*() copy helpers. */
     private ExploreUiState(boolean isLoading, List<Hotspot> hotspots,
                            List<Hotspot> filteredHotspots,
                            Hotspot selectedHotspot, AppState appState, String error,
-                           boolean scanTimedOut, String matchFoundProposalId) {
+                           boolean scanTimedOut, String matchFoundProposalId,
+                           String pendingHotspotId) {
         this.isLoading             = isLoading;
         this.hotspots              = hotspots != null ? hotspots : Collections.emptyList();
         this.filteredHotspots      = filteredHotspots != null ? filteredHotspots : this.hotspots;
@@ -60,24 +65,37 @@ public class ExploreUiState {
         this.error                 = error;
         this.scanTimedOut          = scanTimedOut;
         this.matchFoundProposalId  = matchFoundProposalId;
+        this.pendingHotspotId      = pendingHotspotId;
     }
 
     /** Returns a copy of this state with a different filtered list. */
     public ExploreUiState withFilteredHotspots(List<Hotspot> filtered) {
         return new ExploreUiState(isLoading, hotspots, filtered,
-                selectedHotspot, appState, error, scanTimedOut, matchFoundProposalId);
+                selectedHotspot, appState, error, scanTimedOut, matchFoundProposalId, pendingHotspotId);
     }
 
     /** Returns a copy of this state with scanTimedOut=true. */
     public ExploreUiState withScanTimedOut(boolean timedOut) {
         return new ExploreUiState(isLoading, hotspots, filteredHotspots,
-                selectedHotspot, appState, error, timedOut, matchFoundProposalId);
+                selectedHotspot, appState, error, timedOut, matchFoundProposalId, pendingHotspotId);
     }
 
     /** Returns a copy of this state signalling a match was found. */
     public ExploreUiState withMatchFound(String proposalId) {
         return new ExploreUiState(isLoading, hotspots, filteredHotspots,
-                selectedHotspot, appState, error, false, proposalId);
+                selectedHotspot, appState, error, false, proposalId, pendingHotspotId);
+    }
+
+    /** Returns a copy signalling the user must log in before selecting a hotspot. */
+    public ExploreUiState withPendingHotspot(String hotspotId) {
+        return new ExploreUiState(isLoading, hotspots, filteredHotspots,
+                selectedHotspot, appState, error, scanTimedOut, matchFoundProposalId, hotspotId);
+    }
+
+    /** Clears the pending hotspot event after the Fragment has handled it. */
+    public ExploreUiState withPendingHotspotConsumed() {
+        return new ExploreUiState(isLoading, hotspots, filteredHotspots,
+                selectedHotspot, appState, error, scanTimedOut, matchFoundProposalId, null);
     }
 
     public static ExploreUiState initial() {
@@ -92,4 +110,5 @@ public class ExploreUiState {
     public String getError()                       { return error; }
     public boolean isScanTimedOut()                { return scanTimedOut; }
     public String getMatchFoundProposalId()        { return matchFoundProposalId; }
+    public String getPendingHotspotId()            { return pendingHotspotId; }
 }

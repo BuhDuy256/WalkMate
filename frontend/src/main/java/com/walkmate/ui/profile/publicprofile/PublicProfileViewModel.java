@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.walkmate.core.domain.DomainCallback;
+import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.gamification.UserBadge;
 import com.walkmate.domain.gamification.UserStats;

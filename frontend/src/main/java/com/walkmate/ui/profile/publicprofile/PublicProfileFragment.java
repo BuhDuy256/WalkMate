@@ -245,7 +245,7 @@ public class PublicProfileFragment extends Fragment {
         renderStats(state.getStats(), state.getProfile());
         renderBadges(state.getBadges());
         renderReviews(state.getReviews());
-        renderFriendshipActions(state.getFriendshipStatus(), state.isSelf());
+        renderFriendshipActions(state.getProfile(), state.getFriendshipStatus(), state.isSelf());
 
         // Overflow menu visible only when viewing someone else's profile
         btnOverflowMenu.setVisibility(state.isSelf() ? View.GONE : View.VISIBLE);
@@ -257,11 +257,30 @@ public class PublicProfileFragment extends Fragment {
         avatarView.bind(profile.getFullName(), profile.getAvatarUrl());
         txtName.setText(profile.getFullName());
 
-        // Bio — UserSummary doesn't carry bio; shown empty unless extended in Phase 3+
-        txtBio.setVisibility(View.GONE);
+        // Bio
+        String bio = profile.getBio();
+        if (bio != null && !bio.isEmpty()) {
+            txtBio.setText(bio);
+            txtBio.setVisibility(View.VISIBLE);
+        } else {
+            txtBio.setVisibility(View.GONE);
+        }
 
-        // Tags — UserSummary doesn't carry tags in the current model; skip for now
-        chipGroupTags.setVisibility(View.GONE);
+        // Tags
+        List<String> tags = profile.getTags();
+        if (tags != null && !tags.isEmpty()) {
+            chipGroupTags.removeAllViews();
+            for (String tag : tags) {
+                com.google.android.material.chip.Chip chip =
+                        new com.google.android.material.chip.Chip(requireContext());
+                chip.setText(tag);
+                chip.setClickable(false);
+                chipGroupTags.addView(chip);
+            }
+            chipGroupTags.setVisibility(View.VISIBLE);
+        } else {
+            chipGroupTags.setVisibility(View.GONE);
+        }
     }
 
     private void renderStats(UserStats stats, UserSummary profile) {
@@ -308,7 +327,7 @@ public class PublicProfileFragment extends Fragment {
         }
     }
 
-    private void renderFriendshipActions(String status, boolean isSelf) {
+    private void renderFriendshipActions(UserSummary profile, String status, boolean isSelf) {
         // Hide all friendship views when viewing own profile
         layoutFriendshipActions.setVisibility(isSelf ? View.GONE : View.VISIBLE);
         if (isSelf) return;
@@ -330,6 +349,8 @@ public class PublicProfileFragment extends Fragment {
                 btnRequestSent.setVisibility(View.VISIBLE);
                 break;
             case "PENDING_RECEIVED":
+                // Populate pendingRequestId so accept/decline callbacks work
+                pendingRequestId = (profile != null) ? profile.getPendingRequestId() : null;
                 btnAcceptRequest.setVisibility(View.VISIBLE);
                 btnDeclineRequest.setVisibility(View.VISIBLE);
                 break;

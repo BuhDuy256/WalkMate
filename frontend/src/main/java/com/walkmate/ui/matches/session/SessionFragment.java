@@ -120,6 +120,7 @@ public class SessionFragment extends Fragment {
                 // Case B: both activated — launch tracking screen
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
                         .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
+                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));

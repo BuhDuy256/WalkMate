@@ -53,8 +53,9 @@ public class WalkProposalMapper {
         return new WalkSession(
                 response.getSessionId(),
                 response.getProposalId(),
-                response.getMatchedUserId(),   // name not yet in API — use userId as placeholder
-                null,                           // avatar not yet in API
+                response.getMatchedUserId(),    // partnerId
+                null,                           // partnerName not yet in API
+                null,                           // partnerAvatar not yet in API
                 response.getProposedLat(),
                 response.getProposedLng(),
                 response.getProposedTimeStart(),

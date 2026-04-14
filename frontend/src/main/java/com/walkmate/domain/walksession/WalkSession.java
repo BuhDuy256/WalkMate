@@ -14,6 +14,7 @@ public class WalkSession {
 
     private final String sessionId;
     private final String proposalId;
+    private final String partnerId;     // backend user ID of the other participant
     private final String partnerName;
     private final String partnerAvatar; // URL or null
     private final double meetingPointLat;
@@ -31,6 +32,7 @@ public class WalkSession {
     public WalkSession(
             String sessionId,
             String proposalId,
+            String partnerId,
             String partnerName,
             String partnerAvatar,
             double meetingPointLat,
@@ -46,6 +48,7 @@ public class WalkSession {
             boolean isCallerUserA) {
         this.sessionId = sessionId;
         this.proposalId = proposalId;
+        this.partnerId = partnerId;
         this.partnerName = partnerName;
         this.partnerAvatar = partnerAvatar;
         this.meetingPointLat = meetingPointLat;
@@ -63,6 +66,7 @@ public class WalkSession {
 
     public String getSessionId() { return sessionId; }
     public String getProposalId() { return proposalId; }
+    public String getPartnerId()   { return partnerId; }
     public String getPartnerName() { return partnerName; }
     public String getPartnerAvatar() { return partnerAvatar; }
     public double getMeetingPointLat() { return meetingPointLat; }

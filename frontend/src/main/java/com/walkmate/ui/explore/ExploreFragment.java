@@ -1,5 +1,6 @@
 package com.walkmate.ui.explore;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,6 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,6 +45,8 @@ import com.walkmate.ui.explore.ExploreUiState.AppState;
 import com.walkmate.ui.explore.createintent.CreateIntentUiState;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
+import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
+import com.walkmate.ui.auth.AuthActivity;
 import com.walkmate.ui.main.MainActivity;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -101,6 +105,10 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private TextView txtTimeEnd;
     private TextView txtAgeMin;
     private TextView txtAgeMax;
+    private SwitchCompat switchPrivateWalk;
+    private LinearLayout rowFriendPicker;
+    private TextView txtSelectedFriend;
+    private TextView txtPrivateIntentError;
     private MaterialButton btnFindMatch;
 
     // Scanning sheet ──────────────────────────────────────────────────────
@@ -194,8 +202,12 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         txtTimeEnd = root.findViewById(R.id.txtTimeEnd);
         txtAgeMin = root.findViewById(R.id.txtAgeMin);
         txtAgeMax = root.findViewById(R.id.txtAgeMax);
-        btnFindMatch = root.findViewById(R.id.btnFindMatch);
-        chipGroupTags = root.findViewById(R.id.chipGroupTags);
+        btnFindMatch         = root.findViewById(R.id.btnFindMatch);
+        chipGroupTags        = root.findViewById(R.id.chipGroupTags);
+        switchPrivateWalk    = root.findViewById(R.id.switchPrivateWalk);
+        rowFriendPicker      = root.findViewById(R.id.rowFriendPicker);
+        txtSelectedFriend    = root.findViewById(R.id.txtSelectedFriend);
+        txtPrivateIntentError = root.findViewById(R.id.txtPrivateIntentError);
 
         txtScanningHotspotName = root.findViewById(R.id.txtScanningHotspotName);
         btnStopSearching = root.findViewById(R.id.btnStopSearching);
@@ -476,6 +488,23 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         });
 
         btnFindMatch.setOnClickListener(v -> submitCreateIntent());
+
+        switchPrivateWalk.setOnCheckedChangeListener((btn, isChecked) -> {
+            createIntentViewModel.togglePrivate();
+        });
+
+        txtSelectedFriend.setOnClickListener(v -> showFriendPicker());
+    }
+
+    private void showFriendPicker() {
+        CreateIntentUiState s = createIntentViewModel.getUiState().getValue();
+        if (s == null) return;
+
+        FriendPickerBottomSheet sheet = FriendPickerBottomSheet.newInstance();
+        sheet.setOnFriendSelectedListener((userId, name) ->
+                createIntentViewModel.selectFriend(userId, name));
+        sheet.setFriends(s.getFriendList(), s.isFriendListLoading());
+        sheet.show(getChildFragmentManager(), FriendPickerBottomSheet.TAG);
     }
 
     private void submitCreateIntent() {
@@ -517,6 +546,10 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             }
         }
 
+        CreateIntentUiState intentState = createIntentViewModel.getUiState().getValue();
+        boolean isPrivate = intentState != null && intentState.isPrivate();
+        String invitedFriendId = intentState != null ? intentState.getInvitedFriendId() : null;
+
         createIntentViewModel.submit(
             hotspotId,
             selectedDateIso,
@@ -525,8 +558,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             ageMin,
             ageMax,
             tags,
-            false,   // isPrivate — wired up by UC-08 UI
-            null     // invitedFriendId — wired up by UC-08 UI
+            isPrivate,
+            invitedFriendId
         );
     }
 
@@ -559,6 +592,14 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
 
     private void renderState(ExploreUiState state) {
+        // Auth gate: navigate to login when user taps a hotspot without being signed in.
+        String pendingHotspot = state.getPendingHotspotId();
+        if (pendingHotspot != null) {
+            viewModel.consumePendingHotspot();
+            startActivity(new Intent(requireContext(), AuthActivity.class));
+            return;
+        }
+
         // Redraw map markers whenever the filtered list changes.
         if (googleMap != null) {
             List<Hotspot> filtered = state.getFilteredHotspots();
@@ -729,12 +770,48 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
+        // Sync the private-walk switch without re-triggering the listener
+        if (switchPrivateWalk != null && switchPrivateWalk.isChecked() != state.isPrivate()) {
+            switchPrivateWalk.setOnCheckedChangeListener(null);
+            switchPrivateWalk.setChecked(state.isPrivate());
+            switchPrivateWalk.setOnCheckedChangeListener((btn, isChecked) -> {
+                createIntentViewModel.togglePrivate();
+            });
+        }
+
+        // Show/hide friend picker row based on private mode
+        if (rowFriendPicker != null) {
+            rowFriendPicker.setVisibility(state.isPrivate() ? View.VISIBLE : View.GONE);
+        }
+
+        // Update selected friend label
+        if (txtSelectedFriend != null) {
+            String friendName = state.getInvitedFriendName();
+            txtSelectedFriend.setText(
+                    friendName != null ? friendName : getString(R.string.select_friend));
+        }
+
+        // Private intent validation error
+        if (txtPrivateIntentError != null) {
+            String privateErr = state.getPrivateIntentError();
+            if (privateErr != null) {
+                txtPrivateIntentError.setText(privateErr);
+                txtPrivateIntentError.setVisibility(View.VISIBLE);
+            } else {
+                txtPrivateIntentError.setVisibility(View.GONE);
+            }
+        }
+
+        // Update the open friend picker sheet if visible
+        FriendPickerBottomSheet pickerSheet =
+                (FriendPickerBottomSheet) getChildFragmentManager()
+                        .findFragmentByTag(FriendPickerBottomSheet.TAG);
+        if (pickerSheet != null) {
+            pickerSheet.setFriends(state.getFriendList(), state.isFriendListLoading());
+        }
+
         if (state.getError() != null) {
-            Toast.makeText(
-                requireContext(),
-                state.getError(),
-                Toast.LENGTH_SHORT
-            ).show();
+            Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
             createIntentViewModel.consumeError();
         }
     }

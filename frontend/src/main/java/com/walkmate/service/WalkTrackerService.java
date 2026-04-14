@@ -59,6 +59,7 @@ public class WalkTrackerService extends Service {
     // ── Intent extras ─────────────────────────────────────────────────────────
 
     public static final String EXTRA_SESSION_ID    = "SESSION_ID";
+    public static final String EXTRA_PARTNER_ID    = "PARTNER_ID";
     public static final String EXTRA_PARTNER_NAME  = "PARTNER_NAME";
     public static final String EXTRA_MEETING_LAT   = "MEETING_POINT_LAT";
     public static final String EXTRA_MEETING_LNG   = "MEETING_POINT_LNG";

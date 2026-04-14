@@ -35,6 +35,7 @@ public class ExploreViewModelFactory extends AbstractSavedStateViewModelFactory 
             return (T) new ExploreViewModel(
                     app.getHotspotRepository(),
                     app.getWalkIntentRepository(),
+                    app.getUserRepository(),
                     handle);
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());

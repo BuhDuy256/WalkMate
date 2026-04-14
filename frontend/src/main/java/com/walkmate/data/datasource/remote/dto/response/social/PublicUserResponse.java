@@ -29,4 +29,7 @@ public class PublicUserResponse {
 
     @SerializedName("friendshipStatus")
     public String friendshipStatus;
+
+    @SerializedName("pendingRequestId")
+    public String pendingRequestId;
 }

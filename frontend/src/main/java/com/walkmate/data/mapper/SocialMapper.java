@@ -16,7 +16,8 @@ public final class SocialMapper {
 
     public static UserSummary toDomain(UserSummaryResponse dto) {
         if (dto == null) return null;
-        return new UserSummary(dto.userId, dto.fullName, dto.avatarUrl, "NONE");
+        return new UserSummary(dto.userId, dto.fullName, dto.avatarUrl, "NONE",
+                null, null, null);
     }
 
     public static List<UserSummary> toDomainList(List<UserSummaryResponse> dtos) {
@@ -28,7 +29,8 @@ public final class SocialMapper {
 
     public static UserSummary toUserSummary(PublicUserResponse dto) {
         if (dto == null) return null;
-        return new UserSummary(dto.userId, dto.fullName, dto.avatarUrl, dto.friendshipStatus);
+        return new UserSummary(dto.userId, dto.fullName, dto.avatarUrl, dto.friendshipStatus,
+                dto.bio, dto.tags, dto.pendingRequestId);
     }
 
     public static FriendRequest toFriendRequest(FriendRequestResponse dto) {

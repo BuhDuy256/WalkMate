@@ -14,6 +14,7 @@ import com.walkmate.core.event.AppEventBus;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.ui.explore.ExploreUiState.AppState;
@@ -42,6 +43,7 @@ public class ExploreViewModel extends ViewModel {
 
     private final HotspotRepository hotspotRepository;
     private final WalkIntentRepository intentRepository;
+    private final UserRepository userRepository;
     private final SavedStateHandle savedState;
 
     private static final String KEY_OPEN_INTENT_ID = "openIntentId";
@@ -73,9 +75,11 @@ public class ExploreViewModel extends ViewModel {
 
     public ExploreViewModel(HotspotRepository hotspotRepository,
             WalkIntentRepository intentRepository,
+            UserRepository userRepository,
             SavedStateHandle savedState) {
         this.hotspotRepository = hotspotRepository;
         this.intentRepository = intentRepository;
+        this.userRepository = userRepository;
         this.savedState = savedState;
         AppEventBus.get().observe().observeForever(appEventObserver);
         // Bug 7: loadHotspots() moved to Fragment.onViewCreated() to avoid
@@ -114,11 +118,24 @@ public class ExploreViewModel extends ViewModel {
 
     /**
      * User tapped a hotspot marker.
-     * Transitions directly to SETUP (skipping the old HOTSPOT_SELECTED CTA-card
-     * step).
+     *
+     * Auth gate (Task 4.4): if the user has no valid access token, the hotspot ID
+     * is stored in {@code pendingHotspotId} and the Fragment navigates to login.
+     * After a successful login the Fragment can call {@link #selectHotspot} again
+     * with the stored ID.
+     *
+     * If authenticated, transitions directly to SETUP.
      */
     public void selectHotspot(String hotspotId) {
         ExploreUiState s = current();
+
+        // Auth gate
+        String token = userRepository.getAccessToken();
+        if (token == null || token.trim().isEmpty()) {
+            post(s.withPendingHotspot(hotspotId));
+            return;
+        }
+
         Hotspot found = null;
         for (Hotspot h : s.getHotspots()) {
             if (h.getId().equals(hotspotId)) {
@@ -131,6 +148,11 @@ public class ExploreViewModel extends ViewModel {
         // Bug 2: preserve filteredHotspots so an active search isn't wiped
         post(new ExploreUiState(false, s.getHotspots(), found, AppState.SETUP, null)
                 .withFilteredHotspots(s.getFilteredHotspots()));
+    }
+
+    /** Called by the Fragment after it has handled the auth-gate navigation. */
+    public void consumePendingHotspot() {
+        post(current().withPendingHotspotConsumed());
     }
 
     /**

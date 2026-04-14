@@ -22,7 +22,9 @@ public class CreateIntentViewModelFactory implements ViewModelProvider.Factory {
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(CreateIntentViewModel.class)) {
             WalkMateApplication app = (WalkMateApplication) appContext;
-            return (T) new CreateIntentViewModel(app.getWalkIntentRepository());
+            return (T) new CreateIntentViewModel(
+                    app.getWalkIntentRepository(),
+                    app.getSocialRepository());
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

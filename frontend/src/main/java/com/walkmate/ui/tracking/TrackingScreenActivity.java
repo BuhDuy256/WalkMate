@@ -58,6 +58,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     // ── Intent extra keys (re-exported from WalkTrackerService) ──────────────
 
     public static final String EXTRA_SESSION_ID   = WalkTrackerService.EXTRA_SESSION_ID;
+    public static final String EXTRA_PARTNER_ID   = WalkTrackerService.EXTRA_PARTNER_ID;
     public static final String EXTRA_PARTNER_NAME = WalkTrackerService.EXTRA_PARTNER_NAME;
     public static final String EXTRA_MEETING_LAT  = WalkTrackerService.EXTRA_MEETING_LAT;
     public static final String EXTRA_MEETING_LNG  = WalkTrackerService.EXTRA_MEETING_LNG;
@@ -71,6 +72,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     // ── Session contract ──────────────────────────────────────────────────────
 
     private String sessionId;
+    private String partnerId;
     private String partnerName;
     private double meetingLat;
     private double meetingLng;
@@ -124,7 +126,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         TrackingViewModelFactory factory = new TrackingViewModelFactory(getApplication());
         viewModel = new ViewModelProvider(this, factory).get(TrackingViewModel.class);
-        viewModel.startTrackingSession(sessionId, partnerName, meetingLat, meetingLng);
+        viewModel.startTrackingSession(sessionId, partnerId, partnerName, meetingLat, meetingLng);
         viewModel.getUiState().observe(this, this::renderState);
         viewModel.getCompletionError().observe(this, error -> {
             if (error != null) {
@@ -469,7 +471,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void showPostSessionSummary(TrackingUiState state) {
         boolean isAborted = viewModel.wasLastActionAbort();
         PostSessionSummaryFragment fragment =
-                PostSessionSummaryFragment.newInstance(sessionId, partnerName, isAborted);
+                PostSessionSummaryFragment.newInstance(sessionId, partnerName, partnerId, isAborted);
 
         getSupportFragmentManager()
                 .beginTransaction()
@@ -536,6 +538,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void readIntentExtras() {
         Intent intent = getIntent();
         sessionId   = intent.getStringExtra(EXTRA_SESSION_ID);
+        partnerId   = intent.getStringExtra(EXTRA_PARTNER_ID);
         partnerName = intent.getStringExtra(EXTRA_PARTNER_NAME);
         meetingLat  = intent.getDoubleExtra(EXTRA_MEETING_LAT, 0.0);
         meetingLng  = intent.getDoubleExtra(EXTRA_MEETING_LNG, 0.0);
@@ -548,6 +551,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         Log.d(TAG, "TrackingScreen opened:"
                 + "\n  sessionId   = " + sessionId
+                + "\n  partnerId   = " + partnerId
                 + "\n  partnerName = " + partnerName
                 + "\n  meetingLat  = " + meetingLat
                 + "\n  meetingLng  = " + meetingLng);

@@ -645,6 +645,70 @@
                         />
                     </com.google.android.material.chip.ChipGroup>
 
+                    <!-- Private Walk toggle row -->
+                    <LinearLayout
+                        android:id="@+id/rowPrivateWalk"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/private_walk"
+                            android:textColor="@color/text_dark"
+                            android:textSize="14sp" />
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switchPrivateWalk"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                    <!-- Friend picker row (visible only when switchPrivateWalk is ON) -->
+                    <LinearLayout
+                        android:id="@+id/rowFriendPicker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/invite_friend"
+                            android:textColor="@color/text_muted"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/txtSelectedFriend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:drawableEnd="@drawable/ic_chevron_right"
+                            android:drawablePadding="4dp"
+                            android:text="@string/select_friend"
+                            android:textColor="@color/orange_start"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                    <!-- Validation error for private intent config -->
+                    <TextView
+                        android:id="@+id/txtPrivateIntentError"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/color_danger"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+
                     <!-- CTA -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnFindMatch"

@@ -220,4 +220,9 @@
     <string name="hotspot_2">Hồ Con Rùa</string>
     <string name="hotspot_3">Công viên Gia Định</string>
     <string name="hotspot_4">Công viên Lê Văn Tám</string>
+    <!-- Private Walk (Task 4.3) -->
+    <string name="private_walk">Private Walk</string>
+    <string name="invite_friend">Invite Friend</string>
+    <string name="select_friend">Select…</string>
+    <string name="no_friends_yet">No friends yet. Add friends to invite them.</string>
 </resources>
