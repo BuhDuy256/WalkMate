@@ -58,7 +58,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                         return;
                     }
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -81,7 +81,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                     callback.onSuccess(UserProfileMapper.toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -114,7 +114,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                         return;
                     }
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_UPDATE_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -146,7 +146,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                         return;
                     }
                     ApiError apiError = ErrorParser.extractApiError(resp, "AVATAR_UPLOAD_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));

@@ -29,7 +29,6 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
     }
 
     public interface OnIntentActionListener {
-        void onFindMatchClicked(String intentId);
         void onViewProposalClicked(String intentId);
         void onIntentExpired();
     }
@@ -141,11 +140,8 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
                 btnCancelIntent.setVisibility(View.GONE);
                 imgLock.setVisibility(View.VISIBLE);
             } else {
-                // OPEN (default)
-                btnFindMatch.setText(R.string.find_match);
-                btnFindMatch.setOnClickListener(v -> {
-                    if (actionListener != null) actionListener.onFindMatchClicked(intent.getId());
-                });
+                // OPEN (default) — match is triggered server-side; button hidden
+                btnFindMatch.setVisibility(View.GONE);
                 btnCancelIntent.setVisibility(View.VISIBLE);
                 imgLock.setVisibility(View.GONE);
                 btnCancelIntent.setOnClickListener(v -> {

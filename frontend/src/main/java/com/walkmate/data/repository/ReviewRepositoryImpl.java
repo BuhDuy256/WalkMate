@@ -52,7 +52,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                     callback.onSuccess(toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "REVIEW_SUBMIT_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -77,7 +77,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                     callback.onSuccess(toDomainList(data != null ? data : Collections.emptyList()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "REVIEWS_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));

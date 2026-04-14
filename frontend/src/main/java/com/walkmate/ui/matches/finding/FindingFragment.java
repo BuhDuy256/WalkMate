@@ -51,11 +51,6 @@ public class FindingFragment extends Fragment {
         adapter.setOnCancelClickListener(intent -> matchesViewModel.cancelIntent(intent.getId()));
         adapter.setOnIntentActionListener(new FindingAdapter.OnIntentActionListener() {
             @Override
-            public void onFindMatchClicked(String intentId) {
-                matchesViewModel.triggerMatch(intentId);
-            }
-
-            @Override
             public void onViewProposalClicked(String intentId) {
                 matchesViewModel.navigateToTab(MatchesPagerAdapter.TAB_PROPOSAL);
             }
@@ -71,13 +66,6 @@ public class FindingFragment extends Fragment {
 
         matchesViewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
 
-        matchesViewModel.getNoMatchFoundEvent().observe(getViewLifecycleOwner(), noMatch -> {
-            if (noMatch != null && noMatch) {
-                Toast.makeText(requireContext(),
-                        R.string.no_match_found_toast, Toast.LENGTH_LONG).show();
-                matchesViewModel.consumeNoMatchFoundEvent();
-            }
-        });
     }
 
     private void renderState(MatchesUiState state) {

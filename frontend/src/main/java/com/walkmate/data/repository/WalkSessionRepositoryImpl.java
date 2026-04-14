@@ -61,7 +61,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                             data != null ? data : Collections.emptyList(), callerId));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSIONS_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -87,7 +87,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(WalkSessionMapper.toDomain(data, callerId));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ACTIVATE_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -111,7 +111,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_CANCEL_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -135,7 +135,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ABORT_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -161,7 +161,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(WalkSessionMapper.toDomain(data, callerId));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_COMPLETE_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -188,7 +188,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                             data != null ? data : Collections.emptyList(), callerId));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_HISTORY_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -212,7 +212,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(SessionRouteMapper.toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ROUTE_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -239,7 +239,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_REPORT_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));

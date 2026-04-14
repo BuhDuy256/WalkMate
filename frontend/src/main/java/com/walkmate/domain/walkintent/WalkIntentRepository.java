@@ -15,6 +15,7 @@ public interface WalkIntentRepository {
 
     void listActiveIntents(DomainCallback<List<WalkIntent>> callback);
 
+    /** Internal API only — must not be called from the UI layer. */
     void findMatch(String intentId, DomainCallback<WalkProposal> callback);
 
     void cancelIntent(String intentId, DomainCallback<Void> callback);

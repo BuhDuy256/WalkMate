@@ -47,7 +47,7 @@ public class SocialRepositoryImpl implements SocialRepository {
                     callback.onSuccess(SocialMapper.toDomainList(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "FRIENDS_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -98,7 +98,7 @@ public class SocialRepositoryImpl implements SocialRepository {
                     callback.onSuccess(SocialMapper.toDomainList(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "FOLLOWERS_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -121,7 +121,7 @@ public class SocialRepositoryImpl implements SocialRepository {
                     callback.onSuccess(SocialMapper.toDomainList(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "FOLLOWING_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -171,7 +171,7 @@ public class SocialRepositoryImpl implements SocialRepository {
             callback.onSuccess(null);
         } else {
             ApiError apiError = ErrorParser.extractApiError(resp, fallbackCode);
-            if (resp.code() == 422) {
+            if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                 callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
             } else {
                 callback.onError(new Exception(apiError.getCode()));

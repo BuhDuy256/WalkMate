@@ -68,7 +68,7 @@ public class UserRepositoryImpl implements UserRepository {
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "USER_INVALID_CREDENTIALS");
                     Log.w(TAG, "login failed: " + apiError.getCode());
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -99,7 +99,7 @@ public class UserRepositoryImpl implements UserRepository {
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "REGISTER_FAILED");
                     Log.w(TAG, "register failed: " + apiError.getCode());
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -326,7 +326,7 @@ public class UserRepositoryImpl implements UserRepository {
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "FCM_TOKEN_UPDATE_FAILED");
                     Log.w(TAG, "FCM token update failed: " + apiError.getCode());
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));

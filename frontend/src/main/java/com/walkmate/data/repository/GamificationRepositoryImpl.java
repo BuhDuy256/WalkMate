@@ -57,7 +57,7 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                     callback.onSuccess(toBadgeDomainList(data != null ? data : Collections.emptyList()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "BADGES_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -81,7 +81,7 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                     callback.onSuccess(toStatsDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "STATS_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -106,7 +106,7 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                     callback.onSuccess(toLeaderboardDomainList(data != null ? data : Collections.emptyList()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "LEADERBOARD_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));

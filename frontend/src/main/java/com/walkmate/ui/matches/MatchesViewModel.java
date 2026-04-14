@@ -76,16 +76,6 @@ public class MatchesViewModel extends ViewModel {
         scrollToTabEvent.postValue(tabIndex);
     }
 
-    // -------------------------------------------------------------------------
-    // No-match-found event (gap 3.7 — 204 No Content handling)
-    // -------------------------------------------------------------------------
-
-    private final MutableLiveData<Boolean> noMatchFoundEvent = new MutableLiveData<>(null);
-
-    public LiveData<Boolean> getNoMatchFoundEvent() { return noMatchFoundEvent; }
-
-    public void consumeNoMatchFoundEvent() { noMatchFoundEvent.postValue(null); }
-
     // ── Activation result event ───────────────────────────────────────────────
 
     private final MutableLiveData<ActivationResult> activationResultEvent = new MutableLiveData<>(null);
@@ -211,38 +201,6 @@ public class MatchesViewModel extends ViewModel {
                         current.getProposals(),
                         current.getActiveSessions(),
                         null));
-            }
-
-            @Override
-            public void onError(Exception error) {
-                MatchesUiState current = uiState.getValue();
-                if (current == null) return;
-                uiState.postValue(new MatchesUiState(
-                        false,
-                        current.getActiveIntents(),
-                        current.getProposals(),
-                        current.getActiveSessions(),
-                        error.getMessage()));
-            }
-        });
-    }
-
-    /**
-     * Triggers a match request for the given intent (gap 3.6).
-     * Case A (200 + body): a proposal was created — reload all data and scroll to Proposal tab.
-     * Case B (204 No Content, null body): no match yet — fire noMatchFoundEvent for the UI to toast.
-     */
-    public void triggerMatch(String intentId) {
-        intentRepository.findMatch(intentId, new DomainCallback<WalkProposal>() {
-            @Override
-            public void onSuccess(WalkProposal result) {
-                if (result == null) {
-                    // Case B: 204 No Content — server found no match yet
-                    noMatchFoundEvent.postValue(true);
-                } else {
-                    // Case A: proposal created — refresh and navigate to Proposal tab
-                    loadAll(() -> scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_PROPOSAL));
-                }
             }
 
             @Override

@@ -63,7 +63,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                     callback.onSuccess(WalkIntentMapper.toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "INTENT_CREATE_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -89,7 +89,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                     callback.onSuccess(intents);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "INTENT_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -118,7 +118,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                     callback.onSuccess(WalkProposalMapper.toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "MATCH_NOT_FOUND");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -141,7 +141,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "INTENT_CANCEL_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));

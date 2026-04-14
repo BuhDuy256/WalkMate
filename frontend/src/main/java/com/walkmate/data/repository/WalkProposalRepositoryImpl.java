@@ -53,7 +53,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                             data != null ? data : Collections.emptyList()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSALS_FETCH_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -77,7 +77,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                     callback.onSuccess(WalkProposalMapper.toDomain(resp.body().getData()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_ACCEPT_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -100,7 +100,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_PASS_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
@@ -123,7 +123,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                     callback.onSuccess(null);
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_CANCEL_FAILED");
-                    if (resp.code() == 422) {
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
                         callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
                     } else {
                         callback.onError(new Exception(apiError.getCode()));
