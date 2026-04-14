@@ -1,5 +1,6 @@
 package com.walkmate.ui.gamification;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,7 @@ import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
-import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
+import com.walkmate.ui.main.MainActivity;
 import com.walkmate.ui.report.ReportIncidentFragment;
 import com.walkmate.ui.review.SubmitReviewFragment;
 
@@ -131,15 +132,10 @@ public class PostSessionSummaryFragment extends Fragment {
         final String resolvedPartnerId = partnerId;
         if (resolvedPartnerId != null) {
             txtSummaryPartner.setOnClickListener(v -> {
-                Bundle profileArgs = new Bundle();
-                profileArgs.putString(PublicProfileFragment.ARG_USER_ID, resolvedPartnerId);
-                PublicProfileFragment fragment = new PublicProfileFragment();
-                fragment.setArguments(profileArgs);
-                requireActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(android.R.id.content, fragment, PublicProfileFragment.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                Intent intent = new Intent(requireContext(), MainActivity.class);
+                intent.putExtra(MainActivity.EXTRA_NAVIGATE_USER_ID, resolvedPartnerId);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
             });
         }
 

@@ -63,7 +63,30 @@
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.walkmate.ui.profile.ProfileFragment"
-        android:label="Profile" />
+        android:label="Profile">
+
+        <action
+            android:id="@+id/action_profile_to_sessionHistoryFragment"
+            app:destination="@id/sessionHistoryFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/sessionHistoryFragment"
+        android:name="com.walkmate.ui.history.SessionHistoryFragment"
+        android:label="Session History">
+
+        <action
+            android:id="@+id/action_sessionHistory_to_publicProfileFragment"
+            app:destination="@id/publicProfileFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
 
     <fragment
         android:id="@+id/notificationFragment"

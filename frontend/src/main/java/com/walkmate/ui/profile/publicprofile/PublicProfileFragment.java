@@ -44,8 +44,8 @@ import java.util.Locale;
  * Entry points:
  *   - HomeFragment (quick-invite card tap) via NavController
  *   - ProposalFragment (partner avatar/name tap) via NavController
- *   - SessionHistoryFragment (partner name tap) via FragmentManager
- *   - PostSessionSummaryFragment (partner name tap) via FragmentManager
+ *   - SessionHistoryFragment (partner name tap) via NavController
+ *   - PostSessionSummaryFragment (partner name tap) via MainActivity Intent → NavController
  *
  * Navigation argument:
  *   Bundle key "userId" — String, required.
@@ -349,6 +349,7 @@ public class PublicProfileFragment extends Fragment {
         popup.getMenu().add(0, MENU_BLOCK_USER, 0, "Block User");
         popup.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == MENU_BLOCK_USER) {
+                if (!requiresAuth()) return true;
                 viewModel.blockUser(currentUserId);
                 return true;
             }

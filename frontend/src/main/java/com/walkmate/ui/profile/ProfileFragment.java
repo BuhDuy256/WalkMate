@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -23,7 +24,6 @@ import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.util.GlideHelper;
 import com.walkmate.domain.user.VisibilityMode;
-import com.walkmate.ui.history.SessionHistoryFragment;
 import com.walkmate.ui.profile.edit.EditProfileFragment;
 
 import java.util.List;
@@ -121,12 +121,8 @@ public class ProfileFragment extends Fragment {
         viewModel.getNavigateToHistoryEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
             if (!Boolean.TRUE.equals(shouldNavigate)) return;
             viewModel.consumeNavigateToHistory();
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new SessionHistoryFragment(),
-                            SessionHistoryFragment.TAG)
-                    .addToBackStack(null)
-                    .commit();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_sessionHistoryFragment);
         });
     }
 

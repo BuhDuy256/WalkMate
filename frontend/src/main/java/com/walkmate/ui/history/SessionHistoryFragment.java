@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -72,13 +73,8 @@ public class SessionHistoryFragment extends Fragment {
         adapter.setOnPartnerClickListener(partnerId -> {
             Bundle args = new Bundle();
             args.putString(PublicProfileFragment.ARG_USER_ID, partnerId);
-            PublicProfileFragment fragment = new PublicProfileFragment();
-            fragment.setArguments(args);
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment, PublicProfileFragment.TAG)
-                    .addToBackStack(null)
-                    .commit();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_sessionHistory_to_publicProfileFragment, args);
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));

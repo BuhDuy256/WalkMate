@@ -37,6 +37,9 @@ import com.walkmate.ui.matches.MatchesPagerAdapter;
  */
 public class MainActivity extends AppCompatActivity {
 
+    /** Intent extra key: pass a userId String to navigate directly to PublicProfileFragment. */
+    public static final String EXTRA_NAVIGATE_USER_ID = "navigate_user_id";
+
     private BottomNavigationView bottomNav;
     private NavController navController;
     private int cachedBottomNavHeight = 0;
@@ -95,6 +98,34 @@ public class MainActivity extends AppCompatActivity {
 
         observeAppEventBus();
         observeAuthEventBus();
+
+        // Handle deep-link from TrackingScreenActivity (or any external caller) that
+        // wants to open a public profile without using FragmentManager.
+        if (savedInstanceState == null) {
+            handleNavigateIntent(getIntent());
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNavigateIntent(intent);
+    }
+
+    /**
+     * If the launching Intent carries {@link #EXTRA_NAVIGATE_USER_ID}, navigate to
+     * {@code publicProfileFragment} with that userId. The extra is consumed immediately
+     * so a config-change (rotation) does not re-trigger the navigation.
+     */
+    private void handleNavigateIntent(Intent intent) {
+        if (intent == null) return;
+        String userId = intent.getStringExtra(EXTRA_NAVIGATE_USER_ID);
+        if (userId == null || userId.isEmpty()) return;
+        intent.removeExtra(EXTRA_NAVIGATE_USER_ID);
+        Bundle args = new Bundle();
+        args.putString("userId", userId);
+        navController.navigate(R.id.publicProfileFragment, args);
     }
 
     // ── Forced-logout handling ────────────────────────────────────────────────
