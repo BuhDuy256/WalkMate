@@ -25,4 +25,4 @@ firebase-service-account.json
 .claude
 .idea
 .ackg
-.log
+*.log

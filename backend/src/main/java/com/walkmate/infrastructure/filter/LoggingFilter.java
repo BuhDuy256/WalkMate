@@ -30,15 +30,23 @@ public class LoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             long duration = System.currentTimeMillis() - startTime;
+            int status = response.getStatus();
 
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String user = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal()))
                     ? auth.getName()
                     : "anonymous";
 
-            log.info("User: {} | {} {} -> {} | {}ms",
-                    user, request.getMethod(), request.getRequestURI(),
-                    response.getStatus(), duration);
+            if (status >= 500) {
+                log.error("User: {} | {} {} -> {} | {}ms",
+                        user, request.getMethod(), request.getRequestURI(), status, duration);
+            } else if (status >= 400) {
+                log.warn("User: {} | {} {} -> {} | {}ms",
+                        user, request.getMethod(), request.getRequestURI(), status, duration);
+            } else {
+                log.info("User: {} | {} {} -> {} | {}ms",
+                        user, request.getMethod(), request.getRequestURI(), status, duration);
+            }
         }
     }
 }
