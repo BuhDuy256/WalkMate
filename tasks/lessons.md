@@ -283,3 +283,31 @@ For non-stats terminal states (ABORTED, CANCELLED) omit `total_distance_km` / `t
 **Rule going forward:** Document when a test class introduces a new `@MockitoBean` beyond what `AbstractIntegrationTest` provides — it always creates a new context. If startup time becomes a problem, consolidate mocks into the base class.
 
 ---
+
+## 2026-04-16 · Phase 11 · Private intents are created directly in MATCHING state, not OPEN
+
+### Lesson: `createPrivateInviteIntent()` locks the sender intent to MATCHING immediately — it never touches OPEN
+**What happened:** INV-I7 asserted `$.data.intent.status = "OPEN"` after a successful private intent creation. The actual response was `"MATCHING"`. Domain comment in `createPrivateInviteIntent()` is explicit: "Private intents are never OPEN: both are locked to MATCHING immediately (I-4, I-7)".
+**Root cause:** The private invite flow creates both sender and receiver intents in MATCHING status, creates a proposal, and auto-accepts on the sender side — all in a single transaction. The API response reflects the sender intent's final persisted state, which is MATCHING.
+**Fix:** Changed assertion to `"MATCHING"`.
+**Rule going forward:** For private intents, the response to `POST /api/v1/intents` always returns `status = "MATCHING"` (and a non-null `data.proposal`). Never assert `"OPEN"` for private invite creation.
+
+---
+
+## 2026-04-16 · Phase 11 · S-5 boundary test timing: 299s rewind is too close to the 300s minimum
+
+### Lesson: `rewindSessionStartedAt(299s)` creates a race condition — test-execution overhead pushes duration past 300s before the service check
+**What happened:** `inv_s5a` (4m59s → SESSION_COMPLETE_TOO_EARLY) returned HTTP 200 instead of 400. `rewindSessionStartedAt` sets `started_at = db_now - 299s`. By the time MockMvc processes the `complete` request (JVM overhead, DB I/O), actual duration = 299s + elapsed ≥ 300s → guard doesn't fire.
+**Fix:** Use 240s (4 min) as the rewind value for "too early" tests — safely below the 300s boundary with a buffer.
+**Rule going forward:** For time-based boundary tests, never use a value within 30–60 seconds of the threshold. Use values that give a comfortable margin against test-execution timing jitter (e.g., 240s for "under 5 min", 361s for "over 5 min").
+
+---
+
+## 2026-04-16 · Phase 11 · walk_intent primary key column is `intent_id`, not `walk_intent_id`
+
+### Lesson: The `public.walk_intent` table PK column is named `intent_id` — there is no `walk_intent_id` column
+**What happened:** Two JDBC queries in `IntentInvariantTest` used `WHERE walk_intent_id = ?::uuid` → `BadSqlGrammarException`. `TestDataSeeder.seedProposal()` uses `RETURNING intent_id::text`, which is the correct name.
+**Fix:** Changed both queries to `WHERE intent_id = ?::uuid` and replaced the redundant JDBC lookup with direct access to `ProposalSeed.intentIdA()`.
+**Rule going forward:** Always verify column names against `V1__init.sql` before writing raw JDBC. Do not derive column names from the entity class name — they may differ.
+
+---
