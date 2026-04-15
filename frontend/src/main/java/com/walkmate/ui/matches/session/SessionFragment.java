@@ -134,29 +134,22 @@ public class SessionFragment extends Fragment {
         matchesViewModel.getActivationResultEvent().observe(getViewLifecycleOwner(), result -> {
             if (result == null) return;
             matchesViewModel.consumeActivationResult();
-            if (result.session != null && result.session.getStatus() == WalkSession.Status.ACTIVE) {
+            
+            if (result.session != null) {
+                if (result.session.getStatus() == WalkSession.Status.ACTIVE) {
+                    // Case A: only this user activated (partner hasn't confirmed yet).
+                    showWaitingForPartnerUi();
+                    startActivationPolling();
+                }   
+
                 // Case B: both activated — launch tracking screen
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
-                        .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
-                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
-                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
-                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
-                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
-            } else if (result.session != null) {
-                // Case A: only this user activated (partner hasn't confirmed yet).
-                // ── TEST BYPASS ──────────────────────────────────────────────
-                // TODO: revert before production — removes the two-sided activation
-                //       requirement so GPS Path Tracing can be tested with one device.
-                startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
-                        .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
-                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
-                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
-                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
-                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
-                // ── END TEST BYPASS ──────────────────────────────────────────
-                // Production code (restore when done):
-                // showWaitingForPartnerUi();
-                // startActivationPolling();
+                            .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
+                            .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
+                            .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
+                            .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
+                            .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
+
             } else if ("SESSION_ACTIVATION_WINDOW_CLOSED".equals(result.errorCode)) {
                 Toast.makeText(requireContext(),
                         "Activation window closed. Waiting for status update.",

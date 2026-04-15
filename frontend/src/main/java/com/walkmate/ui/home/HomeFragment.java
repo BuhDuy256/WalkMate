@@ -90,9 +90,14 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Only load on first entry — ViewModel is Activity-scoped so data survives tab switches.
         if (viewModel.getUiState().getValue() == null) {
+            // First entry — load everything.
             viewModel.loadDashboard();
+        } else {
+            // Returning from another screen (e.g. NotificationFragment).
+            // Re-check unread count so the badge clears immediately after the user
+            // reads all notifications without forcing a full dashboard reload.
+            viewModel.refreshNotificationBadge();
         }
         resolveLocationName();
     }

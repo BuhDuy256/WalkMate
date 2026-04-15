@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -496,8 +497,15 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Flies the camera to the device's last-known location using
-     * {@link FusedLocationProviderClient#getLastLocation()}.
+     * Flies the camera to the device's current location.
+     *
+     * Strategy: try {@link FusedLocationProviderClient#getLastLocation()} first
+     * (instant if a recent fix is cached). If it returns {@code null} — which
+     * happens on a fresh boot, after a location-permission toggle, or when the
+     * device hasn't moved in a long time — fall back to
+     * {@link FusedLocationProviderClient#getCurrentLocation} to force a fresh fix.
+     * This guarantees the camera always moves to the user rather than staying
+     * pinned to the meeting-point coordinates.
      *
      * @param markInitialFly if {@code true}, sets {@link #hasInitialCameraFly} so that
      *                       the first route-point handler doesn't double-animate.
@@ -516,6 +524,20 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         new LatLng(location.getLatitude(), location.getLongitude()),
                         MAP_TRACKING_ZOOM));
+            } else {
+                // No cached fix — request a fresh location so the camera always
+                // moves to the user instead of staying at the meeting point.
+                fusedLocationClient.getCurrentLocation(
+                        Priority.PRIORITY_HIGH_ACCURACY, null)
+                        .addOnSuccessListener(this, freshLocation -> {
+                            if (freshLocation != null && googleMap != null) {
+                                if (markInitialFly) hasInitialCameraFly = true;
+                                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                                        new LatLng(freshLocation.getLatitude(),
+                                                freshLocation.getLongitude()),
+                                        MAP_TRACKING_ZOOM));
+                            }
+                        });
             }
         });
     }

@@ -38,20 +38,21 @@ import java.time.Instant;
  * <h3>XML attrs</h3>
  * <pre>{@code
  * <com.walkmate.core.designsystem.view.ActivationWindowButtonView
- *     app:wm_arriveLabel="I'm Here!"
+ *     app:wm_arriveLabel="Start Your Walk"
  *     app:wm_waitingLabel="Not yet open" />
  * }</pre>
  */
 public class ActivationWindowButtonView extends LinearLayout {
 
-    private static final long WINDOW_OPEN_OFFSET_MS  = 10L * 60_000L; // 10 min before
-    private static final long WINDOW_CLOSE_OFFSET_MS = 15L * 60_000L; // 15 min after
+    // TODO: Reset to 10 - 15 min before/after once testing is done. These huge values are just to test for fast
+    private static final long WINDOW_OPEN_OFFSET_MS  = 1000000000000000000L * 60_000L; // 10 min before
+    private static final long WINDOW_CLOSE_OFFSET_MS = 1500000000000000000L * 60_000L; // 15 min after
     private static final long RE_EVAL_INTERVAL_MS    = 60_000L;        // re-check every 60 s
 
     private TextView       tvStatus;
     private WalkMateButton btnArrive;
 
-    private String arriveLabel  = "I'm Here!";
+    private String arriveLabel  = "Start Your Walk";
     private String waitingLabel = "Not yet open";
     private String closedLabel  = "Window closed";
 

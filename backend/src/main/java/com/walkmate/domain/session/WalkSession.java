@@ -135,6 +135,7 @@ public class WalkSession {
             this.status    = SessionStatus.ACTIVE;
             this.startedAt = now;
         }
+        
         this.version++;
     }
 

@@ -150,6 +150,45 @@ public class HomeViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Lightweight refresh of just the notification badge.
+     * Called from HomeFragment.onResume() every time the user returns to the
+     * Home tab so that reading notifications in NotificationFragment is reflected
+     * immediately without a full dashboard reload.
+     * No-op while the dashboard is still loading or hasn't loaded yet.
+     */
+    public void refreshNotificationBadge() {
+        HomeDashboardUiState current = uiState.getValue();
+        if (current == null || current.isLoading()) return;
+
+        notificationRepo.getNotifications(new DomainCallback<List<Notification>>() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                boolean hasUnread = false;
+                if (notifications != null) {
+                    for (Notification n : notifications) {
+                        if (n != null && !n.isRead()) { hasUnread = true; break; }
+                    }
+                }
+                HomeDashboardUiState latest = uiState.getValue();
+                if (latest == null || latest.isLoading()) return;
+                uiState.postValue(new HomeDashboardUiState(
+                        false,
+                        latest.getGreetingName(),
+                        latest.getLocationName(),
+                        hasUnread,
+                        latest.getUpcomingSession(),
+                        latest.getTotalDistanceKm(),
+                        latest.getCompletedSessions(),
+                        null));
+            }
+            @Override
+            public void onError(Exception e) {
+                // Non-critical — badge stays as-is until next load
+            }
+        });
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void loadNotificationsAndPublish(
