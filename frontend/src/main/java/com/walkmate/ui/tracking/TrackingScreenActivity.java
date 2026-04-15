@@ -17,6 +17,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -88,6 +90,10 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     /** True after the camera has flown to the first GPS point. */
     private boolean      hasInitialCameraFly = false;
 
+    // ── Location (for immediate zoom before first GPS fix from service) ────────
+
+    private FusedLocationProviderClient fusedLocationClient;
+
     // ── Views ─────────────────────────────────────────────────────────────────
 
     private AvatarInitialView      avatarPartner;
@@ -123,6 +129,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         setupBottomPanel();
         setupMap();
         setupClickListeners();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         TrackingViewModelFactory factory = new TrackingViewModelFactory(getApplication());
         viewModel = new ViewModelProvider(this, factory).get(TrackingViewModel.class);
@@ -169,9 +177,23 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         map.getUiSettings().setCompassEnabled(false);
         map.getUiSettings().setZoomControlsEnabled(false);
 
+        // Show the blue "you are here" dot if permission is already granted.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            //noinspection MissingPermission
+            map.setMyLocationEnabled(true);
+        }
+
         // Fly to meeting point as the initial map position.
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(meetingLat, meetingLng), MAP_DEFAULT_ZOOM));
+
+        // Immediately try to centre on the device's real position so the blue dot
+        // is visible and the user isn't staring at the meeting-point coordinates
+        // (which could be 0,0 or far away).
+        // Don't mark hasInitialCameraFly here — the first GPS fix from the service
+        // should still trigger a zoom to start path tracing.
+        zoomToDeviceLocation(false);
 
         // Re-apply the latest ViewModel state in case GPS points arrived before
         // the map finished loading (rare, but possible on slow devices).
@@ -179,6 +201,10 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         if (latestState != null && !latestState.getMapPoints().isEmpty()) {
             updatePolyline(latestState.getMapPoints());
             handleCameraUpdate(latestState);
+        } else if (latestState != null && latestState.getWalkState() == WalkState.ACTIVE) {
+            // Walk already started but service hasn't delivered a point yet — zoom
+            // immediately to the device's cached last-known location.
+            zoomToDeviceLocation(true);
         }
     }
 
@@ -214,6 +240,10 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 viewModel.startWalk();
+                // Immediately fly to the cached last-known location so the user
+                // doesn't stare at the meeting-point overview while waiting for
+                // the first GPS fix from WalkTrackerService.
+                zoomToDeviceLocation(true);
             } else {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -285,7 +315,13 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         if (requestCode == REQUEST_LOCATION_PERMISSION
                 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // Enable the blue dot now that we have the runtime grant.
+            if (googleMap != null) {
+                //noinspection MissingPermission
+                googleMap.setMyLocationEnabled(true);
+            }
             viewModel.startWalk();
+            zoomToDeviceLocation(true);
         } else {
             Toast.makeText(this,
                     R.string.tracking_permission_denied, Toast.LENGTH_LONG).show();
@@ -447,11 +483,41 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void recenterCamera() {
         if (googleMap == null) return;
         TrackingUiState state = viewModel.getUiState().getValue();
-        if (state == null || state.getMapPoints().isEmpty()) return;
+        if (state != null && !state.getMapPoints().isEmpty()) {
+            // Route has points — fly to the latest recorded position.
+            LatLng latest = state.getMapPoints().get(state.getMapPoints().size() - 1);
+            googleMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(latest, MAP_TRACKING_ZOOM));
+        } else {
+            // No route points yet (walk not started or waiting for first GPS fix)
+            // — fall back to the device's cached last-known location.
+            zoomToDeviceLocation(true);
+        }
+    }
 
-        LatLng latest = state.getMapPoints().get(state.getMapPoints().size() - 1);
-        googleMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(latest, MAP_TRACKING_ZOOM));
+    /**
+     * Flies the camera to the device's last-known location using
+     * {@link FusedLocationProviderClient#getLastLocation()}.
+     *
+     * @param markInitialFly if {@code true}, sets {@link #hasInitialCameraFly} so that
+     *                       the first route-point handler doesn't double-animate.
+     *                       Pass {@code false} when calling before the walk has started
+     *                       so the first real GPS fix can still trigger a zoom.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void zoomToDeviceLocation(boolean markInitialFly) {
+        if (googleMap == null || fusedLocationClient == null) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) return;
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null && googleMap != null) {
+                if (markInitialFly) hasInitialCameraFly = true;
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(location.getLatitude(), location.getLongitude()),
+                        MAP_TRACKING_ZOOM));
+            }
+        });
     }
 
     // ── Walk completed → Post-Session Summary ─────────────────────────────────

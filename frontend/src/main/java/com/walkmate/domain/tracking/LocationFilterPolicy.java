@@ -16,8 +16,9 @@ package com.walkmate.domain.tracking;
  */
 public class LocationFilterPolicy {
 
-    /** Ignore fixes with an accuracy radius larger than this value (metres). */
-    private static final float MAX_ACCURACY_METRES = 25.0f;
+    /** Ignore fixes with an accuracy radius larger than this value (metres).
+     *  100 m includes indoor/weak-signal fixes; tighten to ~25 m for production. */
+    private static final float MAX_ACCURACY_METRES = 100.0f;
 
     /** Ignore fixes that are closer than this distance to the last accepted point (metres). */
     private static final float MIN_DISTANCE_METRES = 3.0f;
