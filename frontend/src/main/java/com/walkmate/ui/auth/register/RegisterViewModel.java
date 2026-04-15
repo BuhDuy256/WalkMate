@@ -28,10 +28,11 @@ public class RegisterViewModel extends ViewModel {
         return uiState;
     }
 
-    public void register(String fullName, String email, String password) {
+    public void register(String fullName, String email, String password, String confirmPassword) {
         String fNameError = null;
         String eError = null;
         String pError = null;
+        String cpError = null;
 
         if (fullName == null || fullName.trim().isEmpty()) {
             fNameError = "Full Name is required";
@@ -51,19 +52,27 @@ public class RegisterViewModel extends ViewModel {
             pError = "Password must be at least 8 characters, include uppercase, number, and special character";
         }
 
-        if (fNameError != null || eError != null || pError != null) {
-            uiState.setValue(new RegisterUiState(false, false, null, fNameError, eError, pError));
+        if (pError == null) {
+            if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
+                cpError = "Please confirm your password";
+            } else if (!password.trim().equals(confirmPassword.trim())) {
+                cpError = "Passwords do not match";
+            }
+        }
+
+        if (fNameError != null || eError != null || pError != null || cpError != null) {
+            uiState.setValue(new RegisterUiState(false, false, null, fNameError, eError, pError, cpError));
             return;
         }
 
-        uiState.setValue(new RegisterUiState(true, false, null, null, null, null));
+        uiState.setValue(new RegisterUiState(true, false, null, null, null, null, null));
 
         String deviceId = userRepository.getOrGenerateDeviceId();
         userRepository.register(fullName.trim(), email.trim(), password.trim(), deviceId,
                 new DomainCallback<String>() {
                     @Override
                     public void onSuccess(String token) {
-                        uiState.postValue(new RegisterUiState(false, true, null, null, null, null));
+                        uiState.postValue(new RegisterUiState(false, true, null, null, null, null, null));
                     }
 
                     @Override
@@ -72,7 +81,7 @@ public class RegisterViewModel extends ViewModel {
                                 UserErrorMessageMapper.map(error.getMessage());
                         String message = appContext.getString(result.messageResId);
                         uiState.postValue(
-                                new RegisterUiState(false, false, message, null, null, null));
+                                new RegisterUiState(false, false, message, null, null, null, null));
                     }
                 });
     }
@@ -86,7 +95,8 @@ public class RegisterViewModel extends ViewModel {
         RegisterUiState current = uiState.getValue();
         if (current != null) {
             uiState.setValue(new RegisterUiState(current.isLoading(), current.isSuccess(), null,
-                    current.getFullNameError(), current.getEmailError(), current.getPasswordError()));
+                    current.getFullNameError(), current.getEmailError(), current.getPasswordError(),
+                    current.getConfirmPasswordError()));
         }
     }
 }

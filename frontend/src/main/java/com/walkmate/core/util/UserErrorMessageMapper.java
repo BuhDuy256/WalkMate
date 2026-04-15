@@ -64,6 +64,8 @@ public class UserErrorMessageMapper {
                 return new ErrorResult(R.string.error_user_otp_invalid, ActionType.FIELD_ERROR);
 
             // ── Toast errors ──────────────────────────────────────────────────
+            case "GOOGLE_LOGIN_FAILED":
+                return new ErrorResult(R.string.error_google_login_failed, ActionType.TOAST);
             case "USER_NOT_FOUND":
                 return new ErrorResult(R.string.error_user_not_found, ActionType.TOAST);
             case "INVALID_USER_DATA":

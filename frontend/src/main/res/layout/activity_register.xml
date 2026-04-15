@@ -101,6 +101,17 @@
             app:wm_passwordToggle="true"
         />
 
+        <com.walkmate.core.designsystem.view.WalkMateInputField
+            android:id="@+id/field_confirm_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:wm_hint="Re-enter your password"
+            app:wm_icon="@drawable/ic_lock"
+            app:wm_label="Confirm Password"
+            app:wm_passwordToggle="true"
+        />
+
         <!-- ── PRIMARY CTA ──────────────────────────────────────────────────── -->
         <com.walkmate.core.designsystem.view.WalkMateButton
             android:id="@+id/btn_register_action"

@@ -161,7 +161,7 @@ Every backend response is wrapped:
   "success": true,
   "data": { ... },
   "error": null,
-  "timestamp": "2026-06-01T17:00:00Z"
+  "timestamp": "2026-12-31T17:00:00Z"
 }
 ```
 

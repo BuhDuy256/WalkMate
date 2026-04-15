@@ -136,9 +136,13 @@ public class UserRepositoryImpl implements UserRepository {
                                             Log.d(TAG, "Google login succeeded");
                                             callback.onSuccess(data.getAccessToken());
                                         } else {
-                                            String code = extractErrorCode(resp.body(), "GOOGLE_LOGIN_FAILED");
-                                            Log.w(TAG, "Google backend login failed: " + code);
-                                            callback.onError(new Exception(code));
+                                            // Bug fix: use ErrorParser.extractApiError(resp) which reads
+                                            // errorBody() — for non-2xx responses Retrofit sets body()
+                                            // to null, so the old extractErrorCode(resp.body()) always
+                                            // returned the fallback code "GOOGLE_LOGIN_FAILED".
+                                            ApiError apiError = ErrorParser.extractApiError(resp, "GOOGLE_LOGIN_FAILED");
+                                            Log.w(TAG, "Google backend login failed: " + apiError.getCode());
+                                            callback.onError(new Exception(apiError.getCode()));
                                         }
                                     } catch (IOException e) {
                                         Log.e(TAG, "Google login network error", e);
@@ -148,12 +152,12 @@ public class UserRepositoryImpl implements UserRepository {
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Failed to get Firebase ID token", e);
-                                callback.onError(e);
+                                callback.onError(new Exception("GOOGLE_LOGIN_FAILED"));
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Firebase signInWithCredential failed", e);
-                    callback.onError(e);
+                    callback.onError(new Exception("GOOGLE_LOGIN_FAILED"));
                 });
     }
 

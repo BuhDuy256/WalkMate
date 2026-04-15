@@ -21,7 +21,10 @@ public class FirebaseTokenVerifier implements GoogleTokenVerifier {
     @Override
     public GoogleIdentity verify(String firebaseIdToken) {
         try {
-            FirebaseToken decoded = firebaseAuth.verifyIdToken(firebaseIdToken, true);
+            // checkRevoked=false: skips the extra Firebase revocation-status network call.
+            // That call requires the service account to have firebaseauth.users.get permission
+            // and adds latency; revoked tokens are already rejected by token expiry.
+            FirebaseToken decoded = firebaseAuth.verifyIdToken(firebaseIdToken, false);
             return new GoogleIdentity(
                     decoded.getUid(),
                     decoded.getEmail(),

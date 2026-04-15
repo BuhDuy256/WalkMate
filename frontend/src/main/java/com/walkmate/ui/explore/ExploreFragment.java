@@ -2,7 +2,6 @@ package com.walkmate.ui.explore;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -837,9 +836,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             float scale = count == 0 ? 1.0f : (count <= 4 ? 1.3f : 1.6f);
             com.google.android.gms.maps.model.BitmapDescriptor pinIcon =
                 com.google.android.gms.maps.model.BitmapDescriptorFactory.fromBitmap(
-                    scaleBitmap(
-                        BitmapFactory.decodeResource(getResources(), R.drawable.ic_hotspot_pin),
-                        scale));
+                    scaleBitmap(vectorToBitmap(R.drawable.ic_hotspot_pin), scale));
 
             Marker marker = googleMap.addMarker(
                 new MarkerOptions()
@@ -863,10 +860,30 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     }
 
     /**
+     * Converts a vector drawable resource to a {@link Bitmap}.
+     * {@link BitmapFactory#decodeResource} returns null for XML vector drawables,
+     * so we draw the drawable onto a Canvas instead.
+     */
+    private Bitmap vectorToBitmap(@androidx.annotation.DrawableRes int resId) {
+        android.graphics.drawable.Drawable drawable =
+                androidx.core.content.ContextCompat.getDrawable(requireContext(), resId);
+        if (drawable == null) return null;
+        Bitmap bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
+    }
+
+    /**
      * Scales {@code src} by the given factor using bilinear filtering.
      * Used to reflect open-intent count as pin visual weight (GAP-20).
      */
     private Bitmap scaleBitmap(Bitmap src, float scale) {
+        if (src == null) return null;
         int w = (int) (src.getWidth()  * scale);
         int h = (int) (src.getHeight() * scale);
         return Bitmap.createScaledBitmap(src, w, h, true);

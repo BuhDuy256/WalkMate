@@ -98,7 +98,12 @@ public class WalkIntentCommandService {
         try {
             Optional<MatchProposal> proposal = matchingCommandService.findOrCreateProposal(
                     saved.getId(), command.userId());
-            return new CreateIntentResult(saved, proposal.orElse(null));
+            if (proposal.isPresent()) {
+                WalkIntent refreshed = walkIntentRepository.findById(saved.getId())
+                        .orElse(saved);
+                return new CreateIntentResult(refreshed, proposal.get());
+            }
+            return new CreateIntentResult(saved, null);
         } catch (Exception e) {
             log.warn("Inline match failed for intent {}: {}", saved.getId(), e.getMessage());
         }

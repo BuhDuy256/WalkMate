@@ -7,19 +7,22 @@ public class RegisterUiState {
     private final String fullNameError;
     private final String emailError;
     private final String passwordError;
+    private final String confirmPasswordError;
 
     public RegisterUiState(boolean isLoading, boolean isSuccess, String error,
-            String fullNameError, String emailError, String passwordError) {
+            String fullNameError, String emailError, String passwordError,
+            String confirmPasswordError) {
         this.isLoading = isLoading;
         this.isSuccess = isSuccess;
         this.error = error;
         this.fullNameError = fullNameError;
         this.emailError = emailError;
         this.passwordError = passwordError;
+        this.confirmPasswordError = confirmPasswordError;
     }
 
     public static RegisterUiState initial() {
-        return new RegisterUiState(false, false, null, null, null, null);
+        return new RegisterUiState(false, false, null, null, null, null, null);
     }
 
     public boolean isLoading() {
@@ -44,5 +47,9 @@ public class RegisterUiState {
 
     public String getPasswordError() {
         return passwordError;
+    }
+
+    public String getConfirmPasswordError() {
+        return confirmPasswordError;
     }
 }

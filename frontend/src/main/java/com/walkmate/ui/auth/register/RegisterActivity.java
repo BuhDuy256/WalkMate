@@ -33,6 +33,7 @@ public class RegisterActivity extends AppCompatActivity {
     private WalkMateInputField fieldFullName;
     private WalkMateInputField fieldEmail;
     private WalkMateInputField fieldPassword;
+    private WalkMateInputField fieldConfirmPassword;
     private WalkMateButton btnRegister;
     private MaterialButton btnGoogleSignIn;
 
@@ -68,17 +69,19 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        fieldFullName   = findViewById(R.id.field_fullname);
-        fieldEmail      = findViewById(R.id.field_email);
-        fieldPassword   = findViewById(R.id.field_password);
-        btnRegister     = findViewById(R.id.btn_register_action);
-        btnGoogleSignIn = findViewById(R.id.btn_google_signin);
+        fieldFullName        = findViewById(R.id.field_fullname);
+        fieldEmail           = findViewById(R.id.field_email);
+        fieldPassword        = findViewById(R.id.field_password);
+        fieldConfirmPassword = findViewById(R.id.field_confirm_password);
+        btnRegister          = findViewById(R.id.btn_register_action);
+        btnGoogleSignIn      = findViewById(R.id.btn_google_signin);
     }
 
     private void initClickListeners() {
         btnRegister.setOnClickListener(v ->
                 registerViewModel.register(
-                        fieldFullName.getText(), fieldEmail.getText(), fieldPassword.getText()));
+                        fieldFullName.getText(), fieldEmail.getText(),
+                        fieldPassword.getText(), fieldConfirmPassword.getText()));
 
         btnGoogleSignIn.setOnClickListener(v -> {
             btnGoogleSignIn.setEnabled(false);
@@ -98,6 +101,7 @@ public class RegisterActivity extends AppCompatActivity {
             fieldFullName.setError(state.getFullNameError());
             fieldEmail.setError(state.getEmailError());
             fieldPassword.setError(state.getPasswordError());
+            fieldConfirmPassword.setError(state.getConfirmPasswordError());
 
             if (state.getError() != null) {
                 Toast.makeText(this, state.getError(), Toast.LENGTH_LONG).show();

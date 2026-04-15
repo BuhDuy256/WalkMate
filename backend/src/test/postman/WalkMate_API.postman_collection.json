@@ -364,7 +364,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-06-01\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 40,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Looking for a friendly walking partner!\"\n}",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-12-31\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 40,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Looking for a friendly walking partner!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -447,7 +447,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-06-01\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 40,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Happy to walk with anyone!\"\n}",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-12-31\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 40,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Happy to walk with anyone!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
