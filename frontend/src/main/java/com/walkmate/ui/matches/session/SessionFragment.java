@@ -164,8 +164,10 @@ public class SessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Periodic background refresh while the fragment is visible (30 s)
-        pollHandler.postDelayed(pollRunnable, 30_000L);
+        // NOTE: Polling is NOT started here. It is only started explicitly via
+        // startActivationPolling() after an activation Case A (waiting for partner).
+        // Starting it unconditionally here caused unwanted API reloads every time
+        // the user returned to the Matches tab.
     }
 
     @Override

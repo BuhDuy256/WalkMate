@@ -67,8 +67,7 @@ public class MatchesFragment extends Fragment {
                 .get(MatchesViewModel.class);
 
         // Only load when there is no cached data yet.
-        if (matchesViewModel.getUiState().getValue() == null
-                || matchesViewModel.getUiState().getValue().isLoading()) {
+        if (!matchesViewModel.hasLoadedOnce()) {
             matchesViewModel.loadAll();
         }
 

@@ -1,5 +1,8 @@
 package com.walkmate.ui.matches;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -47,6 +50,22 @@ public class MatchesViewModel extends ViewModel {
 
     /** In-memory cache of userId → UserProfile for partner name enrichment. */
     private final Map<String, UserProfile> profileCache = new HashMap<>();
+
+    /** Tracks whether loadAll() has completed at least once. */
+    private volatile boolean dataLoaded = false;
+
+    /** Returns true if loadAll() has completed at least once (data is cached). */
+    public boolean hasLoadedOnce() {
+        return dataLoaded;
+    }
+
+    /**
+     * Handler bound to the main thread.
+     * Used to dispatch rebuildUiStateWithEnrichedProposals() onto the main thread,
+     * guaranteeing that any preceding postValue() calls have already been dispatched
+     * (i.e. mData is current) before getValue() is read inside the rebuild.
+     */
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public MatchesViewModel(WalkIntentRepository intentRepository,
                             WalkProposalRepository proposalRepository,
@@ -139,6 +158,7 @@ public class MatchesViewModel extends ViewModel {
                 List<String> errorList = errors.get();
                 String errorMessage = errorList.isEmpty()
                         ? null : String.join("; ", errorList);
+                dataLoaded = true;
                 uiState.postValue(new MatchesUiState(
                         false,
                         intentsRef.get(),
@@ -536,13 +556,27 @@ public class MatchesViewModel extends ViewModel {
         for (WalkProposal p : proposals) {
             String uid = p.getMatchedUserId();
             if (profileCache.containsKey(uid)) {
-                rebuildUiStateWithEnrichedProposals();
+                // Post to main thread instead of calling synchronously.
+                // rebuildUiStateWithEnrichedProposals() calls getValue(), which on a
+                // background thread returns mData (the last value committed to the main
+                // thread). When profiles are cached, this method is called on the same
+                // executor thread that just called uiState.postValue(data) — but that
+                // postValue only queues the update; mData still holds the old loading
+                // state. A synchronous call here would therefore read the loading state
+                // (empty proposals) and overwrite the pending data postValue via another
+                // postValue, permanently clearing proposals from the UI.
+                // By posting to the main thread we always run AFTER the data postValue
+                // has been dispatched, so getValue() is guaranteed to return fresh data.
+                mainHandler.post(this::rebuildUiStateWithEnrichedProposals);
             } else {
                 userProfileRepository.getProfile(uid, new DomainCallback<UserProfile>() {
                     @Override
                     public void onSuccess(UserProfile profile) {
                         profileCache.put(uid, profile);
-                        rebuildUiStateWithEnrichedProposals();
+                        // Also post to main thread for the same reason: the profile network
+                        // call is fast enough on some devices that mData may not yet reflect
+                        // the latest postValue() when this callback fires.
+                        mainHandler.post(MatchesViewModel.this::rebuildUiStateWithEnrichedProposals);
                     }
 
                     @Override
