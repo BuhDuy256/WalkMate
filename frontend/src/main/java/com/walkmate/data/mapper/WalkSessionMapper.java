@@ -27,7 +27,7 @@ public class WalkSessionMapper {
                 response.getSessionId(),
                 response.getProposalId(),
                 partnerId,
-                null,                   // partnerName not yet in API
+                partnerId,              // fallback: use partnerId until the API returns a name
                 null,                   // partnerAvatar not yet in API
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),

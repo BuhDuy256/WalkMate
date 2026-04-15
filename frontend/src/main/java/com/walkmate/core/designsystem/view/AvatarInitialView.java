@@ -137,7 +137,7 @@ public class AvatarInitialView extends FrameLayout {
      * @param isOnline Whether to show the green online-status dot.
      */
     public void bind(@NonNull String name, @Nullable String photoUrl, boolean isOnline) {
-        tvInitial.setText(extractInitial(name));
+        tvInitial.setText(extractInitial(name != null ? name : ""));
         loadPhoto(photoUrl);
         setOnlineStatus(isOnline);
     }
@@ -167,6 +167,7 @@ public class AvatarInitialView extends FrameLayout {
      */
     @NonNull
     private String extractInitial(@NonNull String name) {
+        if (name == null) return "?";
         String trimmed = name.trim();
         if (trimmed.isEmpty()) return "?";
         return String.valueOf(Character.toUpperCase(trimmed.charAt(0)));
