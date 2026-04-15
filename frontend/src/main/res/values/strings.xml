@@ -5,11 +5,11 @@
     <string name="walkers_active">12 walkers active now</string>
     <string name="set_walking_intent">Set Walking Intent ✦</string>
     <string name="set_preferences_title">Set your preferences ⏱️</string>
-    <string name="label_when_time">When (Time)</string>
-    <string name="label_when_duration">When (Duration)</string>
-    <string name="label_who_age">Who (Age)</string>
-    <string name="label_who_gender">Who (Gender)</string>
-    <string name="label_what_tags">What (Tags)</string>
+    <string name="label_when_time">Time</string>
+    <string name="label_who_age">Age</string>
+    <string name="label_who_gender">Gender</string>
+    <string name="label_what_tags">Tags</string>
+    <string name="label_private_options_disabled">Not applicable for private walks</string>
     <string name="find_match">Find Match ✦</string>
     <string name="scanning_format">Scanning %s…</string>
     <string name="match_name">Minh Anh</string>
@@ -163,7 +163,7 @@
 
     <!-- Phase 11: Notifications -->
     <string name="notification_screen_title">Notifications</string>
-    <string name="notification_empty">No notifications yet.\nYou\'re all caught up! 🎉</string>
+    <string name="notification_empty">No notifications yet.</string>
     <string name="notification_error">Could not load notifications.\nPlease try again.</string>
     <string name="notification_back_cd">Go back</string>
 

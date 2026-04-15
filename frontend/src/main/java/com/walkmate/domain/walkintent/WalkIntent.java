@@ -15,6 +15,8 @@ public class WalkIntent {
     private final List<String> tags; // empty list until API contract includes it
     private final String expiresAt;  // ISO-8601, nullable
     private final String description; // nullable
+    // Non-null when backend returned an inline match proposal (private invite or immediate public match).
+    private final String proposalId; // nullable
 
     public WalkIntent(String id, String hotspotId, String userId,
                       float timeStart, float timeEnd,
@@ -22,6 +24,16 @@ public class WalkIntent {
                       String status, String createdAt,
                       List<String> tags,
                       String expiresAt, String description) {
+        this(id, hotspotId, userId, timeStart, timeEnd, ageMin, ageMax,
+                status, createdAt, tags, expiresAt, description, null);
+    }
+
+    public WalkIntent(String id, String hotspotId, String userId,
+                      float timeStart, float timeEnd,
+                      int ageMin, int ageMax,
+                      String status, String createdAt,
+                      List<String> tags,
+                      String expiresAt, String description, String proposalId) {
         this.id = id;
         this.hotspotId = hotspotId;
         this.userId = userId;
@@ -34,6 +46,7 @@ public class WalkIntent {
         this.tags = tags;
         this.expiresAt = expiresAt;
         this.description = description;
+        this.proposalId = proposalId;
     }
 
     public String getId() { return id; }
@@ -48,6 +61,7 @@ public class WalkIntent {
     public List<String> getTags() { return tags; }
     public String getExpiresAt() { return expiresAt; }
     public String getDescription() { return description; }
+    public String getProposalId() { return proposalId; }
 
     public boolean isOpen() { return "OPEN".equals(status); }
     public boolean isMatching() { return "MATCHING".equals(status); }

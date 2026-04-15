@@ -112,6 +112,14 @@ public class CreateIntentViewModel extends ViewModel {
                 });
     }
 
+    /**
+     * Called by ExploreFragment after it has handled the submitted intent navigation.
+     * Clears the submittedIntent signal so it is not re-delivered on rotation/re-render.
+     */
+    public void consumeSubmission() {
+        post(CreateIntentUiState.initial());
+    }
+
     public void consumeError() {
         post(current().withError(null));
     }

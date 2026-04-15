@@ -83,7 +83,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/label_when_duration"
+                android:text="Duration"
                 android:textColor="@color/text_label"
                 android:textSize="13sp"
                 android:textStyle="bold"

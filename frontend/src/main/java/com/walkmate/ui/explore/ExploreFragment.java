@@ -48,6 +48,8 @@ import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
 import com.walkmate.ui.auth.AuthActivity;
 import com.walkmate.ui.main.MainActivity;
+import com.walkmate.ui.matches.MatchesViewModel;
+import com.walkmate.ui.matches.MatchesViewModelFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -96,6 +98,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     // Setup (Create Intent) form ──────────────────────────────────────────
     private TextView txtSetupHotspotName;
+    private LinearLayout rowDatePicker;
     private TextView txtSelectedDate;
     private String selectedDateIso = "";
     private ChipGroup chipGroupTags;
@@ -105,6 +108,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private TextView txtTimeEnd;
     private TextView txtAgeMin;
     private TextView txtAgeMax;
+    private LinearLayout layoutPublicOptions;
+    private TextView txtPrivateModeHint;
     private SwitchCompat switchPrivateWalk;
     private LinearLayout rowFriendPicker;
     private TextView txtSelectedFriend;
@@ -194,19 +199,22 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         popularSpotsSection = root.findViewById(R.id.popularSpotsSection);
         chipGroupHotspots = root.findViewById(R.id.chipGroupHotspots);
 
-        txtSetupHotspotName = root.findViewById(R.id.txtSetupHotspotName);
-        txtSelectedDate = root.findViewById(R.id.txtSelectedDate);
-        sliderTime = root.findViewById(R.id.sliderTime);
-        sliderAge = root.findViewById(R.id.sliderAge);
-        txtTimeStart = root.findViewById(R.id.txtTimeStart);
-        txtTimeEnd = root.findViewById(R.id.txtTimeEnd);
-        txtAgeMin = root.findViewById(R.id.txtAgeMin);
-        txtAgeMax = root.findViewById(R.id.txtAgeMax);
-        btnFindMatch         = root.findViewById(R.id.btnFindMatch);
-        chipGroupTags        = root.findViewById(R.id.chipGroupTags);
-        switchPrivateWalk    = root.findViewById(R.id.switchPrivateWalk);
-        rowFriendPicker      = root.findViewById(R.id.rowFriendPicker);
-        txtSelectedFriend    = root.findViewById(R.id.txtSelectedFriend);
+        txtSetupHotspotName   = root.findViewById(R.id.txtSetupHotspotName);
+        rowDatePicker         = root.findViewById(R.id.rowDatePicker);
+        txtSelectedDate       = root.findViewById(R.id.txtSelectedDate);
+        sliderTime            = root.findViewById(R.id.sliderTime);
+        sliderAge             = root.findViewById(R.id.sliderAge);
+        txtTimeStart          = root.findViewById(R.id.txtTimeStart);
+        txtTimeEnd            = root.findViewById(R.id.txtTimeEnd);
+        txtAgeMin             = root.findViewById(R.id.txtAgeMin);
+        txtAgeMax             = root.findViewById(R.id.txtAgeMax);
+        btnFindMatch          = root.findViewById(R.id.btnFindMatch);
+        chipGroupTags         = root.findViewById(R.id.chipGroupTags);
+        layoutPublicOptions   = root.findViewById(R.id.layoutPublicOptions);
+        txtPrivateModeHint    = root.findViewById(R.id.txtPrivateModeHint);
+        switchPrivateWalk     = root.findViewById(R.id.switchPrivateWalk);
+        rowFriendPicker       = root.findViewById(R.id.rowFriendPicker);
+        txtSelectedFriend     = root.findViewById(R.id.txtSelectedFriend);
         txtPrivateIntentError = root.findViewById(R.id.txtPrivateIntentError);
 
         txtScanningHotspotName = root.findViewById(R.id.txtScanningHotspotName);
@@ -458,22 +466,25 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         selectedDateIso = sdf.format(cal.getTime());
         if (txtSelectedDate != null) {
             txtSelectedDate.setText(selectedDateIso);
-            txtSelectedDate.setOnClickListener(v -> {
-                int year = cal.get(Calendar.YEAR);
-                int month = cal.get(Calendar.MONTH);
-                int day = cal.get(Calendar.DAY_OF_MONTH);
-
-                android.app.DatePickerDialog dialog = new android.app.DatePickerDialog(requireContext(), (view, y, m, d) -> {
-                    cal.set(y, m, d);
-                    selectedDateIso = sdf.format(cal.getTime());
-                    txtSelectedDate.setText(selectedDateIso);
-                }, year, month, day);
-                
-                // Set explicitly that the user cannot choose past dates.
-                dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-                dialog.show();
-            });
         }
+        android.view.View.OnClickListener datePickerListener = v -> {
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
+
+            android.app.DatePickerDialog dialog = new android.app.DatePickerDialog(
+                    requireContext(), (pickerView, y, m, d) -> {
+                cal.set(y, m, d);
+                selectedDateIso = sdf.format(cal.getTime());
+                if (txtSelectedDate != null) txtSelectedDate.setText(selectedDateIso);
+            }, year, month, day);
+
+            // User cannot choose past dates.
+            dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+            dialog.show();
+        };
+        if (rowDatePicker != null) rowDatePicker.setOnClickListener(datePickerListener);
+        if (txtSelectedDate != null) txtSelectedDate.setOnClickListener(datePickerListener);
 
         sliderTime.addOnChangeListener((slider, value, fromUser) -> {
             List<Float> v = slider.getValues();
@@ -728,19 +739,40 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             viewModel.consumeError();
         }
 
-        // Phase 4 — match found: navigate to MatchesFragment → Proposal tab.
+        // Match found inline (private invite or immediate public match) — Proposal tab.
         if (state.getMatchFoundProposalId() != null) {
-            Bundle args = new Bundle();
-            args.putInt("scrollToTab", com.walkmate.ui.matches.MatchesPagerAdapter.TAB_PROPOSAL);
-            Navigation.findNavController(requireView())
-                    .navigate(R.id.matchesFragment, args);
+            navigateToMatchesTab(com.walkmate.ui.matches.MatchesPagerAdapter.TAB_PROPOSAL);
             viewModel.consumeMatchFound();
+        }
+
+        // No immediate match — intent is OPEN, navigate to Finding tab.
+        if (state.isIntentOpenPending()) {
+            navigateToMatchesTab(com.walkmate.ui.matches.MatchesPagerAdapter.TAB_FINDING);
+            viewModel.consumeIntentOpen();
         }
 
         // Phase 4 — timeout: show "Still looking…" dialog (only once per timeout).
         if (state.isScanTimedOut()) {
             showScanTimeoutDialog();
         }
+    }
+
+    /**
+     * Refreshes all Matches data and navigates to the given sub-tab.
+     * Called every time ExploreFragment transitions the user to the Matches screen
+     * so the data is always fresh (Finding list, Proposals, Sessions).
+     */
+    private void navigateToMatchesTab(int tabIndex) {
+        // MatchesViewModel is Activity-scoped — force a fresh reload before switching tabs.
+        MatchesViewModel matchesViewModel = new ViewModelProvider(
+                requireActivity(),
+                new MatchesViewModelFactory(requireActivity().getApplication()))
+                .get(MatchesViewModel.class);
+        matchesViewModel.loadAll();
+
+        Bundle args = new Bundle();
+        args.putInt("scrollToTab", tabIndex);
+        Navigation.findNavController(requireView()).navigate(R.id.matchesFragment, args);
     }
 
     /** Shows the "Still looking…" bottom-sheet dialog on scan timeout. */
@@ -763,10 +795,14 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void renderCreateIntentState(CreateIntentUiState state) {
-        btnFindMatch.setEnabled(!state.isLoading());
+        // Loading: disable the submit button while the API call is in-flight.
+        if (btnFindMatch != null) btnFindMatch.setEnabled(!state.isLoading());
 
+        // Submission complete — hand off to ExploreViewModel for navigation decision,
+        // then immediately consume so this is not re-triggered on rotation.
         if (state.getSubmittedIntent() != null) {
             viewModel.onIntentCreated(state.getSubmittedIntent());
+            createIntentViewModel.consumeSubmission();
             return;
         }
 
@@ -774,10 +810,12 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (switchPrivateWalk != null && switchPrivateWalk.isChecked() != state.isPrivate()) {
             switchPrivateWalk.setOnCheckedChangeListener(null);
             switchPrivateWalk.setChecked(state.isPrivate());
-            switchPrivateWalk.setOnCheckedChangeListener((btn, isChecked) -> {
-                createIntentViewModel.togglePrivate();
-            });
+            switchPrivateWalk.setOnCheckedChangeListener((btn, isChecked) ->
+                    createIntentViewModel.togglePrivate());
         }
+
+        // Public-option fields (Age / Gender / Tags) — dim and block when private mode is ON.
+        applyPrivateModeUx(state.isPrivate());
 
         // Show/hide friend picker row based on private mode
         if (rowFriendPicker != null) {
@@ -813,6 +851,32 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         if (state.getError() != null) {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
             createIntentViewModel.consumeError();
+        }
+    }
+
+    /**
+     * Dims and blocks interaction on the public-only preference block (Age / Gender / Tags)
+     * when private walk mode is active. Restores them when private mode is off.
+     */
+    private void applyPrivateModeUx(boolean isPrivate) {
+        if (layoutPublicOptions != null) {
+            layoutPublicOptions.setAlpha(isPrivate ? 0.35f : 1.0f);
+            setViewGroupEnabled(layoutPublicOptions, !isPrivate);
+        }
+        if (txtPrivateModeHint != null) {
+            txtPrivateModeHint.setVisibility(isPrivate ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /** Recursively enables or disables all views within a ViewGroup. */
+    private void setViewGroupEnabled(android.view.ViewGroup group, boolean enabled) {
+        group.setEnabled(enabled);
+        for (int i = 0; i < group.getChildCount(); i++) {
+            android.view.View child = group.getChildAt(i);
+            child.setEnabled(enabled);
+            if (child instanceof android.view.ViewGroup) {
+                setViewGroupEnabled((android.view.ViewGroup) child, enabled);
+            }
         }
     }
 

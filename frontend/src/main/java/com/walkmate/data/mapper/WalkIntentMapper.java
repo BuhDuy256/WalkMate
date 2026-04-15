@@ -26,7 +26,8 @@ public class WalkIntentMapper {
                 response.getCreatedAt(),
                 Collections.emptyList(),  // tags not yet in API contract
                 response.getExpiresAt(),
-                null  // description not in API contract
+                null,  // description not in API contract
+                response.getProposalId() // non-null when inline match was found
         );
     }
 

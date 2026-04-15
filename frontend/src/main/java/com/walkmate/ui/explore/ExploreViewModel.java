@@ -193,15 +193,30 @@ public class ExploreViewModel extends ViewModel {
 
     /**
      * Create-intent form submitted successfully.
-     * Stores the intent ID for FCM correlation, starts the scanning timeout,
-     * then moves to SCANNING state.
+     *
+     * Decision tree (UC-15):
+     *  - proposalId non-null OR status=MATCHING: inline match (private invite or immediate
+     *    public match). Navigate directly to the Proposal tab.
+     *  - status=OPEN: no immediate match. Navigate to the Finding tab where the OPEN intent
+     *    appears in the wait-list. Backend continues async matching; FCM push will arrive later.
      */
     public void onIntentCreated(WalkIntent intent) {
-        setOpenIntentId(intent.getId()); // Bug 3: persisted in SavedStateHandle
         ExploreUiState s = current();
-        post(new ExploreUiState(false, s.getHotspots(), s.getSelectedHotspot(),
-                AppState.SCANNING, null));
-        startScanningTimeout();
+
+        // Inline match: backend already created a proposal — go straight to Proposals tab.
+        String proposalId = intent.getProposalId();
+        boolean inlineMatch = proposalId != null || "MATCHING".equals(intent.getStatus());
+        if (inlineMatch) {
+            String navId = proposalId != null ? proposalId : intent.getId();
+            setOpenIntentId(null);
+            post(s.withMatchFound(navId));
+            return;
+        }
+
+        // No immediate match (OPEN) — navigate to Finding tab so the user sees the OPEN intent.
+        // Backend continues async matching; any FCM match event is handled via AppEventBus.
+        setOpenIntentId(intent.getId()); // kept so FCM MATCH_FOUND can correlate later
+        post(s.withIntentOpen());
     }
 
     /**
@@ -247,17 +262,27 @@ public class ExploreViewModel extends ViewModel {
     }
 
     /**
-     * Called by ExploreFragment after it has handled the matchFoundProposalId
-     * navigation.
-     * Clears the signal so it is not re-delivered on rotation.
+     * Called by ExploreFragment after it has handled the matchFoundProposalId navigation.
+     * Resets to WELCOME so the form is not left in a stale state.
      */
     public void consumeMatchFound() {
         ExploreUiState s = current();
         if (s.getMatchFoundProposalId() == null)
             return;
-        // Bug 2: preserve filteredHotspots
-        post(new ExploreUiState(false, s.getHotspots(), s.getSelectedHotspot(),
-                AppState.SCANNING, null)
+        cancelScanningTimeout();
+        post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null)
+                .withFilteredHotspots(s.getFilteredHotspots()));
+    }
+
+    /**
+     * Called by ExploreFragment after it has handled the intentOpenPending navigation.
+     * Resets to WELCOME; the OPEN intent is now visible in the Finding tab.
+     */
+    public void consumeIntentOpen() {
+        ExploreUiState s = current();
+        if (!s.isIntentOpenPending())
+            return;
+        post(new ExploreUiState(false, s.getHotspots(), null, AppState.WELCOME, null)
                 .withFilteredHotspots(s.getFilteredHotspots()));
     }
 
