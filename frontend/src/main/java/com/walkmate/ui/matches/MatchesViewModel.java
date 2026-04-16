@@ -68,24 +68,6 @@ public class MatchesViewModel extends ViewModel {
 
     public void setLastViewedSubTab(int tabIndex) { lastViewedSubTab = tabIndex; }
 
-    // ── Force-to-Finding signal ───────────────────────────────────────────────
-
-    /**
-     * When set, MatchesFragment will show the Finding sub-tab regardless of the
-     * last viewed tab. Set by MainActivity when the user navigates to Matches from
-     * the Home tab. Consumed (and cleared) by MatchesFragment in onViewCreated().
-     */
-    private boolean forceToFinding = false;
-
-    public void requestForceToFinding() { forceToFinding = true; }
-
-    /** Returns whether a force-to-Finding is pending and clears the flag. */
-    public boolean consumeForceToFinding() {
-        boolean v = forceToFinding;
-        forceToFinding = false;
-        return v;
-    }
-
     /**
      * Handler bound to the main thread.
      * Used to dispatch rebuildUiStateWithEnrichedProposals() onto the main thread,

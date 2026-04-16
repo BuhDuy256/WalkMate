@@ -11,9 +11,9 @@ import java.util.UUID;
 public class WalkSession {
 
     /** Arrival window opens this many minutes before the scheduled start. */
-    public static final Duration ACTIVATION_WINDOW_BEFORE = Duration.ofMinutes(10);
+    public static final Duration ACTIVATION_WINDOW_BEFORE = Duration.ofMinutes(180);
     /** Arrival window closes this many minutes after the scheduled start. */
-    public static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(15);
+    public static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(180);
 
     private String        sessionId;
     private String        proposalId;
@@ -111,8 +111,8 @@ public class WalkSession {
      *
      * @param userId      the arriving user's ID
      * @param now         current timestamp
-     * @param windowOpen  earliest moment a user may activate (scheduledStart − 15 min)
-     * @param windowClose latest moment a user may activate  (scheduledStart + 30 min)
+    * @param windowOpen  earliest moment a user may activate (scheduledStart - 180 min)
+    * @param windowClose latest moment a user may activate  (scheduledStart + 180 min)
      */
     public void recordActivation(String userId, Instant now, Instant windowOpen, Instant windowClose) {
         if (this.status != SessionStatus.PENDING) {

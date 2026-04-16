@@ -80,11 +80,7 @@ public class MatchesFragment extends Fragment {
         // Track the active sub-tab so it can be restored on return visits.
         subTabPager.registerOnPageChangeCallback(pageChangeCallback);
 
-        // Consume the force-to-Finding signal BEFORE reading hasLoadedOnce().
-        // forceToFinding=true means MainActivity navigated here from Home → show Finding.
-        // forceToFinding=false means the user came from elsewhere → restore the last tab.
-        boolean forceToFinding = matchesViewModel.consumeForceToFinding();
-        boolean wasAlreadyLoaded = !forceToFinding && matchesViewModel.hasLoadedOnce();
+        boolean wasAlreadyLoaded = matchesViewModel.hasLoadedOnce();
 
         // Only load when there is no cached data yet.
         if (!matchesViewModel.hasLoadedOnce()) {
@@ -102,9 +98,7 @@ public class MatchesFragment extends Fragment {
         }
 
         // Phase 5b — restore last-viewed sub-tab on return visits.
-        // Skipped on fresh sessions (wasAlreadyLoaded=false) and when forced to Finding
-        // (forceToFinding=true), so the user always starts at Finding after a new login
-        // or when navigating from the Home tab.
+        // On the first visit (wasAlreadyLoaded=false), keep the default Finding tab.
         if (wasAlreadyLoaded) {
             int lastTab = matchesViewModel.getLastViewedSubTab();
             if (lastTab != MatchesPagerAdapter.TAB_FINDING) {

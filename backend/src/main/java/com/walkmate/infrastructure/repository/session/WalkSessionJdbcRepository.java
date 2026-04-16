@@ -142,11 +142,13 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     public List<WalkSession> findSessionsPastActivationWindow(Instant now) {
         // PENDING sessions where the full activation window has elapsed:
         //   scheduledStart + ACTIVATION_WINDOW_AFTER < now
+        long activationWindowAfterMinutes = WalkSession.ACTIVATION_WINDOW_AFTER.toMinutes();
         final String sql = selectAll() + """
                 WHERE status = 'PENDING'
-                  AND scheduled_start + INTERVAL '15 minutes' < :now
+                  AND scheduled_start + (:activationWindowAfterMinutes * INTERVAL '1 minute') < :now
                 """;
         return jdbcClient.sql(sql)
+                .param("activationWindowAfterMinutes", activationWindowAfterMinutes)
                 .param("now", Timestamp.from(now))
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();

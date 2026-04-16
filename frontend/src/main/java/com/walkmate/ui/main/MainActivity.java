@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
@@ -28,10 +27,7 @@ import com.walkmate.core.event.AppEventBus;
 import com.walkmate.core.event.AuthEvent;
 import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.ui.auth.AuthActivity;
-import androidx.lifecycle.ViewModelProvider;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
-import com.walkmate.ui.matches.MatchesViewModel;
-import com.walkmate.ui.matches.MatchesViewModelFactory;
 import com.walkmate.ui.social.friends.FriendsPagerAdapter;
 
 /**
@@ -115,16 +111,6 @@ public class MainActivity extends AppCompatActivity {
                                 .setLaunchSingleTop(true)
                                 .build());
                 return true;
-            }
-            // When the user taps the Matches tab while on the Home tab, force the
-            // Matches fragment to show the Finding sub-tab (not the last-viewed tab).
-            if (item.getItemId() == R.id.matchesFragment) {
-                NavDestination current = navController.getCurrentDestination();
-                if (current != null && current.getId() == R.id.homeFragment) {
-                    new ViewModelProvider(this, new MatchesViewModelFactory(getApplication()))
-                            .get(MatchesViewModel.class)
-                            .requestForceToFinding();
-                }
             }
             return NavigationUI.onNavDestinationSelected(item, navController);
         });

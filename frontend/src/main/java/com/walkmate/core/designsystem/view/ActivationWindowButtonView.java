@@ -14,14 +14,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.walkmate.R;
+import com.walkmate.domain.walksession.WalkSession;
 
 import java.time.Instant;
 
 /**
  * ActivationWindowButtonView — shows the "I'm Here!" button together with a
  * status label, enabling/disabling the button based on whether the current
- * time falls inside the activation window (scheduledStart − 10 min to
- * scheduledStart + 15 min, per spec invariant S-3).
+ * time falls inside the activation window defined by
+ * WalkSession.ACTIVATION_WINDOW_BEFORE_MINUTES and
+ * WalkSession.ACTIVATION_WINDOW_AFTER_MINUTES (per invariant S-3).
  *
  * <p>Re-evaluates every 60 seconds via a {@link Handler#postDelayed} loop so
  * the button enables itself automatically once the window opens without
@@ -44,9 +46,10 @@ import java.time.Instant;
  */
 public class ActivationWindowButtonView extends LinearLayout {
 
-    // TODO: Reset to 10 - 15 min before/after once testing is done. These huge values are just to test for fast
-    private static final long WINDOW_OPEN_OFFSET_MS  = 1000000000000000000L * 60_000L; // 10 min before
-    private static final long WINDOW_CLOSE_OFFSET_MS = 1500000000000000000L * 60_000L; // 15 min after
+    private static final long WINDOW_OPEN_OFFSET_MS  =
+        WalkSession.ACTIVATION_WINDOW_BEFORE_MINUTES * 60_000L;
+    private static final long WINDOW_CLOSE_OFFSET_MS =
+        WalkSession.ACTIVATION_WINDOW_AFTER_MINUTES * 60_000L;
     private static final long RE_EVAL_INTERVAL_MS    = 60_000L;        // re-check every 60 s
 
     private TextView       tvStatus;

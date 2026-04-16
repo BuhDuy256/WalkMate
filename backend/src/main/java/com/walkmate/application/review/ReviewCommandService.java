@@ -50,9 +50,10 @@ public class ReviewCommandService {
         WalkSession session = walkSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new DomainException(SessionErrorCode.SESSION_NOT_FOUND));
 
-        if (session.getStatus() != SessionStatus.COMPLETED) {
-            throw new DomainException(ReviewErrorCode.REVIEW_SESSION_NOT_COMPLETED);
-        }
+        // TODO: Commend just to test, Uncomment when review feature is ready
+        // if (session.getStatus() != SessionStatus.COMPLETED) {
+        //     throw new DomainException(ReviewErrorCode.REVIEW_SESSION_NOT_COMPLETED);
+        // }
 
         // 2. Verify the reviewer was a participant
         boolean isParticipant = reviewerId.equals(session.getUserIdA())

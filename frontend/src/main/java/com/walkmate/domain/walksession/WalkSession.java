@@ -8,9 +8,9 @@ public class WalkSession {
         PENDING, ACTIVE, CANCELLED, COMPLETED, NO_SHOW, ABORTED
     }
 
-    public static final int ACTIVATION_WINDOW_BEFORE_MINUTES = 10;
-    public static final int ACTIVATION_WINDOW_AFTER_MINUTES  = 15;
-    public static final int MINIMUM_WALK_DURATION_MINUTES    = 5;
+    public static final long ACTIVATION_WINDOW_BEFORE_MINUTES = 180L;
+    public static final long ACTIVATION_WINDOW_AFTER_MINUTES  = 180L;
+    public static final long MINIMUM_WALK_DURATION_MINUTES    = 5;
 
     private final String sessionId;
     private final String proposalId;
