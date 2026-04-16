@@ -182,10 +182,20 @@ public class WalkTrackerService extends Service {
     // ── Internal helpers ──────────────────────────────────────────────────────
 
     private void startLocationUpdates() {
+        // Build the location request. LocationRequest.Builder requires Play Services 21+
+        // (roughly Android 12+ on most devices). On Android 9 (Samsung J7 Pro) with
+        // older Play Services, the Builder API still works but may silently drop updates
+        // if the device's GPS accuracy is below MAX_ACCURACY_METRES. The real fix for
+        // that is in LocationFilterPolicy (threshold raised to 300 m). Here we keep the
+        // Builder path but wrap the registration in a broad catch so we can fall back
+        // gracefully rather than crashing or silently stopping tracking.
         LocationRequest locationRequest = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY, LOCATION_INTERVAL_MS)
                 .setMinUpdateIntervalMillis(LOCATION_FASTEST_MS)
                 .setMinUpdateDistanceMeters(LOCATION_MIN_DISTANCE_M)
+                // Do NOT call setWaitForAccurateLocation(true) — that can delay the
+                // first fix by 30+ seconds on Android 9 / weak GPS chips, causing
+                // the polyline to stay blank for a long time.
                 .build();
 
         locationCallback = new LocationCallback() {
@@ -198,6 +208,9 @@ public class WalkTrackerService extends Service {
                 // the work off to its own executor thread.
                 android.location.Location loc = result.getLastLocation();
                 if (loc != null) {
+                    Log.v(TAG, "GPS fix: lat=" + loc.getLatitude()
+                            + " lng=" + loc.getLongitude()
+                            + " accuracy=" + loc.getAccuracy() + "m");
                     sessionTrackingService.onLocationReceived(
                             loc.getLatitude(),
                             loc.getLongitude(),
@@ -211,11 +224,15 @@ public class WalkTrackerService extends Service {
                     locationRequest,
                     locationCallback,
                     Looper.getMainLooper());
-            Log.d(TAG, "Location updates requested");
+            Log.d(TAG, "Location updates requested (interval=" + LOCATION_INTERVAL_MS + "ms)");
         } catch (SecurityException e) {
             // ACCESS_FINE_LOCATION not granted — the Activity is responsible for
             // checking and requesting this permission before starting the service.
-            Log.e(TAG, "Location permission not granted: " + e.getMessage());
+            Log.e(TAG, "Location permission not granted — stopping service: " + e.getMessage());
+            stopSelf();
+        } catch (Exception e) {
+            // Catch-all for unexpected failures on older Play Services versions.
+            Log.e(TAG, "Failed to request location updates: " + e.getMessage(), e);
             stopSelf();
         }
     }

@@ -19,11 +19,30 @@ public class LocationFilterPolicy {
     /**
      * Ignore fixes with an accuracy radius larger than this value (metres)
      * once a baseline point has been established.
+     *
+     * <p>Raised from 150 m to 300 m to accommodate GPS hardware on lower-end
+     * devices (e.g. Samsung J7 Pro / Android 9) which routinely reports
+     * accuracy values of 200–400 m during the first several seconds of
+     * acquisition. A 150 m threshold caused every point to be silently
+     * rejected, leaving the polyline permanently empty on those devices.
+     * 300 m still rejects obvious jitter (>300 m) while allowing weaker
+     * chips to contribute valid points.
      */
-    private static final float MAX_ACCURACY_METRES = 150.0f;
+    private static final float MAX_ACCURACY_METRES = 300.0f;
 
     /** Ignore fixes that are closer than this distance to the last accepted point (metres). */
     private static final float MIN_DISTANCE_METRES = 1.0f;
+
+    /**
+     * How many consecutive points to accept regardless of accuracy after
+     * a session starts / resumes. This seeds the polyline immediately so
+     * the user sees a path drawing even on devices with very slow GPS
+     * cold-start (Android 9, weak GPS chips).
+     */
+    private static final int WARM_UP_POINTS = 3;
+
+    /** Counts accepted points; resets on {@link #reset()} (pause/resume). */
+    private int acceptedCount = 0;
 
     private Double lastLat;
     private Double lastLng;
@@ -39,8 +58,14 @@ public class LocationFilterPolicy {
      */
     public boolean shouldAccept(double lat, double lng, float accuracy) {
         if (lastLat == null) {
-            // Always accept the first fix so tracking starts immediately after Start.
+            // Always accept the very first fix after start / resume so that
+            // tracking begins immediately, regardless of initial accuracy.
             return true;
+        }
+        // Accept the first WARM_UP_POINTS to seed the polyline quickly on
+        // devices with slow GPS acquisition (Android 9, weak chips).
+        if (acceptedCount < WARM_UP_POINTS) {
+            return distanceMetres(lastLat, lastLng, lat, lng) >= MIN_DISTANCE_METRES;
         }
         if (accuracy > MAX_ACCURACY_METRES) {
             return false;
@@ -55,6 +80,7 @@ public class LocationFilterPolicy {
     public void accept(double lat, double lng) {
         lastLat = lat;
         lastLng = lng;
+        acceptedCount++;
     }
 
     /**
@@ -64,6 +90,7 @@ public class LocationFilterPolicy {
     public void reset() {
         lastLat = null;
         lastLng = null;
+        acceptedCount = 0;
     }
 
     // ── Haversine distance (pure Java, no Android imports) ────────────────────
