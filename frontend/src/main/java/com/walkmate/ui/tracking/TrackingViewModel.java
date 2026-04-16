@@ -222,18 +222,21 @@ public class TrackingViewModel extends AndroidViewModel {
 
     /**
      * Requests walk completion via the backend API.
-     * Enforces the 5-minute minimum gate — posts remaining seconds to UiState if too early.
-     * Transitions ACTIVE → FINISHING → FINISHED (or back to ACTIVE on error).
+     * Enforces the minimum gate (10 seconds) — posts remaining seconds to UiState if too early.
+     * Transitions ACTIVE/PAUSED → FINISHING → FINISHED (or back to previous state on error).
      */
     public void requestCompleteWalk() {
-        if (walkStateLiveData.getValue() != WalkState.ACTIVE) return;
+        WalkState currentState = valueOrDefault(walkStateLiveData, WalkState.READY);
+        if (currentState != WalkState.ACTIVE && currentState != WalkState.PAUSED) return;
+
         long elapsed = valueOrDefault(elapsedSecondsLiveData, 0L);
-        long minDurationSeconds = WalkSession.MINIMUM_WALK_DURATION_MINUTES * 60L;
+        long minDurationSeconds = WalkSession.MINIMUM_WALK_DURATION_SECONDS;
         if (elapsed < minDurationSeconds) {
             // Gate not yet reached — UiState already shows remaining time via rebuildUiState()
             rebuildUiState();
             return;
         }
+
         stopTimer();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHING);
@@ -245,9 +248,11 @@ public class TrackingViewModel extends AndroidViewModel {
 
             @Override
             public void onError(Exception e) {
-                walkStateLiveData.postValue(WalkState.ACTIVE);
-                startTimer();
-                startGpsService();
+                walkStateLiveData.postValue(currentState);
+                if (currentState == WalkState.ACTIVE) {
+                    startTimer();
+                    startGpsService();
+                }
                 completionErrorLiveData.postValue(e.getMessage());
             }
         });
@@ -317,8 +322,9 @@ public class TrackingViewModel extends AndroidViewModel {
         boolean cameraFollowing = (state == WalkState.ACTIVE);
 
         // Compute remaining seconds before complete is allowed (0 when permitted).
-        long minDuration = WalkSession.MINIMUM_WALK_DURATION_MINUTES * 60L;
-        long completeTooEarlySeconds = (state == WalkState.ACTIVE && elapsedSeconds < minDuration)
+        long minDuration = WalkSession.MINIMUM_WALK_DURATION_SECONDS;
+        boolean gatingState = (state == WalkState.ACTIVE || state == WalkState.PAUSED);
+        long completeTooEarlySeconds = (gatingState && elapsedSeconds < minDuration)
                 ? (minDuration - elapsedSeconds) : 0L;
 
         boolean isSaving = (state == WalkState.FINISHING);

@@ -10,7 +10,7 @@ public class WalkSession {
 
     public static final long ACTIVATION_WINDOW_BEFORE_MINUTES = 180L;
     public static final long ACTIVATION_WINDOW_AFTER_MINUTES  = 180L;
-    public static final long MINIMUM_WALK_DURATION_MINUTES    = 5;
+    public static final long MINIMUM_WALK_DURATION_SECONDS    = 10L;
 
     private final String sessionId;
     private final String proposalId;
@@ -93,6 +93,6 @@ public class WalkSession {
         if (startedAt == null) return false;
         long startMs = Instant.parse(startedAt).toEpochMilli();
         long elapsed = System.currentTimeMillis() - startMs;
-        return elapsed >= MINIMUM_WALK_DURATION_MINUTES * 60_000L;
+        return elapsed >= MINIMUM_WALK_DURATION_SECONDS * 1_000L;
     }
 }

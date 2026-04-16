@@ -398,7 +398,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_resume);
-                // Keep Complete and Abort accessible — user may need them without resuming.
+                // Complete eligibility is driven only by countdown (same as ACTIVE).
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(state.getCompleteTooEarlySeconds() == 0);
                 if (state.getCompleteTooEarlySeconds() > 0) {

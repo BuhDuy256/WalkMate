@@ -32,7 +32,7 @@ public class SessionCommandService {
     /**
      * Minimum walk duration before a user-initiated complete is allowed (S-7).
      */
-    private static final Duration MIN_WALK_DURATION = Duration.ofMinutes(5);
+    private static final Duration MIN_WALK_DURATION = Duration.ofSeconds(10);
 
     /**
      * After this duration past scheduledEnd the scheduler auto-completes the session (S-9).
@@ -114,7 +114,7 @@ public class SessionCommandService {
     // ── Complete (user-initiated) ─────────────────────────────────────────────
 
     /**
-     * Marks a session as COMPLETED. Enforces the 5-minute minimum walk guard (S-7).
+     * Marks a session as COMPLETED. Enforces the minimum walk guard (10 seconds, S-7).
      */
     @Transactional
     public WalkSession completeSession(String sessionId, String callerId) {
