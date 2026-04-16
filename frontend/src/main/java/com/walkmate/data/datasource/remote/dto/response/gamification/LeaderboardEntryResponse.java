@@ -21,4 +21,7 @@ public class LeaderboardEntryResponse {
 
     @SerializedName("trustScore")
     public int trustScore;
+
+    @SerializedName("fullName")
+    public String fullName;
 }

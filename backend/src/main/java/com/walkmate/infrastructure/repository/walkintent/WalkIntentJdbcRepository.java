@@ -8,12 +8,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,7 +31,9 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     intent_id, hotspot_id, user_id,
                     time_window_start, time_window_end,
                     matching_constraints,
-                    status, created_at, expires_at, version
+                    status, created_at, expires_at, version,
+                    is_private, invited_friend_id, description,
+                    excluded_user_ids
                 )
                 VALUES (
                     :intentId,
@@ -40,15 +45,23 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     CAST(:status AS intent_status),
                     :createdAt,
                     :expiresAt,
-                    :version
+                    :version,
+                    :isPrivate,
+                    :invitedFriendId,
+                    :description,
+                    CAST(:excludedUserIds AS uuid[])
                 )
                 ON CONFLICT (intent_id) DO UPDATE SET
-                    status              = CAST(EXCLUDED.status AS intent_status),
-                    time_window_start   = EXCLUDED.time_window_start,
-                    time_window_end     = EXCLUDED.time_window_end,
+                    status               = CAST(EXCLUDED.status AS intent_status),
+                    time_window_start    = EXCLUDED.time_window_start,
+                    time_window_end      = EXCLUDED.time_window_end,
                     matching_constraints = EXCLUDED.matching_constraints,
-                    expires_at          = EXCLUDED.expires_at,
-                    version             = EXCLUDED.version
+                    expires_at           = EXCLUDED.expires_at,
+                    version              = EXCLUDED.version,
+                    is_private           = EXCLUDED.is_private,
+                    invited_friend_id    = EXCLUDED.invited_friend_id,
+                    description          = EXCLUDED.description,
+                    excluded_user_ids    = EXCLUDED.excluded_user_ids
                 """;
 
         jdbcClient.sql(sql)
@@ -62,6 +75,11 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                 .param("createdAt",          Timestamp.from(intent.getCreatedAt()))
                 .param("expiresAt",          Timestamp.from(intent.getExpiresAt()))
                 .param("version",            intent.getVersion())
+                .param("isPrivate",          intent.isPrivate())
+                .param("invitedFriendId",    intent.getInvitedFriendId() != null
+                                                 ? UUID.fromString(intent.getInvitedFriendId()) : null)
+                .param("description",        intent.getDescription())
+                .param("excludedUserIds",    toUuidArrayLiteral(intent.getExcludedUserIds()))
                 .update();
 
         return intent;
@@ -81,7 +99,11 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description,
+                    excluded_user_ids
                 FROM walk_intent
                 WHERE intent_id = :intentId
                 """;
@@ -106,7 +128,11 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description,
+                    excluded_user_ids
                 FROM walk_intent
                 WHERE intent_id = :intentId
                 FOR UPDATE
@@ -139,10 +165,15 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description,
+                    excluded_user_ids
                 FROM walk_intent
                 WHERE user_id = :userId
-                  AND status = 'OPEN'
+                  AND status IN ('OPEN', 'MATCHING')
+                  AND is_private = false
                 ORDER BY created_at DESC
                 """;
 
@@ -157,7 +188,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
         final String sql = """
                 SELECT COUNT(*) FROM walk_intent
                 WHERE user_id = :userId
-                  AND status IN ('OPEN', 'CONSUMED')
+                  AND status IN ('OPEN', 'MATCHING')
                   AND time_window_start < :end
                   AND time_window_end   > :start
                 """;
@@ -185,6 +216,10 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
      * Age-preference overlap (mutual comfort range intersection):
      *   candidate.age_min <= ageMax
      *   candidate.age_max >= ageMin
+     *
+     * Exclude list (X-3, GAP-11):
+     *   :callerId != ALL(wi.excluded_user_ids)
+     *   Filters out intents whose owner has already excluded the caller.
      */
     @Override
     public List<WalkIntent> findOpenCandidates(
@@ -211,25 +246,100 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     status,
                     created_at,
                     expires_at,
-                    version
-                FROM walk_intent
-                WHERE hotspot_id          = :hotspotId
-                  AND status              = 'OPEN'
-                  AND user_id            != :excludeUserId
-                  AND (matching_constraints->>'age_min')::int <= :ageMax
-                  AND (matching_constraints->>'age_max')::int >= :ageMin
-                  AND time_window_start   < :boundaryEnd
-                  AND time_window_end     > :boundaryStart
-                ORDER BY created_at ASC
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description,
+                    excluded_user_ids
+                FROM walk_intent wi
+                WHERE wi.hotspot_id          = :hotspotId
+                  AND wi.status              = 'OPEN'
+                  AND wi.user_id            != :excludeUserId
+                  AND (wi.is_private = false OR wi.invited_friend_id = :callerId)
+                  AND :callerId != ALL(wi.excluded_user_ids)
+                  AND (wi.matching_constraints->>'age_min')::int <= :ageMax
+                  AND (wi.matching_constraints->>'age_max')::int >= :ageMin
+                  AND wi.time_window_start   < :boundaryEnd
+                  AND wi.time_window_end     > :boundaryStart
+                ORDER BY wi.created_at ASC
                 """;
 
         return jdbcClient.sql(sql)
                 .param("hotspotId",     UUID.fromString(hotspotId))
                 .param("excludeUserId", UUID.fromString(excludeUserId))
+                .param("callerId",      UUID.fromString(excludeUserId))
                 .param("ageMin",        ageMin)
                 .param("ageMax",        ageMax)
                 .param("boundaryEnd",   Timestamp.from(boundaryEnd))
                 .param("boundaryStart", Timestamp.from(boundaryStart))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public List<WalkIntent> findIntentsExpiringSoon(Instant now, Duration buffer) {
+        // Intents whose start time is within the buffer window AND whose window
+        // has not yet ended. These are about to become stale (GAP-14 / Note #2).
+        Instant cutoff = now.plus(buffer);
+        final String sql = """
+                SELECT
+                    intent_id::text,
+                    hotspot_id::text,
+                    user_id::text,
+                    time_window_start,
+                    time_window_end,
+                    (matching_constraints->>'age_min')::int AS age_min,
+                    (matching_constraints->>'age_max')::int AS age_max,
+                    status,
+                    created_at,
+                    expires_at,
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description,
+                    excluded_user_ids
+                FROM walk_intent
+                WHERE time_window_start <= :cutoff
+                  AND time_window_end   > :now
+                  AND status IN ('OPEN', 'MATCHING')
+                ORDER BY time_window_start ASC
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("cutoff", Timestamp.from(cutoff))
+                .param("now",    Timestamp.from(now))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public List<WalkIntent> findOverdueOpenIntents(Instant now) {
+        // Intents whose entire time window has already passed (GAP-13).
+        final String sql = """
+                SELECT
+                    intent_id::text,
+                    hotspot_id::text,
+                    user_id::text,
+                    time_window_start,
+                    time_window_end,
+                    (matching_constraints->>'age_min')::int AS age_min,
+                    (matching_constraints->>'age_max')::int AS age_max,
+                    status,
+                    created_at,
+                    expires_at,
+                    version,
+                    is_private,
+                    invited_friend_id::text,
+                    description,
+                    excluded_user_ids
+                FROM walk_intent
+                WHERE time_window_end <= :now
+                  AND status IN ('OPEN', 'MATCHING')
+                ORDER BY time_window_end ASC
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("now", Timestamp.from(now))
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();
     }
@@ -247,8 +357,37 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                 IntentStatus.valueOf(rs.getString("status")),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("expires_at").toInstant(),
-                rs.getLong("version")
+                rs.getLong("version"),
+                rs.getBoolean("is_private"),
+                rs.getString("invited_friend_id"),
+                rs.getString("description"),
+                readUuidArray(rs, "excluded_user_ids")
         );
+    }
+
+    /**
+     * Reads a PostgreSQL uuid[] column as a List<UUID>.
+     */
+    private static List<UUID> readUuidArray(java.sql.ResultSet rs, String column)
+            throws java.sql.SQLException {
+        Array sqlArray = rs.getArray(column);
+        List<UUID> result = new ArrayList<>();
+        if (sqlArray != null) {
+            Object[] arr = (Object[]) sqlArray.getArray();
+            for (Object o : arr) {
+                if (o != null) result.add(UUID.fromString(o.toString()));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Converts a List<UUID> to a PostgreSQL array literal string, e.g. {@code {uuid1,uuid2}}.
+     * Used with {@code CAST(:param AS uuid[])} in SQL.
+     */
+    private static String toUuidArrayLiteral(List<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) return "{}";
+        return "{" + uuids.stream().map(UUID::toString).collect(Collectors.joining(",")) + "}";
     }
 
     /**

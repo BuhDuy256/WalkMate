@@ -51,4 +51,8 @@ public interface TrackingRepository {
      * Must be called off the main thread.
      */
     void markPointsSynced(List<Long> ids, DomainCallback<Void> callback);
+
+    // Triggered by the 30-second periodic scheduler. Syncs all unsynced points
+    // regardless of batch size threshold.
+    void triggerPeriodicSync(String sessionId);
 }

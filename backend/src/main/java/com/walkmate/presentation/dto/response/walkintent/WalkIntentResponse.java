@@ -29,6 +29,11 @@ public record WalkIntentResponse(
         String createdAt,
 
         @JsonProperty("expires_at")
-        String expiresAt
+        String expiresAt,
+
+        @JsonProperty("is_private")
+        boolean isPrivate,
+
+        String description
 ) {
 }

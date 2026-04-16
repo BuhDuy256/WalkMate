@@ -1,6 +1,7 @@
 package com.walkmate.presentation.dto.request.walkintent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -40,6 +41,18 @@ public record CreateWalkIntentRequest(
 
         @Min(value = 0, message = "Age max must be >= 0")
         @JsonProperty("age_max")
-        int ageMax
+        int ageMax,
+
+        @JsonProperty("is_private")
+        boolean isPrivate,
+
+        @JsonProperty("invited_friend_id")
+        String invitedFriendId,
+
+        String description
 ) {
+    @AssertTrue(message = "invited_friend_id is required when is_private is true")
+    public boolean isInvitedFriendIdValidWhenPrivate() {
+        return !isPrivate || (invitedFriendId != null && !invitedFriendId.isBlank());
+    }
 }

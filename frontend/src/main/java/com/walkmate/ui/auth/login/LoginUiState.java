@@ -4,15 +4,17 @@ public class LoginUiState {
     private final boolean isLoading;
     private final String error;
     private final boolean isSuccess;
+    private final boolean forcedLogout;
 
-    public LoginUiState(boolean isLoading, String error, boolean isSuccess) {
+    public LoginUiState(boolean isLoading, String error, boolean isSuccess, boolean forcedLogout) {
         this.isLoading = isLoading;
         this.error = error;
         this.isSuccess = isSuccess;
+        this.forcedLogout = forcedLogout;
     }
 
     public static LoginUiState initial() {
-        return new LoginUiState(false, null, false);
+        return new LoginUiState(false, null, false, false);
     }
 
     public boolean isLoading() {
@@ -25,5 +27,9 @@ public class LoginUiState {
 
     public boolean isSuccess() {
         return isSuccess;
+    }
+
+    public boolean isForcedLogout() {
+        return forcedLogout;
     }
 }

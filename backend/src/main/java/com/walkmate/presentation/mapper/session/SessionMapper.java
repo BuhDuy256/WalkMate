@@ -9,7 +9,7 @@ import java.time.Instant;
 @Component
 public class SessionMapper {
 
-    public WalkSessionResponse toResponse(WalkSession session) {
+    public WalkSessionResponse toResponse(WalkSession session, boolean isReviewed) {
         return new WalkSessionResponse(
                 session.getSessionId(),
                 session.getProposalId(),
@@ -26,7 +26,8 @@ public class SessionMapper {
                 fmt(session.getUserAActivatedAt()),
                 fmt(session.getUserBActivatedAt()),
                 session.getCancellationReason(),
-                session.getAbortReason() != null ? session.getAbortReason().name() : null
+                session.getAbortReason() != null ? session.getAbortReason().name() : null,
+                isReviewed
         );
     }
 

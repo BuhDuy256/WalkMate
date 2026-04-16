@@ -28,7 +28,13 @@ public class WalkProposalMapper {
                 Collections.emptyList(),        // tags not yet in API
                 toHourFloat(response.getProposedTimeStart()),
                 toHourFloat(response.getProposedTimeEnd()),
-                toStatus(response.getStatus())
+                toStatus(response.getStatus()),
+                response.getExpiresAt(),
+                response.getProposedLat(),
+                response.getProposedLng(),
+                response.getMyAcceptanceStatus(),
+                response.getSessionId(),
+                response.isPrivateInvite()
         );
     }
 
@@ -48,12 +54,20 @@ public class WalkProposalMapper {
         return new WalkSession(
                 response.getSessionId(),
                 response.getProposalId(),
-                response.getMatchedUserId(),   // name not yet in API — use userId as placeholder
-                null,                           // avatar not yet in API
+                response.getMatchedUserId(),    // partnerId
+                response.getMatchedUserId(),    // fallback: use partnerId until the API returns a name
+                null,                           // partnerAvatar not yet in API
                 response.getProposedLat(),
                 response.getProposedLng(),
                 response.getProposedTimeStart(),
-                WalkSession.Status.PENDING
+                WalkSession.Status.PENDING,
+                null,   // scheduledEnd
+                null,   // startedAt
+                null,   // endedAt
+                null,   // userAActivatedAt
+                null,   // userBActivatedAt
+                false,  // isReviewed
+                false   // isCallerUserA — unknown at proposal stage; corrected on session fetch
         );
     }
 

@@ -4,40 +4,62 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.gamification.UserStats;
+import com.walkmate.domain.notification.Notification;
+import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.user.UserProfile;
+import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * ViewModel for the Home Dashboard.
  *
- * Owns: greeting/location, streak state, upcoming session snapshot,
- * quick-invite candidate list, and weekly stats.
+ * Owns: greeting/location, upcoming session snapshot, and lifetime stats.
  *
  * Data flow:
- *   loadDashboard() → posts loading state → fetches sessions via repo
- *   → assembles HomeDashboardUiState → postValue() → HomeFragment renders.
+ *   loadDashboard() → posts loading state → fires 2 parallel calls
+ *   (profile → stats chained, sessions)
+ *   → when both complete → loads notifications → publishes state.
+ *
+ * Location name is resolved separately via onLocationResolved() — the Fragment
+ * holds the Android location client and calls this when a fix is available.
  *
  * The ViewModel holds zero Context references and never touches Views.
  */
 public class HomeViewModel extends ViewModel {
 
     private final MutableLiveData<HomeDashboardUiState> uiState = new MutableLiveData<>();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private final WalkSessionRepository sessionRepo;
-    private final UserRepository userRepo;
+    private final WalkSessionRepository  sessionRepo;
+    private final UserRepository         userRepo;
+    private final UserProfileRepository  profileRepo;
+    private final NotificationRepository notificationRepo;
+    private final GamificationRepository gamificationRepo;
 
-    public HomeViewModel(WalkSessionRepository sessionRepo, UserRepository userRepo) {
-        this.sessionRepo = sessionRepo;
-        this.userRepo = userRepo;
+    // ── Cached dashboard data ─────────────────────────────────────────────────
+
+    private String cachedGreetingName = null;
+    private String cachedLocationName = "Your area"; // updated via onLocationResolved()
+    private double cachedDistanceKm   = 0.0;
+    private int    cachedSessionCount = 0;
+
+    public HomeViewModel(WalkSessionRepository sessionRepo,
+                         UserRepository userRepo,
+                         UserProfileRepository profileRepo,
+                         NotificationRepository notificationRepo,
+                         GamificationRepository gamificationRepo) {
+        this.sessionRepo      = sessionRepo;
+        this.userRepo         = userRepo;
+        this.profileRepo      = profileRepo;
+        this.notificationRepo = notificationRepo;
+        this.gamificationRepo = gamificationRepo;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -48,102 +70,175 @@ public class HomeViewModel extends ViewModel {
 
     /**
      * Triggers a full dashboard data load.
-     * Safe to call multiple times (e.g., on resume). Each call posts a fresh
-     * loading state before fetching, preventing stale data from showing.
+     * Call only when {@link #getUiState()} has no value yet (first load).
+     *
+     * Two logical units run in parallel:
+     *   1. Profile → then stats (chained so stats has a real userId)
+     *   2. Active sessions
+     *
+     * Notifications are loaded after both complete.
      */
     public void loadDashboard() {
         uiState.postValue(HomeDashboardUiState.loading());
 
-        // Fetch active sessions — the repo's callback fires on its own background
-        // thread, so postValue() is safe here without wrapping in the executor.
+        final List<WalkSession>[] sessionsHolder = new List[]{null};
+
+        final AtomicInteger doneCount = new AtomicInteger(0);
+        Runnable checkAllDone = () -> {
+            if (doneCount.incrementAndGet() == 2) {
+                loadNotificationsAndPublish(buildSessionSnapshot(sessionsHolder[0]));
+            }
+        };
+
+        // ── 1. Profile → chain into getStats ──────────────────────────────────
+        profileRepo.getMyProfile(new DomainCallback<UserProfile>() {
+            @Override
+            public void onSuccess(UserProfile profile) {
+                cachedGreetingName = profile.getFullName();
+
+                gamificationRepo.getStats(profile.getUserId(), new DomainCallback<UserStats>() {
+                    @Override
+                    public void onSuccess(UserStats stats) {
+                        cachedDistanceKm   = stats.getTotalDistanceKm();
+                        cachedSessionCount = stats.getCompletedSessions();
+                        checkAllDone.run();
+                    }
+                    @Override
+                    public void onError(Exception e) {
+                        checkAllDone.run();
+                    }
+                });
+            }
+            @Override
+            public void onError(Exception e) {
+                checkAllDone.run();
+            }
+        });
+
+        // ── 2. Active sessions ────────────────────────────────────────────────
         sessionRepo.getActiveSessions(new DomainCallback<List<WalkSession>>() {
             @Override
             public void onSuccess(List<WalkSession> sessions) {
-                HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot =
-                        buildSessionSnapshot(sessions);
-                uiState.postValue(buildReadyState(sessionSnapshot));
+                sessionsHolder[0] = sessions;
+                checkAllDone.run();
             }
-
             @Override
-            public void onError(Exception error) {
-                uiState.postValue(new HomeDashboardUiState(
-                        false, null, null, false,
-                        0, 7, 0, null, null,
-                        0.0, 0, error.getMessage()));
+            public void onError(Exception e) {
+                checkAllDone.run();
             }
         });
     }
 
     /**
-     * Called when the user taps the "Find a WalkMate" CTA.
-     * Navigation is driven by the Fragment observing this signal — the ViewModel
-     * does not hold an Activity reference.
+     * Called by HomeFragment when it has resolved the device location to a city name.
+     * Re-publishes the current ready state with the updated location, or caches it
+     * for inclusion in the next publish if the dashboard hasn't loaded yet.
      */
-    public void onFindWalkMateClicked() {
-        // Phase D: emit a navigation signal (e.g. SingleLiveEvent<Void>) to
-        // the Fragment so it can navigate to the Explore screen.
-        // For Phase B this is a no-op; the Fragment handles it directly.
+    public void onLocationResolved(String locationName) {
+        cachedLocationName = locationName;
+        HomeDashboardUiState current = uiState.getValue();
+        if (current != null && !current.isLoading()) {
+            uiState.postValue(new HomeDashboardUiState(
+                    false,
+                    current.getGreetingName(),
+                    cachedLocationName,
+                    current.hasUnreadNotification(),
+                    current.getUpcomingSession(),
+                    current.getTotalDistanceKm(),
+                    current.getCompletedSessions(),
+                    null));
+        }
     }
 
-    @Override
-    protected void onCleared() {
-        executor.shutdown();
+    /**
+     * Lightweight refresh of just the notification badge.
+     * Called from HomeFragment.onResume() every time the user returns to the
+     * Home tab so that reading notifications in NotificationFragment is reflected
+     * immediately without a full dashboard reload.
+     * No-op while the dashboard is still loading or hasn't loaded yet.
+     */
+    public void refreshNotificationBadge() {
+        HomeDashboardUiState current = uiState.getValue();
+        if (current == null || current.isLoading()) return;
+
+        notificationRepo.getNotifications(new DomainCallback<List<Notification>>() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                boolean hasUnread = false;
+                if (notifications != null) {
+                    for (Notification n : notifications) {
+                        if (n != null && !n.isRead()) { hasUnread = true; break; }
+                    }
+                }
+                HomeDashboardUiState latest = uiState.getValue();
+                if (latest == null || latest.isLoading()) return;
+                uiState.postValue(new HomeDashboardUiState(
+                        false,
+                        latest.getGreetingName(),
+                        latest.getLocationName(),
+                        hasUnread,
+                        latest.getUpcomingSession(),
+                        latest.getTotalDistanceKm(),
+                        latest.getCompletedSessions(),
+                        null));
+            }
+            @Override
+            public void onError(Exception e) {
+                // Non-critical — badge stays as-is until next load
+            }
+        });
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    private void loadNotificationsAndPublish(
+            HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot) {
+        notificationRepo.getNotifications(new DomainCallback<List<Notification>>() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                boolean hasUnread = false;
+                if (notifications != null) {
+                    for (Notification n : notifications) {
+                        if (n != null && !n.isRead()) { hasUnread = true; break; }
+                    }
+                }
+                uiState.postValue(buildReadyState(sessionSnapshot, hasUnread));
+            }
+            @Override
+            public void onError(Exception e) {
+                uiState.postValue(buildReadyState(sessionSnapshot, false));
+            }
+        });
+    }
 
     private HomeDashboardUiState.UpcomingSessionSnapshot buildSessionSnapshot(
             List<WalkSession> sessions) {
         if (sessions == null || sessions.isEmpty()) return null;
         WalkSession session = sessions.get(0);
-        String timeAndPlace = formatScheduledTime(session.getScheduledTime());
         return new HomeDashboardUiState.UpcomingSessionSnapshot(
                 session.getSessionId(),
                 session.getPartnerName(),
                 session.getPartnerAvatar(),
-                timeAndPlace,
+                formatScheduledTime(session.getScheduledTime()),
                 "Confirmed");
     }
 
-    /**
-     * Builds the full ready state with mock data for fields that don't yet
-     * have a backend endpoint (profile info, hotspot count, stats, invite list).
-     * Replace these with real repo calls as APIs become available.
-     */
     private HomeDashboardUiState buildReadyState(
-            HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot) {
+            HomeDashboardUiState.UpcomingSessionSnapshot sessionSnapshot,
+            boolean hasUnreadNotification) {
         return new HomeDashboardUiState(
                 false,
-                "Alex",                 // greetingName — replace with userRepo.getProfile()
-                "Ho Chi Minh City",     // locationName — replace with location service
-                true,                   // hasUnreadNotification
-                5,                      // streakDays
-                7,                      // streakGoal
-                5,                      // nearbyHotspotCount — replace with hotspot repo
+                cachedGreetingName != null ? cachedGreetingName : "WalkMate User",
+                cachedLocationName,
+                hasUnreadNotification,
                 sessionSnapshot,
-                buildMockInviteList(),
-                12.5,                   // weeklyDistanceKm — replace with stats repo
-                3,                      // weeklySessionCount
+                cachedDistanceKm,
+                cachedSessionCount,
                 null);
     }
 
-    private List<HomeDashboardUiState.QuickInviteUser> buildMockInviteList() {
-        return Arrays.asList(
-                new HomeDashboardUiState.QuickInviteUser("u1", "Minh", null),
-                new HomeDashboardUiState.QuickInviteUser("u2", "Sarah", null),
-                new HomeDashboardUiState.QuickInviteUser("u3", "Linh", null),
-                new HomeDashboardUiState.QuickInviteUser("u4", "Tom", null),
-                new HomeDashboardUiState.QuickInviteUser("u5", "Hà", null)
-        );
-    }
-
-    /**
-     * Extracts the HH:mm portion from an ISO-8601 datetime string.
-     * Falls back to the raw string if parsing fails.
-     */
     private String formatScheduledTime(String iso8601) {
         if (iso8601 == null || iso8601.length() < 16) return iso8601;
-        // "2026-03-29T14:00:00Z" → "14:00"
         try {
             return iso8601.substring(11, 16);
         } catch (Exception e) {

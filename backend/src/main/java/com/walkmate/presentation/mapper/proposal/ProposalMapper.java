@@ -19,10 +19,12 @@ public class ProposalMapper {
     public WalkProposalResponse toResponse(MatchProposal proposal, String callerId, String sessionId) {
         boolean callerIsA = callerId.equals(proposal.getUserIdA());
 
-        String callersIntentId = callerIsA ? proposal.getIntentIdA() : proposal.getIntentIdB();
-        String matchedIntentId = callerIsA ? proposal.getIntentIdB() : proposal.getIntentIdA();
-        String callersUserId   = callerIsA ? proposal.getUserIdA()   : proposal.getUserIdB();
-        String matchedUserId   = callerIsA ? proposal.getUserIdB()   : proposal.getUserIdA();
+        String callersIntentId   = callerIsA ? proposal.getIntentIdA() : proposal.getIntentIdB();
+        String matchedIntentId   = callerIsA ? proposal.getIntentIdB() : proposal.getIntentIdA();
+        String callersUserId     = callerIsA ? proposal.getUserIdA()   : proposal.getUserIdB();
+        String matchedUserId     = callerIsA ? proposal.getUserIdB()   : proposal.getUserIdA();
+        boolean callerHasAccepted = callerIsA ? proposal.isAcceptedByA() : proposal.isAcceptedByB();
+        String myAcceptanceStatus = callerHasAccepted ? "ACCEPTED" : "PENDING";
 
         return new WalkProposalResponse(
                 proposal.getProposalId(),
@@ -36,7 +38,8 @@ public class ProposalMapper {
                 proposal.getProposedLocationLng(),
                 proposal.getStatus().name(),
                 proposal.getExpiresAt().toString(),
-                sessionId
+                sessionId,
+                myAcceptanceStatus
         );
     }
 }

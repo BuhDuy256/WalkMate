@@ -4,29 +4,30 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.notification.NotificationRepository;
+import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
-/**
- * Manual DI factory for HomeViewModel.
- *
- * Instantiated in HomeFragment.onViewCreated() using singletons from
- * WalkMateApplication, keeping the ViewModel free of Context dependencies.
- *
- * Usage:
- *   WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
- *   HomeViewModelFactory factory = new HomeViewModelFactory(
- *       app.getWalkSessionRepository(), app.getUserRepository());
- *   viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
- */
 public class HomeViewModelFactory implements ViewModelProvider.Factory {
 
-    private final WalkSessionRepository sessionRepo;
-    private final UserRepository userRepo;
+    private final WalkSessionRepository  sessionRepo;
+    private final UserRepository         userRepo;
+    private final UserProfileRepository  profileRepo;
+    private final NotificationRepository notificationRepo;
+    private final GamificationRepository gamificationRepo;
 
-    public HomeViewModelFactory(WalkSessionRepository sessionRepo, UserRepository userRepo) {
-        this.sessionRepo = sessionRepo;
-        this.userRepo = userRepo;
+    public HomeViewModelFactory(WalkSessionRepository sessionRepo,
+                                UserRepository userRepo,
+                                UserProfileRepository profileRepo,
+                                NotificationRepository notificationRepo,
+                                GamificationRepository gamificationRepo) {
+        this.sessionRepo      = sessionRepo;
+        this.userRepo         = userRepo;
+        this.profileRepo      = profileRepo;
+        this.notificationRepo = notificationRepo;
+        this.gamificationRepo = gamificationRepo;
     }
 
     @NonNull
@@ -34,7 +35,8 @@ public class HomeViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(HomeViewModel.class)) {
-            return (T) new HomeViewModel(sessionRepo, userRepo);
+            return (T) new HomeViewModel(sessionRepo, userRepo, profileRepo,
+                    notificationRepo, gamificationRepo);
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

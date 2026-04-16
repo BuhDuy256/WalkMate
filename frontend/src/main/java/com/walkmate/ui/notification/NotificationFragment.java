@@ -11,12 +11,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavOptions;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationRepository;
+import com.walkmate.ui.matches.MatchesPagerAdapter;
+import com.walkmate.ui.social.friends.FriendsPagerAdapter;
 
 /**
  * Notification Center screen.
@@ -57,10 +62,20 @@ public class NotificationFragment extends Fragment {
         recyclerView  = view.findViewById(R.id.rv_notifications);
         txtEmpty      = view.findViewById(R.id.txt_notifications_empty);
         txtError      = view.findViewById(R.id.txt_notifications_error);
+        View btnBack  = view.findViewById(R.id.btnBack);
+
+        btnBack.setOnClickListener(v -> {
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        });
 
         adapter = new NotificationAdapter();
-        adapter.setOnReadListener(notification ->
-                viewModel.markRead(notification.getNotificationId()));
+        adapter.setOnReadListener(notification -> {
+            // Only call markRead for unread notifications to avoid redundant API calls.
+            if (!notification.isRead()) {
+                viewModel.markRead(notification.getNotificationId());
+            }
+            navigateForNotification(notification);
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
@@ -85,6 +100,60 @@ public class NotificationFragment extends Fragment {
     public void onPause() {
         super.onPause();
         viewModel.stopPolling();
+    }
+
+    // ── Notification tap navigation ───────────────────────────────────────────
+
+    /**
+     * Navigates to the appropriate destination after the user taps a notification.
+     * Pops {@code notificationFragment} off the back stack so pressing Back from the
+     * destination returns to the screen the user was on before opening Notifications.
+     */
+    private void navigateForNotification(Notification notification) {
+        NavOptions popSelf = new NavOptions.Builder()
+                .setPopUpTo(R.id.notificationFragment, true)
+                .build();
+
+        Bundle args = new Bundle();
+
+        switch (notification.getType()) {
+            case PROPOSAL_RECEIVED:
+            case INVITE_SENT:
+            case PROPOSAL_ACCEPTED:
+                args.putInt("scrollToTab", MatchesPagerAdapter.TAB_PROPOSAL);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.matchesFragment, args, popSelf);
+                break;
+
+            case SESSION_CONFIRMED:
+            case SESSION_ACTIVE:
+                args.putInt("scrollToTab", MatchesPagerAdapter.TAB_SESSION);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.matchesFragment, args, popSelf);
+                break;
+
+            case FRIEND_REQUEST_RECEIVED:
+                args.putInt("scrollToTab", FriendsPagerAdapter.TAB_INCOMING);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.friendsFragment, args, popSelf);
+                break;
+
+            case FRIEND_REQUEST_ACCEPTED:
+                args.putInt("scrollToTab", FriendsPagerAdapter.TAB_FRIENDS);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.friendsFragment, args, popSelf);
+                break;
+
+            case FRIEND_REQUEST_DECLINED:
+                args.putInt("scrollToTab", FriendsPagerAdapter.TAB_OUTGOING);
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.friendsFragment, args, popSelf);
+                break;
+
+            default:
+                // REVIEW_REQUESTED and unknown types: no navigation — just mark read.
+                break;
+        }
     }
 
     // ── Rendering ─────────────────────────────────────────────────────────────

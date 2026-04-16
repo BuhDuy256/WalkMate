@@ -8,10 +8,18 @@ import com.walkmate.data.datasource.remote.api.SessionApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.walksession.AbortWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
+import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.session.SessionRouteResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
+import com.walkmate.data.mapper.SessionRouteMapper;
+import com.walkmate.data.mapper.SessionSummaryMapper;
 import com.walkmate.data.mapper.WalkSessionMapper;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.walksession.SessionRoute;
+import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
@@ -33,7 +41,7 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
 
     public WalkSessionRepositoryImpl(Context context) {
         this.sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(SessionApiService.class);
     }
 
@@ -52,7 +60,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     callback.onSuccess(WalkSessionMapper.toDomainList(
                             data != null ? data : Collections.emptyList(), callerId));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSIONS_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSIONS_FETCH_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getActiveSessions network error", e);
@@ -73,7 +86,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                     String callerId = sessionManager.getUserId();
                     callback.onSuccess(WalkSessionMapper.toDomain(data, callerId));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSION_ACTIVATE_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ACTIVATE_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "activateSession network error", e);
@@ -92,7 +110,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSION_CANCEL_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_CANCEL_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "cancelSession network error", e);
@@ -111,7 +134,12 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "SESSION_ABORT_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ABORT_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "abortSession network error", e);
@@ -120,12 +148,108 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    @Override
+    public void completeSession(String sessionId, DomainCallback<WalkSession> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<WalkSessionResponse>> resp =
+                        apiService.completeSession(sessionId).execute();
 
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    WalkSessionResponse data = resp.body().getData();
+                    String callerId = sessionManager.getUserId();
+                    callback.onSuccess(WalkSessionMapper.toDomain(data, callerId));
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_COMPLETE_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "completeSession network error", e);
+                callback.onError(e);
+            }
+        });
     }
+
+    @Override
+    public void getSessionHistory(DomainCallback<List<SessionSummary>> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<List<WalkSessionResponse>>> resp =
+                        apiService.getSessionHistory().execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    List<WalkSessionResponse> data = resp.body().getData();
+                    String callerId = sessionManager.getUserId();
+                    callback.onSuccess(SessionSummaryMapper.toDomainList(
+                            data != null ? data : Collections.emptyList(), callerId));
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_HISTORY_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getSessionHistory network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void getSessionRoute(String sessionId, DomainCallback<SessionRoute> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<SessionRouteResponse>> resp =
+                        apiService.getSessionRoute(sessionId).execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(SessionRouteMapper.toDomain(resp.body().getData()));
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ROUTE_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getSessionRoute network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void reportSession(String sessionId, String reportedUserId,
+                              String reason, String evidenceUrl,
+                              DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp =
+                        apiService.reportSession(sessionId,
+                                new ReportSessionRequest(reportedUserId, reason, evidenceUrl)).execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_REPORT_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "reportSession network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
 }

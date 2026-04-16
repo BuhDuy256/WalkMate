@@ -17,7 +17,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Row 1: Hotspot name + Status badge -->
+        <!-- Row 1: Hotspot name + lock icon + Status badge -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,6 +34,15 @@
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end" />
+
+            <ImageView
+                android:id="@+id/imgLock"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="6dp"
+                android:src="@drawable/ic_lock"
+                android:visibility="gone"
+                android:contentDescription="" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipStatus"
@@ -62,6 +71,17 @@
             android:layout_marginTop="6dp"
             android:textColor="@color/text_muted"
             android:textSize="13sp" />
+
+        <!-- Countdown timer (visible only when expiresAt is non-null) -->
+        <com.walkmate.core.designsystem.view.CountdownTimerView
+            android:id="@+id/countdownTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="12sp"
+            app:wm_urgentThresholdSec="300"
+            app:wm_urgentColor="@color/color_danger"
+            app:wm_normalColor="@color/text_muted" />
 
         <!-- Chips row: Duration + Age range -->
         <LinearLayout
@@ -107,13 +127,24 @@
             app:chipSpacingHorizontal="6dp"
             app:chipSpacingVertical="4dp" />
 
-        <!-- Cancel button -->
+        <!-- Primary action button: "Find Match" (OPEN) or "View Proposal" (MATCHING) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFindMatch"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="14dp"
+            android:text="@string/find_match"
+            android:textSize="14sp"
+            app:cornerRadius="999dp" />
+
+        <!-- Cancel button (GONE when MATCHING) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelIntent"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="8dp"
             android:text="@string/btn_cancel_intent"
             android:textColor="@color/orange_end"
             android:textSize="14sp"

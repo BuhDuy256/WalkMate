@@ -36,6 +36,10 @@ public class WalkIntentResponse {
     @SerializedName("expires_at")
     private String expiresAt;
 
+    // Non-null when backend found an inline match (status=MATCHING) or created a private invite.
+    @SerializedName("proposal_id")
+    private String proposalId;
+
     public String getId() { return id; }
     public String getHotspotId() { return hotspotId; }
     public String getUserId() { return userId; }
@@ -46,4 +50,5 @@ public class WalkIntentResponse {
     public String getStatus() { return status; }
     public String getCreatedAt() { return createdAt; }
     public String getExpiresAt() { return expiresAt; }
+    public String getProposalId() { return proposalId; }
 }

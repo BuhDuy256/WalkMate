@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    tools:context=".ui.home.HomeFragment">
+
+    <ProgressBar
+        android:id="@+id/loadingIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/orange_primary"
+        android:visibility="gone" />
+
+<androidx.core.widget.NestedScrollView
+    android:id="@+id/contentContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@color/bg_cream"
     android:fillViewport="true"
-    android:overScrollMode="never"
-    tools:context=".ui.home.HomeFragment">
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -58,7 +71,6 @@
                 android:layout_height="40dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackgroundBorderless"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent">
@@ -84,57 +96,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- ── STREAK WIDGET ─────────────────────────────────────────────────── -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardStreak"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/bg_white">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <!-- Header row: fire emoji + title + chevron -->
-                <com.walkmate.core.designsystem.view.WalkMateCardHeader
-                    android:id="@+id/headerStreak"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:wm_headerEmoji="🔥"
-                    app:wm_headerTitle="@string/home_streak_title"
-                    app:wm_navigable="true" />
-
-                <ProgressBar
-                    android:id="@+id/streakProgress"
-                    style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:layout_marginTop="12dp"
-                    android:max="7"
-                    android:progressTint="@color/orange_primary"
-                    android:progressBackgroundTint="@color/bg_tag_inactive"
-                    tools:progress="5" />
-
-                <TextView
-                    android:id="@+id/txtStreakDays"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_muted"
-                    tools:text="5 / 7 days" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
         <!-- ── HERO ACTION CARD ──────────────────────────────────────────────── -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardHero"
@@ -152,15 +113,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/txtHeroSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_muted"
-                    tools:text="5 Hotspots are bustling nearby." />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnFindWalkMate"
@@ -290,48 +242,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ── QUICK INVITE SECTION ──────────────────────────────────────────── -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/home_quick_invite_header"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_dark" />
-
-            <TextView
-                android:id="@+id/txtSeeAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/home_see_all"
-                android:textSize="13sp"
-                android:textColor="@color/orange_primary"
-                android:clickable="true"
-                android:focusable="true" />
-
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvQuickInvite"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:clipToPadding="false"
-            android:overScrollMode="never"
-            tools:listitem="@layout/item_quick_invite" />
-
         <!-- ── QUICK STATS ROW ───────────────────────────────────────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -340,7 +250,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginTop="20dp"
-            android:weightSum="3">
+            android:weightSum="2">
 
             <!-- Distance Card -->
             <com.google.android.material.card.MaterialCardView
@@ -369,7 +279,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/bg_white">
@@ -385,29 +294,25 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Day Streak Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/bg_white">
-
-                <com.walkmate.core.designsystem.view.WalkMateStatColumn
-                    android:id="@+id/statStreak"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    app:wm_statEmoji="🔥"
-                    app:wm_statValue="—"
-                    app:wm_statLabel="@string/home_stat_day_streak" />
-
-            </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
+
+        <!-- ── VIEW LEADERBOARD BUTTON ──────────────────────────────────────── -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewLeaderboard"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="View Leaderboard"
+            android:textColor="@color/orange_end"
+            app:strokeColor="@color/orange_end"
+            app:cornerRadius="999dp" />
 
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>
+
+</FrameLayout>

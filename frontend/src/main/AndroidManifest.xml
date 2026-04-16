@@ -41,7 +41,8 @@
         <activity
             android:name="com.walkmate.ui.main.MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.WalkMate">
+            android:theme="@style/Theme.WalkMate"
+            android:windowSoftInputMode="adjustPan">
         </activity>
 
         <!-- Registered here; fully wired in Phase 3 (Entry-Point) -->
@@ -56,9 +57,32 @@
             android:foregroundServiceType="location"
             android:exported="false" />
 
+        <!-- FCM service: receives token refreshes and data-only push messages -->
+        <service
+            android:name="com.walkmate.service.WalkMateFcmService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
+
+        <!-- OkHttp 5.x registers PlatformInitializer via androidx.startup but the class
+             fails to load in pure-Java projects without the full Kotlin runtime wired up.
+             Remove it so startup doesn't crash on app launch. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="okhttp3.internal.platform.PlatformInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
     </application>
 

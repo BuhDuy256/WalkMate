@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel;
 import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.walksession.SessionSummary;
+import com.walkmate.domain.walksession.WalkSessionRepository;
 
 import java.util.List;
 
@@ -33,12 +35,18 @@ public class ReviewViewModel extends ViewModel {
     private final MutableLiveData<List<WalkReview>> reviews  = new MutableLiveData<>();
     private final MutableLiveData<String>        error       = new MutableLiveData<>();
 
+    private final MutableLiveData<ReviewUiState> reviewUiState =
+            new MutableLiveData<>(ReviewUiState.idle());
+
     // ── Dependencies ──────────────────────────────────────────────────────────
 
-    private final ReviewRepository reviewRepository;
+    private final ReviewRepository      reviewRepository;
+    private final WalkSessionRepository sessionRepository;
 
-    public ReviewViewModel(ReviewRepository reviewRepository) {
-        this.reviewRepository = reviewRepository;
+    public ReviewViewModel(ReviewRepository reviewRepository,
+                           WalkSessionRepository sessionRepository) {
+        this.reviewRepository  = reviewRepository;
+        this.sessionRepository = sessionRepository;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -85,10 +93,44 @@ public class ReviewViewModel extends ViewModel {
         });
     }
 
+    /**
+     * Checks whether the session has already been reviewed.
+     * Loads session history, finds the matching entry, and posts
+     * {@link ReviewUiState#alreadyReviewed()} if reviewed, or
+     * {@link ReviewUiState#idle()} if not.
+     */
+    public void loadReviewState(String sessionId) {
+        reviewUiState.postValue(ReviewUiState.loading());
+        sessionRepository.getSessionHistory(new DomainCallback<List<SessionSummary>>() {
+            @Override
+            public void onSuccess(List<SessionSummary> sessions) {
+                boolean alreadyReviewed = false;
+                if (sessions != null) {
+                    for (SessionSummary s : sessions) {
+                        if (sessionId.equals(s.getSessionId())) {
+                            alreadyReviewed = s.isReviewed();
+                            break;
+                        }
+                    }
+                }
+                reviewUiState.postValue(alreadyReviewed
+                        ? ReviewUiState.alreadyReviewed()
+                        : ReviewUiState.idle());
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Non-fatal: default to allowing a review attempt.
+                reviewUiState.postValue(ReviewUiState.idle());
+            }
+        });
+    }
+
     // ── LiveData getters ──────────────────────────────────────────────────────
 
     public LiveData<SubmitState>      getSubmitState()    { return submitState; }
     public LiveData<WalkReview>       getSubmittedReview(){ return submittedReview; }
     public LiveData<List<WalkReview>> getReviews()        { return reviews; }
     public LiveData<String>           getError()          { return error; }
+    public LiveData<ReviewUiState>    getReviewUiState()  { return reviewUiState; }
 }

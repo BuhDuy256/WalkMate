@@ -25,6 +25,7 @@ public class MatchProposal {
     private Instant createdAt;
     private Instant expiresAt;
     private Instant confirmedAt;
+    private long version;
 
     protected MatchProposal() {
     }
@@ -36,7 +37,8 @@ public class MatchProposal {
                          Instant proposedStartTime, Instant proposedEndTime,
                          boolean acceptedByA, boolean acceptedByB,
                          ProposalStatus status,
-                         Instant createdAt, Instant expiresAt, Instant confirmedAt) {
+                         Instant createdAt, Instant expiresAt, Instant confirmedAt,
+                         long version) {
         this.proposalId = proposalId;
         this.intentIdA = intentIdA;
         this.intentIdB = intentIdB;
@@ -52,6 +54,7 @@ public class MatchProposal {
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.confirmedAt = confirmedAt;
+        this.version = version;
     }
 
     private MatchProposal(String intentIdA, String intentIdB,
@@ -74,6 +77,7 @@ public class MatchProposal {
         this.createdAt = Instant.now();
         this.expiresAt = expiresAt;
         this.confirmedAt = null;
+        this.version = 0;
     }
 
     public static MatchProposal create(String intentIdA, String intentIdB,
@@ -105,6 +109,7 @@ public class MatchProposal {
         } else {
             throw new DomainException(ProposalErrorCode.PROPOSAL_NOT_PARTICIPANT);
         }
+        this.version++;
         return this.acceptedByA && this.acceptedByB;
     }
 
@@ -113,11 +118,21 @@ public class MatchProposal {
             throw new DomainException(ProposalErrorCode.PROPOSAL_ALREADY_TERMINAL);
         }
         this.status = ProposalStatus.REJECTED;
+        this.version++;
+    }
+
+    public void expire() {
+        if (this.status != ProposalStatus.PENDING) {
+            throw new DomainException(ProposalErrorCode.PROPOSAL_ALREADY_TERMINAL);
+        }
+        this.status = ProposalStatus.EXPIRED;
+        this.version++;
     }
 
     public void confirm(Instant confirmedAt) {
         this.status = ProposalStatus.CONFIRMED;
         this.confirmedAt = confirmedAt;
+        this.version++;
     }
 
     /** Returns which intentId belongs to the given userId, or null if not a participant. */

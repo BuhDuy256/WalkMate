@@ -3,6 +3,7 @@ import java.net.InetAddress
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 fun getLocalIP(): String {
@@ -49,6 +50,12 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -63,6 +70,8 @@ dependencies {
     implementation(libs.swiperefreshlayout)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidxTestCore)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
@@ -83,6 +92,9 @@ dependencies {
     // Khối Architecture Components (ViewModel, LiveData)
     implementation(libs.lifecycleViewmodel)
     implementation(libs.lifecycleLivedata)
+    // Kotlin coroutines runtime — required by lifecycle 2.8+ (LifecycleRegistry uses StateFlow)
+    // and transitively needed by OkHttp 5.x / Retrofit 3.x in a pure-Java project
+    implementation(libs.coroutinesAndroid)
 
     // Secure local token storage
     implementation(libs.securityCrypto)
@@ -93,4 +105,16 @@ dependencies {
 
     // Image loading
     implementation(libs.glide)
+
+    // Jetpack Navigation
+    implementation(libs.navigationFragment)
+    implementation(libs.navigationUi)
+
+    // Firebase (BOM pins all firebase versions)
+    implementation(platform(libs.firebaseBom))
+    implementation(libs.firebaseMessaging)
+    implementation(libs.firebaseAuth)
+
+    // Google Sign-In (provides GoogleSignIn, GoogleSignInClient, GoogleSignInAccount)
+    implementation(libs.playServicesAuth)
 }

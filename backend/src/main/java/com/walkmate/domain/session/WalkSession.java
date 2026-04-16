@@ -11,9 +11,9 @@ import java.util.UUID;
 public class WalkSession {
 
     /** Arrival window opens this many minutes before the scheduled start. */
-    public static final Duration ACTIVATION_WINDOW_BEFORE = Duration.ofMinutes(15);
+    public static final Duration ACTIVATION_WINDOW_BEFORE = Duration.ofMinutes(180);
     /** Arrival window closes this many minutes after the scheduled start. */
-    public static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(30);
+    public static final Duration ACTIVATION_WINDOW_AFTER  = Duration.ofMinutes(180);
 
     private String        sessionId;
     private String        proposalId;
@@ -106,20 +106,15 @@ public class WalkSession {
     // ── Domain behaviour ──────────────────────────────────────────────────────
 
     /**
-     * Records that a participant has arrived at the meeting point (S-3/S-4).
+     * Records that a participant has arrived at the meeting point (S-3).
      * Transitions the session to ACTIVE once both users have activated.
      *
      * @param userId      the arriving user's ID
      * @param now         current timestamp
-     * @param windowOpen  earliest moment a user may activate (scheduledStart − 15 min)
-     * @param windowClose latest moment a user may activate  (scheduledStart + 30 min)
      */
-    public void recordActivation(String userId, Instant now, Instant windowOpen, Instant windowClose) {
+    public void recordActivation(String userId, Instant now) {
         if (this.status != SessionStatus.PENDING) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_PENDING);
-        }
-        if (now.isBefore(windowOpen) || now.isAfter(windowClose)) {
-            throw new DomainException(SessionErrorCode.SESSION_ACTIVATION_WINDOW_CLOSED);
         }
 
         if (userId.equals(userIdA)) {
@@ -135,6 +130,7 @@ public class WalkSession {
             this.status    = SessionStatus.ACTIVE;
             this.startedAt = now;
         }
+        
         this.version++;
     }
 

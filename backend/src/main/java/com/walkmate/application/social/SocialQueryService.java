@@ -12,7 +12,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SocialQueryService {
 
-    private final SocialRepository socialRepository;
+    private final SocialRepository  socialRepository;
+    private final FriendQueryService friendQueryService;
 
     @Transactional(readOnly = true)
     public List<UUID> getFollowers(UUID userId) {
@@ -22,6 +23,15 @@ public class SocialQueryService {
     @Transactional(readOnly = true)
     public List<UUID> getFollowing(UUID userId) {
         return socialRepository.getFolloweeIds(userId);
+    }
+
+    /**
+     * Returns the friend list for the private-intent friend-picker (UC-08).
+     * Delegates to FriendQueryService which reads accepted friendship rows.
+     */
+    @Transactional(readOnly = true)
+    public List<UUID> getFriends(UUID callerId) {
+        return friendQueryService.getFriends(callerId);
     }
 
     @Transactional(readOnly = true)

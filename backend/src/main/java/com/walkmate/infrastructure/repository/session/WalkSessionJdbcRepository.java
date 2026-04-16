@@ -139,15 +139,14 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     }
 
     @Override
-    public List<WalkSession> findSessionsPastActivationWindow(Instant now) {
-        // PENDING sessions where the full activation window has elapsed:
-        //   scheduledStart + ACTIVATION_WINDOW_AFTER < now
+    public List<WalkSession> findStalePendingSessions(Instant cutoff) {
+        // PENDING sessions older than the configured scheduler cutoff.
         final String sql = selectAll() + """
                 WHERE status = 'PENDING'
-                  AND scheduled_start + INTERVAL '30 minutes' < :now
+                  AND created_at < :cutoff
                 """;
         return jdbcClient.sql(sql)
-                .param("now", Timestamp.from(now))
+                .param("cutoff", Timestamp.from(cutoff))
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();
     }
@@ -161,6 +160,20 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 """;
         return jdbcClient.sql(sql)
                 .param("cutoff", Timestamp.from(cutoff))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public List<WalkSession> findCompletedByUserId(String userId) {
+        final String sql = selectAll() + """
+                WHERE (user_id_a = :userId OR user_id_b = :userId)
+                  AND status IN ('COMPLETED', 'NO_SHOW', 'ABORTED', 'CANCELLED')
+                ORDER BY COALESCE(ended_at, created_at) DESC
+                LIMIT 50
+                """;
+        return jdbcClient.sql(sql)
+                .param("userId", UUID.fromString(userId))
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();
     }

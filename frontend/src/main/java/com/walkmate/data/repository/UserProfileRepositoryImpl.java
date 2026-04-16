@@ -7,6 +7,8 @@ import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.UserProfileApiService;
 import com.walkmate.data.datasource.remote.dto.request.user.UpdateProfileRequestDto;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.AvatarUploadResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.UserProfileResponse;
@@ -29,12 +31,13 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     private static final String TAG = "UserProfileRepo";
 
+    private final SessionManager sessionManager;
     private final UserProfileApiService apiService;
-    private final ExecutorService       executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public UserProfileRepositoryImpl(Context context) {
-        SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.sessionManager = new SessionManager(context);
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(UserProfileApiService.class);
     }
 
@@ -44,13 +47,22 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     public void getMyProfile(DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<UserProfileResponse>> resp =
-                        apiService.getMyProfile().execute();
+                Response<ApiResponse<UserProfileResponse>> resp = apiService.getMyProfile().execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(UserProfileMapper.toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROFILE_FETCH_FAILED")));
+                    if (resp.code() == 401) {
+                        sessionManager.clearSession();
+                        callback.onError(new Exception("AUTH_UNAUTHORIZED"));
+                        return;
+                    }
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_FETCH_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getMyProfile network error", e);
@@ -63,13 +75,17 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     public void getProfile(String userId, DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<UserProfileResponse>> resp =
-                        apiService.getPublicProfile(userId).execute();
+                Response<ApiResponse<UserProfileResponse>> resp = apiService.getPublicProfile(userId).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(UserProfileMapper.toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROFILE_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_FETCH_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getProfile network error", e);
@@ -80,20 +96,29 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public void updateProfile(String fullName, String gender, String dateOfBirth,
-                              String bio, int searchRadius, List<String> tags,
-                              DomainCallback<UserProfile> callback) {
+            String bio, int searchRadius, List<String> tags,
+            DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
             try {
                 UpdateProfileRequestDto dto = new UpdateProfileRequestDto(
                         fullName, gender, dateOfBirth, bio, searchRadius, tags);
 
-                Response<ApiResponse<UserProfileResponse>> resp =
-                        apiService.updateMyProfile(dto).execute();
+                Response<ApiResponse<UserProfileResponse>> resp = apiService.updateMyProfile(dto).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(UserProfileMapper.toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROFILE_UPDATE_FAILED")));
+                    if (resp.code() == 401) {
+                        sessionManager.clearSession();
+                        callback.onError(new Exception("AUTH_UNAUTHORIZED"));
+                        return;
+                    }
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_UPDATE_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "updateProfile network error", e);
@@ -104,19 +129,28 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public void uploadAvatar(byte[] imageBytes, String filename, String mimeType,
-                             DomainCallback<String> callback) {
+            DomainCallback<String> callback) {
         executor.execute(() -> {
             try {
-                RequestBody     requestBody = RequestBody.create(imageBytes, MediaType.parse(mimeType));
-                MultipartBody.Part part     = MultipartBody.Part.createFormData("file", filename, requestBody);
+                RequestBody requestBody = RequestBody.create(imageBytes, MediaType.parse(mimeType));
+                MultipartBody.Part part = MultipartBody.Part.createFormData("file", filename, requestBody);
 
-                Response<ApiResponse<AvatarUploadResponse>> resp =
-                        apiService.uploadAvatar(part).execute();
+                Response<ApiResponse<AvatarUploadResponse>> resp = apiService.uploadAvatar(part).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(resp.body().getData().avatarUrl);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "AVATAR_UPLOAD_FAILED")));
+                    if (resp.code() == 401) {
+                        sessionManager.clearSession();
+                        callback.onError(new Exception("AUTH_UNAUTHORIZED"));
+                        return;
+                    }
+                    ApiError apiError = ErrorParser.extractApiError(resp, "AVATAR_UPLOAD_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "uploadAvatar network error", e);
@@ -125,12 +159,4 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

@@ -14,8 +14,7 @@ public class HotspotMapper {
                 response.getName(),
                 response.getLat(),
                 response.getLng(),
-                response.getActiveWalkerCount()
-        );
+                response.getopenIntentCount());
     }
 
     public static List<Hotspot> toDomainList(List<HotspotResponse> responses) {
@@ -26,5 +25,6 @@ public class HotspotMapper {
         return result;
     }
 
-    private HotspotMapper() {}
+    private HotspotMapper() {
+    }
 }

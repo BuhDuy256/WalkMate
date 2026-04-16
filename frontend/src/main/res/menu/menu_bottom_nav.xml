@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Menu item IDs MUST match the fragment destination IDs in nav_graph.xml.
+    NavigationUI.setupWithNavController() uses ID equality to know which
+    destination to navigate to when a bottom nav item is tapped.
+-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/tab_explore"
-        android:icon="@drawable/ic_tab_explore"
-        android:title="@string/tab_explore" />
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_tab_home"
+        android:title="@string/tab_home" />
 
     <item
-        android:id="@+id/tab_matches"
+        android:id="@+id/matchesFragment"
         android:icon="@drawable/ic_tab_matches"
         android:title="@string/tab_matches" />
 
     <item
-        android:id="@+id/tab_profile"
+        android:id="@+id/profileFragment"
         android:icon="@drawable/ic_tab_profile"
         android:title="@string/tab_profile" />
 

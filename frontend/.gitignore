@@ -1,2 +1,9 @@
 /build
+<<<<<<< HEAD
+
+# Firebase — contains API keys; loaded at build time from local file
+# Production uses CI secret injection, not this file
 google-services.json
+=======
+google-services.json
+>>>>>>> main

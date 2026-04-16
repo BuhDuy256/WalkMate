@@ -11,6 +11,8 @@ import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.RoutePointSyncApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.tracking.PushRoutePointsRequest;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.tracking.PushRoutePointsResponse;
 import com.walkmate.data.mapper.RoutePointMapper;
@@ -41,6 +43,10 @@ import retrofit2.Response;
  */
 public class TrackingRepositoryImpl implements TrackingRepository {
 
+    public interface SessionEndedListener {
+        void onSessionEndedRemotely(String errorCode);
+    }
+
     private static final String TAG = "TrackingRepo";
 
     /** Trigger a backend push when this many unsynced points accumulate. */
@@ -49,6 +55,12 @@ public class TrackingRepositoryImpl implements TrackingRepository {
     private final RoutePointDao          dao;
     private final SessionManager         sessionManager;
     private final ExecutorService        executor = Executors.newSingleThreadExecutor();
+
+    private SessionEndedListener sessionEndedListener;
+
+    public void setSessionEndedListener(SessionEndedListener l) {
+        this.sessionEndedListener = l;
+    }
 
     public TrackingRepositoryImpl(RoutePointDao dao, SessionManager sessionManager) {
         this.dao            = dao;
@@ -126,7 +138,7 @@ public class TrackingRepositoryImpl implements TrackingRepository {
 
                 PushRoutePointsRequest request = new PushRoutePointsRequest(sessionId, payloads);
 
-                RoutePointSyncApiService api = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+                RoutePointSyncApiService api = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                         .create(RoutePointSyncApiService.class);
 
                 Response<ApiResponse<PushRoutePointsResponse>> response =
@@ -135,18 +147,47 @@ public class TrackingRepositoryImpl implements TrackingRepository {
                 if (response.isSuccessful()
                         && response.body() != null
                         && response.body().isSuccess()) {
+                    List<Long> acked = response.body().getData().getAcknowledgedIds();
+                    if (acked != null && !acked.isEmpty()) {
+                        dao.markAsSynced(acked);
+                    }
                     Log.d(TAG, "Sync succeeded — " + points.size() + " points acknowledged");
                     callback.onSuccess(null);
                 } else {
-                    String errCode = response.body() != null && response.body().getError() != null
-                            ? response.body().getError().getCode()
-                            : TrackingErrorCode.SYNC_FAILED;
-                    Log.w(TAG, "Sync failed: " + errCode);
-                    callback.onError(new Exception(errCode));
+                    ApiError apiError = ErrorParser.extractApiError(response, TrackingErrorCode.SYNC_FAILED);
+                    String errorCode = apiError.getCode();
+                    Log.w(TAG, "Sync failed: " + errorCode);
+                    if ("SESSION_NOT_ACTIVE".equals(errorCode) || "SESSION_NOT_FOUND".equals(errorCode)) {
+                        callback.onError(new Exception("SESSION_TERMINAL|" + errorCode));
+                    } else if (response.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(errorCode));
+                    }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "pushRoutePoints network error", e);
                 callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void triggerPeriodicSync(String sessionId) {
+        executor.execute(() -> {
+            List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId);
+            if (unsyncedEntities != null && !unsyncedEntities.isEmpty()) {
+                List<RoutePoint> domainPoints = RoutePointMapper.toDomainList(unsyncedEntities);
+                pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
+                    @Override public void onSuccess(Void v) { /* silent success */ }
+                    @Override public void onError(Exception e) {
+                        if (e.getMessage() != null && e.getMessage().startsWith("SESSION_TERMINAL|")) {
+                            if (sessionEndedListener != null) {
+                                sessionEndedListener.onSessionEndedRemotely(e.getMessage());
+                            }
+                        }
+                    }
+                });
             }
         });
     }
@@ -167,10 +208,8 @@ public class TrackingRepositoryImpl implements TrackingRepository {
         pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                List<Long> ids = new ArrayList<>(unsyncedEntities.size());
-                for (RoutePointEntity e : unsyncedEntities) ids.add(e.id);
-                dao.markAsSynced(ids);
-                Log.d(TAG, "Marked " + ids.size() + " points as synced");
+                // Acknowledged IDs are marked synced inside pushRoutePoints via the server response.
+                Log.d(TAG, "Batch sync completed — " + unsyncedEntities.size() + " points pushed");
             }
 
             @Override

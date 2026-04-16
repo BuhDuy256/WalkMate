@@ -1,15 +1,16 @@
 package com.walkmate.presentation.controller.walkintent;
 
 import com.walkmate.application.user.UserPrincipal;
-import com.walkmate.application.walkintent.CreateWalkIntentCommand;
 import com.walkmate.application.proposal.MatchingCommandService;
+import com.walkmate.application.walkintent.CreateIntentResult;
+import com.walkmate.application.walkintent.CreateWalkIntentCommand;
 import com.walkmate.application.walkintent.WalkIntentCommandService;
 import com.walkmate.application.walkintent.WalkIntentQueryService;
 import com.walkmate.domain.proposal.MatchProposal;
-import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.presentation.dto.request.walkintent.CreateWalkIntentRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.proposal.WalkProposalResponse;
+import com.walkmate.presentation.dto.response.walkintent.CreateIntentResponse;
 import com.walkmate.presentation.dto.response.walkintent.WalkIntentResponse;
 import com.walkmate.presentation.mapper.proposal.ProposalMapper;
 import com.walkmate.presentation.mapper.walkintent.WalkIntentMapper;
@@ -37,8 +38,10 @@ public class WalkIntentController {
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final WalkIntentCommandService walkIntentCommandService;
-        private final WalkIntentQueryService   walkIntentQueryService;
+    
+    private final WalkIntentQueryService   walkIntentQueryService;
     private final MatchingCommandService   matchingCommandService;
+    
     private final WalkIntentMapper         walkIntentMapper;
     private final ProposalMapper           proposalMapper;
 
@@ -49,25 +52,34 @@ public class WalkIntentController {
      * date + timeStart/timeEnd floats are converted to Instant using VN timezone.
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<WalkIntentResponse>> createIntent(
+    public ResponseEntity<ApiResponse<CreateIntentResponse>> createIntent(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateWalkIntentRequest request) {
 
         Instant start = toInstant(request.date(), request.timeStart());
         Instant end   = toInstant(request.date(), request.timeEnd());
 
-        WalkIntent intent = walkIntentCommandService.createIntent(
+        CreateIntentResult result = walkIntentCommandService.createIntent(
                 new CreateWalkIntentCommand(
                         request.hotspotId(),
-                        principal.userId().toString(),
+                        principal.userId(),
                         start,
                         end,
                         request.ageMin(),
-                        request.ageMax()
+                        request.ageMax(),
+                        request.isPrivate(),
+                        request.invitedFriendId(),
+                        request.description()
                 )
         );
+
+        WalkIntentResponse intentResp = walkIntentMapper.toResponse(result.intent());
+        WalkProposalResponse proposalResp = result.proposal() != null
+                ? proposalMapper.toResponse(result.proposal(), principal.userId(), null)
+                : null;
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(walkIntentMapper.toResponse(intent)));
+                .body(ApiResponse.success(new CreateIntentResponse(intentResp, proposalResp)));
     }
 
     /**
@@ -86,13 +98,17 @@ public class WalkIntentController {
     }
 
     /**
-     * GET /api/v1/intents/{intentId}/match
-     * Runs the matching engine for the given intent.
+     * POST /api/v1/intents/{intentId}/match
+     * Triggers the matching engine for the given intent.
      * Returns the proposal if a candidate was found (or an existing PENDING proposal).
      * Returns 204 No Content if no candidate is available yet.
+     *
+     * POST is correct here: every call may mutate state (create a MatchProposal,
+     * transition the intent from OPEN → MATCHING). GET is reserved for safe,
+     * idempotent reads.
      */
-    @GetMapping("/{intentId}/match")
-    public ResponseEntity<ApiResponse<WalkProposalResponse>> findMatch(
+    @PostMapping("/{intentId}/match")
+    public ResponseEntity<ApiResponse<WalkProposalResponse>> triggerMatch(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String intentId) {
         MatchProposal proposal = matchingCommandService
@@ -129,4 +145,5 @@ public class WalkIntentController {
         LocalTime localTime = LocalTime.of(totalMinutes / 60, totalMinutes % 60);
         return LocalDateTime.of(localDate, localTime).atZone(VN_ZONE).toInstant();
     }
+
 }

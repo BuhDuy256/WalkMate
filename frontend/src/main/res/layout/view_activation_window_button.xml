@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ActivationWindowButtonView layout.
+  Root is <merge> because the host class extends LinearLayout (vertical),
+  so inflating with attachToRoot=true avoids an extra ViewGroup level.
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Status label: "I'm Here!" / "Not yet open" / "Window closed"
+      Set programmatically by ActivationWindowButtonView.evaluate().
+    -->
+    <TextView
+        android:id="@+id/tv_activation_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        tools:text="Not yet open" />
+
+    <!--
+      The arrive button — enabled/disabled by ActivationWindowButtonView.
+      Uses the standard FILLED variant (orange gradient pill).
+    -->
+    <com.walkmate.core.designsystem.view.WalkMateButton
+        android:id="@+id/btn_arrive"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        app:wm_buttonStyle="filled"
+        app:wm_text="I'm Here!" />
+
+</merge>

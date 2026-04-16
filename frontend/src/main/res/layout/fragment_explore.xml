@@ -54,33 +54,22 @@
         android:paddingTop="48dp"
     >
 
-        <!-- <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_white_pill"
+        <FrameLayout
+            android:id="@+id/btnBackToHome"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_white_circle"
             android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp">
+            android:clickable="true"
+            android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🚶"
-                android:textSize="18sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="@string/app_name"
-                android:textColor="@color/text_dark"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout> -->
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_back"
+                android:tint="@color/text_dark" />
+        </FrameLayout>
 
         <View
             android:layout_width="0dp"
@@ -105,24 +94,6 @@
             />
         </FrameLayout>
     </LinearLayout>
-
-    <!-- ================================================================ -->
-    <!-- LAYER 2b: Back button — GONE in WELCOME/SCANNING, VISIBLE in SETUP -->
-    <!-- Floats at top-left above the map; elevation matches topBar.       -->
-    <!-- ================================================================ -->
-    <ImageButton
-        android:id="@+id/btnBackToWelcome"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_gravity="top|start"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_white_circle"
-        android:contentDescription="Back"
-        android:elevation="8dp"
-        android:src="@drawable/ic_back"
-        android:visibility="gone"
-    />
 
     <!-- ================================================================ -->
     <!-- LAYER 3: Unified Bottom Sheet                                     -->
@@ -239,7 +210,7 @@
                         android:textSize="14sp"
                     />
 
-                    <!-- Search bar (UI only; search logic is a future enhancement) -->
+                    <!-- Search bar -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/searchInputLayout"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
@@ -255,35 +226,55 @@
                             android:layout_height="wrap_content"
                             android:inputType="text"
                             android:maxLines="1"
+                            android:imeOptions="actionSearch"
                         />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="@string/popular_spots"
-                        android:textColor="@color/text_label"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                    />
-
-                    <!-- Hotspot chips — populated dynamically from ViewModel state -->
-                    <HorizontalScrollView
+                    <!-- Search results — shown only when query is non-empty -->
+                    <LinearLayout
+                        android:id="@+id/searchResultsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:scrollbars="none"
+                        android:orientation="vertical"
+                        android:layout_marginTop="4dp"
+                        android:visibility="gone"
+                    />
+
+                    <!-- Popular spots section — hidden while a search query is active -->
+                    <LinearLayout
+                        android:id="@+id/popularSpotsSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
                     >
 
-                        <com.google.android.material.chip.ChipGroup
-                            android:id="@+id/chipGroupHotspots"
+                        <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            app:chipSpacingHorizontal="8dp"
-                            app:singleLine="true"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/popular_spots"
+                            android:textColor="@color/text_label"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
                         />
-                    </HorizontalScrollView>
+
+                        <!-- Hotspot chips — populated dynamically from ViewModel state -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none"
+                        >
+
+                            <com.google.android.material.chip.ChipGroup
+                                android:id="@+id/chipGroupHotspots"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:chipSpacingHorizontal="8dp"
+                                app:singleLine="true"
+                            />
+                        </HorizontalScrollView>
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- ============================================================ -->
@@ -355,7 +346,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- SECTION: When (Date) -->
+                    <!-- SECTION: Date -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -366,26 +357,52 @@
                         android:textStyle="bold"
                     />
 
-                    <TextView
-                        android:id="@+id/txtSelectedDate"
+                    <!-- Date picker row: shows current date, tap to open DatePickerDialog -->
+                    <LinearLayout
+                        android:id="@+id/rowDatePicker"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp"
-                        android:text="2026-04-01"
-                        android:textColor="@color/orange_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_field_outlined"
                         android:clickable="true"
                         android:focusable="true"
-                        android:background="?attr/selectableItemBackground" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp">
 
-                    <!-- SECTION: When (Time) -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📅"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/txtSelectedDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="2026-04-01"
+                            android:textColor="@color/orange_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Change"
+                            android:textColor="@color/orange_start"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- SECTION: Time -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="@dimen/section_gap"
                         android:text="@string/label_when_time"
                         android:textColor="@color/text_label"
                         android:textSize="13sp"
@@ -436,53 +453,16 @@
                         app:trackHeight="6dp"
                     />
 
-                    <!-- SECTION: When (Duration) -->
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <!-- Public-only preference fields (Age / Gender / Tags).
+                         When Private Walk is ON, this container is dimmed and
+                         interaction is blocked in ExploreFragment. -->
+                    <LinearLayout
+                        android:id="@+id/layoutPublicOptions"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/section_gap"
-                        android:text="@string/label_when_duration"
-                        android:textColor="@color/text_label"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                    />
+                        android:orientation="vertical">
 
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/chipGroupDuration"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        app:chipSpacingHorizontal="8dp"
-                        app:singleSelection="true"
-                    >
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipDur15"
-                            style="@style/Widget.WalkMate.Chip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dur_15"
-                        />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipDur30"
-                            style="@style/Widget.WalkMate.Chip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:checked="true"
-                            android:text="@string/dur_30"
-                        />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipDur60"
-                            style="@style/Widget.WalkMate.Chip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dur_60"
-                        />
-                    </com.google.android.material.chip.ChipGroup>
-
-                    <!-- SECTION: Who (Age) -->
+                    <!-- SECTION: Age -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -492,6 +472,8 @@
                         android:textSize="13sp"
                         android:textStyle="bold"
                     />
+
+
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -537,7 +519,7 @@
                         app:trackHeight="6dp"
                     />
 
-                    <!-- SECTION: Who (Gender) -->
+                    <!-- SECTION: Gender -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -583,7 +565,7 @@
                         />
                     </com.google.android.material.chip.ChipGroup>
 
-                    <!-- SECTION: What (Tags) -->
+                    <!-- SECTION: Tags -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -653,6 +635,117 @@
                             android:text="@string/tag_photography"
                         />
                     </com.google.android.material.chip.ChipGroup>
+
+                    </LinearLayout>
+                    <!-- end layoutPublicOptions -->
+
+                    <!-- Hint shown when private mode is ON (sits below the dimmed block) -->
+                    <TextView
+                        android:id="@+id/txtPrivateModeHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/bg_field_outlined"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:text="🔒  Age, Gender and Tags are not used for private walks"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+
+                    <!-- Private Walk toggle row -->
+                    <LinearLayout
+                        android:id="@+id/rowPrivateWalk"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/private_walk"
+                                android:textColor="@color/text_dark"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Invite a friend directly"
+                                android:textColor="@color/text_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switchPrivateWalk"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                    <!-- Friend picker row (visible only when switchPrivateWalk is ON) -->
+                    <LinearLayout
+                        android:id="@+id/rowFriendPicker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_field_outlined"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="👤"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/invite_friend"
+                            android:textColor="@color/text_muted"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/txtSelectedFriend"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:drawableEnd="@drawable/ic_chevron_right"
+                            android:drawablePadding="4dp"
+                            android:text="@string/select_friend"
+                            android:textColor="@color/orange_start"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                    <!-- Validation error for private intent config -->
+                    <TextView
+                        android:id="@+id/txtPrivateIntentError"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/color_danger"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
 
                     <!-- CTA -->
                     <com.google.android.material.button.MaterialButton

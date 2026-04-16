@@ -1,0 +1,4 @@
+walkmate:
+  session:
+    # ISO-8601 duration; override per environment via WALKMATE_SESSION_PENDING_TTL.
+    pending-ttl: ${WALKMATE_SESSION_PENDING_TTL:PT24H}

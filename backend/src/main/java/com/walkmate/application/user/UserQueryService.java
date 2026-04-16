@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -46,6 +47,12 @@ public class UserQueryService {
     public User getUser(UUID userId) {
         return userRepository.findById(userId.toString())
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+    }
+
+    /** Returns all tags for the given user, ordered by insertion order. */
+    @Transactional(readOnly = true)
+    public List<String> getTagsByUserId(UUID userId) {
+        return profileRepository.findTagsByUserId(userId);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

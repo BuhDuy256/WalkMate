@@ -7,6 +7,8 @@ import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.WalkIntentApiService;
 import com.walkmate.data.datasource.remote.dto.request.walkintent.CreateWalkIntentRequest;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.data.datasource.remote.dto.response.walkintent.WalkIntentResponse;
@@ -34,7 +36,7 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
 
     public WalkIntentRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(WalkIntentApiService.class);
     }
 
@@ -45,11 +47,14 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
     @Override
     public void createIntent(String hotspotId, String date, float timeStart, float timeEnd,
                              int ageMin, int ageMax, List<String> tags,
+                             boolean isPrivate, String invitedFriendId,
+                             String description,
                              DomainCallback<WalkIntent> callback) {
         executor.execute(() -> {
             try {
                 CreateWalkIntentRequest request = new CreateWalkIntentRequest(
-                        hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags);
+                        hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
+                        isPrivate, invitedFriendId, description);
 
                 Response<ApiResponse<WalkIntentResponse>> resp =
                         apiService.createIntent(request).execute();
@@ -57,7 +62,12 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(WalkIntentMapper.toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "INTENT_CREATE_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "INTENT_CREATE_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "createIntent network error", e);
@@ -78,7 +88,12 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                             resp.body().getData() != null ? resp.body().getData() : Collections.emptyList());
                     callback.onSuccess(intents);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "INTENT_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "INTENT_FETCH_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "listActiveIntents network error", e);
@@ -102,7 +117,12 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(WalkProposalMapper.toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "MATCH_NOT_FOUND")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "MATCH_NOT_FOUND");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "findMatch network error", e);
@@ -120,7 +140,12 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "INTENT_CANCEL_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "INTENT_CANCEL_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "cancelIntent network error", e);
@@ -129,14 +154,4 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
         });
     }
 
-    // ---------------------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------------------
-
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

@@ -37,6 +37,10 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
 
     private static final Duration MIN_WALK_DURATION = WalkIntent.MIN_WALK_DURATION;
 
+    // TODO [DOMAIN_CONTRACTS §4.2 Invariant 3]: filter out PRIVATE users before returning candidates
+    //      When the matching engine reads candidates, add: WHERE visibility_mode = 'PUBLIC'
+    //      to the user_account join in WalkIntentJdbcRepository / candidate query.
+
     // ── Scoring weights ───────────────────────────────────────────────────
     private static final int WEIGHT_OVERLAP_PER_MINUTE = 1;
     // TODO (AI Upgrade — Tags):    private static final int WEIGHT_SHARED_TAG  = 10;

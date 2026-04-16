@@ -4,6 +4,7 @@ import com.walkmate.domain.user.AccountStatus;
 import com.walkmate.domain.user.AuthProvider;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
+import com.walkmate.domain.user.VisibilityMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -38,6 +39,22 @@ public class UserJdbcRepository implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByProviderSubject(String providerSubject) {
+        return jdbcClient.sql(selectAll() + "WHERE provider_subject = :providerSubject")
+                .param("providerSubject", providerSubject)
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
+    public Optional<User> findByPhone(String phone) {
+        return jdbcClient.sql(selectAll() + "WHERE phone = :phone")
+                .param("phone", phone)
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
     public List<User> findTopByPoints(int limit) {
         return jdbcClient.sql(selectAll() + """
                 ORDER BY total_points DESC, trust_score DESC
@@ -59,82 +76,104 @@ public class UserJdbcRepository implements UserRepository {
                         user.getPhone(),
                         user.getProvider(),
                         user.getStatus(),
+                        user.getVisibilityMode(),
                         user.getPasswordHash(),
+                        user.getProviderSubject(),
                         user.getCreatedAt(),
                         user.getLastLoginAt(),
                         user.getTrustScore(),
                         user.getTotalPoints(),
                         user.getTotalDistanceKm(),
-                        user.getCompletedSessions());
+                        user.getCompletedSessions(),
+                        user.getFcmToken());
 
         jdbcClient.sql("""
                         INSERT INTO user_account (
-                            user_id, email, phone, provider, status, password_hash,
-                            created_at, last_login_at, trust_score,
-                            total_points, total_distance_km, completed_sessions
+                            user_id, email, phone, provider, status, visibility_mode, password_hash,
+                            provider_subject, created_at, last_login_at, trust_score,
+                            total_points, fcm_token
                         )
                         VALUES (
                             :userId, :email, :phone,
                             CAST(:provider AS auth_provider),
                             CAST(:status AS account_status),
-                            :passwordHash, :createdAt, :lastLoginAt, :trustScore,
-                            :totalPoints, :totalDistanceKm, :completedSessions
+                            :visibilityMode, :passwordHash, :providerSubject, :createdAt, :lastLoginAt,
+                            :trustScore, :totalPoints, :fcmToken
                         )
                         ON CONFLICT (user_id) DO UPDATE SET
                             email              = EXCLUDED.email,
                             phone              = EXCLUDED.phone,
                             status             = EXCLUDED.status,
+                            visibility_mode    = EXCLUDED.visibility_mode,
                             password_hash      = EXCLUDED.password_hash,
+                            provider_subject   = EXCLUDED.provider_subject,
                             last_login_at      = EXCLUDED.last_login_at,
                             trust_score        = EXCLUDED.trust_score,
                             total_points       = EXCLUDED.total_points,
-                            total_distance_km  = EXCLUDED.total_distance_km,
-                            completed_sessions = EXCLUDED.completed_sessions
+                            fcm_token          = EXCLUDED.fcm_token
                         """)
                 .param("userId",            persisted.getUserId())
                 .param("email",             persisted.getEmail())
                 .param("phone",             persisted.getPhone())
                 .param("provider",          persisted.getProvider().name())
                 .param("status",            persisted.getStatus().name())
+                .param("visibilityMode",    persisted.getVisibilityMode() != null
+                        ? persisted.getVisibilityMode().name() : VisibilityMode.PUBLIC.name())
                 .param("passwordHash",      persisted.getPasswordHash())
+                .param("providerSubject",   persisted.getProviderSubject())
                 .param("createdAt",         Timestamp.from(persisted.getCreatedAt()))
                 .param("lastLoginAt",       persisted.getLastLoginAt() != null
                         ? Timestamp.from(persisted.getLastLoginAt()) : null)
                 .param("trustScore",        persisted.getTrustScore())
                 .param("totalPoints",       persisted.getTotalPoints())
-                .param("totalDistanceKm",   persisted.getTotalDistanceKm())
-                .param("completedSessions", persisted.getCompletedSessions())
+                .param("fcmToken",          persisted.getFcmToken())
                 .update();
 
         return persisted;
+    }
+
+    @Override
+    public void updateFcmToken(UUID userId, String token) {
+        jdbcClient.sql("""
+                        UPDATE user_account
+                        SET fcm_token = :token
+                        WHERE user_id = :userId
+                        """)
+                .param("token",  token)
+                .param("userId", userId)
+                .update();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private String selectAll() {
         return """
-                SELECT user_id, email, phone, provider, status, password_hash,
-                       created_at, last_login_at, trust_score,
-                       total_points, total_distance_km, completed_sessions
+                SELECT user_id, email, phone, provider, status, visibility_mode, password_hash,
+                       provider_subject, created_at, last_login_at, trust_score,
+                  total_points, fcm_token
                 FROM user_account
                 """;
     }
 
     private User mapRow(ResultSet rs) throws SQLException {
         Timestamp lastLogin = rs.getTimestamp("last_login_at");
+        String visMode = rs.getString("visibility_mode");
         return new User(
                 rs.getObject("user_id", UUID.class),
                 rs.getString("email"),
                 rs.getString("phone"),
                 AuthProvider.valueOf(rs.getString("provider")),
                 AccountStatus.valueOf(rs.getString("status")),
+                visMode != null ? VisibilityMode.valueOf(visMode) : VisibilityMode.PUBLIC,
                 rs.getString("password_hash"),
+                rs.getString("provider_subject"),
                 rs.getTimestamp("created_at").toInstant(),
                 lastLogin != null ? lastLogin.toInstant() : null,
                 rs.getInt("trust_score"),
                 rs.getInt("total_points"),
-                rs.getDouble("total_distance_km"),
-                rs.getInt("completed_sessions")
+                0.0,
+                0,
+                rs.getString("fcm_token")
         );
     }
 }

@@ -40,6 +40,17 @@ public class WalkProposalResponse {
     @SerializedName("session_id")
     private String sessionId;           // null until CONFIRMED
 
+    // Populated on every response to /accept: "ACCEPTED" if this user has
+    // already tapped Accept, null/absent otherwise.  Distinguishes Case A
+    // (partial acceptance, partner still pending) from a fresh PENDING view.
+    @SerializedName("my_acceptance_status")
+    private String myAcceptanceStatus;
+
+    // True when this proposal was created via a private walk invite (UC-15).
+    // The backend auto-accepts the sender's side for private invites.
+    @SerializedName("is_private")
+    private boolean privateInvite;
+
     public String getProposalId()       { return proposalId; }
     public String getCallersIntentId()  { return callersIntentId; }
     public String getMatchedIntentId()  { return matchedIntentId; }
@@ -49,7 +60,9 @@ public class WalkProposalResponse {
     public String getProposedTimeEnd()  { return proposedTimeEnd; }
     public double getProposedLat()      { return proposedLat; }
     public double getProposedLng()      { return proposedLng; }
-    public String getStatus()           { return status; }
-    public String getExpiresAt()        { return expiresAt; }
-    public String getSessionId()        { return sessionId; }
+    public String getStatus()             { return status; }
+    public String getExpiresAt()          { return expiresAt; }
+    public String getSessionId()          { return sessionId; }
+    public String getMyAcceptanceStatus() { return myAcceptanceStatus; }
+    public boolean isPrivateInvite()       { return privateInvite; }
 }

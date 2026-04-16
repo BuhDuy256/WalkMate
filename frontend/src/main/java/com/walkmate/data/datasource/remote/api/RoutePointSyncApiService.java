@@ -17,7 +17,7 @@ import retrofit2.http.POST;
  *
  * Currently consumed by the MOCK implementation in TrackingRepositoryImpl.
  * When the backend is ready, replace the mock executor call with:
- *   Retrofit retrofit = ApiClient.buildAuthenticatedRetrofit(sessionManager);
+ *   Retrofit retrofit = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService());
  *   RoutePointSyncApiService api = retrofit.create(RoutePointSyncApiService.class);
  *   api.pushRoutePoints(request).enqueue(...);
  */

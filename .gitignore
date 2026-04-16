@@ -16,7 +16,15 @@ local.properties
 /personal
 .env
 .idea
-.claude
+
+# Firebase credentials — must never be committed
+google-services.json
+firebase-service-account.json
 .grapuco
+.vscode
+.claude
+.idea
+.ackg
+*.log
 .ackg
 CLAUDE.md

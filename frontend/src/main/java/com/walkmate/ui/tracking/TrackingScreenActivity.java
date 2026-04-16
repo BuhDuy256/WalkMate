@@ -17,6 +17,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -31,7 +37,9 @@ import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.domain.tracking.WalkState;
+import com.walkmate.domain.walksession.AbortReason;
 import com.walkmate.service.WalkTrackerService;
+import com.walkmate.ui.gamification.PostSessionSummaryFragment;
 
 import java.util.List;
 import java.util.Locale;
@@ -56,19 +64,20 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     // ── Intent extra keys (re-exported from WalkTrackerService) ──────────────
 
     public static final String EXTRA_SESSION_ID   = WalkTrackerService.EXTRA_SESSION_ID;
+    public static final String EXTRA_PARTNER_ID   = WalkTrackerService.EXTRA_PARTNER_ID;
     public static final String EXTRA_PARTNER_NAME = WalkTrackerService.EXTRA_PARTNER_NAME;
     public static final String EXTRA_MEETING_LAT  = WalkTrackerService.EXTRA_MEETING_LAT;
     public static final String EXTRA_MEETING_LNG  = WalkTrackerService.EXTRA_MEETING_LNG;
 
     private static final String TAG = "TrackingScreenActivity";
     private static final int    REQUEST_LOCATION_PERMISSION = 100;
-    private static final float  MAP_DEFAULT_ZOOM   = 16.5f; // meeting-point overview
     private static final float  MAP_TRACKING_ZOOM  = 18.5f; // close follow during walk
     private static final int    POLYLINE_COLOR      = 0xFFFF7B3A; // orange_end
 
     // ── Session contract ──────────────────────────────────────────────────────
 
     private String sessionId;
+    private String partnerId;
     private String partnerName;
     private double meetingLat;
     private double meetingLng;
@@ -84,6 +93,10 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     /** True after the camera has flown to the first GPS point. */
     private boolean      hasInitialCameraFly = false;
 
+    // ── Location (for immediate zoom before first GPS fix from service) ────────
+
+    private FusedLocationProviderClient fusedLocationClient;
+
     // ── Views ─────────────────────────────────────────────────────────────────
 
     private AvatarInitialView      avatarPartner;
@@ -95,6 +108,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private LinearLayout          btnRowPauseStop;
     private MaterialButton        btnPause;
     private MaterialButton        btnStop;
+    private MaterialButton        btnComplete;
+    private MaterialButton        btnAbort;
     private FloatingActionButton  fabRecenter;
     private LinearLayout          bottomPanel;
 
@@ -102,6 +117,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private boolean finishDialogShown = false;
     private int     bottomPanelHeightPx = 0;
+    private boolean shouldStartWalkAfterPermission = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -115,13 +131,21 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         bindViews();
         setupBottomPanel();
-        setupMap();
-        setupClickListeners();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         TrackingViewModelFactory factory = new TrackingViewModelFactory(getApplication());
         viewModel = new ViewModelProvider(this, factory).get(TrackingViewModel.class);
-        viewModel.startTrackingSession(sessionId, partnerName, meetingLat, meetingLng);
+        viewModel.startTrackingSession(sessionId, partnerId, partnerName, meetingLat, meetingLng);
         viewModel.getUiState().observe(this, this::renderState);
+        viewModel.getCompletionError().observe(this, error -> {
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        setupMap();
+        setupClickListeners();
     }
 
     /**
@@ -158,16 +182,34 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         map.getUiSettings().setCompassEnabled(false);
         map.getUiSettings().setZoomControlsEnabled(false);
 
-        // Fly to meeting point as the initial map position.
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(meetingLat, meetingLng), MAP_DEFAULT_ZOOM));
+        // Show the blue "you are here" dot if permission is already granted.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            //noinspection MissingPermission
+            map.setMyLocationEnabled(true);
+        } else {
+            // Ask once on map load so recenter/initial zoom can work immediately.
+            requestLocationPermission(false);
+        }
+
+        // Immediately center on the device location as the initial map position.
+        // Don't move to meeting-point coordinates first.
+        // Mark initial fly now so stale cached route points cannot override this
+        // initial camera decision on map startup.
+        zoomToDeviceLocation(true);
 
         // Re-apply the latest ViewModel state in case GPS points arrived before
         // the map finished loading (rare, but possible on slow devices).
         TrackingUiState latestState = viewModel.getUiState().getValue();
         if (latestState != null && !latestState.getMapPoints().isEmpty()) {
             updatePolyline(latestState.getMapPoints());
-            handleCameraUpdate(latestState);
+            if (latestState.isCameraFollowingUser()) {
+                handleCameraUpdate(latestState);
+            }
+        } else if (latestState != null && latestState.getWalkState() == WalkState.ACTIVE) {
+            // Walk already started but service hasn't delivered a point yet — zoom
+            // immediately to the device's cached last-known location.
+            zoomToDeviceLocation(true);
         }
     }
 
@@ -196,17 +238,26 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
         // Re-center — animate camera to the latest GPS point.
-        fabRecenter.setOnClickListener(v -> recenterCamera());
+        fabRecenter.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                recenterCamera();
+            } else {
+                requestLocationPermission(false);
+            }
+        });
 
         // Start — requires ACCESS_FINE_LOCATION at runtime.
         btnStart.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 viewModel.startWalk();
+                // Immediately fly to the cached last-known location so the user
+                // doesn't stare at the meeting-point overview while waiting for
+                // the first GPS fix from WalkTrackerService.
+                zoomToDeviceLocation(true);
             } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        REQUEST_LOCATION_PERMISSION);
+                requestLocationPermission(true);
             }
         });
 
@@ -227,6 +278,43 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             viewModel.finishWalk();
             // renderState() will react to FINISHED and show the summary dialog.
         });
+
+        // Complete Walk — confirmation dialog then API-backed completion.
+        btnComplete.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.complete_walk_confirm_title)
+                    .setMessage(R.string.complete_walk_confirm_message)
+                    .setPositiveButton(R.string.btn_complete_confirm,
+                            (d, w) -> viewModel.requestCompleteWalk())
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        });
+
+        // Emergency Abort — radio-button dialog with AbortReason, then API-backed abort.
+        btnAbort.setOnClickListener(v -> showAbortReasonDialog());
+    }
+
+    private void showAbortReasonDialog() {
+        String[] labels = {
+                getString(R.string.abort_reason_safety),
+                getString(R.string.abort_reason_emergency),
+                getString(R.string.abort_reason_misconduct),
+                getString(R.string.abort_reason_other)
+        };
+        AbortReason[] reasons = {
+                AbortReason.SAFETY_CONCERN,
+                AbortReason.EMERGENCY,
+                AbortReason.PARTNER_MISCONDUCT,
+                AbortReason.OTHER
+        };
+        final int[] selected = {0};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.abort_walk_title)
+                .setSingleChoiceItems(labels, 0, (d, which) -> selected[0] = which)
+                .setPositiveButton(R.string.btn_abort_confirm,
+                        (d, w) -> viewModel.abortWalk(reasons[selected[0]]))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     @Override
@@ -237,11 +325,32 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         if (requestCode == REQUEST_LOCATION_PERMISSION
                 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            viewModel.startWalk();
+            // Enable the blue dot now that we have the runtime grant.
+            if (googleMap != null) {
+                //noinspection MissingPermission
+                googleMap.setMyLocationEnabled(true);
+            }
+            // Always center the map once permission is granted.
+            zoomToDeviceLocation(false);
+
+            // Only auto-start walk when this permission request came from Start.
+            if (shouldStartWalkAfterPermission) {
+                shouldStartWalkAfterPermission = false;
+                viewModel.startWalk();
+                zoomToDeviceLocation(true);
+            }
         } else {
+            shouldStartWalkAfterPermission = false;
             Toast.makeText(this,
                     R.string.tracking_permission_denied, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void requestLocationPermission(boolean startWalkAfterGrant) {
+        shouldStartWalkAfterPermission = startWalkAfterGrant;
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                REQUEST_LOCATION_PERMISSION);
     }
 
     // ── State rendering ───────────────────────────────────────────────────────
@@ -253,16 +362,23 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void renderState(TrackingUiState state) {
         updatePartnerHeader(state.getPartnerName());
         updateStats(state);
-        updateControls(state.getWalkState());
+        updateControls(state);
 
         if (googleMap != null) {
             updatePolyline(state.getMapPoints());
             handleCameraUpdate(state);
+            if (state.isCameraFollowingUser()
+                    && state.getMapPoints().isEmpty()
+                    && !hasInitialCameraFly) {
+                // ACTIVE but no route points yet: keep trying to center on device
+                // so users don't stay stuck at a world/default viewport.
+                zoomToDeviceLocation(true);
+            }
         }
 
         if (state.getWalkState() == WalkState.FINISHED && !finishDialogShown) {
             finishDialogShown = true;
-            showWalkCompletedDialog(state);
+            showPostSessionSummary(state);
         }
     }
 
@@ -278,36 +394,74 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Controls which button row is shown based on the walk state:
+     * Controls which button row is shown based on the walk state and new session lifecycle fields:
      * <ul>
-     *   <li>{@code READY}    — Start only</li>
-     *   <li>{@code ACTIVE}   — Pause ("Pause") + Stop</li>
-     *   <li>{@code PAUSED}   — Pause ("Resume") + Stop</li>
-     *   <li>{@code FINISHED} — all hidden (summary dialog takes over)</li>
+     *   <li>{@code READY}     — Start only</li>
+     *   <li>{@code ACTIVE}    — Pause/Resume row + Complete Walk + Abort</li>
+     *   <li>{@code PAUSED}    — Pause/Resume row only</li>
+     *   <li>{@code FINISHING} — Complete/Abort disabled (saving indicator)</li>
+     *   <li>{@code FINISHED}  — all hidden (summary dialog takes over)</li>
      * </ul>
      */
-    private void updateControls(WalkState state) {
-        switch (state) {
+    private void updateControls(TrackingUiState state) {
+        WalkState walkState = state.getWalkState();
+        switch (walkState) {
             case READY:
                 btnStart.setVisibility(View.VISIBLE);
                 btnRowPauseStop.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.GONE);
+                btnAbort.setVisibility(View.GONE);
                 break;
 
             case ACTIVE:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_pause);
+                btnComplete.setVisibility(View.VISIBLE);
+                btnAbort.setVisibility(View.VISIBLE);
+                long tooEarly = state.getCompleteTooEarlySeconds();
+                if (tooEarly > 0) {
+                    btnComplete.setEnabled(false);
+                    btnComplete.setText(getString(R.string.tracking_complete_too_early_format, tooEarly));
+                } else {
+                    btnComplete.setEnabled(true);
+                    btnComplete.setText(R.string.btn_complete_walk);
+                }
+                btnAbort.setEnabled(true);
                 break;
 
             case PAUSED:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_resume);
+                // Keep Complete and Abort accessible — user may need them without resuming.
+                btnComplete.setVisibility(View.VISIBLE);
+                btnComplete.setEnabled(state.getCompleteTooEarlySeconds() == 0);
+                if (state.getCompleteTooEarlySeconds() > 0) {
+                    btnComplete.setText(getString(R.string.tracking_complete_too_early_format,
+                            state.getCompleteTooEarlySeconds()));
+                } else {
+                    btnComplete.setText(R.string.btn_complete_walk);
+                }
+                btnAbort.setVisibility(View.VISIBLE);
+                btnAbort.setEnabled(true);
+                break;
+
+            case FINISHING:
+                btnStart.setVisibility(View.GONE);
+                btnRowPauseStop.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.VISIBLE);
+                btnComplete.setEnabled(false);
+                btnComplete.setText(R.string.btn_complete_walk);
+                btnAbort.setVisibility(View.VISIBLE);
+                btnAbort.setEnabled(false);
                 break;
 
             case FINISHED:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.GONE);
+                btnAbort.setVisibility(View.GONE);
                 break;
         }
     }
@@ -348,6 +502,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         LatLng latest = points.get(points.size() - 1);
 
         if (!hasInitialCameraFly) {
+            if (!state.isCameraFollowingUser()) {
+                return;
+            }
             hasInitialCameraFly = true;
             // First point: hard move (no animation) to avoid disorienting the user.
             googleMap.moveCamera(
@@ -361,27 +518,118 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void recenterCamera() {
         if (googleMap == null) return;
         TrackingUiState state = viewModel.getUiState().getValue();
-        if (state == null || state.getMapPoints().isEmpty()) return;
-
-        LatLng latest = state.getMapPoints().get(state.getMapPoints().size() - 1);
-        googleMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(latest, MAP_TRACKING_ZOOM));
+        if (state != null && !state.getMapPoints().isEmpty()) {
+            // Route has points — fly to the latest recorded position.
+            LatLng latest = state.getMapPoints().get(state.getMapPoints().size() - 1);
+            googleMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(latest, MAP_TRACKING_ZOOM));
+        } else {
+            // No route points yet (walk not started or waiting for first GPS fix)
+            // — fall back to the device's cached last-known location.
+            zoomToDeviceLocation(true);
+        }
     }
 
-    // ── Walk completed dialog ─────────────────────────────────────────────────
+    /**
+     * Flies the camera to the device's current location.
+     *
+     * Strategy: try {@link FusedLocationProviderClient#getLastLocation()} first
+     * (instant if a recent fix is cached). If it returns {@code null} — which
+     * happens on a fresh boot, after a location-permission toggle, or when the
+     * device hasn't moved in a long time — fall back to
+     * {@link FusedLocationProviderClient#getCurrentLocation} to force a fresh fix.
+     * This guarantees the camera always moves to the user rather than staying
+     * pinned to the meeting-point coordinates.
+     *
+     * @param markInitialFly if {@code true}, sets {@link #hasInitialCameraFly} so that
+     *                       the first route-point handler doesn't double-animate.
+     *                       Pass {@code false} when calling before the walk has started
+     *                       so the first real GPS fix can still trigger a zoom.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void zoomToDeviceLocation(boolean markInitialFly) {
+        if (googleMap == null || fusedLocationClient == null) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) return;
 
-    private void showWalkCompletedDialog(TrackingUiState state) {
-        String message = getString(R.string.walk_completed_message,
-                formatDistance(state.getDistanceKm()),
-                formatDuration(state.getElapsedSeconds()),
-                formatPace(state.getPaceMinPerKm()));
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null && googleMap != null) {
+                if (markInitialFly) hasInitialCameraFly = true;
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(location.getLatitude(), location.getLongitude()),
+                        MAP_TRACKING_ZOOM));
+            } else {
+                // No cached fix — request a fresh location so the camera always
+                // moves to the user instead of staying at the meeting point.
+                fusedLocationClient.getCurrentLocation(
+                        Priority.PRIORITY_HIGH_ACCURACY, null)
+                        .addOnSuccessListener(this, freshLocation -> {
+                            if (freshLocation != null && googleMap != null) {
+                                if (markInitialFly) hasInitialCameraFly = true;
+                                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                                        new LatLng(freshLocation.getLatitude(),
+                                                freshLocation.getLongitude()),
+                                        MAP_TRACKING_ZOOM));
+                            } else {
+                                requestOneShotLocation(markInitialFly);
+                            }
+                        });
+            }
+        });
+    }
 
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.walk_completed_title)
-                .setMessage(message)
-                .setPositiveButton(R.string.btn_done, (d, w) -> finish())
-                .setCancelable(false)
-                .show();
+    @SuppressWarnings("MissingPermission")
+    private void requestOneShotLocation(boolean markInitialFly) {
+        if (googleMap == null || fusedLocationClient == null) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) return;
+
+        LocationRequest request = new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY, 1_000L)
+                .setMinUpdateIntervalMillis(500L)
+                .setMaxUpdates(1)
+                .build();
+
+        LocationCallback callback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult result) {
+                android.location.Location loc = result.getLastLocation();
+                if (loc != null && googleMap != null) {
+                    if (markInitialFly) hasInitialCameraFly = true;
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                            new LatLng(loc.getLatitude(), loc.getLongitude()),
+                            MAP_TRACKING_ZOOM));
+                }
+                fusedLocationClient.removeLocationUpdates(this);
+            }
+        };
+
+        fusedLocationClient.requestLocationUpdates(request, callback, getMainLooper());
+    }
+
+    // ── Walk completed → Post-Session Summary ─────────────────────────────────
+
+    /**
+     * Replaces the old summary dialog with a full PostSessionSummaryFragment.
+     * The Fragment is added over android.R.id.content so it covers the tracking
+     * UI without the user seeing the map underneath.
+     *
+     * The {@code isAborted} flag is determined by whether the current walk state
+     * transitioned through FINISHING via an abort action (tracked via the ViewModel's
+     * last abortWalk() call). We derive it from the walk state: FINISHED after
+     * requestCompleteWalk() → not aborted; FINISHED after abortWalk() → aborted.
+     * Since the Activity cannot distinguish these directly from WalkState alone, we
+     * use the abortPending flag on TrackingUiState (default: false for completed).
+     */
+    private void showPostSessionSummary(TrackingUiState state) {
+        boolean isAborted = viewModel.wasLastActionAbort();
+        PostSessionSummaryFragment fragment =
+                PostSessionSummaryFragment.newInstance(sessionId, partnerName, partnerId, isAborted);
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(android.R.id.content, fragment, PostSessionSummaryFragment.TAG)
+                .commit();
     }
 
     // ── Stat formatters ───────────────────────────────────────────────────────
@@ -429,6 +677,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         btnRowPauseStop     = findViewById(R.id.btnRowPauseStop);
         btnPause            = findViewById(R.id.btnPause);
         btnStop             = findViewById(R.id.btnStop);
+        btnComplete         = findViewById(R.id.btnComplete);
+        btnAbort            = findViewById(R.id.btnAbort);
         fabRecenter         = findViewById(R.id.fabRecenter);
         bottomPanel         = findViewById(R.id.bottomPanel);
     }
@@ -441,6 +691,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void readIntentExtras() {
         Intent intent = getIntent();
         sessionId   = intent.getStringExtra(EXTRA_SESSION_ID);
+        partnerId   = intent.getStringExtra(EXTRA_PARTNER_ID);
         partnerName = intent.getStringExtra(EXTRA_PARTNER_NAME);
         meetingLat  = intent.getDoubleExtra(EXTRA_MEETING_LAT, 0.0);
         meetingLng  = intent.getDoubleExtra(EXTRA_MEETING_LNG, 0.0);
@@ -453,6 +704,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         Log.d(TAG, "TrackingScreen opened:"
                 + "\n  sessionId   = " + sessionId
+                + "\n  partnerId   = " + partnerId
                 + "\n  partnerName = " + partnerName
                 + "\n  meetingLat  = " + meetingLat
                 + "\n  meetingLng  = " + meetingLng);

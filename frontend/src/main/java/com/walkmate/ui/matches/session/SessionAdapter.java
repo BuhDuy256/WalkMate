@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.walkmate.core.designsystem.view.ActivationWindowButtonView;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
 
 import androidx.annotation.NonNull;
@@ -32,8 +33,11 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         void onCancelClick(WalkSession session);
     }
 
-    public interface OnStartWalkClickListener {
-        void onStartWalkClick(WalkSession session);
+    public interface SessionActionListener {
+        void onArriveClicked(String sessionId);
+        void onAbortClicked(String sessionId);
+        void onCompleteClicked(WalkSession session);
+        void onReportClicked(String sessionId, String partnerId);
     }
 
     // -------------------------------------------------------------------------
@@ -41,7 +45,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     private final List<WalkSession> items = new ArrayList<>();
     private OnChatClickListener chatListener;
     private OnCancelClickListener cancelListener;
-    private OnStartWalkClickListener startWalkListener;
+    private SessionActionListener sessionActionListener;
 
     public void setOnChatClickListener(OnChatClickListener listener) {
         this.chatListener = listener;
@@ -51,8 +55,8 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         this.cancelListener = listener;
     }
 
-    public void setOnStartWalkClickListener(OnStartWalkClickListener listener) {
-        this.startWalkListener = listener;
+    public void setSessionActionListener(SessionActionListener listener) {
+        this.sessionActionListener = listener;
     }
 
     public void setItems(List<WalkSession> newItems) {
@@ -71,7 +75,13 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(items.get(position));
+        holder.bind(items.get(position), sessionActionListener);
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        holder.activationBtn.release();
     }
 
     @Override
@@ -83,26 +93,32 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
+        final ActivationWindowButtonView activationBtn;
         private final AvatarInitialView avatarPartner;
         private final TextView txtPartnerName;
         private final TextView txtMeetingPoint;
         private final TextView txtMeetingTime;
         private final MaterialButton btnChat;
         private final MaterialButton btnCancelSession;
-        private final MaterialButton btnStartWalk;
+        final MaterialButton btnComplete;
+        final MaterialButton btnAbort;
+        private final MaterialButton btnReportIssue;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            avatarPartner = itemView.findViewById(R.id.avatarPartner);
+            activationBtn    = itemView.findViewById(R.id.activationBtn);
+            avatarPartner    = itemView.findViewById(R.id.avatarPartner);
             txtPartnerName   = itemView.findViewById(R.id.txtPartnerName);
             txtMeetingPoint  = itemView.findViewById(R.id.txtMeetingPoint);
             txtMeetingTime   = itemView.findViewById(R.id.txtMeetingTime);
             btnChat          = itemView.findViewById(R.id.btnChat);
             btnCancelSession = itemView.findViewById(R.id.btnCancelSession);
-            btnStartWalk     = itemView.findViewById(R.id.btnStartWalk);
+            btnComplete      = itemView.findViewById(R.id.btnComplete);
+            btnAbort         = itemView.findViewById(R.id.btnAbort);
+            btnReportIssue   = itemView.findViewById(R.id.btnReportIssue);
         }
 
-        void bind(WalkSession session) {
+        void bind(WalkSession session, SessionActionListener listener) {
             String name = session.getPartnerName();
             avatarPartner.bind(name, null);
 
@@ -118,12 +134,33 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 if (cancelListener != null) cancelListener.onCancelClick(session);
             });
 
-            // "Start Walk" is only available when the partner has been met at the meeting point
-            boolean isPendingMeet = session.getStatus() == WalkSession.Status.PENDING;
-            btnStartWalk.setVisibility(isPendingMeet ? View.VISIBLE : View.GONE);
-            btnStartWalk.setOnClickListener(v -> {
-                if (startWalkListener != null) startWalkListener.onStartWalkClick(session);
-            });
+            if (session.getStatus() == WalkSession.Status.PENDING) {
+                activationBtn.setVisibility(View.VISIBLE);
+                activationBtn.bind(session.getScheduledTime(),
+                        v -> { if (listener != null) listener.onArriveClicked(session.getSessionId()); });
+                btnComplete.setVisibility(View.GONE);
+                btnAbort.setVisibility(View.GONE);
+                btnReportIssue.setVisibility(View.GONE);
+            } else if (session.getStatus() == WalkSession.Status.ACTIVE) {
+                activationBtn.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.VISIBLE);
+                btnComplete.setEnabled(true);
+                btnComplete.setText(R.string.btn_resume_walk);
+                btnComplete.setOnClickListener(v -> {
+                    if (listener != null) listener.onCompleteClicked(session);
+                });
+                btnAbort.setVisibility(View.VISIBLE);
+                btnAbort.setOnClickListener(v -> { if (listener != null) listener.onAbortClicked(session.getSessionId()); });
+                btnReportIssue.setVisibility(View.VISIBLE);
+                btnReportIssue.setOnClickListener(v -> {
+                    if (listener != null) listener.onReportClicked(session.getSessionId(), session.getPartnerId());
+                });
+            } else {
+                activationBtn.setVisibility(View.GONE);
+                btnComplete.setVisibility(View.GONE);
+                btnAbort.setVisibility(View.GONE);
+                btnReportIssue.setVisibility(View.GONE);
+            }
         }
 
         private String formatMeetingPoint(double lat, double lng) {

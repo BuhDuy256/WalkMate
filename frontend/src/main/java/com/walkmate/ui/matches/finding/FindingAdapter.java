@@ -4,6 +4,7 @@ import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,9 +14,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.CountdownTimerView;
 import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkintent.WalkIntent;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -26,11 +29,21 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
         void onCancelClick(WalkIntent intent);
     }
 
+    public interface OnIntentActionListener {
+        void onViewProposalClicked(String intentId);
+        void onIntentExpired();
+    }
+
     private final List<WalkIntent> items = new ArrayList<>();
     private OnCancelClickListener cancelListener;
+    private OnIntentActionListener actionListener;
 
     public void setOnCancelClickListener(OnCancelClickListener listener) {
         this.cancelListener = listener;
+    }
+
+    public void setOnIntentActionListener(OnIntentActionListener listener) {
+        this.actionListener = listener;
     }
 
     public void setItems(List<WalkIntent> newItems) {
@@ -49,8 +62,30 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        if (!boundHolders.contains(holder)) boundHolders.add(holder);
         holder.bind(items.get(position));
     }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        holder.countdown.cancelCountdown();
+        boundHolders.remove(holder);
+    }
+
+    /**
+     * Cancels all active countdown timers. Call from
+     * {@code FindingFragment.onDestroyView()} to prevent leaked timers when the
+     * fragment's view is torn down before RecyclerView recycles every holder.
+     */
+    public void cancelAllTimers() {
+        for (ViewHolder holder : new ArrayList<>(boundHolders)) {
+            holder.countdown.cancelCountdown();
+        }
+        boundHolders.clear();
+    }
+
+    private final List<ViewHolder> boundHolders = new ArrayList<>();
 
     @Override
     public int getItemCount() {
@@ -63,20 +98,26 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
         private final TextView txtHotspotName;
         private final TextView txtTimeWindow;
+        private final CountdownTimerView countdown;
         private final Chip chipDuration;
         private final Chip chipAgeRange;
         private final TagChipGroup chipGroupTags;
         private final Chip chipStatus;
+        private final ImageView imgLock;
+        private final MaterialButton btnFindMatch;
         private final MaterialButton btnCancelIntent;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             txtHotspotName  = itemView.findViewById(R.id.txtHotspotName);
             txtTimeWindow   = itemView.findViewById(R.id.txtTimeWindow);
+            countdown       = itemView.findViewById(R.id.countdownTimer);
             chipDuration    = itemView.findViewById(R.id.chipDuration);
             chipAgeRange    = itemView.findViewById(R.id.chipAgeRange);
             chipGroupTags   = itemView.findViewById(R.id.chipGroupTags);
             chipStatus      = itemView.findViewById(R.id.chipStatus);
+            imgLock         = itemView.findViewById(R.id.imgLock);
+            btnFindMatch    = itemView.findViewById(R.id.btnFindMatch);
             btnCancelIntent = itemView.findViewById(R.id.btnCancelIntent);
         }
 
@@ -95,9 +136,46 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
             bindStatusChip(intent.getStatus());
 
-            btnCancelIntent.setOnClickListener(v -> {
-                if (cancelListener != null) cancelListener.onCancelClick(intent);
-            });
+            // Determine expiry state upfront so it can affect both countdown and button visibility
+            long millisUntilExpiry = Long.MAX_VALUE;
+            if (intent.getExpiresAt() != null) {
+                millisUntilExpiry = Instant.parse(intent.getExpiresAt()).toEpochMilli()
+                        - System.currentTimeMillis();
+            }
+            boolean isExpired = millisUntilExpiry <= 0;
+
+            // Countdown timer
+            if (intent.getExpiresAt() != null) {
+                countdown.setVisibility(View.VISIBLE);
+                countdown.startCountdown(intent.getExpiresAt());
+                countdown.setOnExpiredListener(() -> {
+                    if (actionListener != null) actionListener.onIntentExpired();
+                });
+            } else {
+                countdown.setVisibility(View.GONE);
+                countdown.cancelCountdown();
+            }
+
+            // OPEN vs MATCHING state
+            if (intent.isMatching()) {
+                btnFindMatch.setVisibility(View.VISIBLE);
+                btnFindMatch.setText(R.string.btn_view_proposal);
+                btnFindMatch.setOnClickListener(v -> {
+                    if (actionListener != null) actionListener.onViewProposalClicked(intent.getId());
+                });
+                btnCancelIntent.setVisibility(View.GONE);
+                imgLock.setVisibility(View.VISIBLE);
+            } else {
+                // OPEN — hide Cancel when already expired; show it otherwise
+                btnFindMatch.setVisibility(View.GONE);
+                btnCancelIntent.setVisibility(isExpired ? View.GONE : View.VISIBLE);
+                imgLock.setVisibility(View.GONE);
+                if (!isExpired) {
+                    btnCancelIntent.setOnClickListener(v -> {
+                        if (cancelListener != null) cancelListener.onCancelClick(intent);
+                    });
+                }
+            }
         }
 
         private void bindStatusChip(String status) {

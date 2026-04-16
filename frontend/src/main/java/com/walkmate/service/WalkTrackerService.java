@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
@@ -23,6 +24,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.domain.tracking.SessionTrackingService;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
 
@@ -57,6 +59,7 @@ public class WalkTrackerService extends Service {
     // ── Intent extras ─────────────────────────────────────────────────────────
 
     public static final String EXTRA_SESSION_ID    = "SESSION_ID";
+    public static final String EXTRA_PARTNER_ID    = "PARTNER_ID";
     public static final String EXTRA_PARTNER_NAME  = "PARTNER_NAME";
     public static final String EXTRA_MEETING_LAT   = "MEETING_POINT_LAT";
     public static final String EXTRA_MEETING_LNG   = "MEETING_POINT_LNG";
@@ -69,7 +72,7 @@ public class WalkTrackerService extends Service {
     // ── Location config ───────────────────────────────────────────────────────
 
     /** How often to request a new GPS fix (milliseconds). */
-    private static final long LOCATION_INTERVAL_MS     = 3_000L;
+    private static final long LOCATION_INTERVAL_MS     = 5_000L;
     /** Fastest interval — ignored if no other app is requesting faster. */
     private static final long LOCATION_FASTEST_MS      = 1_500L;
     /** Minimum movement between fixes delivered to the callback. */
@@ -120,7 +123,21 @@ public class WalkTrackerService extends Service {
 
         // ── Wire domain service ────────────────────────────────────────────────
         WalkMateApplication app = (WalkMateApplication) getApplicationContext();
-        sessionTrackingService = new SessionTrackingService(app.getTrackingRepository());
+        TrackingRepositoryImpl trackingRepository =
+                (TrackingRepositoryImpl) app.getTrackingRepository();
+        sessionTrackingService = new SessionTrackingService(trackingRepository);
+
+        // ── PHASE 10: Register SessionEndedListener ────────────────────────────
+        // When the backend signals the session is terminal (SESSION_NOT_ACTIVE /
+        // SESSION_NOT_FOUND) during any periodic sync, we update the notification
+        // and stop the foreground service cleanly on the main thread.
+        trackingRepository.setSessionEndedListener(errorCode -> {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                updateNotification("Your walk session has ended.");
+                stopSelf();
+            });
+        });
+
         sessionTrackingService.startSession(sessionId);
 
         // ── Move to foreground immediately ─────────────────────────────────────
@@ -165,10 +182,20 @@ public class WalkTrackerService extends Service {
     // ── Internal helpers ──────────────────────────────────────────────────────
 
     private void startLocationUpdates() {
+        // Build the location request. LocationRequest.Builder requires Play Services 21+
+        // (roughly Android 12+ on most devices). On Android 9 (Samsung J7 Pro) with
+        // older Play Services, the Builder API still works but may silently drop updates
+        // if the device's GPS accuracy is below MAX_ACCURACY_METRES. The real fix for
+        // that is in LocationFilterPolicy (threshold raised to 300 m). Here we keep the
+        // Builder path but wrap the registration in a broad catch so we can fall back
+        // gracefully rather than crashing or silently stopping tracking.
         LocationRequest locationRequest = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY, LOCATION_INTERVAL_MS)
                 .setMinUpdateIntervalMillis(LOCATION_FASTEST_MS)
                 .setMinUpdateDistanceMeters(LOCATION_MIN_DISTANCE_M)
+                // Do NOT call setWaitForAccurateLocation(true) — that can delay the
+                // first fix by 30+ seconds on Android 9 / weak GPS chips, causing
+                // the polyline to stay blank for a long time.
                 .build();
 
         locationCallback = new LocationCallback() {
@@ -181,6 +208,9 @@ public class WalkTrackerService extends Service {
                 // the work off to its own executor thread.
                 android.location.Location loc = result.getLastLocation();
                 if (loc != null) {
+                    Log.v(TAG, "GPS fix: lat=" + loc.getLatitude()
+                            + " lng=" + loc.getLongitude()
+                            + " accuracy=" + loc.getAccuracy() + "m");
                     sessionTrackingService.onLocationReceived(
                             loc.getLatitude(),
                             loc.getLongitude(),
@@ -194,11 +224,15 @@ public class WalkTrackerService extends Service {
                     locationRequest,
                     locationCallback,
                     Looper.getMainLooper());
-            Log.d(TAG, "Location updates requested");
+            Log.d(TAG, "Location updates requested (interval=" + LOCATION_INTERVAL_MS + "ms)");
         } catch (SecurityException e) {
             // ACCESS_FINE_LOCATION not granted — the Activity is responsible for
             // checking and requesting this permission before starting the service.
-            Log.e(TAG, "Location permission not granted: " + e.getMessage());
+            Log.e(TAG, "Location permission not granted — stopping service: " + e.getMessage());
+            stopSelf();
+        } catch (Exception e) {
+            // Catch-all for unexpected failures on older Play Services versions.
+            Log.e(TAG, "Failed to request location updates: " + e.getMessage(), e);
             stopSelf();
         }
     }
@@ -236,6 +270,25 @@ public class WalkTrackerService extends Service {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
         } else {
             startForeground(NOTIFICATION_ID, notification);
+        }
+    }
+
+    /**
+     * Updates the foreground notification text in-place.
+     * Must be called on the main thread.
+     */
+    private void updateNotification(String contentText) {
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Walk in progress")
+                .setContentText(contentText)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build();
+
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.notify(NOTIFICATION_ID, notification);
         }
     }
 

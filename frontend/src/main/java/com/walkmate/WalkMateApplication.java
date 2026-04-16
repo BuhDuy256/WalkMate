@@ -1,23 +1,40 @@
 package com.walkmate;
 
 import android.app.Application;
+import android.util.Log;
 
+import com.google.firebase.FirebaseApp;
+import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.data.datasource.remote.api.AuthInterceptor;
+import com.walkmate.data.repository.ChatRepositoryImpl;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
+import com.walkmate.data.repository.HotspotRepositoryImpl;
 import com.walkmate.data.repository.NotificationRepositoryImpl;
+import com.walkmate.data.repository.ReviewRepositoryImpl;
 import com.walkmate.data.repository.SocialRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.UserProfileRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
+import com.walkmate.data.repository.WalkIntentRepositoryImpl;
+import com.walkmate.data.repository.WalkProposalRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
+import com.walkmate.domain.chat.ChatRepository;
 import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.notification.NotificationRepository;
+import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
+import com.walkmate.domain.walkintent.WalkIntentRepository;
+import com.walkmate.domain.walkproposal.WalkProposalRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
+
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
  * Application-level Service Locator.
@@ -27,28 +44,45 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  * Hilt/Dagger while keeping the DI contract explicit and testable.
  *
  * Usage in a ViewModel factory:
- *   WalkMateApplication app = (WalkMateApplication) context.getApplicationContext();
- *   TrackingRepository repo = app.getTrackingRepository();
+ * WalkMateApplication app = (WalkMateApplication)
+ * context.getApplicationContext();
+ * TrackingRepository repo = app.getTrackingRepository();
  */
 public class WalkMateApplication extends Application {
 
-    private WalkMateDatabase        database;
-    private SessionManager          sessionManager;
-    private TrackingRepository      trackingRepository;
-    private WalkSessionRepository   walkSessionRepository;
-    private UserRepository          userRepository;
-    private UserProfileRepository   userProfileRepository;
-    private GamificationRepository  gamificationRepository;
-    private SocialRepository        socialRepository;
-    private NotificationRepository  notificationRepository;
+    private WalkMateDatabase database;
+    private SessionManager sessionManager;
+    private OkHttpClient sharedOkHttpClient;
+    private ChatRepository chatRepository;
+    private HotspotRepository hotspotRepository;
+    private TrackingRepository trackingRepository;
+    private WalkIntentRepository walkIntentRepository;
+    private WalkProposalRepository walkProposalRepository;
+    private WalkSessionRepository walkSessionRepository;
+    private UserRepository userRepository;
+    private UserProfileRepository userProfileRepository;
+    private GamificationRepository gamificationRepository;
+    private SocialRepository socialRepository;
+    private NotificationRepository notificationRepository;
+    private ReviewRepository reviewRepository;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // Initialize Firebase first — required for FCM token generation
+        // and push notifications to function correctly.
+        FirebaseApp.initializeApp(this);
+        Log.d("WalkMateApp", "FirebaseApp initialized");
+
         // Eagerly instantiate the DB and SessionManager so the first Room query
         // and any authenticated network call don't pay a cold-start penalty.
-        database       = WalkMateDatabase.getInstance(this);
+        database = WalkMateDatabase.getInstance(this);
         sessionManager = new SessionManager(this);
+
+        // Eagerly initialize AuthEventBus so the singleton exists before any
+        // background OkHttp thread could invoke TokenRefreshAuthenticator.
+        AuthEventBus.getInstance();
     }
 
     // ── Singletons ────────────────────────────────────────────────────────────
@@ -61,11 +95,69 @@ public class WalkMateApplication extends Application {
         return sessionManager;
     }
 
+    /**
+     * Returns a lazily-created shared OkHttpClient with the AuthInterceptor attached.
+     * Reused by ChatRepositoryImpl so we don't spin up a second connection pool.
+     */
+    public OkHttpClient getOkHttpClient() {
+        if (sharedOkHttpClient == null) {
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor()
+                    .setLevel(HttpLoggingInterceptor.Level.BASIC);
+            sharedOkHttpClient = new OkHttpClient.Builder()
+                    .addInterceptor(logging)
+                    .addInterceptor(new AuthInterceptor(sessionManager))
+                    .build();
+        }
+        return sharedOkHttpClient;
+    }
+
+    /**
+     * Derives the WebSocket base URL from the HTTP base URL defined in BuildConfig.
+     * e.g. "http://192.168.x.x:8080/" → "ws://192.168.x.x:8080/api/v1/sessions/"
+     */
+    public String getBaseWsUrl() {
+        String httpBase = com.walkmate.BuildConfig.BASE_URL;
+        String wsBase = httpBase
+                .replace("https://", "wss://")
+                .replace("http://",  "ws://");
+        // Ensure trailing slash before appending path
+        if (!wsBase.endsWith("/")) wsBase += "/";
+        return wsBase + "api/v1/sessions/";
+    }
+
+    public ChatRepository getChatRepository() {
+        if (chatRepository == null) {
+            chatRepository = new ChatRepositoryImpl(getOkHttpClient(), getBaseWsUrl());
+        }
+        return chatRepository;
+    }
+
+    public HotspotRepository getHotspotRepository() {
+        if (hotspotRepository == null) {
+            hotspotRepository = new HotspotRepositoryImpl(this);
+        }
+        return hotspotRepository;
+    }
+
     public TrackingRepository getTrackingRepository() {
         if (trackingRepository == null) {
             trackingRepository = new TrackingRepositoryImpl(database.routePointDao(), sessionManager);
         }
         return trackingRepository;
+    }
+
+    public WalkIntentRepository getWalkIntentRepository() {
+        if (walkIntentRepository == null) {
+            walkIntentRepository = new WalkIntentRepositoryImpl(this);
+        }
+        return walkIntentRepository;
+    }
+
+    public WalkProposalRepository getWalkProposalRepository() {
+        if (walkProposalRepository == null) {
+            walkProposalRepository = new WalkProposalRepositoryImpl(this);
+        }
+        return walkProposalRepository;
     }
 
     public WalkSessionRepository getWalkSessionRepository() {
@@ -108,5 +200,12 @@ public class WalkMateApplication extends Application {
             notificationRepository = new NotificationRepositoryImpl(this);
         }
         return notificationRepository;
+    }
+
+    public ReviewRepository getReviewRepository() {
+        if (reviewRepository == null) {
+            reviewRepository = new ReviewRepositoryImpl(this);
+        }
+        return reviewRepository;
     }
 }

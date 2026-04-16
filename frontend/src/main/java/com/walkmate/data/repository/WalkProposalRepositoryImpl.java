@@ -6,13 +6,14 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.ProposalApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.data.mapper.WalkProposalMapper;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walkproposal.WalkProposal;
 import com.walkmate.domain.walkproposal.WalkProposalRepository;
-import com.walkmate.domain.walksession.WalkSession;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -31,7 +32,7 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
 
     public WalkProposalRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(ProposalApiService.class);
     }
 
@@ -51,7 +52,12 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                     callback.onSuccess(WalkProposalMapper.toDomainList(
                             data != null ? data : Collections.emptyList()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSALS_FETCH_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSALS_FETCH_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getProposals network error", e);
@@ -60,29 +66,22 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
         });
     }
 
-    /**
-     * Accepts a proposal.
-     * - If both users have now accepted (status == CONFIRMED), calls onSuccess with the new WalkSession.
-     * - If only this user has accepted (status == PENDING), calls onSuccess(null) — the caller
-     *   should interpret null as "waiting for the other participant".
-     */
     @Override
-    public void acceptProposal(String proposalId, DomainCallback<WalkSession> callback) {
+    public void acceptProposal(String proposalId, DomainCallback<WalkProposal> callback) {
         executor.execute(() -> {
             try {
                 Response<ApiResponse<WalkProposalResponse>> resp =
                         apiService.acceptProposal(proposalId).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    WalkProposalResponse proposal = resp.body().getData();
-                    if (proposal.getSessionId() != null) {
-                        callback.onSuccess(WalkProposalMapper.toSession(proposal));
-                    } else {
-                        // Partial accept — waiting for the other participant
-                        callback.onSuccess(null);
-                    }
+                    callback.onSuccess(WalkProposalMapper.toDomain(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSAL_ACCEPT_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_ACCEPT_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "acceptProposal network error", e);
@@ -100,7 +99,12 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "PROPOSAL_PASS_FAILED")));
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_PASS_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "passProposal network error", e);
@@ -109,14 +113,27 @@ public class WalkProposalRepositoryImpl implements WalkProposalRepository {
         });
     }
 
-    // ---------------------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------------------
+    @Override
+    public void cancelProposal(String proposalId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = apiService.cancelProposal(proposalId).execute();
 
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "PROPOSAL_CANCEL_FAILED");
+                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "cancelProposal network error", e);
+                callback.onError(e);
+            }
+        });
     }
+
 }

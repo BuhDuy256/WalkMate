@@ -152,21 +152,58 @@
 
             </LinearLayout>
 
-            <!-- Start Walk CTA — only visible for PENDING sessions -->
+            <!-- Activation window — PENDING sessions: "I'm Here!" button with
+                 auto-enable/disable based on the 10-min-before / 15-min-after window. -->
+            <com.walkmate.core.designsystem.view.ActivationWindowButtonView
+                android:id="@+id/activationBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:visibility="gone" />
+
+            <!-- Complete Walk CTA — ACTIVE sessions, enabled after 5 min -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStartWalk"
+                android:id="@+id/btnComplete"
                 style="@style/Widget.Material3.Button.UnelevatedButton"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="10dp"
                 android:background="@drawable/bg_gradient_orange_pill"
-                android:text="@string/btn_start_walk"
+                android:text="@string/btn_complete_walk"
                 android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:visibility="gone"
                 app:cornerRadius="999dp"
                 app:backgroundTint="@null" />
+
+            <!-- Emergency Abort — ACTIVE sessions -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAbort"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/btn_abort_walk"
+                android:textColor="@color/color_danger"
+                android:textSize="14sp"
+                android:visibility="gone"
+                app:strokeColor="@color/color_danger"
+                app:strokeWidth="1.5dp"
+                app:cornerRadius="999dp" />
+
+            <!-- Report Issue — ACTIVE sessions only (GAP-15) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReportIssue"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="4dp"
+                android:text="Report an Issue"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:visibility="gone" />
 
         </LinearLayout>
 

@@ -4,6 +4,8 @@ public class LoginResponseDto {
     private String accessToken;
     private String tokenType;
     private long expiresIn;
+    private String refreshToken;
+    private long refreshTokenExpiresIn;
 
     public String getAccessToken() {
         return accessToken;
@@ -15,5 +17,13 @@ public class LoginResponseDto {
 
     public long getExpiresIn() {
         return expiresIn;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public long getRefreshTokenExpiresIn() {
+        return refreshTokenExpiresIn;
     }
 }

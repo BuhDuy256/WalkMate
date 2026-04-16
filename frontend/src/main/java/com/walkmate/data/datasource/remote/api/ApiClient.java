@@ -32,13 +32,15 @@ public final class ApiClient {
         return PUBLIC_RETROFIT.create(AuthApiService.class);
     }
 
-    // ── Authenticated client — attaches Bearer token from SessionManager ──
+    // ── Authenticated client — attaches Bearer token + handles 401 refresh ──
     public static Retrofit buildAuthenticatedRetrofit(
-        SessionManager sessionManager
+        SessionManager sessionManager,
+        AuthApiService authApiService
     ) {
         OkHttpClient authenticatedClient = new OkHttpClient.Builder()
             .addInterceptor(LOGGING_INTERCEPTOR)
             .addInterceptor(new AuthInterceptor(sessionManager))
+            .authenticator(new TokenRefreshAuthenticator(sessionManager, authApiService))
             .build();
 
         return new Retrofit.Builder()

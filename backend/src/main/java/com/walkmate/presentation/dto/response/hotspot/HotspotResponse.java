@@ -5,6 +5,5 @@ public record HotspotResponse(
         String name,
         double lat,
         double lng,
-        int activeWalkerCount
-) {
+        int openIntentCount) {
 }

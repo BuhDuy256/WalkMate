@@ -6,19 +6,29 @@ import java.util.List;
 
 public interface SocialRepository {
 
-    // ── Follow ────────────────────────────────────────────────────────────────
+    // ── Friends ───────────────────────────────────────────────────────────────
 
-    void follow(String targetUserId, DomainCallback<Void> callback);
+    void getFriends(DomainCallback<List<UserSummary>> callback);
 
-    void unfollow(String targetUserId, DomainCallback<Void> callback);
+    void sendFriendRequest(String userId, DomainCallback<Void> callback);
 
-    void getFollowers(String userId, DomainCallback<List<UserSummary>> callback);
+    void acceptFriendRequest(String requestId, DomainCallback<Void> callback);
 
-    void getFollowing(String userId, DomainCallback<List<UserSummary>> callback);
+    void declineFriendRequest(String requestId, DomainCallback<Void> callback);
+
+    void getIncomingRequests(DomainCallback<List<FriendRequest>> callback);
+
+    void getOutgoingRequests(DomainCallback<List<FriendRequest>> callback);
+
+    void removeFriend(String userId, DomainCallback<Void> callback);
+
+    void getPublicProfile(String userId, DomainCallback<UserSummary> callback);
 
     // ── Block ─────────────────────────────────────────────────────────────────
 
     void block(String targetUserId, DomainCallback<Void> callback);
 
     void unblock(String targetUserId, DomainCallback<Void> callback);
+
+    void getBlockedUsers(DomainCallback<List<UserSummary>> callback);
 }

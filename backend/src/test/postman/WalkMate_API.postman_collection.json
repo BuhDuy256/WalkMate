@@ -1,0 +1,4350 @@
+{
+  "info": {
+    "_postman_id": "wm-api-collection-v1",
+    "name": "WalkMate API",
+    "description": "Comprehensive Postman Collection for WalkMate Backend APIs (UC-01 to UC-43).\n\n## Quick Start\n1. Create a Postman Environment.\n2. Set `baseUrl` = `http://localhost:8080`.\n3. Run **UC-01 Register** or **UC-02 Login** : the test script automatically extracts `accessToken` and `refreshToken` from `ApiResponse<T>.data` and saves them to the environment.\n4. All secured endpoints inherit the collection-level **Bearer {{accessToken}}** auth : no manual header setup needed.\n\n## ApiResponse<T> Wrapper\nEvery response is wrapped as:\n```json\n{ \"success\": true|false, \"data\": <T>|null, \"error\": null|{\"code\":\"...\",\"message\":\"...\"}, \"timestamp\": \"ISO-8601\" }\n```\nValidation errors return HTTP 422 with `error.code = VALIDATION_ERROR` and `error.message` as a comma-separated `field: reason` string.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "00000000-0000-0000-0000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "hotspotId",
+      "value": "hotspot-id-here",
+      "type": "string"
+    },
+    {
+      "key": "intentId",
+      "value": "intent-id-here",
+      "type": "string"
+    },
+    {
+      "key": "proposalId",
+      "value": "proposal-id-here",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "session-id-here",
+      "type": "string"
+    },
+    {
+      "key": "friendUserId",
+      "value": "00000000-0000-0000-0000-000000000002",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "friendship-id-here",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "notification-id-here",
+      "type": "string"
+    },
+    {
+      "key": "avatarFilename",
+      "value": "avatar.jpg",
+      "type": "string"
+    },
+    {
+      "key": "googleIdToken",
+      "value": "firebase-google-id-token-here",
+      "type": "string"
+    },
+    {
+      "key": "userA_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userB_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_intentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_proposalId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userB_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userB_refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userB_intentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "friendRequestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "privateProposalId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_privateIntentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "E2E Integration Flow",
+      "description": "Full realistic user lifecycle for Collection Runner automated end-to-end testing.\n\nScenario: Two strangers register, match publicly, complete a walk, become friends, then walk together privately.\n\n── Phase 1: Setup & Authentication (Steps 1–2) ─────────────────\n  Register User A (Alice) and User B (Bob). Tokens and user IDs extracted from JWT.\n\n── Phase 2: The First Encounter — Public Match (Steps 3–9) ──────\n  User A posts an OPEN intent. User B posts an overlapping intent, triggering an\n  inline match. Both accept the proposal, mutually activate, and complete the walk.\n\n── Phase 3: Post-Session & Social Connection (Steps 10–13) ──────\n  User A reviews User B. User A sends a friend request. User B accepts it.\n  They are now friends — private invite is unlocked.\n\n── Phase 4: The Second Encounter — Private Invite (Steps 14–18) ─\n  User A creates a private intent inviting User B. User B accepts. Both activate.\n\nRun via: Postman Collection Runner → select \"E2E Integration Flow\" folder → Run All.\nSee README.md in this folder for full setup instructions.",
+      "item": [
+        {
+          "name": "[Phase 1 - Step 1] [User A] UC-01 — Register Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data.accessToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('accessToken');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "function parseJwt(token) {",
+                  "    try {",
+                  "        var b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');",
+                  "        return JSON.parse(atob(b64));",
+                  "    } catch(e) { return null; }",
+                  "}",
+                  "var tokenA = json.data.accessToken;",
+                  "var payloadA = parseJwt(tokenA);",
+                  "var userAId = payloadA ? (payloadA.sub || payloadA.userId || payloadA.id) : null;",
+                  "pm.test('JWT sub (userA_id) is extractable', function () {",
+                  "    pm.expect(userAId).to.not.be.null;",
+                  "});",
+                  "pm.collectionVariables.set('userA_token', tokenA);",
+                  "pm.environment.set('userA_token', tokenA);",
+                  "console.log('[User A] userA_token:', tokenA);",
+                  "pm.collectionVariables.set('userA_id', userAId);",
+                  "pm.environment.set('userA_id', userAId);",
+                  "console.log('[User A] userA_id:', userAId);",
+                  "if (json.data.refreshToken) {",
+                  "    pm.collectionVariables.set('userA_refreshToken', json.data.refreshToken);",
+                  "    pm.environment.set('userA_refreshToken', json.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Alice Walker\",\n  \"email\": \"alice@walkmate.vn\",\n  \"password\": \"password123\",\n  \"deviceId\": \"android-device-alice\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "UC-01 (User A): Registers User A (Alice).\n\nTest script:\n- Asserts HTTP 201 and ApiResponse.success=true.\n- Extracts accessToken and decodes the JWT payload to get the userId (sub claim).\n- Saves: {{userA_token}}, {{userA_id}}, {{userA_refreshToken}}.\n\nReplace email with a unique address each test run, or seed the DB fresh."
+          }
+        },
+        {
+          "name": "[Phase 1 - Step 2] [User B] UC-01 — Register Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data.accessToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('accessToken');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "function parseJwt(token) {",
+                  "    try {",
+                  "        var b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');",
+                  "        return JSON.parse(atob(b64));",
+                  "    } catch(e) { return null; }",
+                  "}",
+                  "var tokenB = json.data.accessToken;",
+                  "var payloadB = parseJwt(tokenB);",
+                  "var userBId = payloadB ? (payloadB.sub || payloadB.userId || payloadB.id) : null;",
+                  "pm.test('JWT sub (userB_id) is extractable', function () {",
+                  "    pm.expect(userBId).to.not.be.null;",
+                  "});",
+                  "pm.collectionVariables.set('userB_token', tokenB);",
+                  "pm.environment.set('userB_token', tokenB);",
+                  "console.log('[User B] userB_token:', tokenB);",
+                  "pm.collectionVariables.set('userB_id', userBId);",
+                  "pm.environment.set('userB_id', userBId);",
+                  "console.log('[User B] userB_id:', userBId);",
+                  "if (json.data.refreshToken) {",
+                  "    pm.collectionVariables.set('userB_refreshToken', json.data.refreshToken);",
+                  "    pm.environment.set('userB_refreshToken', json.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Bob Walker\",\n  \"email\": \"bob@walkmate.vn\",\n  \"password\": \"password123\",\n  \"deviceId\": \"android-device-bob\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "UC-01 (User B): Registers User B (Bob).\n\nTest script:\n- Asserts HTTP 201 and ApiResponse.success=true.\n- Extracts accessToken and decodes JWT to get userId.\n- Saves: {{userB_token}}, {{userB_id}}, {{userB_refreshToken}}.\n\nPrerequisite: Step 1 must have run first (no dependency on variables, but ordering matters for the narrative)."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 3] [User A] UC-15 — Create Public Walk Intent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data.intent is present', function () {",
+                  "    pm.expect(json.data).to.have.property('intent');",
+                  "    pm.expect(json.data.intent.id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('Intent status is OPEN (no match yet)', function () {",
+                  "    pm.expect(json.data.intent.status).to.eql('OPEN');",
+                  "});",
+                  "pm.test('No inline proposal (User B has not posted yet)', function () {",
+                  "    pm.expect(json.data.proposal).to.be.null;",
+                  "});",
+                  "pm.collectionVariables.set('userA_intentId', json.data.intent.id);",
+                  "pm.environment.set('userA_intentId', json.data.intent.id);",
+                  "console.log('[User A] userA_intentId:', json.data.intent.id);",
+                  "// If an inline match IS found (race condition), also save proposalId",
+                  "if (json.data.proposal) {",
+                  "    pm.collectionVariables.set('proposalId', json.data.proposal.proposal_id);",
+                  "    pm.environment.set('proposalId', json.data.proposal.proposal_id);",
+                  "    console.log('[User A] Unexpected inline match - proposalId:', json.data.proposal.proposal_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-12-31\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 40,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Looking for a friendly walking partner!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "UC-15 (User A — Public, Case A2 expected): User A posts a public walk intent.\n\nExpected outcome: OPEN status, proposal = null (no match yet because User B has not posted their intent yet).\n\nSaves: {{userA_intentId}}\n\nInvariants checked: I-1 (no overlapping intent/session for User A).\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 4] [User B] UC-15 — Create Public Walk Intent (Triggers Inline Match)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data.intent is present', function () {",
+                  "    pm.expect(json.data).to.have.property('intent');",
+                  "    pm.expect(json.data.intent.id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('Case A1 — Inline match found: proposal is populated', function () {",
+                  "    pm.expect(json.data.proposal).to.not.be.null;",
+                  "    pm.expect(json.data.proposal.proposal_id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(json.data.proposal.status).to.eql('PENDING');",
+                  "});",
+                  "pm.test('Intent status is MATCHING after inline match', function () {",
+                  "    pm.expect(json.data.intent.status).to.eql('MATCHING');",
+                  "});",
+                  "pm.collectionVariables.set('userB_intentId', json.data.intent.id);",
+                  "pm.environment.set('userB_intentId', json.data.intent.id);",
+                  "console.log('[User B] userB_intentId:', json.data.intent.id);",
+                  "if (json.data.proposal) {",
+                  "    var pid = json.data.proposal.proposal_id;",
+                  "    pm.collectionVariables.set('proposalId', pid);",
+                  "    pm.environment.set('proposalId', pid);",
+                  "    console.log('[Public Match] proposalId:', pid);",
+                  "    pm.test('proposal.my_acceptance_status is PENDING for User B', function () {",
+                  "        pm.expect(json.data.proposal.my_acceptance_status).to.eql('PENDING');",
+                  "    });",
+                  "    pm.test('proposal.expires_at is set (5-min TTL)', function () {",
+                  "        pm.expect(json.data.proposal.expires_at).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-12-31\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 40,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Happy to walk with anyone!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "UC-15 (User B — Public, Case A1 expected): User B posts a public walk intent with overlapping time window/hotspot. Backend finds User A's OPEN intent and creates a MatchProposal inline (P-1).\n\nExpected outcome: MATCHING status, proposal populated with status=PENDING.\n\nSaves: {{userB_intentId}}, {{proposalId}}\n\nInvariants: I-1 (overlap check), I-2 (matching condition), I-4 (matching lock).\n\nAuthenticated via {{userB_token}}.\n\nNOTE: {{hotspotId}} must point to the same hotspot used in Step 3."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 5] [User A] UC-20 — Accept Proposal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Proposal status is PENDING or CONFIRMED', function () {",
+                  "    pm.expect(['PENDING','CONFIRMED']).to.include(json.data.status);",
+                  "});",
+                  "// Case A: partial acceptance — User B has not accepted yet",
+                  "// Case B: both accepted (possible if B accepted concurrently)",
+                  "if (json.data.status === 'CONFIRMED' && json.data.session_id) {",
+                  "    pm.collectionVariables.set('sessionId', json.data.session_id);",
+                  "    pm.environment.set('sessionId', json.data.session_id);",
+                  "    console.log('[Phase 2] sessionId:', json.data.session_id);",
+                  "    console.log('[User A] Both accepted immediately — session created!');",
+                  "} else {",
+                  "    console.log('[User A] Partial acceptance recorded. Waiting for User B (Step 6).');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}",
+                "accept"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-20 (User A): User A accepts the MatchProposal created in Step 4.\n\nUses: {{proposalId}} (saved by Step 4).\n\nExpected outcome: status=PENDING (partial — User B has not accepted yet).\n\nIf CONFIRMED immediately, saves {{sessionId}}.\n\nInvariants: P-2 (both intents still MATCHING).\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 6] [User B] UC-20 — Accept Proposal → Creates Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Proposal is CONFIRMED — both accepted', function () {",
+                  "    pm.expect(json.data.status).to.eql('CONFIRMED');",
+                  "});",
+                  "pm.test('session_id is present on CONFIRMED', function () {",
+                  "    pm.expect(json.data.session_id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('sessionId', json.data.session_id);",
+                  "pm.environment.set('sessionId', json.data.session_id);",
+                  "console.log('[Phase 2] sessionId:', json.data.session_id);",
+                  "pm.test('Proposal has required WalkSession reference', function () {",
+                  "    pm.expect(json.data.session_id).to.not.be.null;",
+                  "});",
+                  "console.log('[User B] Session CONFIRMED. WalkSession created. Proceed to activation (Steps 7-8).');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}",
+                "accept"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-20 (User B): User B accepts the same proposal. Since User A already accepted in Step 5, this triggers the CONFIRMED state (invariant P-3 atomic transaction):\n  1. Both intents → CONSUMED (I-3)\n  2. WalkSession created in PENDING status (S-1)\n  3. MongoDB chat room created\n\nUses: {{proposalId}}\nSaves: {{sessionId}}\n\nAuthenticated via {{userB_token}}."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 7] [User A] UC-24 — Activate Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data.session_id matches saved sessionId', function () {",
+                  "    pm.expect(json.data.session_id).to.eql(pm.environment.get('sessionId') || pm.collectionVariables.get('sessionId'));",
+                  "});",
+                  "pm.test('Session status is PENDING or ACTIVE after User A activation', function () {",
+                  "    pm.expect(['PENDING','ACTIVE']).to.include(json.data.status);",
+                  "});",
+                  "if (json.data.status === 'ACTIVE') {",
+                  "    pm.test('started_at is set on ACTIVE', function () { pm.expect(json.data.started_at).to.not.be.null; });",
+                  "    console.log('[User A] Both activated simultaneously — session is ACTIVE!');",
+                  "} else {",
+                  "    console.log('[User A] Activation recorded (PENDING). Proceed to Step 8 to activate User B.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-24 (User A): User A taps \"I'm Here!\" — records arrival at the hotspot.\n\nUses: {{sessionId}}\n\nExpected outcome: status=PENDING (User B has not yet activated).\n\nInvariants: S-3 (activation window = [scheduledStart − 10 min, scheduledStart + 15 min]).\n\nNOTE: This call must be made within the activation window. In automated testing this may return SESSION_ACTIVATION_WINDOW_CLOSED if the scheduled time has passed.\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 8] [User B] UC-24 — Activate Session → Walk ACTIVE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Session transitions to ACTIVE when both activate', function () {",
+                  "    pm.expect(json.data.status).to.eql('ACTIVE');",
+                  "});",
+                  "pm.test('started_at is set on ACTIVE', function () {",
+                  "    pm.expect(json.data.started_at).to.not.be.null;",
+                  "});",
+                  "pm.test('Both activation timestamps are populated', function () {",
+                  "    pm.expect(json.data.user_a_activated_at).to.not.be.null;",
+                  "    pm.expect(json.data.user_b_activated_at).to.not.be.null;",
+                  "});",
+                  "console.log('[User B] Session is ACTIVE. Walk has begun at:', json.data.started_at);",
+                  "console.log('GPS sync (UC-28) should start now for both users.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-24 (User B): User B taps \"I'm Here!\" — mutual activation triggers PENDING → ACTIVE transition (invariant S-2).\n\nUses: {{sessionId}}\n\nExpected outcome: status=ACTIVE, started_at set, both activation timestamps non-null.\n\nThis is the final state before the walk ends. After this, GPS sync (UC-28) runs in background.\n\nInvariants: S-2 (bilateral activation required), S-3 (within window).\n\nAuthenticated via {{userB_token}}."
+          }
+        },
+        {
+          "name": "[Phase 2 - Step 9] [User A] UC-26 — Complete Walk Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// UC-26 requires at least 5 minutes of active walk (invariant S-5).",
+                  "// In automated testing this may return SESSION_COMPLETE_TOO_EARLY (400).",
+                  "// Both outcomes are tested below.",
+                  "var status = pm.response.code;",
+                  "pm.test('Complete returns 200 OK or 400 TOO_EARLY', function () {",
+                  "    pm.expect([200, 400]).to.include(status);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (status === 200) {",
+                  "    pm.test('ApiResponse.success is true on 200', function () { pm.expect(json.success).to.be.true; });",
+                  "    pm.test('Session status is COMPLETED', function () { pm.expect(json.data.status).to.eql('COMPLETED'); });",
+                  "    pm.test('ended_at is set', function () { pm.expect(json.data.ended_at).to.not.be.null; });",
+                  "    console.log('[User A] Session COMPLETED. ended_at:', json.data.ended_at);",
+                  "    console.log('Proceed to Phase 3: Review and Friend Request.');",
+                  "} else {",
+                  "    pm.test('Error code is SESSION_COMPLETE_TOO_EARLY', function () {",
+                  "        pm.expect(json.error.code).to.eql('SESSION_COMPLETE_TOO_EARLY');",
+                  "    });",
+                  "    console.warn('[User A] Walk is less than 5 minutes. Wait and retry. Invariant S-5 enforced.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "complete"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-26 (User A): User A ends the walk.\n\nUses: {{sessionId}}\n\nExpected outcome: HTTP 200, status=COMPLETED, ended_at set.\n\nIMPORTANT: Invariant S-5 enforces a minimum 5-minute walk. If run immediately after activation in automated testing, the backend returns HTTP 400 with error code SESSION_COMPLETE_TOO_EARLY. The test script handles both outcomes gracefully.\n\nOn COMPLETED: GPS sync stops, chat is locked (S-7), reputation is updated (X-4), route is available via UC-30.\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 3 - Step 10] [User A] UC-31 — Submit Review for User B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Review response contains rating_stars', function () {",
+                  "    pm.expect(json.data).to.have.property('rating_stars');",
+                  "    pm.expect(json.data.rating_stars).to.be.within(1, 5);",
+                  "});",
+                  "console.log('[User A] Review submitted for User B. Trust score will be recalculated (X-4).');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "review"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating_stars\": 5,\n  \"comment\": \"Great walk! Bob was very friendly and punctual.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "UC-31 (User A): User A submits a star review for User B (the partner) for the just-completed session.\n\nUses: {{sessionId}}\n\nThe reviewee (User B) is inferred server-side from the session participants. No explicit reviewedUserId in the body.\n\nInvariants: Session must be COMPLETED (else REVIEW_SESSION_NOT_COMPLETED).\nInvariants: X-4 — review-based trust score adjustment is applied.\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 3 - Step 11] [User A] UC-34 — Send Friend Request to User B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "console.log('[User A] Friend request sent to User B (userB_id: ' + pm.environment.get('userB_id') + ').');",
+                  "console.log('Proceed to Step 12: User B views incoming requests.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/{{userB_id}}/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "{{userB_id}}",
+                "request"
+              ]
+            },
+            "description": "UC-34 (User A): User A sends a friend request to User B.\n\nUses: {{userB_id}} (saved at Step 2 from JWT).\n\nExpected outcome: HTTP 201, request is PENDING.\n\nError codes: FRIEND_REQUEST_ALREADY_FRIENDS | FRIEND_REQUEST_ALREADY_PENDING | FRIEND_REQUEST_BLOCKED | SOCIAL_USER_NOT_FOUND.\n\nThe friendship must reach ACCEPTED before User A can use invited_friend_id in a private intent (Phase 4).\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 3 - Step 12] [User B] UC-36 — View Incoming Friend Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data is an array', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "pm.test('At least one incoming request exists', function () {",
+                  "    pm.expect(json.data.length).to.be.greaterThan(0);",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    var req = json.data[0];",
+                  "    pm.test('Request has id field', function () { pm.expect(req).to.have.property('id'); });",
+                  "    pm.test('Request status is PENDING', function () { pm.expect(req.status).to.eql('PENDING'); });",
+                  "    pm.collectionVariables.set('friendRequestId', req.id);",
+                  "    pm.environment.set('friendRequestId', req.id);",
+                  "    console.log('[User B] friendRequestId:', req.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/requests/incoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "requests",
+                "incoming"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-36 (User B): User B fetches their incoming friend requests.\n\nExpected outcome: Array containing the request from User A (Step 11).\n\nSaves: {{friendRequestId}} — the ID of the first pending request, used in Step 13.\n\nAuthenticated via {{userB_token}}."
+          }
+        },
+        {
+          "name": "[Phase 3 - Step 13] [User B] UC-35 — Accept Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('ApiResponse indicates success', function () { pm.expect(json.success).to.be.true; });",
+                  "console.log('[User B] Friend request accepted! User A and User B are now friends.');",
+                  "console.log('Private walk invite (Phase 4) is now unlocked.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/requests/{{friendRequestId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "requests",
+                "{{friendRequestId}}",
+                "accept"
+              ]
+            },
+            "description": "UC-35 (User B): User B accepts User A's friend request.\n\nUses: {{friendRequestId}} (saved at Step 12).\n\nExpected outcome: HTTP 200, friendship status = ACCEPTED.\n\nPost-condition: User A and User B are now friends. This unlocks the private walk invite (invariant I-7 + UC-15 Case B). User A can now set invited_friend_id = {{userB_id}} in Phase 4.\n\nAuthenticated via {{userB_token}}."
+          }
+        },
+        {
+          "name": "[Phase 4 - Step 14] [User A] UC-15 — Create Private Walk Intent (Invite User B)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Case B — Private invite: proposal is auto-created', function () {",
+                  "    pm.expect(json.data.proposal).to.not.be.null;",
+                  "    pm.expect(json.data.proposal.proposal_id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(json.data.proposal.status).to.eql('PENDING');",
+                  "});",
+                  "pm.test('Intent status is MATCHING (private invite auto-matched)', function () {",
+                  "    pm.expect(json.data.intent.status).to.eql('MATCHING');",
+                  "});",
+                  "pm.test('Sender is auto-accepted (my_acceptance_status = ACCEPTED)', function () {",
+                  "    pm.expect(json.data.proposal.my_acceptance_status).to.eql('ACCEPTED');",
+                  "});",
+                  "pm.collectionVariables.set('userA_privateIntentId', json.data.intent.id);",
+                  "pm.environment.set('userA_privateIntentId', json.data.intent.id);",
+                  "console.log('[User A Private] userA_privateIntentId:', json.data.intent.id);",
+                  "var ppid = json.data.proposal.proposal_id;",
+                  "    pm.collectionVariables.set('privateProposalId', ppid);",
+                  "    pm.environment.set('privateProposalId', ppid);",
+                  "    console.log('[Private Invite] privateProposalId:', ppid);",
+                  "// Also mirror to proposalId for use in Steps 16",
+                  "pm.collectionVariables.set('proposalId', ppid);",
+                  "pm.environment.set('proposalId', ppid);",
+                  "console.log('[mirrored] proposalId:', ppid);",
+                  "console.log('[User A] Private invite sent to User B. Sender auto-accepted. User B must accept within 5 min (P-4).');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-06-08\",\n  \"time_start\": 8.0,\n  \"time_end\": 9.5,\n  \"age_min\": 18,\n  \"age_max\": 50,\n  \"is_private\": true,\n  \"invited_friend_id\": \"{{userB_id}}\",\n  \"description\": \"Just the two of us this time!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "UC-15 (User A — Case B Private Invite): User A creates a private intent targeting User B (now an accepted friend).\n\nUses: {{userB_id}}\nSaves: {{userA_privateIntentId}}, {{privateProposalId}}, {{proposalId}} (mirrored)\n\nBackend behavior (I-7, P-1):\n  - Creates paired intents for both users atomically.\n  - Both intents set to MATCHING.\n  - MatchProposal created in PENDING.\n  - Sender (User A) is auto-accepted.\n  - Push notification sent to User B.\n\nThe receiver intent is system-generated and never surfaces in public OPEN list.\n\nPrerequisite: User A and User B must be ACCEPTED friends (Step 13).\nError if not friends: INTENT_PRIVATE_FRIEND_NOT_ACCEPTED.\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 4 - Step 15] [User B] UC-19 — View Incoming Proposals (Private Invite)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('data is an array', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "pm.test('User B can see the private invite proposal', function () {",
+                  "    pm.expect(json.data.length).to.be.greaterThan(0);",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    // Find the matching private proposal by cross-referencing privateProposalId",
+                  "    var targetId = pm.environment.get('privateProposalId') || pm.collectionVariables.get('privateProposalId');",
+                  "    var found = json.data.find(function(p) { return p.proposal_id === targetId; });",
+                  "    var proposal = found || json.data[0];",
+                  "    pm.test('Proposal has required fields', function () {",
+                  "        pm.expect(proposal).to.have.property('proposal_id');",
+                  "        pm.expect(proposal).to.have.property('status');",
+                  "        pm.expect(proposal).to.have.property('expires_at');",
+                  "        pm.expect(proposal).to.have.property('my_acceptance_status');",
+                  "    });",
+                  "    pm.test('Proposal status is PENDING', function () {",
+                  "        pm.expect(proposal.status).to.eql('PENDING');",
+                  "    });",
+                  "    pm.test('User B acceptance is PENDING (waiting for User B to decide)', function () {",
+                  "        pm.expect(proposal.my_acceptance_status).to.eql('PENDING');",
+                  "    });",
+                  "    // Ensure proposalId is set to the private proposal for Step 16",
+                  "    pm.collectionVariables.set('proposalId', proposal.proposal_id);",
+                  "    pm.environment.set('proposalId', proposal.proposal_id);",
+                  "    console.log('[User B] Private invite proposal found:', proposal.proposal_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-19 (User B): User B opens the Proposals screen after receiving the push notification from Step 14.\n\nUses: {{privateProposalId}} to cross-reference the correct proposal.\n\nExpected outcome: At least one PENDING proposal visible; my_acceptance_status = PENDING for User B.\n\nAlso re-confirms {{proposalId}} points to the private proposal.\n\nInvariant: P-4 (5-min TTL) — this step should run promptly after Step 14.\n\nAuthenticated via {{userB_token}}."
+          }
+        },
+        {
+          "name": "[Phase 4 - Step 16] [User B] UC-20 — Accept Private Proposal → Creates Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Proposal is CONFIRMED (User A was auto-accepted in Step 14)', function () {",
+                  "    pm.expect(json.data.status).to.eql('CONFIRMED');",
+                  "});",
+                  "pm.test('session_id is present', function () {",
+                  "    pm.expect(json.data.session_id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('sessionId', json.data.session_id);",
+                  "pm.environment.set('sessionId', json.data.session_id);",
+                  "console.log('[Phase 4] sessionId:', json.data.session_id);",
+                  "console.log('[User B] Private session CONFIRMED. Proceed to mutual activation (Steps 17-18).');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}",
+                "accept"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-20 (User B): User B accepts the private invite proposal.\n\nUses: {{proposalId}} (pointing to privateProposalId)\nSaves: {{sessionId}} (overwrites Phase 2 session — this is the new Phase 4 session)\n\nSince User A was auto-accepted during the private invite creation (Step 14), this single acceptance by User B immediately produces status=CONFIRMED (P-2, P-3).\n\nAtomic transaction: both intents → CONSUMED, WalkSession created in PENDING.\n\nAuthenticated via {{userB_token}}."
+          }
+        },
+        {
+          "name": "[Phase 4 - Step 17] [User A] UC-24 — Activate Private Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Session status is PENDING or ACTIVE', function () {",
+                  "    pm.expect(['PENDING','ACTIVE']).to.include(json.data.status);",
+                  "});",
+                  "if (json.data.status === 'ACTIVE') {",
+                  "    pm.test('started_at set', function () { pm.expect(json.data.started_at).to.not.be.null; });",
+                  "    console.log('[User A] Private session ACTIVE immediately!');",
+                  "} else {",
+                  "    console.log('[User A] Activation recorded. Proceed to Step 18 for User B activation.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userA_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-24 (User A): User A activates the private walk session.\n\nUses: {{sessionId}} (Phase 4 session from Step 16)\n\nExpected outcome: status=PENDING (waiting for User B).\n\nInvariants: S-2 (mutual activation required), S-3 (activation window).\n\nAuthenticated via {{userA_token}}."
+          }
+        },
+        {
+          "name": "[Phase 4 - Step 18] [User B] UC-24 — Activate Private Session → Walk ACTIVE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () { pm.expect(json.success).to.be.true; });",
+                  "pm.test('Private session transitions to ACTIVE on mutual activation', function () {",
+                  "    pm.expect(json.data.status).to.eql('ACTIVE');",
+                  "});",
+                  "pm.test('started_at is set', function () { pm.expect(json.data.started_at).to.not.be.null; });",
+                  "pm.test('Both activation timestamps are set (S-2)', function () {",
+                  "    pm.expect(json.data.user_a_activated_at).to.not.be.null;",
+                  "    pm.expect(json.data.user_b_activated_at).to.not.be.null;",
+                  "});",
+                  "console.log('[User B] Private session is ACTIVE. Full E2E lifecycle complete!');",
+                  "console.log('Session started_at:', json.data.started_at);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userB_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "UC-24 (User B): User B activates the private walk session. Mutual activation triggers PENDING → ACTIVE (S-2).\n\nUses: {{sessionId}}\n\nThis is the final step of the full E2E lifecycle:\n  Strangers → Public Match → Friends → Private Walk → ACTIVE\n\nInvariants: S-2, S-3, S-6 (4h auto-close safety limit begins).\n\nAuthenticated via {{userB_token}}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth & Profile",
+      "item": [
+        {
+          "name": "UC-01 : Register Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.accessToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('accessToken');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('data.tokenType is Bearer', function () {",
+                  "    pm.expect(json.data.tokenType).to.eql('Bearer');",
+                  "});",
+                  "pm.test('data.expiresIn is a number', function () {",
+                  "    pm.expect(json.data.expiresIn).to.be.a('number');",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "        pm.environment.set('accessToken', json.data.accessToken);",
+                  "    }",
+                  "    if (json.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "        pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "    }",
+                  "    console.log('Tokens saved. accessToken:', json.data.accessToken.substring(0, 20) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Test User\",\n  \"email\": \"test@walkmate.vn\",\n  \"password\": \"password123\",\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "UC-01: Register a new account. Returns HTTP 201 with `LoginUserResponse` inside `data`.\n\n**Constraints:** fullname 1â€“100 chars | email valid format â‰¤255 | password 8â€“72 chars | deviceId non-blank\n\n**Auto-saves:** `accessToken`, `refreshToken` to collection variables and environment.\n\n**Error codes:** USER_ALREADY_EXISTS | VALIDATION_ERROR (422) | INTERNAL_ERROR"
+          }
+        },
+        {
+          "name": "UC-01 : Register Account [VALIDATION_ERROR : blank email]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422 Unprocessable Entity', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is false', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "});",
+                  "pm.test('error.code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(json.error.code).to.eql('VALIDATION_ERROR');",
+                  "});",
+                  "pm.test('error.message is a non-empty string', function () {",
+                  "    pm.expect(json.error.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Test User\",\n  \"email\": \"\",\n  \"password\": \"password123\",\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Negative test: expects VALIDATION_ERROR (422) when email is blank."
+          }
+        },
+        {
+          "name": "UC-02 : Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.accessToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('accessToken');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('data.refreshToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('refreshToken');",
+                  "    pm.expect(json.data.refreshToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('data.tokenType is Bearer', function () {",
+                  "    pm.expect(json.data.tokenType).to.eql('Bearer');",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "        pm.environment.set('accessToken', json.data.accessToken);",
+                  "    }",
+                  "    if (json.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "        pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "    }",
+                  "    console.log('Tokens saved. accessToken:', json.data.accessToken.substring(0, 20) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@walkmate.vn\",\n  \"password\": \"password123\",\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "UC-02: Authenticate with email + password. Returns HTTP 200 with `LoginUserResponse`.\n\n**Auto-saves:** `accessToken`, `refreshToken` to collection variables and environment.\n\n**Error codes:** USER_INVALID_CREDENTIALS | VALIDATION_ERROR (422)"
+          }
+        },
+        {
+          "name": "UC-02 : Login [USER_INVALID_CREDENTIALS]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is false', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "});",
+                  "pm.test('error.code is USER_INVALID_CREDENTIALS', function () {",
+                  "    pm.expect(json.error.code).to.eql('USER_INVALID_CREDENTIALS');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@walkmate.vn\",\n  \"password\": \"wrongpassword\",\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Negative test: expects USER_INVALID_CREDENTIALS (400) when password is wrong."
+          }
+        },
+        {
+          "name": "UC-07 : Login with Google (OAuth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "        pm.environment.set('accessToken', json.data.accessToken);",
+                  "    }",
+                  "    if (json.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "        pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"{{googleIdToken}}\",\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "google"
+              ]
+            },
+            "description": "UC-07: Sign in with a Firebase Google ID token. Backend verifies the token, resolves or creates the account, and returns tokens.\n\nSet `{{googleIdToken}}` to a real Firebase ID token before running.\n\n**Error codes:** GOOGLE_LOGIN_FAILED | VALIDATION_ERROR (422)"
+          }
+        },
+        {
+          "name": "UC-08 : Phone Sign-In: Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null (fire-and-forget)', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+84901234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/send-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "send-otp"
+              ]
+            },
+            "description": "UC-08: Dispatch an OTP SMS to the given E.164-formatted phone number. Returns {data: null}.\n\n**Error codes:** INVALID_USER_DATA | SEND_OTP_FAILED"
+          }
+        },
+        {
+          "name": "UC-09 : Phone Sign-In: Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.accessToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('accessToken');",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "        pm.environment.set('accessToken', json.data.accessToken);",
+                  "    }",
+                  "    if (json.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "        pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+84901234567\",\n  \"code\": \"123456\",\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "verify"
+              ]
+            },
+            "description": "UC-09: Verify the 6-digit OTP sent in UC-08. Returns access + refresh tokens on success.\n\n**Error codes:** USER_OTP_INVALID | VALIDATION_ERROR (422)"
+          }
+        },
+        {
+          "name": "UC-12 : Silent Token Refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('New accessToken is present', function () {",
+                  "    pm.expect(json.data).to.have.property('accessToken');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "        pm.environment.set('accessToken', json.data.accessToken);",
+                  "    }",
+                  "    if (json.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "        pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "    }",
+                  "    console.log('Tokens rotated successfully.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "UC-12: Exchange a valid refresh token for a new rotated access + refresh token pair. No auth header needed.\n\n**Auto-saves:** new `accessToken` and `refreshToken`."
+          }
+        },
+        {
+          "name": "UC-10 : Logout This Device",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"android-device-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "UC-10: Invalidates the refresh token bound to the given deviceId. App must clear local session regardless of response."
+          }
+        },
+        {
+          "name": "UC-11 : Logout All Devices",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "UC-11: Invalidates ALL refresh tokens for the user across all devices. No request body. Requires Bearer token."
+          }
+        },
+        {
+          "name": "UC-03 : View My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Profile has required fields', function () {",
+                  "    pm.expect(json.data).to.have.property('userId');",
+                  "    pm.expect(json.data).to.have.property('fullName');",
+                  "    pm.expect(json.data).to.have.property('trustScore');",
+                  "    pm.expect(json.data).to.have.property('totalDistanceKm');",
+                  "    pm.expect(json.data).to.have.property('totalSessions');",
+                  "    pm.expect(json.data).to.have.property('tags');",
+                  "    pm.expect(json.data.tags).to.be.an('array');",
+                  "});",
+                  "if (json.success && json.data && json.data.userId) {",
+                  "    pm.collectionVariables.set('userId', json.data.userId);",
+                  "    pm.environment.set('userId', json.data.userId);",
+                  "    console.log('userId saved:', json.data.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/profile/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "UC-03: Returns the authenticated user's full profile. Test script auto-saves `userId`.\n\n**Error codes:** USER_NOT_FOUND | 401 (token expired)"
+          }
+        },
+        {
+          "name": "UC-04 : Edit My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Updated fullName matches request', function () {",
+                  "    pm.expect(json.data.fullName).to.eql('Updated Test User');",
+                  "});",
+                  "pm.test('Tags are replaced atomically', function () {",
+                  "    pm.expect(json.data.tags).to.be.an('array');",
+                  "    pm.expect(json.data.tags).to.include('hiking');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Test User\",\n  \"gender\": \"MALE\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"bio\": \"Walking enthusiast from Ho Chi Minh City. Love morning jogs!\",\n  \"searchRadius\": 5000,\n  \"tags\": [\"hiking\", \"morning walks\", \"coffee\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/profile/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "UC-04: Update the authenticated user's profile. All fields are optional (nullable). Tags list is replaced atomically (not merged).\n\n**Constraints:** fullName â‰¤100 chars | bio â‰¤500 chars | searchRadius 1â€“50000 metres | tags â‰¤10 items | gender: MALE|FEMALE|OTHER|PREFER_NOT_TO_SAY\n\n**Error codes:** INVALID_USER_DATA | VALIDATION_ERROR (422) | USER_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-04 : Edit My Profile [VALIDATION_ERROR : bio too long]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422 Unprocessable Entity', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('error.code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(json.error.code).to.eql('VALIDATION_ERROR');",
+                  "});",
+                  "pm.test('error.message mentions bio', function () {",
+                  "    pm.expect(json.error.message.toLowerCase()).to.include('bio');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n  \"searchRadius\": 5000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/profile/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Negative test: bio exceeds 500 characters â†’ expects VALIDATION_ERROR (422)."
+          }
+        },
+        {
+          "name": "UC-05 : Upload Avatar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.avatarUrl is present', function () {",
+                  "    pm.expect(json.data).to.have.property('avatarUrl');",
+                  "    pm.expect(json.data.avatarUrl).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (json.success && json.data && json.data.avatarUrl) {",
+                  "    var parts = json.data.avatarUrl.split('/');",
+                  "    var filename = parts[parts.length - 1];",
+                  "    pm.collectionVariables.set('avatarFilename', filename);",
+                  "    pm.environment.set('avatarFilename', filename);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select an image file (JPEG or PNG recommended)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "UC-05: Upload a new profile avatar as `multipart/form-data`. Field name must be `file`. Returns `avatarUrl`. Test script extracts the filename and saves to `avatarFilename`."
+          }
+        },
+        {
+          "name": "UC-05 : Serve Avatar File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an image', function () {",
+                  "    var ct = pm.response.headers.get('Content-Type');",
+                  "    pm.expect(ct).to.match(/^image\\//);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/avatars/{{avatarFilename}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "avatars",
+                "{{avatarFilename}}"
+              ]
+            },
+            "description": "Serves a stored avatar image by filename. Public endpoint. Set `avatarFilename` from UC-05 response."
+          }
+        },
+        {
+          "name": "UC-06 : Register FCM Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null (fire-and-forget)', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcmToken\": \"fCM-device-registration-token-example-aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/fcm-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "fcm-token"
+              ]
+            },
+            "description": "UC-06: Register or refresh the FCM device push token. Called after login and whenever Firebase calls onNewToken. Returns {data: null}.\n\n**Constraint:** fcmToken â‰¤512 chars.\n\n**Error codes:** VALIDATION_ERROR (422)"
+          }
+        },
+        {
+          "name": "UC-13 : Set Profile Visibility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.visibilityMode is present', function () {",
+                  "    pm.expect(json.data).to.have.property('visibilityMode');",
+                  "});",
+                  "pm.test('visibilityMode is PUBLIC', function () {",
+                  "    pm.expect(json.data.visibilityMode).to.eql('PUBLIC');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"PUBLIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/visibility",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "visibility"
+              ]
+            },
+            "description": "UC-13: Toggle profile visibility for discovery and matching surfaces.\n\n**Allowed values:** PUBLIC | PRIVATE\n\n**Error codes:** SET_VISIBILITY_FAILED | VALIDATION_ERROR (422)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Discovery",
+      "item": [
+        {
+          "name": "UC-14 : Browse All Hotspots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Each hotspot has id, name, lat, lng, openIntentCount', function () {",
+                  "        var h = json.data[0];",
+                  "        pm.expect(h).to.have.property('id');",
+                  "        pm.expect(h).to.have.property('name');",
+                  "        pm.expect(h).to.have.property('lat');",
+                  "        pm.expect(h).to.have.property('lng');",
+                  "        pm.expect(h).to.have.property('openIntentCount');",
+                  "    });",
+                  "    pm.collectionVariables.set('hotspotId', json.data[0].id);",
+                  "    pm.environment.set('hotspotId', json.data[0].id);",
+                  "    console.log('hotspotId saved:', json.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotspots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotspots"
+              ]
+            },
+            "description": "UC-14: Returns all active hotspots. Public endpoint : auth optional. Test script auto-saves first `hotspotId`.\n\nUI uses `openIntentCount` to scale pin visual weight on the map."
+          }
+        },
+        {
+          "name": "UC-14 : Get Hotspot by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Hotspot has id, name, lat, lng', function () {",
+                  "    pm.expect(json.data).to.have.property('id');",
+                  "    pm.expect(json.data).to.have.property('name');",
+                  "    pm.expect(json.data).to.have.property('lat');",
+                  "    pm.expect(json.data).to.have.property('lng');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotspots/{{hotspotId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotspots",
+                "{{hotspotId}}"
+              ]
+            },
+            "description": "UC-14 (detail): Returns a single hotspot by ID.\n\n**Error codes:** HOTSPOT_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-14 : Get Hotspot by ID [HOTSPOT_NOT_FOUND]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('error.code is HOTSPOT_NOT_FOUND', function () {",
+                  "    pm.expect(json.error.code).to.eql('HOTSPOT_NOT_FOUND');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotspots/non-existent-hotspot-id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotspots",
+                "non-existent-hotspot-id"
+              ]
+            },
+            "description": "Negative test: expects HOTSPOT_NOT_FOUND (400) for a non-existent hotspot ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Walk Intent",
+      "item": [
+        {
+          "name": "UC-15 : Create Walk Intent (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.intent is present with id', function () {",
+                  "    pm.expect(json.data).to.have.property('intent');",
+                  "    pm.expect(json.data.intent).to.have.property('id');",
+                  "    pm.expect(json.data.intent).to.have.property('status');",
+                  "});",
+                  "pm.test('Intent status is OPEN or MATCHING', function () {",
+                  "    pm.expect(['OPEN','MATCHING']).to.include(json.data.intent.status);",
+                  "});",
+                  "if (json.success && json.data && json.data.intent) {",
+                  "    pm.collectionVariables.set('intentId', json.data.intent.id);",
+                  "    pm.environment.set('intentId', json.data.intent.id);",
+                  "}",
+                  "if (json.success && json.data && json.data.proposal) {",
+                  "    pm.collectionVariables.set('proposalId', json.data.proposal.proposal_id);",
+                  "    pm.environment.set('proposalId', json.data.proposal.proposal_id);",
+                  "    console.log('Case A1 : Match found! proposalId:', json.data.proposal.proposal_id);",
+                  "} else {",
+                  "    console.log('Case A2 : No match yet. Intent is OPEN. intentId:', json.data && json.data.intent ? json.data.intent.id : 'N/A');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-05-01\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 45,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"Looking for a morning jog partner!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "description": "UC-15 (Case A : Public): Create a public walk intent. Backend performs inline matching in the same request.\n\n- **Case A1** (match found): intent.status = MATCHING, proposal is populated â†’ proposalId auto-saved.\n- **Case A2** (no match): intent.status = OPEN, proposal = null â†’ intentId auto-saved.\n\n`time_start`/`time_end` are fractional hours in Asia/Ho_Chi_Minh: 17.0 = 17:00, 17.5 = 17:30.\n\n**Error codes:** INTENT_OVERLAPPING | INTENT_OVERLAPPING_SESSION | HOTSPOT_NOT_FOUND | INVALID_TIME_RANGE | INVALID_AGE_RANGE | VALIDATION_ERROR (422)"
+          }
+        },
+        {
+          "name": "UC-15 : Create Walk Intent (Private Invite)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data.proposal is present (auto-created for private invite)', function () {",
+                  "    pm.expect(json.data).to.have.property('proposal');",
+                  "    pm.expect(json.data.proposal).to.not.be.null;",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.intent) {",
+                  "        pm.collectionVariables.set('intentId', json.data.intent.id);",
+                  "        pm.environment.set('intentId', json.data.intent.id);",
+                  "    }",
+                  "    if (json.data.proposal) {",
+                  "        pm.collectionVariables.set('proposalId', json.data.proposal.proposal_id);",
+                  "        pm.environment.set('proposalId', json.data.proposal.proposal_id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-05-01\",\n  \"time_start\": 17.0,\n  \"time_end\": 18.5,\n  \"age_min\": 18,\n  \"age_max\": 45,\n  \"is_private\": true,\n  \"invited_friend_id\": \"{{friendUserId}}\",\n  \"description\": \"Private walk just for us!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "description": "UC-15 (Case B : Private Invite): Invites a specific accepted friend. Both intents are atomically created in MATCHING status. Sender side is auto-accepted. proposalId auto-saved.\n\n**Error codes:** INTENT_PRIVATE_FRIEND_NOT_ACCEPTED | INTENT_OVERLAPPING | HOTSPOT_NOT_FOUND | VALIDATION_ERROR (422)"
+          }
+        },
+        {
+          "name": "UC-15 : Create Walk Intent [INVALID_TIME_RANGE]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('error.code is INVALID_TIME_RANGE', function () {",
+                  "    pm.expect(json.error.code).to.eql('INVALID_TIME_RANGE');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotspot_id\": \"{{hotspotId}}\",\n  \"date\": \"2026-05-01\",\n  \"time_start\": 18.5,\n  \"time_end\": 17.0,\n  \"age_min\": 18,\n  \"age_max\": 45,\n  \"is_private\": false,\n  \"invited_friend_id\": null,\n  \"description\": \"time_start > time_end : should fail\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "description": "Negative test: time_start (18.5) > time_end (17.0) â†’ expects INVALID_TIME_RANGE (400)."
+          }
+        },
+        {
+          "name": "UC-16 : View My Active Intents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Each intent has id, status, hotspot_id', function () {",
+                  "        var intent = json.data[0];",
+                  "        pm.expect(intent).to.have.property('id');",
+                  "        pm.expect(intent).to.have.property('status');",
+                  "        pm.expect(intent).to.have.property('hotspot_id');",
+                  "    });",
+                  "    pm.collectionVariables.set('intentId', json.data[0].id);",
+                  "    pm.environment.set('intentId', json.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents"
+              ]
+            },
+            "description": "UC-16: Returns all OPEN intents for the authenticated user (the Intent wait-list tab). MATCHING intents are surfaced in the Proposals tab instead."
+          }
+        },
+        {
+          "name": "UC-17 : Cancel Walk Intent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents/{{intentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents",
+                "{{intentId}}"
+              ]
+            },
+            "description": "UC-17: Cancel an OPEN intent. Only the owner can cancel. MATCHING intents must be managed via UC-22 (DELETE /proposals/{id}).\n\n**Error codes:** INTENT_NOT_OPEN | INTENT_NOT_OWNER | INTENT_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-18 : Trigger Match (Internal/Dev Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('HTTP 200 : Match found', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    var json = pm.response.json();",
+                  "    pm.test('Proposal has proposal_id', function () {",
+                  "        pm.expect(json.data).to.have.property('proposal_id');",
+                  "    });",
+                  "    if (json.success && json.data && json.data.proposal_id) {",
+                  "        pm.collectionVariables.set('proposalId', json.data.proposal_id);",
+                  "        pm.environment.set('proposalId', json.data.proposal_id);",
+                  "        console.log('Match found! proposalId saved:', json.data.proposal_id);",
+                  "    }",
+                  "} else if (pm.response.code === 204) {",
+                  "    pm.test('HTTP 204 : No match yet (intent remains OPEN)', function () {",
+                  "        pm.response.to.have.status(204);",
+                  "    });",
+                  "    console.log('No match available yet.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/intents/{{intentId}}/match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "intents",
+                "{{intentId}}",
+                "match"
+              ]
+            },
+            "description": "UC-18 (**Internal/Dev only** : not exposed as a UI button): Manually trigger the matching engine for a given OPEN intent.\n\n- **200 OK:** Match found â†’ WalkProposalResponse (status: PENDING). proposalId auto-saved.\n- **204 No Content:** No match yet â†’ intent remains OPEN.\n\n**Error codes:** INVALID_INTENT_DATA | INTENT_NOT_FOUND | INTENT_NOT_OWNER"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proposal Negotiation",
+      "item": [
+        {
+          "name": "UC-19 : View Incoming Proposals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Proposal has required fields', function () {",
+                  "        var p = json.data[0];",
+                  "        pm.expect(p).to.have.property('proposal_id');",
+                  "        pm.expect(p).to.have.property('status');",
+                  "        pm.expect(p).to.have.property('expires_at');",
+                  "        pm.expect(p).to.have.property('my_acceptance_status');",
+                  "    });",
+                  "    pm.collectionVariables.set('proposalId', json.data[0].proposal_id);",
+                  "    pm.environment.set('proposalId', json.data[0].proposal_id);",
+                  "    console.log('proposalId saved:', json.data[0].proposal_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals"
+              ]
+            },
+            "description": "UC-19: Returns all PENDING proposals for the authenticated user. Each proposal has a 5-minute TTL (`expires_at`). Test script auto-saves first `proposalId`.\n\nKey field: `my_acceptance_status` (PENDING|ACCEPTED) : controls whether to show Accept button or waiting state."
+          }
+        },
+        {
+          "name": "UC-20 : Accept a Proposal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Proposal status is PENDING or CONFIRMED', function () {",
+                  "    pm.expect(['PENDING','CONFIRMED']).to.include(json.data.status);",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.status === 'CONFIRMED' && json.data.session_id) {",
+                  "        pm.collectionVariables.set('sessionId', json.data.session_id);",
+                  "        pm.environment.set('sessionId', json.data.session_id);",
+                  "        console.log('Case B : Both accepted! sessionId saved:', json.data.session_id);",
+                  "    } else {",
+                  "        console.log('Case A : Partial acceptance. Waiting for partner. Status:', json.data.status);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}",
+                "accept"
+              ]
+            },
+            "description": "UC-20: Accept a proposal.\n\n- **Case A** (partial, 200 OK): status=PENDING, session_id=null â†’ show waiting state.\n- **Case B** (both accepted, 200 OK): status=CONFIRMED, session_id is populated â†’ sessionId auto-saved. WalkSession is created.\n\n**Error codes:** PROPOSAL_ALREADY_TERMINAL | PROPOSAL_NOT_PARTICIPANT | PROPOSAL_INTENT_NO_LONGER_OPEN | PROPOSAL_CONCURRENT_MODIFICATION | PROPOSAL_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-21 : Pass (Reject) a Proposal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/pass",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}",
+                "pass"
+              ]
+            },
+            "description": "UC-21: Pass (reject) a PENDING proposal. Proposal â†’ REJECTED.\n\n- Public path: both intents revert to OPEN for further matching.\n- Private invite: both intents move to CANCELLED.\n\n**Error codes:** PROPOSAL_ALREADY_TERMINAL | PROPOSAL_NOT_PARTICIPANT | PROPOSAL_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-22 : Cancel a Proposal (Withdraw Intent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}"
+              ]
+            },
+            "description": "UC-22: Fully withdraw from a PENDING proposal. Caller's intent â†’ CANCELLED (terminal). Partner's intent reverts to OPEN.\n\n**Error codes:** PROPOSAL_ALREADY_TERMINAL | PROPOSAL_NOT_PARTICIPANT | PROPOSAL_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Session Lifecycle",
+      "item": [
+        {
+          "name": "UC-23 : View Active Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Session has required fields', function () {",
+                  "        var s = json.data[0];",
+                  "        pm.expect(s).to.have.property('session_id');",
+                  "        pm.expect(s).to.have.property('status');",
+                  "        pm.expect(s).to.have.property('meeting_point_lat');",
+                  "        pm.expect(s).to.have.property('meeting_point_lng');",
+                  "        pm.expect(['PENDING','ACTIVE']).to.include(s.status);",
+                  "    });",
+                  "    pm.collectionVariables.set('sessionId', json.data[0].session_id);",
+                  "    pm.environment.set('sessionId', json.data[0].session_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "active"
+              ]
+            },
+            "description": "UC-23: Returns all PENDING and ACTIVE sessions. Poll every 30 seconds. Test script auto-saves first `sessionId`."
+          }
+        },
+        {
+          "name": "UC-24 : Activate Session (I'm Here!)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Session status is PENDING or ACTIVE', function () {",
+                  "    pm.expect(['PENDING','ACTIVE']).to.include(json.data.status);",
+                  "});",
+                  "if (json.success && json.data) {",
+                  "    if (json.data.status === 'ACTIVE') {",
+                  "        console.log('Case B : Both activated! Walk is ACTIVE. started_at:', json.data.started_at);",
+                  "    } else {",
+                  "        console.log('Case A : Partial activation. Waiting for partner...');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "activate"
+              ]
+            },
+            "description": "UC-24: Record arrival at the meeting hotspot.\n\n- **Case A** (partial, 200 OK): status=PENDING : waiting for partner.\n- **Case B** (both arrived, 200 OK): status=ACTIVE, started_at is set : GPS sync must start.\n\nActivation window: `[scheduledStart âˆ’ 10 min, scheduledStart + 15 min]`\n\n**Error codes:** SESSION_ACTIVATION_WINDOW_CLOSED | SESSION_NOT_PENDING | SESSION_NOT_PARTICIPANT | SESSION_NOT_FOUND | SESSION_OVERLAPPING"
+          }
+        },
+        {
+          "name": "UC-25 : Cancel Pending Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"I can't make it today, something came up.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "cancel"
+              ]
+            },
+            "description": "UC-25: Cancel a PENDING session. Reason is required. Partner receives a push notification.\n\n**Error codes:** SESSION_CANCEL_NOT_PENDING | VALIDATION_ERROR (422) | SESSION_NOT_FOUND | SESSION_NOT_PARTICIPANT"
+          }
+        },
+        {
+          "name": "UC-25 : Cancel Session [VALIDATION_ERROR : blank reason]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422 Unprocessable Entity', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('error.code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(json.error.code).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "cancel"
+              ]
+            },
+            "description": "Negative test: blank reason â†’ expects VALIDATION_ERROR (422)."
+          }
+        },
+        {
+          "name": "UC-26 : Complete Walk Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Session status is COMPLETED', function () {",
+                  "    pm.expect(json.data.status).to.eql('COMPLETED');",
+                  "});",
+                  "pm.test('ended_at is set', function () {",
+                  "    pm.expect(json.data.ended_at).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "complete"
+              ]
+            },
+            "description": "UC-26: User-initiated walk completion. Backend enforces minimum 5-minute walk guard (invariant S-5). No request body needed.\n\n**Error codes:** SESSION_COMPLETE_TOO_EARLY | SESSION_NOT_ACTIVE | SESSION_NOT_FOUND | SESSION_NOT_PARTICIPANT"
+          }
+        },
+        {
+          "name": "UC-27 : Abort Active Session (Emergency)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"SAFETY_CONCERN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/abort",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "abort"
+              ]
+            },
+            "description": "UC-27: Emergency abort of an ACTIVE session. GPS sync must stop after this call.\n\n**`reason` enum values (AbortReason):** SAFETY_CONCERN | EMERGENCY | PARTNER_MISCONDUCT | OTHER\n\n**Error codes:** SESSION_NOT_ACTIVE | VALIDATION_ERROR (422) | SESSION_NOT_FOUND | SESSION_NOT_PARTICIPANT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GPS Tracking",
+      "item": [
+        {
+          "name": "UC-28 : Background GPS Route Sync",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('acknowledged_ids is an array', function () {",
+                  "    pm.expect(json.data).to.have.property('acknowledged_ids');",
+                  "    pm.expect(json.data.acknowledged_ids).to.be.an('array');",
+                  "});",
+                  "pm.test('All submitted local_ids are acknowledged', function () {",
+                  "    pm.expect(json.data.acknowledged_ids).to.have.lengthOf(3);",
+                  "    pm.expect(json.data.acknowledged_ids).to.include(1);",
+                  "    pm.expect(json.data.acknowledged_ids).to.include(2);",
+                  "    pm.expect(json.data.acknowledged_ids).to.include(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{sessionId}}\",\n  \"points\": [\n    {\n      \"local_id\": 1,\n      \"lat\": 10.776523,\n      \"lng\": 106.700812,\n      \"timestamp\": 1744123456000,\n      \"accuracy\": 4.5\n    },\n    {\n      \"local_id\": 2,\n      \"lat\": 10.776650,\n      \"lng\": 106.700950,\n      \"timestamp\": 1744123461000,\n      \"accuracy\": 3.8\n    },\n    {\n      \"local_id\": 3,\n      \"lat\": 10.776780,\n      \"lng\": 106.701100,\n      \"timestamp\": 1744123466000,\n      \"accuracy\": 5.1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tracking",
+                "sync"
+              ]
+            },
+            "description": "UC-28: Batch-upload GPS route points for an ACTIVE session. Called every ~30 seconds by the Android background GPS service.\n\nReturns `acknowledged_ids` : client marks those Room DB rows as synced. Unacknowledged points are retried next cycle.\n\n**Constraints:** lat Â±90Â°, lng Â±180Â°, timestamp positive epoch-ms, points non-empty.\n\n**Error codes:** SESSION_NOT_ACTIVE | INVALID_ARGUMENT | SESSION_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Post-Session",
+      "item": [
+        {
+          "name": "UC-29 : View Session History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('History entry has required fields', function () {",
+                  "        var s = json.data[0];",
+                  "        pm.expect(s).to.have.property('session_id');",
+                  "        pm.expect(s).to.have.property('status');",
+                  "        pm.expect(s).to.have.property('partner_id');",
+                  "        pm.expect(s).to.have.property('is_reviewed');",
+                  "    });",
+                  "    pm.collectionVariables.set('sessionId', json.data[0].session_id);",
+                  "    pm.environment.set('sessionId', json.data[0].session_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "history"
+              ]
+            },
+            "description": "UC-29: Returns terminal sessions (COMPLETED, NO_SHOW, CANCELLED, ABORTED), newest first. `is_reviewed` flag controls review prompt visibility without extra round-trips."
+          }
+        },
+        {
+          "name": "UC-30 : View Session Route Replay",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Route has session_id and polyline arrays', function () {",
+                  "    pm.expect(json.data).to.have.property('session_id');",
+                  "    pm.expect(json.data).to.have.property('user_a_polylines');",
+                  "    pm.expect(json.data).to.have.property('user_b_polylines');",
+                  "    pm.expect(json.data.user_a_polylines).to.be.an('array');",
+                  "    pm.expect(json.data.user_b_polylines).to.be.an('array');",
+                  "});",
+                  "pm.test('Route has distance and duration', function () {",
+                  "    pm.expect(json.data).to.have.property('total_distance_km');",
+                  "    pm.expect(json.data).to.have.property('duration_minutes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/route",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "route"
+              ]
+            },
+            "description": "UC-30: Returns dual-path GPS polylines (Google Encoded Polyline format) for a COMPLETED session. Decode and render as two coloured paths on a map.\n\n**Error codes:** SESSION_NOT_FINISHED | SESSION_NOT_PARTICIPANT | SESSION_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-31 : Submit a Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Review has required fields', function () {",
+                  "    pm.expect(json.data).to.have.property('review_id');",
+                  "    pm.expect(json.data).to.have.property('session_id');",
+                  "    pm.expect(json.data).to.have.property('rating_stars');",
+                  "    pm.expect(json.data).to.have.property('reviewer_id');",
+                  "    pm.expect(json.data).to.have.property('reviewee_id');",
+                  "});",
+                  "pm.test('rating_stars is between 1 and 5', function () {",
+                  "    pm.expect(json.data.rating_stars).to.be.within(1, 5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating_stars\": 4,\n  \"comment\": \"Great walk! Very friendly and punctual.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "review"
+              ]
+            },
+            "description": "UC-31: Submit a post-session review for the partner. One review per participant per COMPLETED session.\n\n**Constraints:** rating_stars 1â€“5 (required) | comment optional.\n\n**Error codes:** REVIEW_SESSION_NOT_COMPLETED | REVIEW_NOT_PARTICIPANT | REVIEW_ALREADY_SUBMITTED | REVIEW_INVALID_RATING"
+          }
+        },
+        {
+          "name": "UC-33 : Get User Reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}",
+                "reviews"
+              ]
+            },
+            "description": "Returns all reviews written about a specific user, most recent first. Public endpoint : used in the Public Profile screen review feed (UC-33)."
+          }
+        },
+        {
+          "name": "UC-32 : Submit Incident Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Report has reportId and createdAt', function () {",
+                  "    pm.expect(json.data).to.have.property('reportId');",
+                  "    pm.expect(json.data).to.have.property('createdAt');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportedUserId\": \"{{friendUserId}}\",\n  \"reason\": \"Partner was aggressive and made me feel unsafe during the walk.\",\n  \"evidenceUrl\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "report"
+              ]
+            },
+            "description": "UC-32: Submit an incident report against a session participant.\n\n**Time windows:** 72h for COMPLETED, 24h for ABORTED/NO_SHOW. One report per reporter per session.\n\n**Error codes:** REPORT_SESSION_INVALID_STATUS | REPORT_WINDOW_EXPIRED | REPORT_ALREADY_SUBMITTED | REPORT_SELF_NOT_ALLOWED | SESSION_NOT_PARTICIPANT | SESSION_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Social",
+      "item": [
+        {
+          "name": "UC-33 : View Public User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Profile has required public fields', function () {",
+                  "    pm.expect(json.data).to.have.property('userId');",
+                  "    pm.expect(json.data).to.have.property('fullName');",
+                  "    pm.expect(json.data).to.have.property('trustScore');",
+                  "    pm.expect(json.data).to.have.property('tags');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "UC-33: Returns any user's public profile. Auth optional. When authenticated, the UI renders friendship action buttons based on relationship state.\n\n**Error codes:** USER_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-34 : Send Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Friendship has friendship_id and status PENDING', function () {",
+                  "    pm.expect(json.data).to.have.property('friendship_id');",
+                  "    pm.expect(json.data.status).to.eql('PENDING');",
+                  "});",
+                  "if (json.success && json.data && json.data.friendship_id) {",
+                  "    pm.collectionVariables.set('requestId', json.data.friendship_id);",
+                  "    pm.environment.set('requestId', json.data.friendship_id);",
+                  "    console.log('requestId saved:', json.data.friendship_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/{{friendUserId}}/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "{{friendUserId}}",
+                "request"
+              ]
+            },
+            "description": "UC-34: Send a friend request. Returns FriendshipResponse with status=PENDING. requestId auto-saved.\n\n**Error codes:** SOCIAL_USER_NOT_FOUND | FRIEND_REQUEST_SELF_FORBIDDEN | FRIEND_REQUEST_ALREADY_FRIENDS | FRIEND_REQUEST_ALREADY_PENDING | FRIEND_REQUEST_BLOCKED"
+          }
+        },
+        {
+          "name": "UC-35 : Accept Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Friendship status is ACCEPTED', function () {",
+                  "    pm.expect(json.data.status).to.eql('ACCEPTED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/requests/{{requestId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "requests",
+                "{{requestId}}",
+                "accept"
+              ]
+            },
+            "description": "UC-35: Accept an incoming friend request. Friendship â†’ ACCEPTED. Both users can now use private walk invites (UC-15).\n\n**Error codes:** FRIEND_REQUEST_NOT_FOUND | FRIEND_REQUEST_NOT_PARTICIPANT | FRIEND_REQUEST_ALREADY_RESOLVED"
+          }
+        },
+        {
+          "name": "UC-35 : Decline Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/requests/{{requestId}}/decline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "requests",
+                "{{requestId}}",
+                "decline"
+              ]
+            },
+            "description": "UC-35: Decline an incoming friend request. Request â†’ DECLINED (terminal). No friendship is created.\n\n**Error codes:** FRIEND_REQUEST_NOT_FOUND | FRIEND_REQUEST_NOT_PARTICIPANT | FRIEND_REQUEST_ALREADY_RESOLVED"
+          }
+        },
+        {
+          "name": "UC-36 : View Friends List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Friend has userId, fullName, avatarUrl', function () {",
+                  "        pm.expect(json.data[0]).to.have.property('userId');",
+                  "        pm.expect(json.data[0]).to.have.property('fullName');",
+                  "        pm.expect(json.data[0]).to.have.property('avatarUrl');",
+                  "    });",
+                  "    pm.collectionVariables.set('friendUserId', json.data[0].userId);",
+                  "    pm.environment.set('friendUserId', json.data[0].userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends"
+              ]
+            },
+            "description": "UC-36: Returns accepted friends list with userId, fullName, avatarUrl. Also the source for the friend-picker in Create Intent (UC-15). Test script auto-saves first `friendUserId`."
+          }
+        },
+        {
+          "name": "UC-36 : View Incoming Friend Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.collectionVariables.set('requestId', json.data[0].friendship_id);",
+                  "    pm.environment.set('requestId', json.data[0].friendship_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/requests/incoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "requests",
+                "incoming"
+              ]
+            },
+            "description": "UC-36: Returns PENDING incoming friend requests (addressee = current user). Test script saves first requestId for UC-35 Accept/Decline."
+          }
+        },
+        {
+          "name": "UC-36 : View Outgoing Friend Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/requests/outgoing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "requests",
+                "outgoing"
+              ]
+            },
+            "description": "UC-36: Returns pending outgoing friend requests (requester = current user). Used to render 'Request Sent' state on other users' profiles."
+          }
+        },
+        {
+          "name": "UC-36 : Remove Friend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/friends/{{friendUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "friends",
+                "{{friendUserId}}"
+              ]
+            },
+            "description": "UC-36: Remove an accepted friend. Private invite is no longer available until a new request is accepted.\n\n**Error codes:** FRIEND_REMOVE_NOT_FRIENDS | SOCIAL_USER_NOT_FOUND"
+          }
+        },
+        {
+          "name": "View My Friends (Private Intent Picker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is an array of UserSummaryResponse', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/friends",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "friends"
+              ]
+            },
+            "description": "Returns the caller's accepted friends (userId, fullName, avatarUrl). Used as the friend-picker data source for the Create Intent private invite flow (`invited_friend_id` in UC-15)."
+          }
+        },
+        {
+          "name": "UC-37 : Block a User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{friendUserId}}/block",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{friendUserId}}",
+                "block"
+              ]
+            },
+            "description": "UC-37: Block a user. Side effects: existing friendship is removed, pending friend requests are closed. Blocked users cannot send private walk invites to each other.\n\n**Error codes:** SOCIAL_USER_NOT_FOUND | BLOCK_SELF_BLOCK_FORBIDDEN | BLOCK_ALREADY_BLOCKED"
+          }
+        },
+        {
+          "name": "UC-38 : Unblock a User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{friendUserId}}/block",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{friendUserId}}",
+                "block"
+              ]
+            },
+            "description": "UC-38: Remove the block relationship. Friendship is NOT auto-restored : users must send a new friend request to reconnect."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "UC-39 : View Notification Feed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Notification has required fields', function () {",
+                  "        var n = json.data[0];",
+                  "        pm.expect(n).to.have.property('notificationId');",
+                  "        pm.expect(n).to.have.property('type');",
+                  "        pm.expect(n).to.have.property('status');",
+                  "        pm.expect(n).to.have.property('createdAt');",
+                  "        pm.expect(['UNREAD','READ']).to.include(n.status);",
+                  "    });",
+                  "    pm.collectionVariables.set('notificationId', json.data[0].notificationId);",
+                  "    pm.environment.set('notificationId', json.data[0].notificationId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ]
+            },
+            "description": "UC-39: Returns all notifications for the user, newest first. Test script auto-saves first `notificationId`.\n\nKey types: PROPOSAL_RECEIVED | INVITE_SENT | SESSION_CONFIRMED | SESSION_ACTIVE | PROPOSAL_ACCEPTED"
+          }
+        },
+        {
+          "name": "UC-40 : Mark Notification as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is null', function () {",
+                  "    pm.expect(json.data).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "none"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notificationId}}",
+                "read"
+              ]
+            },
+            "description": "UC-40: Mark a single notification as READ and set `readAt`. Idempotent : calling on an already-read notification is a no-op."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gamification",
+      "item": [
+        {
+          "name": "UC-41 : View User Badges",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('Badge has badgeName and awardedAt', function () {",
+                  "        pm.expect(json.data[0]).to.have.property('badgeName');",
+                  "        pm.expect(json.data[0]).to.have.property('awardedAt');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/badges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}",
+                "badges"
+              ]
+            },
+            "description": "UC-41: Returns all badges awarded to a user (badgeName, awardedAt). Called in parallel with UC-42 stats when rendering the Public Profile screen (UC-33)."
+          }
+        },
+        {
+          "name": "UC-42 : View User Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('Stats has all required fields', function () {",
+                  "    pm.expect(json.data).to.have.property('userId');",
+                  "    pm.expect(json.data).to.have.property('totalPoints');",
+                  "    pm.expect(json.data).to.have.property('totalDistanceKm');",
+                  "    pm.expect(json.data).to.have.property('completedSessions');",
+                  "    pm.expect(json.data).to.have.property('trustScore');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}",
+                "stats"
+              ]
+            },
+            "description": "UC-42: Returns gamification stats: totalPoints, totalDistanceKm, completedSessions, trustScore.\n\n**Error codes:** USER_NOT_FOUND"
+          }
+        },
+        {
+          "name": "UC-43 : View Leaderboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('ApiResponse.success is true', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "pm.test('data is an array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "if (json.data && json.data.length > 0) {",
+                  "    pm.test('First entry has rank=1 and required fields', function () {",
+                  "        var entry = json.data[0];",
+                  "        pm.expect(entry.rank).to.eql(1);",
+                  "        pm.expect(entry).to.have.property('userId');",
+                  "        pm.expect(entry).to.have.property('totalPoints');",
+                  "        pm.expect(entry).to.have.property('totalDistanceKm');",
+                  "        pm.expect(entry).to.have.property('completedSessions');",
+                  "        pm.expect(entry).to.have.property('trustScore');",
+                  "    });",
+                  "    pm.test('Leaderboard has at most 50 entries', function () {",
+                  "        pm.expect(json.data.length).to.be.at.most(50);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leaderboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "leaderboard"
+              ]
+            },
+            "description": "UC-43: Returns top-50 users ranked by totalPoints. Each entry: rank, userId, totalPoints, totalDistanceKm, completedSessions, trustScore."
+          }
+        }
+      ]
+    }
+  ]
+}

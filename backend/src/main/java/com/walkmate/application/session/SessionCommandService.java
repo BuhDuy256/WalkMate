@@ -1,8 +1,10 @@
 package com.walkmate.application.session;
 
+import com.walkmate.application.gamification.SessionAbortedEvent;
 import com.walkmate.application.gamification.SessionCompletedEvent;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationType;
+import com.walkmate.domain.chat.ChatRoomRepository;
 import com.walkmate.domain.session.AbortReason;
 import com.walkmate.domain.session.SessionErrorCode;
 import com.walkmate.domain.session.SessionStatus;
@@ -12,9 +14,12 @@ import com.walkmate.domain.shared.NotificationPublisher;
 import com.walkmate.domain.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +44,14 @@ public class SessionCommandService {
     private final WalkSessionRepository     sessionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationPublisher     notificationPublisher;
+    private final ChatRoomRepository        chatRoomRepository;
+
+    /**
+     * Safety cleanup TTL for unresolved PENDING sessions.
+     * Config key: walkmate.session.pending-ttl (ISO-8601 duration, e.g. PT24H).
+     */
+    @Value("${walkmate.session.pending-ttl:PT24H}")
+    private Duration pendingSessionTtl;
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -51,18 +64,16 @@ public class SessionCommandService {
 
     /**
      * Records the caller's arrival. Transitions session to ACTIVE once both
-     * participants have activated (S-3). Enforces the arrival window (S-4).
+     * participants have activated (S-3).
      */
     @Transactional
     public WalkSession activateSession(String sessionId, String callerId) {
         WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
 
-        Instant now         = Instant.now();
-        Instant windowOpen  = session.getScheduledStart().minus(WalkSession.ACTIVATION_WINDOW_BEFORE);
-        Instant windowClose = session.getScheduledStart().plus(WalkSession.ACTIVATION_WINDOW_AFTER);
+        Instant now = Instant.now();
 
         SessionStatus prevStatus = session.getStatus();
-        session.recordActivation(callerId, now, windowOpen, windowClose);
+        session.recordActivation(callerId, now);
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, prevStatus, session.getStatus(), callerId, "User arrived");
 
@@ -90,6 +101,16 @@ public class SessionCommandService {
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, SessionStatus.PENDING, SessionStatus.CANCELLED,
                 callerId, reason);
+
+        // S-7: lock the chat room after PostgreSQL commits
+        final String sid = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try { chatRoomRepository.closeRoom(sid); }
+                catch (Exception e) { log.error("Chat room close failed on cancelSession: sessionId={}", sid, e); }
+            }
+        });
     }
 
     // ── Abort (mid-walk emergency) ────────────────────────────────────────────
@@ -105,6 +126,17 @@ public class SessionCommandService {
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, SessionStatus.ACTIVE, SessionStatus.ABORTED,
                 callerId, reason.name());
+        eventPublisher.publishEvent(new SessionAbortedEvent(session.getSessionId(), callerId));
+
+        // S-7: lock the chat room after PostgreSQL commits
+        final String sid = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try { chatRoomRepository.closeRoom(sid); }
+                catch (Exception e) { log.error("Chat room close failed on abortSession: sessionId={}", sid, e); }
+            }
+        });
     }
 
     // ── Complete (user-initiated) ─────────────────────────────────────────────
@@ -128,6 +160,16 @@ public class SessionCommandService {
                 callerId, "User completed walk");
         eventPublisher.publishEvent(new SessionCompletedEvent(session));
 
+        // S-7: lock the chat room after PostgreSQL commits
+        final String sid = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try { chatRoomRepository.closeRoom(sid); }
+                catch (Exception e) { log.error("Chat room close failed on completeSession: sessionId={}", sid, e); }
+            }
+        });
+
         // Notify both participants to leave a review
         String partnerId = session.getUserIdA().equals(callerId)
                 ? session.getUserIdB() : session.getUserIdA();
@@ -141,10 +183,9 @@ public class SessionCommandService {
     // ── Scheduled lifecycle sweep ─────────────────────────────────────────────
 
     /**
-     * Called every 60 seconds by {@link SessionScheduler}. Handles three rules:
+     * Called every 60 seconds by {@link SessionScheduler}. Handles two rules:
      * <ul>
-     *   <li><b>S-6</b> — PENDING session, 0 activations, window closed → CANCELLED.</li>
-     *   <li><b>S-5</b> — PENDING session, 1 activation, window closed  → NO_SHOW.</li>
+     *   <li><b>PENDING TTL</b> — unresolved PENDING session older than cutoff → CANCELLED.</li>
      *   <li><b>S-9</b> — ACTIVE session past scheduledEnd + maxLifespan → COMPLETED.</li>
      * </ul>
      */
@@ -152,26 +193,30 @@ public class SessionCommandService {
     public void handleExpiredSessions() {
         Instant now = Instant.now();
 
-        // ── S-5 / S-6: PENDING sessions whose activation window has fully closed ──
-        List<WalkSession> expiredPending = sessionRepository.findSessionsPastActivationWindow(now);
-        for (WalkSession session : expiredPending) {
-            SessionStatus prev      = session.getStatus();
-            boolean       aArrived  = session.getUserAActivatedAt() != null;
-            boolean       bArrived  = session.getUserBActivatedAt() != null;
-
-            if (!aArrived && !bArrived) {
-                // Nobody showed up (S-6)
-                session.cancel("Auto-cancelled: no participants arrived within activation window", null);
-            } else {
-                // Exactly one person showed up (S-5)
-                session.markNoShow();
-            }
-
+        // ── PENDING TTL cleanup: avoid indefinitely lingering unresolved sessions ──
+        Instant pendingCutoff = now.minus(pendingSessionTtl);
+        List<WalkSession> stalePending = sessionRepository.findStalePendingSessions(pendingCutoff);
+        for (WalkSession session : stalePending) {
+            session.cancel("Auto-cancelled: pending session exceeded TTL", null);
             sessionRepository.save(session);
-            sessionRepository.logStateChange(session.getSessionId(), prev, session.getStatus(),
-                    null, "scheduler-sweep");
-            log.info("Scheduler: session {} transitioned {} → {}",
-                    session.getSessionId(), prev, session.getStatus());
+            sessionRepository.logStateChange(
+                    session.getSessionId(),
+                    SessionStatus.PENDING,
+                    SessionStatus.CANCELLED,
+                    null,
+                    "scheduler-pending-ttl"
+            );
+
+            final String staleSid = session.getSessionId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try { chatRoomRepository.closeRoom(staleSid); }
+                    catch (Exception e) { log.error("Chat room close failed on pending TTL sweep: sessionId={}", staleSid, e); }
+                }
+            });
+
+            log.info("Scheduler: session {} auto-cancelled by pending TTL", session.getSessionId());
         }
 
         // ── S-9: ACTIVE sessions that have run past scheduledEnd + maxLifespan ──
@@ -183,6 +228,16 @@ public class SessionCommandService {
             sessionRepository.logStateChange(session.getSessionId(), SessionStatus.ACTIVE, SessionStatus.COMPLETED,
                     null, "scheduler-auto-complete");
             eventPublisher.publishEvent(new SessionCompletedEvent(session));
+
+            // S-7: lock the chat room after PostgreSQL commits
+            final String autoSid = session.getSessionId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try { chatRoomRepository.closeRoom(autoSid); }
+                    catch (Exception e) { log.error("Chat room close failed on scheduler auto-complete: sessionId={}", autoSid, e); }
+                }
+            });
 
             // Notify both participants to leave a review (auto-completed walk)
             Map<String, Object> reviewPayload = Map.of("sessionId", session.getSessionId());

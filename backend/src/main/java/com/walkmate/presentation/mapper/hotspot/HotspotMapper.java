@@ -15,8 +15,7 @@ public class HotspotMapper {
                 hotspot.getName(),
                 hotspot.getLat(),
                 hotspot.getLng(),
-                hotspot.getActiveWalkerCount()
-        );
+                hotspot.getOpenIntentCount());
     }
 
     public List<HotspotResponse> toResponseList(List<Hotspot> hotspots) {

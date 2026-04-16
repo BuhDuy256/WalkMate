@@ -10,6 +10,7 @@ import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.proposal.MatchProposal;
 import com.walkmate.domain.proposal.MatchProposalRepository;
 import com.walkmate.domain.proposal.ProposalErrorCode;
+import com.walkmate.domain.chat.ChatRoomRepository;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.shared.NotificationPublisher;
@@ -19,27 +20,35 @@ import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentErrorCode;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchingCommandService {
 
-    private static final long PROPOSAL_TTL_MINUTES = 30;
+    private static final long PROPOSAL_TTL_MINUTES = 5;
 
-    private final WalkIntentRepository    walkIntentRepository;
-    private final MatchProposalRepository matchProposalRepository;
-    private final WalkSessionRepository   walkSessionRepository;
-    private final HotspotRepository       hotspotRepository;
-    private final MatchingStrategy        matchingStrategy;
-    private final NotificationPublisher   notificationPublisher;
+    private final WalkIntentRepository     walkIntentRepository;
+    private final MatchProposalRepository  matchProposalRepository;
+    private final WalkSessionRepository    walkSessionRepository;
+    private final HotspotRepository        hotspotRepository;
+    private final MatchingStrategy         matchingStrategy;
+    private final NotificationPublisher    notificationPublisher;
+    private final TransactionTemplate      transactionTemplate;
+    private final ChatRoomRepository       chatRoomRepository;
 
     // ── Find or create a proposal ─────────────────────────────────────────────
 
@@ -98,11 +107,38 @@ public class MatchingCommandService {
 
         MatchProposal saved = matchProposalRepository.save(proposal);
 
-        // Notify the matched user that they have received a new proposal
+        // 6. Re-acquire both intents under pessimistic locks before transitioning to MATCHING.
+        //    Load in consistent lexicographic order (same strategy as acceptProposal) to prevent
+        //    deadlock when two threads race on the same intent pair (I-4, P-1, GAP-2, Phase-0 Issue-1).
+        String firstId  = intentId.compareTo(matched.getId()) <= 0 ? intentId : matched.getId();
+        String secondId = firstId.equals(intentId) ? matched.getId() : intentId;
+
+        WalkIntent lockedFirst = walkIntentRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        WalkIntent lockedSecond = walkIntentRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+
+        // Re-verify both are still OPEN under the lock; a concurrent thread may have already
+        // locked one of them between our initial read and this point.
+        if (lockedFirst.getStatus() != IntentStatus.OPEN || lockedSecond.getStatus() != IntentStatus.OPEN) {
+            throw new DomainException(WalkIntentErrorCode.INVALID_INTENT_DATA,
+                    "One or both intents are no longer OPEN — cannot lock for matching");
+        }
+
+        lockedFirst.lock();
+        lockedSecond.lock();
+        walkIntentRepository.save(lockedFirst);
+        walkIntentRepository.save(lockedSecond);
+
+        // Notify the matched user. NotificationPublisherImpl dual-dispatches:
+        // Channel 1 persists to DB; Channel 2 sends an FCM push to the device.
+        // intentId is the recipient's own intent ID — needed by the Android client
+        // to navigate to the correct Proposal tab (replaces the old sendMatchFound contract).
         notificationPublisher.publish(Notification.create(
                 matched.getUserId(),
                 NotificationType.PROPOSAL_RECEIVED,
-                Map.of("proposalId", saved.getProposalId(),
+                Map.of("proposalId",  saved.getProposalId(),
+                       "intentId",    matched.getId(),
                        "senderUserId", intent.getUserId())
         ));
 
@@ -162,8 +198,8 @@ public class MatchingCommandService {
         WalkIntent second = walkIntentRepository.findByIdForUpdate(secondId)
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
 
-        // Re-verify both are still OPEN under the lock
-        if (first.getStatus() != IntentStatus.OPEN || second.getStatus() != IntentStatus.OPEN) {
+        // Re-verify both are still MATCHING under the lock (P-2, GAP-7)
+        if (first.getStatus() != IntentStatus.MATCHING || second.getStatus() != IntentStatus.MATCHING) {
             throw new DomainException(ProposalErrorCode.PROPOSAL_INTENT_NO_LONGER_OPEN);
         }
 
@@ -188,6 +224,23 @@ public class MatchingCommandService {
                 proposal.getProposedEndTime()
         );
         walkSessionRepository.save(session);
+
+        // Register afterCommit hook — MongoDB write fires only once PostgreSQL commits.
+        // MongoDB is a derived, eventually-consistent store. If this write fails, the
+        // WalkSession remains valid in PostgreSQL (source of truth) and a reconciliation
+        // job can re-initialize the missing chat room. (GAP-8, P-3 step 3)
+        final String sessionId = session.getSessionId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    chatRoomRepository.initRoom(sessionId);
+                } catch (Exception e) {
+                    log.error("Chat room init failed after session creation: sessionId={} error={}",
+                            sessionId, e.getMessage());
+                }
+            }
+        });
 
         // Notify both participants that their session has been confirmed
         notificationPublisher.publish(Notification.create(
@@ -220,7 +273,64 @@ public class MatchingCommandService {
 
         proposal.reject();
         matchProposalRepository.save(proposal);
-        // Both intents remain OPEN — users can find new matches
+
+        // Return both intents to OPEN so they re-enter the matching pool (GAP-3)
+        WalkIntent intentA = walkIntentRepository.findById(proposal.getIntentIdA())
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        WalkIntent intentB = walkIntentRepository.findById(proposal.getIntentIdB())
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        intentA.unlock();
+        intentB.unlock();
+
+        // Caller excludes the matched user from their intent so the engine
+        // won't re-pair them in the same search session (X-3, GAP-11).
+        String callerIntentId = proposal.resolveIntentIdForUser(callerId);
+        String partnerUserId  = callerIntentId.equals(proposal.getIntentIdA())
+                ? proposal.getUserIdB() : proposal.getUserIdA();
+        WalkIntent callerIntent = callerIntentId.equals(proposal.getIntentIdA()) ? intentA : intentB;
+        callerIntent.excludeUser(UUID.fromString(partnerUserId));
+
+        walkIntentRepository.save(intentA);
+        walkIntentRepository.save(intentB);
+    }
+
+    // ── Cancel proposal ───────────────────────────────────────────────────────
+
+    /**
+     * Hard-cancels a PENDING proposal on behalf of the caller.
+     *
+     * Unlike pass (which leaves both intents OPEN), cancel also closes the
+     * caller's own intent — they are explicitly withdrawing from the search.
+     * The partner's intent remains OPEN so they can be matched again.
+     */
+    @Transactional
+    public void cancelProposal(String proposalId, String callerId) {
+        MatchProposal proposal = matchProposalRepository.findById(proposalId)
+                .orElseThrow(() -> new DomainException(ProposalErrorCode.PROPOSAL_NOT_FOUND));
+
+        String callerIntentId = proposal.resolveIntentIdForUser(callerId);
+        if (callerIntentId == null) {
+            throw new DomainException(ProposalErrorCode.PROPOSAL_NOT_PARTICIPANT);
+        }
+
+        // Mark the proposal terminal — reuses the same guard as pass
+        proposal.reject();
+        matchProposalRepository.save(proposal);
+
+        // Close the caller's intent — they are explicitly withdrawing from the search
+        WalkIntent callerIntent = walkIntentRepository.findById(callerIntentId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        callerIntent.cancel();
+        walkIntentRepository.save(callerIntent);
+
+        // Return the partner's intent to OPEN so they can be matched again (GAP-3)
+        String partnerIntentId = callerIntentId.equals(proposal.getIntentIdA())
+                ? proposal.getIntentIdB()
+                : proposal.getIntentIdA();
+        WalkIntent partnerIntent = walkIntentRepository.findById(partnerIntentId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        partnerIntent.unlock();
+        walkIntentRepository.save(partnerIntent);
     }
 
     // ── List proposals ────────────────────────────────────────────────────────
@@ -228,5 +338,37 @@ public class MatchingCommandService {
     @Transactional(readOnly = true)
     public List<MatchProposal> getPendingProposals(String userId) {
         return matchProposalRepository.findPendingForUser(userId);
+    }
+
+    // ── Scheduler sweep ───────────────────────────────────────────────────────
+
+    /**
+     * Called by the scheduler to expire overdue proposals and return both
+     * intents to OPEN so participants re-enter the matching pool (P-4, GAP-3).
+     *
+     * Each proposal is processed in its own isolated transaction (Phase-0 Issue-2).
+     * A failure on one proposal (e.g. OCC conflict) rolls back only that proposal's
+     * changes and is logged; the sweep continues to the next proposal.
+     * The outer method is intentionally not @Transactional — the TransactionTemplate
+     * creates a fresh REQUIRED transaction per iteration.
+     */
+    public void sweepExpiredProposals() {
+        List<MatchProposal> overdue = matchProposalRepository.findExpiredPending();
+        for (MatchProposal proposal : overdue) {
+            transactionTemplate.execute(status -> {
+                proposal.expire();
+                matchProposalRepository.save(proposal);
+
+                walkIntentRepository.findById(proposal.getIntentIdA())
+                        .filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                        .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+
+                walkIntentRepository.findById(proposal.getIntentIdB())
+                        .filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                        .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+
+                return null;
+            });
+        }
     }
 }

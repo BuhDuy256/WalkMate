@@ -20,19 +20,26 @@ public class WalkSessionMapper {
      * @param callerId   the authenticated user's ID, used to determine which side is the partner
      */
     public static WalkSession toDomain(WalkSessionResponse response, String callerId) {
-        String partnerId = callerId.equals(response.getUserIdA())
-                ? response.getUserIdB()
-                : response.getUserIdA();
+        boolean isCallerUserA = callerId.equals(response.getUserIdA());
+        String partnerId = isCallerUserA ? response.getUserIdB() : response.getUserIdA();
 
         return new WalkSession(
                 response.getSessionId(),
                 response.getProposalId(),
-                partnerId,              // name not yet in API — use partner userId as placeholder
-                null,                   // avatar not yet in API
+                partnerId,
+                partnerId,              // fallback: use partnerId until the API returns a name
+                null,                   // partnerAvatar not yet in API
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),
                 response.getScheduledStart(),
-                toStatus(response.getStatus())
+                toStatus(response.getStatus()),
+                response.getScheduledEnd(),
+                response.getStartedAt(),
+                response.getEndedAt(),
+                response.getUserAActivatedAt(),
+                response.getUserBActivatedAt(),
+                response.isReviewed(),
+                isCallerUserA
         );
     }
 

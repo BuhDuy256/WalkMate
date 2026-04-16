@@ -9,10 +9,13 @@ public interface WalkIntentRepository {
 
     void createIntent(String hotspotId, String date, float timeStart, float timeEnd,
                       int ageMin, int ageMax, List<String> tags,
+                      boolean isPrivate, String invitedFriendId,
+                      String description,
                       DomainCallback<WalkIntent> callback);
 
     void listActiveIntents(DomainCallback<List<WalkIntent>> callback);
 
+    /** Internal API only — must not be called from the UI layer. */
     void findMatch(String intentId, DomainCallback<WalkProposal> callback);
 
     void cancelIntent(String intentId, DomainCallback<Void> callback);

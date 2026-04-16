@@ -17,12 +17,26 @@ public class HotspotResponse {
     @SerializedName("lng")
     private double lng;
 
-    @SerializedName(value = "activeWalkerCount", alternate = {"active_walker_count", "active_intent_count"})
-    private int activeWalkerCount;
+    @SerializedName(value = "openIntentCount", alternate = { "active_walker_count", "active_intent_count" })
+    private int openIntentCount;
 
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public double getLat() { return lat; }
-    public double getLng() { return lng; }
-    public int getActiveWalkerCount() { return activeWalkerCount; }
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getLat() {
+        return lat;
+    }
+
+    public double getLng() {
+        return lng;
+    }
+
+    public int getopenIntentCount() {
+        return openIntentCount;
+    }
 }

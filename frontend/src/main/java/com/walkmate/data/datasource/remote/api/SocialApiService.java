@@ -1,6 +1,8 @@
 package com.walkmate.data.datasource.remote.api;
 
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.social.FriendRequestResponse;
+import com.walkmate.data.datasource.remote.dto.response.social.PublicUserResponse;
 import com.walkmate.data.datasource.remote.dto.response.social.UserSummaryResponse;
 
 import java.util.List;
@@ -13,19 +15,31 @@ import retrofit2.http.Path;
 
 public interface SocialApiService {
 
-    // ── Follow ────────────────────────────────────────────────────────────────
+    // ── Friends ───────────────────────────────────────────────────────────────
 
-    @POST("api/v1/users/{userId}/follow")
-    Call<ApiResponse<Void>> follow(@Path("userId") String userId);
+    @GET("api/v1/users/me/friends")
+    Call<ApiResponse<List<UserSummaryResponse>>> getFriends();
 
-    @DELETE("api/v1/users/{userId}/follow")
-    Call<ApiResponse<Void>> unfollow(@Path("userId") String userId);
+    @POST("api/v1/friends/{userId}/request")
+    Call<ApiResponse<Void>> sendFriendRequest(@Path("userId") String userId);
 
-    @GET("api/v1/users/{userId}/followers")
-    Call<ApiResponse<List<UserSummaryResponse>>> getFollowers(@Path("userId") String userId);
+    @POST("api/v1/friends/requests/{id}/accept")
+    Call<ApiResponse<Void>> acceptFriendRequest(@Path("id") String id);
 
-    @GET("api/v1/users/{userId}/following")
-    Call<ApiResponse<List<UserSummaryResponse>>> getFollowing(@Path("userId") String userId);
+    @POST("api/v1/friends/requests/{id}/decline")
+    Call<ApiResponse<Void>> declineFriendRequest(@Path("id") String id);
+
+    @GET("api/v1/friends/requests/incoming")
+    Call<ApiResponse<List<FriendRequestResponse>>> getIncomingRequests();
+
+    @GET("api/v1/friends/requests/outgoing")
+    Call<ApiResponse<List<FriendRequestResponse>>> getOutgoingRequests();
+
+    @DELETE("api/v1/friends/{userId}")
+    Call<ApiResponse<Void>> removeFriend(@Path("userId") String userId);
+
+    @GET("api/v1/users/{userId}")
+    Call<ApiResponse<PublicUserResponse>> getPublicProfile(@Path("userId") String userId);
 
     // ── Block ─────────────────────────────────────────────────────────────────
 
@@ -34,4 +48,7 @@ public interface SocialApiService {
 
     @DELETE("api/v1/users/{userId}/block")
     Call<ApiResponse<Void>> unblock(@Path("userId") String userId);
+
+    @GET("api/v1/users/me/blocked")
+    Call<ApiResponse<List<UserSummaryResponse>>> getBlockedUsers();
 }

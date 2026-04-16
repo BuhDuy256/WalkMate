@@ -6,6 +6,8 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.NotificationApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.notification.NotificationResponse;
 import com.walkmate.data.mapper.NotificationMapper;
@@ -27,7 +29,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public NotificationRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
         this.apiService = ApiClient
-                .buildAuthenticatedRetrofit(sessionManager)
+                .buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(NotificationApiService.class);
     }
 
@@ -44,9 +46,13 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                     List<NotificationResponse> payload = response.body().getData();
                     callback.onSuccess(NotificationMapper.toDomainList(payload));
                 } else {
-                    String code = extractErrorCode(response.body(), "NOTIFICATION_FETCH_FAILED");
-                    Log.w(TAG, "getNotifications failed: " + code);
-                    callback.onError(new Exception(code));
+                    ApiError apiError = ErrorParser.extractApiError(response, "NOTIFICATION_FETCH_FAILED");
+                    Log.w(TAG, "getNotifications failed: " + apiError.getCode());
+                    if (response.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getNotifications network error", e);
@@ -65,9 +71,13 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     callback.onSuccess(null);
                 } else {
-                    String code = extractErrorCode(response.body(), "NOTIFICATION_MARK_READ_FAILED");
-                    Log.w(TAG, "markRead failed: " + code);
-                    callback.onError(new Exception(code));
+                    ApiError apiError = ErrorParser.extractApiError(response, "NOTIFICATION_MARK_READ_FAILED");
+                    Log.w(TAG, "markRead failed: " + apiError.getCode());
+                    if (response.code() == 422) {
+                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                    } else {
+                        callback.onError(new Exception(apiError.getCode()));
+                    }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "markRead network error", e);
@@ -76,12 +86,4 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         }).start();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
-        }
-        return fallback;
-    }
 }

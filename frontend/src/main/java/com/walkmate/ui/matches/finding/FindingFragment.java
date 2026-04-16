@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.walkmate.R;
+import com.walkmate.ui.matches.MatchesPagerAdapter;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
 
@@ -38,8 +39,8 @@ public class FindingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Shared ViewModel owned by MatchesFragment (the parent)
-        matchesViewModel = new ViewModelProvider(requireParentFragment())
+        // Shared ViewModel scoped to Activity — same instance as MatchesFragment.
+        matchesViewModel = new ViewModelProvider(requireActivity())
                 .get(MatchesViewModel.class);
 
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
@@ -48,11 +49,23 @@ public class FindingFragment extends Fragment {
 
         adapter = new FindingAdapter();
         adapter.setOnCancelClickListener(intent -> matchesViewModel.cancelIntent(intent.getId()));
+        adapter.setOnIntentActionListener(new FindingAdapter.OnIntentActionListener() {
+            @Override
+            public void onViewProposalClicked(String intentId) {
+                matchesViewModel.navigateToTab(MatchesPagerAdapter.TAB_PROPOSAL);
+            }
+
+            @Override
+            public void onIntentExpired() {
+                matchesViewModel.loadAll();
+            }
+        });
         recyclerView.setAdapter(adapter);
 
         swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());
 
         matchesViewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
+
     }
 
     private void renderState(MatchesUiState state) {
@@ -73,6 +86,7 @@ public class FindingFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (adapter != null) adapter.cancelAllTimers();
         recyclerView.setAdapter(null);
         swipeRefresh  = null;
         recyclerView  = null;

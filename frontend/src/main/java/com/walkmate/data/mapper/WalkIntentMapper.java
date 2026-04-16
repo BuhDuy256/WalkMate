@@ -1,6 +1,5 @@
 package com.walkmate.data.mapper;
 
-import com.walkmate.data.datasource.remote.dto.request.walkintent.CreateWalkIntentRequest;
 import com.walkmate.data.datasource.remote.dto.response.walkintent.WalkIntentResponse;
 import com.walkmate.domain.walkintent.WalkIntent;
 
@@ -9,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 
@@ -26,7 +24,10 @@ public class WalkIntentMapper {
                 response.getAgeMax(),
                 response.getStatus(),
                 response.getCreatedAt(),
-                Collections.emptyList()  // tags not yet in API contract
+                Collections.emptyList(),  // tags not yet in API contract
+                response.getExpiresAt(),
+                null,  // description not in API contract
+                response.getProposalId() // non-null when inline match was found
         );
     }
 
@@ -36,19 +37,6 @@ public class WalkIntentMapper {
             result.add(toDomain(r));
         }
         return result;
-    }
-
-    public static CreateWalkIntentRequest toRequest(String hotspotId,
-                                                     float timeStart, float timeEnd,
-                                                     int ageMin, int ageMax) {
-        return new CreateWalkIntentRequest(
-                hotspotId,
-            LocalDate.now().toString(),
-            timeStart,
-            timeEnd,
-                ageMin,
-            ageMax,
-            Collections.emptyList());
     }
 
     private static float toHourFloat(String instantString) {

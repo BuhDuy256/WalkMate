@@ -6,10 +6,15 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.SocialApiService;
+import com.walkmate.core.util.ErrorParser;
+import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.social.FriendRequestResponse;
+import com.walkmate.data.datasource.remote.dto.response.social.PublicUserResponse;
 import com.walkmate.data.datasource.remote.dto.response.social.UserSummaryResponse;
 import com.walkmate.data.mapper.SocialMapper;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.social.FriendRequest;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.social.UserSummary;
 
@@ -29,69 +34,131 @@ public class SocialRepositoryImpl implements SocialRepository {
 
     public SocialRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
-        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager)
+        this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(SocialApiService.class);
     }
 
-    // ── Follow ────────────────────────────────────────────────────────────────
+    // ── Friends ───────────────────────────────────────────────────────────────
 
     @Override
-    public void follow(String targetUserId, DomainCallback<Void> callback) {
-        executor.execute(() -> {
-            try {
-                Response<ApiResponse<Void>> resp = apiService.follow(targetUserId).execute();
-                handleVoidResponse(resp, "FOLLOW_FAILED", callback);
-            } catch (IOException e) {
-                Log.e(TAG, "follow network error", e);
-                callback.onError(e);
-            }
-        });
-    }
-
-    @Override
-    public void unfollow(String targetUserId, DomainCallback<Void> callback) {
-        executor.execute(() -> {
-            try {
-                Response<ApiResponse<Void>> resp = apiService.unfollow(targetUserId).execute();
-                handleVoidResponse(resp, "UNFOLLOW_FAILED", callback);
-            } catch (IOException e) {
-                Log.e(TAG, "unfollow network error", e);
-                callback.onError(e);
-            }
-        });
-    }
-
-    @Override
-    public void getFollowers(String userId, DomainCallback<List<UserSummary>> callback) {
+    public void getFriends(DomainCallback<List<UserSummary>> callback) {
         executor.execute(() -> {
             try {
                 Response<ApiResponse<List<UserSummaryResponse>>> resp =
-                        apiService.getFollowers(userId).execute();
+                        apiService.getFriends().execute();
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(SocialMapper.toDomainList(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "FOLLOWERS_FETCH_FAILED")));
+                    deliverError(resp, "FRIENDS_FETCH_FAILED", callback);
                 }
             } catch (IOException e) {
-                Log.e(TAG, "getFollowers network error", e);
+                Log.e(TAG, "getFriends network error", e);
                 callback.onError(e);
             }
         });
     }
 
     @Override
-    public void getFollowing(String userId, DomainCallback<List<UserSummary>> callback) {
+    public void sendFriendRequest(String userId, DomainCallback<Void> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<List<UserSummaryResponse>>> resp =
-                        apiService.getFollowing(userId).execute();
+                Response<ApiResponse<Void>> resp = apiService.sendFriendRequest(userId).execute();
+                handleVoidResponse(resp, "FRIEND_REQUEST_FAILED", callback);
+            } catch (IOException e) {
+                Log.e(TAG, "sendFriendRequest network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void acceptFriendRequest(String requestId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = apiService.acceptFriendRequest(requestId).execute();
+                handleVoidResponse(resp, "ACCEPT_REQUEST_FAILED", callback);
+            } catch (IOException e) {
+                Log.e(TAG, "acceptFriendRequest network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void declineFriendRequest(String requestId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = apiService.declineFriendRequest(requestId).execute();
+                handleVoidResponse(resp, "DECLINE_REQUEST_FAILED", callback);
+            } catch (IOException e) {
+                Log.e(TAG, "declineFriendRequest network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void getIncomingRequests(DomainCallback<List<FriendRequest>> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<List<FriendRequestResponse>>> resp =
+                        apiService.getIncomingRequests().execute();
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    callback.onSuccess(SocialMapper.toDomainList(resp.body().getData()));
+                    callback.onSuccess(SocialMapper.toFriendRequestList(resp.body().getData()));
                 } else {
-                    callback.onError(new Exception(extractErrorCode(resp.body(), "FOLLOWING_FETCH_FAILED")));
+                    deliverError(resp, "INCOMING_REQUESTS_FAILED", callback);
                 }
             } catch (IOException e) {
-                Log.e(TAG, "getFollowing network error", e);
+                Log.e(TAG, "getIncomingRequests network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void getOutgoingRequests(DomainCallback<List<FriendRequest>> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<List<FriendRequestResponse>>> resp =
+                        apiService.getOutgoingRequests().execute();
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(SocialMapper.toFriendRequestList(resp.body().getData()));
+                } else {
+                    deliverError(resp, "OUTGOING_REQUESTS_FAILED", callback);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getOutgoingRequests network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void removeFriend(String userId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = apiService.removeFriend(userId).execute();
+                handleVoidResponse(resp, "REMOVE_FRIEND_FAILED", callback);
+            } catch (IOException e) {
+                Log.e(TAG, "removeFriend network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void getPublicProfile(String userId, DomainCallback<UserSummary> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<PublicUserResponse>> resp =
+                        apiService.getPublicProfile(userId).execute();
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(SocialMapper.toUserSummary(resp.body().getData()));
+                } else {
+                    deliverError(resp, "PUBLIC_PROFILE_FAILED", callback);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getPublicProfile network error", e);
                 callback.onError(e);
             }
         });
@@ -125,6 +192,24 @@ public class SocialRepositoryImpl implements SocialRepository {
         });
     }
 
+    @Override
+    public void getBlockedUsers(DomainCallback<List<UserSummary>> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<List<UserSummaryResponse>>> resp =
+                        apiService.getBlockedUsers().execute();
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(SocialMapper.toDomainList(resp.body().getData()));
+                } else {
+                    deliverError(resp, "BLOCKED_USERS_FAILED", callback);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getBlockedUsers network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void handleVoidResponse(Response<ApiResponse<Void>> resp,
@@ -133,14 +218,22 @@ public class SocialRepositoryImpl implements SocialRepository {
         if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
             callback.onSuccess(null);
         } else {
-            callback.onError(new Exception(extractErrorCode(resp.body(), fallbackCode)));
+            ApiError apiError = ErrorParser.extractApiError(resp, fallbackCode);
+            if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+            } else {
+                callback.onError(new Exception(apiError.getCode()));
+            }
         }
     }
 
-    private <T> String extractErrorCode(ApiResponse<T> body, String fallback) {
-        if (body != null && body.getError() != null && body.getError().getCode() != null) {
-            return body.getError().getCode();
+    private <T> void deliverError(Response<?> resp, String fallbackCode,
+                                   DomainCallback<T> callback) {
+        ApiError apiError = ErrorParser.extractApiError(resp, fallbackCode);
+        if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+            callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+        } else {
+            callback.onError(new Exception(apiError.getCode()));
         }
-        return fallback;
     }
 }

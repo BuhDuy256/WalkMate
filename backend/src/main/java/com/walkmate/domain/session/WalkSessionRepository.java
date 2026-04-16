@@ -18,10 +18,10 @@ public interface WalkSessionRepository {
     boolean hasOverlappingActiveSession(String userId, Instant start, Instant end);
 
     /**
-     * Returns PENDING sessions whose activation window has fully closed.
-     * Window close = scheduledStart + {@link WalkSession#ACTIVATION_WINDOW_AFTER}.
+        * Returns PENDING sessions that have stayed unresolved past a safety TTL.
+        * Caller passes {@code now - pendingTtl} as the cutoff.
      */
-    List<WalkSession> findSessionsPastActivationWindow(Instant now);
+        List<WalkSession> findStalePendingSessions(Instant cutoff);
 
     /**
      * Returns ACTIVE sessions whose scheduled end is before the given cutoff.
@@ -32,4 +32,10 @@ public interface WalkSessionRepository {
     /** Appends one row to the session_state_change_log audit table. */
     void logStateChange(String sessionId, SessionStatus from, SessionStatus to,
                         String changedBy, String reason);
+
+    /**
+     * Returns terminal sessions (COMPLETED, NO_SHOW, ABORTED, CANCELLED) for a user,
+     * ordered by ended_at DESC (falling back to created_at). Capped at 50 rows.
+     */
+    List<WalkSession> findCompletedByUserId(String userId);
 }
