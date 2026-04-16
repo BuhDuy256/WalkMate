@@ -55,7 +55,7 @@ public abstract class WalkMateDatabase extends RoomDatabase {
             database.execSQL(
                     "CREATE TABLE IF NOT EXISTS `tracking_state` ("
                     + "`sessionId` TEXT NOT NULL, "
-                    + "`walkState` TEXT NOT NULL, "
+                    + "`walkState` TEXT, "
                     + "`walkStartEpochMs` INTEGER NOT NULL, "
                     + "`pausedAccumulatedMs` INTEGER NOT NULL, "
                     + "`pauseStartEpochMs` INTEGER NOT NULL, "

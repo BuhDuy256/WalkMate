@@ -51,6 +51,11 @@
             android:exported="false"
             android:theme="@style/Theme.WalkMate" />
 
+        <activity
+            android:name="com.walkmate.ui.history.routereplay.RouteReplayActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WalkMate" />
+
         <!-- GPS foreground service; foregroundServiceType required for targetSdk >= 34 -->
         <service
             android:name="com.walkmate.service.WalkTrackerService"
