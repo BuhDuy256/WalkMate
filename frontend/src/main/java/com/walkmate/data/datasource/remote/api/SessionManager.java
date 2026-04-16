@@ -126,18 +126,35 @@ public class SessionManager {
 
     private static SharedPreferences buildEncryptedPrefs(Context context) {
         try {
-            MasterKey masterKey = new MasterKey.Builder(context)
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                    .build();
-            return EncryptedSharedPreferences.create(
-                    context,
-                    PREFS_NAME,
-                    masterKey,
-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            );
+            return createEncryptedPrefs(context);
         } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException("Failed to initialise EncryptedSharedPreferences", e);
+            // The Keystore key is gone or the stored keyset is corrupted — this happens
+            // after a reinstall on some devices, or when a backup is restored to a new
+            // device whose Keystore doesn't hold the original key.
+            // Deleting the stale prefs file lets us create a fresh keyset on the retry.
+            // The stored tokens are lost; the user will need to log in again.
+            Log.w("SessionManager", "EncryptedSharedPreferences keyset corrupted or key missing; "
+                    + "wiping stale prefs and retrying.", e);
+            context.deleteSharedPreferences(PREFS_NAME);
+            try {
+                return createEncryptedPrefs(context);
+            } catch (GeneralSecurityException | IOException retryEx) {
+                throw new RuntimeException("Failed to initialise EncryptedSharedPreferences", retryEx);
+            }
         }
+    }
+
+    private static SharedPreferences createEncryptedPrefs(Context context)
+            throws GeneralSecurityException, IOException {
+        MasterKey masterKey = new MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build();
+        return EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        );
     }
 }
