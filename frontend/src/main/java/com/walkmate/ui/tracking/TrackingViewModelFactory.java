@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.WalkMateApplication;
+import com.walkmate.domain.tracking.TrackingStateRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
 /**
@@ -33,9 +34,10 @@ public class TrackingViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(TrackingViewModel.class)) {
-            WalkSessionRepository sessionRepository =
-                    ((WalkMateApplication) application).getWalkSessionRepository();
-            return (T) new TrackingViewModel(application, sessionRepository);
+            WalkMateApplication app = (WalkMateApplication) application;
+            WalkSessionRepository sessionRepository = app.getWalkSessionRepository();
+            TrackingStateRepository stateRepository = app.getTrackingStateRepository();
+            return (T) new TrackingViewModel(application, sessionRepository, stateRepository);
         }
         throw new IllegalArgumentException(
                 "TrackingViewModelFactory cannot create: " + modelClass.getName());

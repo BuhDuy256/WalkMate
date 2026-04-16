@@ -15,6 +15,8 @@ import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.tracking.RoutePoint;
 import com.walkmate.domain.tracking.TrackingRepository;
+import com.walkmate.domain.tracking.TrackingRuntimeState;
+import com.walkmate.domain.tracking.TrackingStateRepository;
 import com.walkmate.domain.tracking.WalkState;
 import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.domain.walksession.WalkSessionRepository;
@@ -42,15 +44,21 @@ import java.util.concurrent.TimeUnit;
  *                            ▲                         │
  *                            └──────[resumeWalk]────────┘
  *                            │
- *                       [finishWalk]
+ *                       [finishWalk / requestCompleteWalk]
  *                            │
  *                            ▼
  *                        FINISHED
  * </pre>
  *
+ * <p><b>State persistence:</b> Every state transition persists timer epoch
+ * values and walk state to Room via {@link TrackingStateRepository}. On
+ * re-entry, {@link #startTrackingSession} loads the persisted state and
+ * restores PAUSED or ACTIVE exactly — so leaving and returning to the
+ * screen never resets an in-progress walk.
+ *
  * <p><b>Thread safety:</b> All {@link MutableLiveData#setValue} calls happen
- * on the main thread. Timer ticks use {@link MutableLiveData#postValue} from
- * the {@link ScheduledExecutorService} background thread.
+ * on the main thread. Timer ticks and Room callbacks use
+ * {@link MutableLiveData#postValue} from background threads.
  */
 public class TrackingViewModel extends AndroidViewModel {
 
@@ -94,10 +102,11 @@ public class TrackingViewModel extends AndroidViewModel {
 
     public LiveData<String> getCompletionError() { return completionErrorLiveData; }
 
-    // ── Repository + route cache ──────────────────────────────────────────────
+    // ── Repositories + route cache ────────────────────────────────────────────
 
     private final TrackingRepository repository;
     private final WalkSessionRepository sessionRepository;
+    private final TrackingStateRepository stateRepository;
 
     /**
      * Room-backed LiveData for the current session's route points.
@@ -115,14 +124,16 @@ public class TrackingViewModel extends AndroidViewModel {
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public TrackingViewModel(@NonNull Application application,
-                             @NonNull WalkSessionRepository sessionRepository) {
+                             @NonNull WalkSessionRepository sessionRepository,
+                             @NonNull TrackingStateRepository stateRepository) {
         super(application);
-        repository = ((WalkMateApplication) application).getTrackingRepository();
+        repository           = ((WalkMateApplication) application).getTrackingRepository();
         this.sessionRepository = sessionRepository;
+        this.stateRepository   = stateRepository;
 
         // Wire the two always-present sources; route points are added lazily.
-        uiStateLiveData.addSource(walkStateLiveData,     state -> rebuildUiState());
-        uiStateLiveData.addSource(elapsedSecondsLiveData, secs -> rebuildUiState());
+        uiStateLiveData.addSource(walkStateLiveData,      state -> rebuildUiState());
+        uiStateLiveData.addSource(elapsedSecondsLiveData, secs  -> rebuildUiState());
 
         // Emit an initial non-null snapshot so the Activity never observes null.
         rebuildUiState();
@@ -140,6 +151,10 @@ public class TrackingViewModel extends AndroidViewModel {
      * change because {@link TrackingRepository#getPointsForSession} returns the
      * same Room-backed LiveData instance and we guard against double-adding the
      * source.
+     *
+     * <p>Loads persisted runtime state from Room. If a PAUSED or ACTIVE record
+     * is found for this session the ViewModel restores timer epoch values and
+     * walk state instead of starting fresh at READY.
      */
     public void startTrackingSession(
             String sessionId, String partnerId, String partnerName,
@@ -159,7 +174,19 @@ public class TrackingViewModel extends AndroidViewModel {
             });
         }
 
-        rebuildUiState();
+        // Load persisted state asynchronously and apply it.
+        stateRepository.loadState(sessionId, new DomainCallback<TrackingRuntimeState>() {
+            @Override
+            public void onSuccess(TrackingRuntimeState saved) {
+                applyRestoredState(saved); // safe to call from background thread
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Load failed — keep default READY state, do not block the user.
+                walkStateLiveData.postValue(WalkState.READY);
+            }
+        });
     }
 
     /**
@@ -177,6 +204,8 @@ public class TrackingViewModel extends AndroidViewModel {
         startGpsService();
         walkStateLiveData.setValue(WalkState.ACTIVE);
         startTimer();
+
+        persistState(WalkState.ACTIVE);
     }
 
     /**
@@ -191,6 +220,8 @@ public class TrackingViewModel extends AndroidViewModel {
         stopTimer();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.PAUSED);
+
+        persistState(WalkState.PAUSED);
     }
 
     /**
@@ -207,6 +238,8 @@ public class TrackingViewModel extends AndroidViewModel {
         startGpsService();
         walkStateLiveData.setValue(WalkState.ACTIVE);
         startTimer();
+
+        persistState(WalkState.ACTIVE);
     }
 
     /**
@@ -218,6 +251,7 @@ public class TrackingViewModel extends AndroidViewModel {
         stopTimer();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHED);
+        clearPersistedState();
     }
 
     /**
@@ -243,6 +277,7 @@ public class TrackingViewModel extends AndroidViewModel {
         sessionRepository.completeSession(sessionId, new DomainCallback<WalkSession>() {
             @Override
             public void onSuccess(WalkSession result) {
+                clearPersistedState();
                 walkStateLiveData.postValue(WalkState.FINISHED);
             }
 
@@ -255,6 +290,81 @@ public class TrackingViewModel extends AndroidViewModel {
                 }
                 completionErrorLiveData.postValue(e.getMessage());
             }
+        });
+    }
+
+    // ── State restore ─────────────────────────────────────────────────────────
+
+    /**
+     * Called from a background thread after Room returns the persisted state.
+     * Uses {@code postValue} for LiveData and relies on the fact that timer
+     * fields are written before any timer task is scheduled (happens-before).
+     */
+    private void applyRestoredState(TrackingRuntimeState saved) {
+        if (saved == null) {
+            // No record — fresh session, keep default READY.
+            return;
+        }
+
+        WalkState savedState = saved.getWalkState();
+
+        if (savedState == WalkState.PAUSED) {
+            walkStartEpochMs    = saved.getWalkStartEpochMs();
+            pausedAccumulatedMs = saved.getPausedAccumulatedMs();
+            pauseStartEpochMs   = saved.getPauseStartEpochMs();
+
+            // Elapsed = time from start to when it was paused, minus earlier pauses.
+            long activeMs = (pauseStartEpochMs - walkStartEpochMs) - pausedAccumulatedMs;
+            elapsedSecondsLiveData.postValue(Math.max(0L, activeMs / 1000L));
+            walkStateLiveData.postValue(WalkState.PAUSED);
+
+        } else if (savedState == WalkState.ACTIVE) {
+            walkStartEpochMs    = saved.getWalkStartEpochMs();
+            pausedAccumulatedMs = saved.getPausedAccumulatedMs();
+            pauseStartEpochMs   = 0L;
+
+            // Restart GPS (may already be running as a foreground service; re-delivering
+            // the intent is harmless) and the live timer.
+            startGpsService();
+            walkStateLiveData.postValue(WalkState.ACTIVE);
+            startTimer();
+
+        }
+        // READY / FINISHING / FINISHED → no restore; use default READY.
+    }
+
+    // ── State persistence helpers ─────────────────────────────────────────────
+
+    /**
+     * Fire-and-forget persist of the current timer epoch values + given state.
+     * Errors are silently swallowed — a failed persist is non-fatal; the worst
+     * outcome is losing resume state, which is the same as the old behaviour.
+     */
+    private void persistState(WalkState state) {
+        if (sessionId == null) return;
+        TrackingRuntimeState snapshot = new TrackingRuntimeState(
+                sessionId,
+                state,
+                walkStartEpochMs,
+                pausedAccumulatedMs,
+                pauseStartEpochMs,
+                System.currentTimeMillis()
+        );
+        stateRepository.saveState(snapshot, new DomainCallback<Void>() {
+            @Override public void onSuccess(Void result) { /* no-op */ }
+            @Override public void onError(Exception e)   { /* non-fatal, swallow */ }
+        });
+    }
+
+    /**
+     * Removes the state record when the session ends so a future screen open
+     * does not accidentally restore a finished walk.
+     */
+    private void clearPersistedState() {
+        if (sessionId == null) return;
+        stateRepository.deleteState(sessionId, new DomainCallback<Void>() {
+            @Override public void onSuccess(Void result) { /* no-op */ }
+            @Override public void onError(Exception e)   { /* non-fatal, swallow */ }
         });
     }
 

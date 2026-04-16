@@ -15,6 +15,7 @@ import com.walkmate.data.repository.NotificationRepositoryImpl;
 import com.walkmate.data.repository.ReviewRepositoryImpl;
 import com.walkmate.data.repository.SocialRepositoryImpl;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
+import com.walkmate.data.repository.TrackingStateRepositoryImpl;
 import com.walkmate.data.repository.UserProfileRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkIntentRepositoryImpl;
@@ -27,6 +28,7 @@ import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.tracking.TrackingRepository;
+import com.walkmate.domain.tracking.TrackingStateRepository;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
@@ -56,6 +58,7 @@ public class WalkMateApplication extends Application {
     private ChatRepository chatRepository;
     private HotspotRepository hotspotRepository;
     private TrackingRepository trackingRepository;
+    private TrackingStateRepository trackingStateRepository;
     private WalkIntentRepository walkIntentRepository;
     private WalkProposalRepository walkProposalRepository;
     private WalkSessionRepository walkSessionRepository;
@@ -144,6 +147,13 @@ public class WalkMateApplication extends Application {
             trackingRepository = new TrackingRepositoryImpl(database.routePointDao(), sessionManager);
         }
         return trackingRepository;
+    }
+
+    public TrackingStateRepository getTrackingStateRepository() {
+        if (trackingStateRepository == null) {
+            trackingStateRepository = new TrackingStateRepositoryImpl(database.trackingStateDao());
+        }
+        return trackingStateRepository;
     }
 
     public WalkIntentRepository getWalkIntentRepository() {

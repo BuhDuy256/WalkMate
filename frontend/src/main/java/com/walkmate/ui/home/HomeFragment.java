@@ -18,14 +18,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.chip.Chip;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
-import com.walkmate.core.util.GlideHelper;
 import com.walkmate.core.util.LocationHelper;
 
 /**
@@ -51,11 +48,6 @@ public class HomeFragment extends Fragment {
     private View btnNotification;
     private View viewNotificationBadge;
     private MaterialButton btnFindWalkMate;
-    private MaterialCardView cardUpcomingSession;
-    private Chip chipSessionStatus;
-    private ImageView imgSessionAvatar;
-    private TextView txtSessionPartner;
-    private TextView txtSessionTime;
     private WalkMateStatColumn statDistance;
     private WalkMateStatColumn statSessions;
     private ProgressBar loadingIndicator;
@@ -110,11 +102,6 @@ public class HomeFragment extends Fragment {
         btnNotification       = root.findViewById(R.id.btnNotification);
         viewNotificationBadge = root.findViewById(R.id.viewNotificationBadge);
         btnFindWalkMate       = root.findViewById(R.id.btnFindWalkMate);
-        cardUpcomingSession   = root.findViewById(R.id.cardUpcomingSession);
-        chipSessionStatus     = root.findViewById(R.id.chipSessionStatus);
-        imgSessionAvatar      = root.findViewById(R.id.imgSessionAvatar);
-        txtSessionPartner     = root.findViewById(R.id.txtSessionPartner);
-        txtSessionTime        = root.findViewById(R.id.txtSessionTime);
         statDistance          = root.findViewById(R.id.statDistance);
         statSessions          = root.findViewById(R.id.statSessions);
         loadingIndicator      = root.findViewById(R.id.loadingIndicator);
@@ -183,18 +170,6 @@ public class HomeFragment extends Fragment {
         // ── Notification badge ──
         viewNotificationBadge.setVisibility(
                 state.hasUnreadNotification() ? View.VISIBLE : View.GONE);
-
-        // ── Upcoming session card ──
-        HomeDashboardUiState.UpcomingSessionSnapshot session = state.getUpcomingSession();
-        if (session != null) {
-            cardUpcomingSession.setVisibility(View.VISIBLE);
-            chipSessionStatus.setText(session.statusLabel);
-            txtSessionPartner.setText(session.partnerName);
-            txtSessionTime.setText(session.timeAndPlace);
-            GlideHelper.loadCircle(imgSessionAvatar, session.partnerAvatarUrl);
-        } else {
-            cardUpcomingSession.setVisibility(View.GONE);
-        }
 
         // ── Stats ──
         statDistance.setValue(String.format("%.1f", state.getTotalDistanceKm()));
