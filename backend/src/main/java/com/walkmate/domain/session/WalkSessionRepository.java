@@ -18,10 +18,10 @@ public interface WalkSessionRepository {
     boolean hasOverlappingActiveSession(String userId, Instant start, Instant end);
 
     /**
-        * Returns PENDING sessions that have stayed unresolved past a safety TTL.
-        * Caller passes {@code now - pendingTtl} as the cutoff.
+      * Returns PENDING sessions that have stayed unresolved past a safety TTL.
+      * Caller passes {@code now - pendingTtl} as the cutoff.
      */
-        List<WalkSession> findStalePendingSessions(Instant cutoff);
+     List<WalkSession> findStalePendingSessions(Instant cutoff);
 
     /**
      * Returns ACTIVE sessions whose scheduled end is before the given cutoff.
@@ -33,9 +33,6 @@ public interface WalkSessionRepository {
     void logStateChange(String sessionId, SessionStatus from, SessionStatus to,
                         String changedBy, String reason);
 
-    /**
-     * Returns terminal sessions (COMPLETED, NO_SHOW, ABORTED, CANCELLED) for a user,
-     * ordered by ended_at DESC (falling back to created_at). Capped at 50 rows.
-     */
+    /** Returns terminal sessions (COMPLETED, NO_SHOW, CANCELLED) for a user. */
     List<WalkSession> findCompletedByUserId(String userId);
 }

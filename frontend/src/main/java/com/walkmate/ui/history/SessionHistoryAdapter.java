@@ -37,7 +37,7 @@ public class SessionHistoryAdapter
         void onPartnerClick(String partnerId);
     }
 
-    /** Callback for "Report" action on COMPLETED/ABORTED/NO_SHOW history items (GAP-15). */
+    /** Callback for "Report" action on COMPLETED/NO_SHOW history items (GAP-15). */
     public interface OnReportClickListener {
         void onReportClick(String sessionId, String partnerId,
                            WalkSession.Status status, long terminalAtMs);
@@ -97,7 +97,6 @@ public class SessionHistoryAdapter
         // Report button — visible for reportable terminal statuses only
         WalkSession.Status status = summary.getStatus();
         boolean reportable = status == WalkSession.Status.COMPLETED
-                || status == WalkSession.Status.ABORTED
                 || status == WalkSession.Status.NO_SHOW;
         holder.btnReport.setVisibility(reportable ? View.VISIBLE : View.GONE);
         if (reportable) {

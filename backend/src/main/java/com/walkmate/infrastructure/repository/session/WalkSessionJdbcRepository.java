@@ -168,7 +168,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     public List<WalkSession> findCompletedByUserId(String userId) {
         final String sql = selectAll() + """
                 WHERE (user_id_a = :userId OR user_id_b = :userId)
-                  AND status IN ('COMPLETED', 'NO_SHOW', 'ABORTED', 'CANCELLED')
+                                                                        AND status IN ('COMPLETED', 'NO_SHOW', 'CANCELLED')
                 ORDER BY COALESCE(ended_at, created_at) DESC
                 LIMIT 50
                 """;

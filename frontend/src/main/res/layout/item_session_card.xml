@@ -177,21 +177,6 @@
                 app:cornerRadius="999dp"
                 app:backgroundTint="@null" />
 
-            <!-- Emergency Abort — ACTIVE sessions -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAbort"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:text="@string/btn_abort_walk"
-                android:textColor="@color/color_danger"
-                android:textSize="14sp"
-                android:visibility="gone"
-                app:strokeColor="@color/color_danger"
-                app:strokeWidth="1.5dp"
-                app:cornerRadius="999dp" />
-
             <!-- Report Issue — ACTIVE sessions only (GAP-15) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnReportIssue"

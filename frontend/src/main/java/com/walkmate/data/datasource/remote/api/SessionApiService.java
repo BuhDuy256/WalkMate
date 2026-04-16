@@ -1,6 +1,5 @@
 package com.walkmate.data.datasource.remote.api;
 
-import com.walkmate.data.datasource.remote.dto.request.walksession.AbortWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
@@ -26,10 +25,6 @@ public interface SessionApiService {
     @POST("api/v1/sessions/{sessionId}/cancel")
     Call<ApiResponse<Void>> cancelSession(@Path("sessionId") String sessionId,
                                           @Body CancelWalkSessionRequest body);
-
-    @POST("api/v1/sessions/{sessionId}/abort")
-    Call<ApiResponse<Void>> abortSession(@Path("sessionId") String sessionId,
-                                         @Body AbortWalkSessionRequest body);
 
     // UC-19 — Complete an active walk session
     @POST("api/v1/sessions/{sessionId}/complete")

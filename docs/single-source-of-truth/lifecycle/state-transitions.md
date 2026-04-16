@@ -59,7 +59,6 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 - **ACTIVE:** Both participants have activated the session (Path tracing in progress).
 - **COMPLETED:** The walk reached its destination or time limit.
 - **CANCELLED:** Manual cancellation prior to start hoặc auto-cancel khi `PENDING` quá TTL cấu hình.
-- **ABORTED:** Session terminated due to reported issues or emergency.
 
 ### Transitions
 
@@ -69,7 +68,6 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 | **PENDING** | **ACTIVE**    | Mutual activation (both participants press Arrive). |
 | **PENDING** | **CANCELLED** | Manual cancel or session exceeds `pending-ttl` policy. |
 | **ACTIVE**  | **COMPLETED** | Goal reached or time elapsed.              |
-| **ACTIVE**  | **ABORTED**   | Manual report or safety incident.          |
 
 ---
 
@@ -106,13 +104,13 @@ Trong `MatchProposal`, khi User A bấm **Accept** nhưng User B vẫn đang **P
 - **Vấn đề:** Khi Intent đang ở trạng thái `MATCHING` (đã có Proposal), User có được sửa thời gian hoặc Hotspot không?
 - **Giải pháp:** **Cấm sửa khi đã MATCHING.**
 
-### 4. Hậu quả của CANCELLED/ABORTED (Reputation System)
+### 4. Hậu quả của CANCELLED (Reputation System)
 
 Vì app của bạn là WalkMate (gặp người lạ), sự tin tưởng là quan trọng nhất.
 
-- **Vấn đề:** Nếu một User thường xuyên hủy (`CANCELLED`) hoặc giữa chừng `ABORTED` mà không có lý do chính đáng.
+- **Vấn đề:** Nếu một User thường xuyên hủy (`CANCELLED`) không có lý do chính đáng.
 - **Giải pháp:** \* Cần một bảng **UserReputation** (hoặc Karma điểm).
-  - Mỗi khi Session kết thúc với trạng thái `CANCELLED` hoặc `ABORTED`, hệ thống tự động cập nhật tín hiệu uy tín của User gây lỗi.
+  - Mỗi khi Session kết thúc với trạng thái `CANCELLED`, hệ thống tự động cập nhật tín hiệu uy tín của User gây lỗi.
   - Khi điểm quá thấp, Matching Engine sẽ không ưu tiên ghép đôi họ nữa (dù Intent vẫn `OPEN`).
 
 ### 5. Race Condition (Tranh chấp dữ liệu)

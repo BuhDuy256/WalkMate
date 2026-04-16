@@ -37,7 +37,6 @@ import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.domain.tracking.WalkState;
-import com.walkmate.domain.walksession.AbortReason;
 import com.walkmate.service.WalkTrackerService;
 import com.walkmate.ui.gamification.PostSessionSummaryFragment;
 
@@ -107,9 +106,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private MaterialButton         btnStart;
     private LinearLayout          btnRowPauseStop;
     private MaterialButton        btnPause;
-    private MaterialButton        btnStop;
     private MaterialButton        btnComplete;
-    private MaterialButton        btnAbort;
     private FloatingActionButton  fabRecenter;
     private LinearLayout          bottomPanel;
 
@@ -273,12 +270,6 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             }
         });
 
-        // Finish — ViewModel stops GPS + transitions to FINISHED; we then close.
-        btnStop.setOnClickListener(v -> {
-            viewModel.finishWalk();
-            // renderState() will react to FINISHED and show the summary dialog.
-        });
-
         // Complete Walk — confirmation dialog then API-backed completion.
         btnComplete.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
@@ -289,32 +280,6 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
         });
-
-        // Emergency Abort — radio-button dialog with AbortReason, then API-backed abort.
-        btnAbort.setOnClickListener(v -> showAbortReasonDialog());
-    }
-
-    private void showAbortReasonDialog() {
-        String[] labels = {
-                getString(R.string.abort_reason_safety),
-                getString(R.string.abort_reason_emergency),
-                getString(R.string.abort_reason_misconduct),
-                getString(R.string.abort_reason_other)
-        };
-        AbortReason[] reasons = {
-                AbortReason.SAFETY_CONCERN,
-                AbortReason.EMERGENCY,
-                AbortReason.PARTNER_MISCONDUCT,
-                AbortReason.OTHER
-        };
-        final int[] selected = {0};
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.abort_walk_title)
-                .setSingleChoiceItems(labels, 0, (d, which) -> selected[0] = which)
-                .setPositiveButton(R.string.btn_abort_confirm,
-                        (d, w) -> viewModel.abortWalk(reasons[selected[0]]))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     @Override
@@ -397,9 +362,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
      * Controls which button row is shown based on the walk state and new session lifecycle fields:
      * <ul>
      *   <li>{@code READY}     — Start only</li>
-     *   <li>{@code ACTIVE}    — Pause/Resume row + Complete Walk + Abort</li>
+    *   <li>{@code ACTIVE}    — Pause/Resume row + Complete Walk</li>
      *   <li>{@code PAUSED}    — Pause/Resume row only</li>
-     *   <li>{@code FINISHING} — Complete/Abort disabled (saving indicator)</li>
+    *   <li>{@code FINISHING} — Complete disabled (saving indicator)</li>
      *   <li>{@code FINISHED}  — all hidden (summary dialog takes over)</li>
      * </ul>
      */
@@ -410,7 +375,6 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnStart.setVisibility(View.VISIBLE);
                 btnRowPauseStop.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.GONE);
-                btnAbort.setVisibility(View.GONE);
                 break;
 
             case ACTIVE:
@@ -418,16 +382,16 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_pause);
                 btnComplete.setVisibility(View.VISIBLE);
-                btnAbort.setVisibility(View.VISIBLE);
                 long tooEarly = state.getCompleteTooEarlySeconds();
                 if (tooEarly > 0) {
                     btnComplete.setEnabled(false);
+                    btnComplete.setAlpha(0.6f);
                     btnComplete.setText(getString(R.string.tracking_complete_too_early_format, tooEarly));
                 } else {
                     btnComplete.setEnabled(true);
+                    btnComplete.setAlpha(1.0f);
                     btnComplete.setText(R.string.btn_complete_walk);
                 }
-                btnAbort.setEnabled(true);
                 break;
 
             case PAUSED:
@@ -438,13 +402,13 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(state.getCompleteTooEarlySeconds() == 0);
                 if (state.getCompleteTooEarlySeconds() > 0) {
+                    btnComplete.setAlpha(0.6f);
                     btnComplete.setText(getString(R.string.tracking_complete_too_early_format,
                             state.getCompleteTooEarlySeconds()));
                 } else {
+                    btnComplete.setAlpha(1.0f);
                     btnComplete.setText(R.string.btn_complete_walk);
                 }
-                btnAbort.setVisibility(View.VISIBLE);
-                btnAbort.setEnabled(true);
                 break;
 
             case FINISHING:
@@ -452,16 +416,14 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnRowPauseStop.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(false);
+                btnComplete.setAlpha(0.6f);
                 btnComplete.setText(R.string.btn_complete_walk);
-                btnAbort.setVisibility(View.VISIBLE);
-                btnAbort.setEnabled(false);
                 break;
 
             case FINISHED:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.GONE);
-                btnAbort.setVisibility(View.GONE);
                 break;
         }
     }
@@ -613,16 +575,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
      * Replaces the old summary dialog with a full PostSessionSummaryFragment.
      * The Fragment is added over android.R.id.content so it covers the tracking
      * UI without the user seeing the map underneath.
-     *
-     * The {@code isAborted} flag is determined by whether the current walk state
-     * transitioned through FINISHING via an abort action (tracked via the ViewModel's
-     * last abortWalk() call). We derive it from the walk state: FINISHED after
-     * requestCompleteWalk() → not aborted; FINISHED after abortWalk() → aborted.
-     * Since the Activity cannot distinguish these directly from WalkState alone, we
-     * use the abortPending flag on TrackingUiState (default: false for completed).
      */
     private void showPostSessionSummary(TrackingUiState state) {
-        boolean isAborted = viewModel.wasLastActionAbort();
+        boolean isAborted = false;
         PostSessionSummaryFragment fragment =
                 PostSessionSummaryFragment.newInstance(sessionId, partnerName, partnerId, isAborted);
 
@@ -676,9 +631,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         btnStart            = findViewById(R.id.btnStart);
         btnRowPauseStop     = findViewById(R.id.btnRowPauseStop);
         btnPause            = findViewById(R.id.btnPause);
-        btnStop             = findViewById(R.id.btnStop);
         btnComplete         = findViewById(R.id.btnComplete);
-        btnAbort            = findViewById(R.id.btnAbort);
         fabRecenter         = findViewById(R.id.fabRecenter);
         bottomPanel         = findViewById(R.id.bottomPanel);
     }

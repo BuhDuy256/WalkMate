@@ -8,7 +8,6 @@ public interface WalkSessionRepository {
     void getActiveSessions(DomainCallback<List<WalkSession>> callback);
     void activateSession(String sessionId, DomainCallback<WalkSession> callback);
     void cancelSession(String sessionId, String reason, DomainCallback<Void> callback);
-    void abortSession(String sessionId, String reason, DomainCallback<Void> callback);
     void completeSession(String sessionId, DomainCallback<WalkSession> callback);
     void getSessionHistory(DomainCallback<List<SessionSummary>> callback);
     void getSessionRoute(String sessionId, DomainCallback<SessionRoute> callback);

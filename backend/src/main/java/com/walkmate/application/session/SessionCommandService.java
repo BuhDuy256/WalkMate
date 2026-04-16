@@ -1,11 +1,9 @@
 package com.walkmate.application.session;
 
-import com.walkmate.application.gamification.SessionAbortedEvent;
 import com.walkmate.application.gamification.SessionCompletedEvent;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.chat.ChatRoomRepository;
-import com.walkmate.domain.session.AbortReason;
 import com.walkmate.domain.session.SessionErrorCode;
 import com.walkmate.domain.session.SessionStatus;
 import com.walkmate.domain.session.WalkSession;
@@ -109,32 +107,6 @@ public class SessionCommandService {
             public void afterCommit() {
                 try { chatRoomRepository.closeRoom(sid); }
                 catch (Exception e) { log.error("Chat room close failed on cancelSession: sessionId={}", sid, e); }
-            }
-        });
-    }
-
-    // ── Abort (mid-walk emergency) ────────────────────────────────────────────
-
-    /**
-     * Aborts an ACTIVE session mid-walk (C-2 resolution).
-     */
-    @Transactional
-    public void abortSession(String sessionId, String callerId, AbortReason reason) {
-        WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
-        Instant now = Instant.now();
-        session.abort(reason, now);
-        sessionRepository.save(session);
-        sessionRepository.logStateChange(sessionId, SessionStatus.ACTIVE, SessionStatus.ABORTED,
-                callerId, reason.name());
-        eventPublisher.publishEvent(new SessionAbortedEvent(session.getSessionId(), callerId));
-
-        // S-7: lock the chat room after PostgreSQL commits
-        final String sid = session.getSessionId();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try { chatRoomRepository.closeRoom(sid); }
-                catch (Exception e) { log.error("Chat room close failed on abortSession: sessionId={}", sid, e); }
             }
         });
     }

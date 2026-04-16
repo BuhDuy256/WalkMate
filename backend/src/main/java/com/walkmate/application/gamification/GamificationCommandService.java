@@ -65,17 +65,6 @@ public class GamificationCommandService {
         }
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onSessionAborted(SessionAbortedEvent event) {
-        try {
-            applyPenalty(event.getAbortingUserId(), SessionOutcome.ABORTED);
-        } catch (Exception ex) {
-            log.error("Gamification penalty failed for ABORTED session={} user={}: {}",
-                    event.getSessionId(), event.getAbortingUserId(), ex.getMessage(), ex);
-        }
-    }
-
     // ── Core reward logic ─────────────────────────────────────────────────────
 
     private void rewardBothParticipants(WalkSession session) {

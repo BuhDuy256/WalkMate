@@ -38,7 +38,7 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 - **S-4 Chính sách No-show (Cập nhật):** Luồng tự động chuyển `NO_SHOW` theo khung giờ kích hoạt đã tắt trong runtime hiện tại. `NO_SHOW` được giữ như trạng thái lịch sử/khả năng mở rộng, nhưng không còn là transition mặc định của scheduler.
 - **S-5 Điều kiện hoàn thành:** Một chuyến đi chỉ được chuyển sang `COMPLETED` từ trạng thái `ACTIVE` sau khi đã diễn ra tối thiểu 5 phút (tránh việc gian lận điểm).
 - **S-6 Giới hạn an toàn:** Một chuyến đi không được phép ở trạng thái `ACTIVE` quá 4 tiếng. Sau thời gian này, hệ thống sẽ tự động đóng Session để đảm bảo an toàn.
-- **S-7 Ràng buộc Chat (Bổ sung):** Người dùng chỉ có quyền gửi tin nhắn vào MongoDB khi `WalkSession` đang ở trạng thái `PENDING` hoặc `ACTIVE`. Khi Session chuyển sang `COMPLETED`, `CANCELLED` hoặc `ABORTED`, quyền ghi (Write) vào Chat của `session_id` đó phải bị khóa ngay lập tức.
+- **S-7 Ràng buộc Chat (Bổ sung):** Người dùng chỉ có quyền gửi tin nhắn vào MongoDB khi `WalkSession` đang ở trạng thái `PENDING` hoặc `ACTIVE`. Khi Session chuyển sang `COMPLETED` hoặc `CANCELLED`, quyền ghi (Write) vào Chat của `session_id` đó phải bị khóa ngay lập tức.
 - **S-8 Tính nhất quán của Snapshot (Bổ sung):** Một khi Session đã được tạo, các thông tin `scheduled_start`, `scheduled_end` và `meeting_point` là bất biến (Immutable), không thay đổi theo sự biến động của dữ liệu gốc ở bảng Intent hay Hotspot.
 
 ---
@@ -49,6 +49,6 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 - **X-2 Bàn giao trách nhiệm lịch trình (Hand-off):** Khi Intent chuyển sang `CONSUMED`, bản ghi lịch trình tương ứng phải được cập nhật ngay lập tức để trỏ tới `WalkSession` mới tạo. Tuyệt đối không được xóa và tạo mới để tránh làm mất "khóa" thời gian (Time Lock).
 - **X-3 Danh sách loại trừ (Exclude List):** Nếu User A từ chối lời mời từ User B, hệ thống phải cập nhật danh sách loại trừ của Intent đó để Matching Engine không ghép cặp hai người này lại trong cùng một yêu cầu.
 - **X-4 Hệ thống uy tín (2 giai đoạn):**
-  1. **Session-outcome update (ngay lập tức):** Khi Session đi vào trạng thái kết thúc đang dùng trong runtime (`COMPLETED`, `ABORTED`, `CANCELLED`), hệ thống cập nhật tín hiệu uy tín nền tảng để phục vụ matching.
+  1. **Session-outcome update (ngay lập tức):** Khi Session đi vào trạng thái kết thúc đang dùng trong runtime (`COMPLETED`, `CANCELLED`), hệ thống cập nhật tín hiệu uy tín nền tảng để phục vụ matching.
   2. **Review-based adjustment (hậu kiểm):** Khi có review (UC-31), hệ thống áp dụng điều chỉnh theo `rating_stars` và tính lại `trustScore` hiển thị.
 - **X-5 Versioning (Bổ sung):** Mọi hành động cập nhật trạng thái trên `WalkIntent`, `MatchProposal`, và `WalkSession` phải kiểm tra trường `version` (Optimistic Locking). Nếu `version` ở DB khác với `version` ở Request, hệ thống phải từ chối thao tác để tránh xung đột dữ liệu khi 2 người dùng thao tác cùng lúc.

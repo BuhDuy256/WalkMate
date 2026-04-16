@@ -3,7 +3,6 @@ package com.walkmate.presentation.controller.session;
 import com.walkmate.application.session.SessionCommandService;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.domain.session.WalkSession;
-import com.walkmate.presentation.dto.request.session.AbortWalkSessionRequest;
 import com.walkmate.presentation.dto.request.session.CancelWalkSessionRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.session.WalkSessionResponse;
@@ -68,20 +67,6 @@ public class SessionController {
             @Valid @RequestBody CancelWalkSessionRequest request) {
 
         sessionCommandService.cancelSession(sessionId, principal.userId(), request.reason());
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    /**
-     * POST /api/v1/sessions/{sessionId}/abort
-     * Aborts an ACTIVE session mid-walk.
-     */
-    @PostMapping("/{sessionId}/abort")
-    public ResponseEntity<ApiResponse<Void>> abortSession(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable String sessionId,
-            @Valid @RequestBody AbortWalkSessionRequest request) {
-
-        sessionCommandService.abortSession(sessionId, principal.userId(), request.reason());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

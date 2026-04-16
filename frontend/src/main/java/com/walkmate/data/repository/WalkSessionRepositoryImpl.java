@@ -6,7 +6,6 @@ import android.util.Log;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.SessionApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
-import com.walkmate.data.datasource.remote.dto.request.walksession.AbortWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
 import com.walkmate.core.util.ErrorParser;
@@ -119,30 +118,6 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "cancelSession network error", e);
-                callback.onError(e);
-            }
-        });
-    }
-
-    @Override
-    public void abortSession(String sessionId, String reason, DomainCallback<Void> callback) {
-        executor.execute(() -> {
-            try {
-                Response<ApiResponse<Void>> resp =
-                        apiService.abortSession(sessionId, new AbortWalkSessionRequest(reason)).execute();
-
-                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    callback.onSuccess(null);
-                } else {
-                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_ABORT_FAILED");
-                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
-                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
-                    } else {
-                        callback.onError(new Exception(apiError.getCode()));
-                    }
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "abortSession network error", e);
                 callback.onError(e);
             }
         });

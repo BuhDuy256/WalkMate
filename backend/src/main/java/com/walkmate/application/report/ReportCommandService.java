@@ -28,14 +28,6 @@ public class ReportCommandService {
     @Value("${app.report.completed-window-hours:72}")
     private long completedWindowHours;
 
-    /**
-     * Reporting window for ABORTED sessions (hours).
-     * Override with {@code app.report.terminal-window-hours} in application.properties.
-     * Default: 24 hours.
-     */
-    @Value("${app.report.terminal-window-hours:24}")
-    private long terminalWindowHours;
-
     private final WalkSessionRepository   sessionRepository;
     private final SessionReportRepository reportRepository;
 
@@ -78,10 +70,7 @@ public class ReportCommandService {
                 break;
 
             case ABORTED:
-                if (now.isAfter(session.getEndedAt().plus(Duration.ofHours(terminalWindowHours)))) {
-                    throw new DomainException(ReportErrorCode.REPORT_WINDOW_EXPIRED);
-                }
-                break;
+                throw new DomainException(ReportErrorCode.REPORT_SESSION_INVALID_STATUS);
         }
 
         // 5. Guard duplicate

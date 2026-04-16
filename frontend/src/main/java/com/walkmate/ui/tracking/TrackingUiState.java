@@ -23,7 +23,7 @@ public class TrackingUiState {
     private final boolean isCameraFollowingUser;
     /** Seconds remaining before Complete Walk is allowed; 0 when complete is permitted. */
     private final long completeTooEarlySeconds;
-    /** True while a complete/abort API call is in flight (FINISHING state). */
+    /** True while a complete API call is in flight (FINISHING state). */
     private final boolean isSaving;
 
     public TrackingUiState(

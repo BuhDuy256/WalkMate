@@ -181,7 +181,7 @@
                 app:cornerRadius="999dp" />
 
             <!--
-                Pause + Stop row — ACTIVE and PAUSED states.
+                Pause/Resume row — ACTIVE and PAUSED states.
                 Hidden in READY; btnPause text alternates "Pause" / "Resume".
             -->
             <LinearLayout
@@ -195,9 +195,8 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnPause"
                     style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:layout_weight="1"
                     android:text="@string/btn_pause"
                     android:textColor="@color/orange_end"
                     android:textSize="14sp"
@@ -206,22 +205,6 @@
                     app:strokeWidth="1.5dp"
                     app:cornerRadius="999dp"
                     app:rippleColor="@color/bg_warm_light" />
-
-                <!-- Finish — solid orange gradient pill -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStop"
-                    style="@style/Widget.Material3.Button.UnelevatedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/bg_gradient_orange_pill"
-                    android:text="@string/btn_finish_walk"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null"
-                    app:cornerRadius="999dp" />
 
             </LinearLayout>
 
@@ -239,21 +222,6 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 app:backgroundTint="@null"
-                app:cornerRadius="999dp" />
-
-            <!-- Emergency Abort — ACTIVE state; red outlined pill. -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAbort"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:text="@string/btn_abort_walk"
-                android:textColor="@color/color_danger"
-                android:textSize="14sp"
-                android:visibility="gone"
-                app:strokeColor="@color/color_danger"
-                app:strokeWidth="1.5dp"
                 app:cornerRadius="999dp" />
 
         </LinearLayout>

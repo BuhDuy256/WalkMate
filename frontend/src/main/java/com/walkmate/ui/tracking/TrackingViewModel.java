@@ -16,7 +16,6 @@ import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.tracking.RoutePoint;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.tracking.WalkState;
-import com.walkmate.domain.walksession.AbortReason;
 import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 import com.walkmate.service.WalkTrackerService;
@@ -94,16 +93,6 @@ public class TrackingViewModel extends AndroidViewModel {
     private final MutableLiveData<String> completionErrorLiveData = new MutableLiveData<>();
 
     public LiveData<String> getCompletionError() { return completionErrorLiveData; }
-
-    /** True if the last terminal action was abortWalk(); false if requestCompleteWalk(). */
-    private boolean lastActionWasAbort = false;
-
-    /**
-     * Returns true if the session ended via an abort (safety concern, emergency, etc.)
-     * rather than a normal completion. Used by TrackingScreenActivity to decide whether
-     * to show the "Report Incident" button on the post-session summary.
-     */
-    public boolean wasLastActionAbort() { return lastActionWasAbort; }
 
     // ── Repository + route cache ──────────────────────────────────────────────
 
@@ -251,31 +240,6 @@ public class TrackingViewModel extends AndroidViewModel {
         sessionRepository.completeSession(sessionId, new DomainCallback<WalkSession>() {
             @Override
             public void onSuccess(WalkSession result) {
-                walkStateLiveData.postValue(WalkState.FINISHED);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                walkStateLiveData.postValue(WalkState.ACTIVE);
-                startTimer();
-                startGpsService();
-                completionErrorLiveData.postValue(e.getMessage());
-            }
-        });
-    }
-
-    /**
-     * Aborts the walk with the given reason via the backend API.
-     * Transitions ACTIVE → FINISHING → FINISHED (or back to ACTIVE on error).
-     */
-    public void abortWalk(AbortReason reason) {
-        lastActionWasAbort = true;
-        stopTimer();
-        stopGpsService();
-        walkStateLiveData.setValue(WalkState.FINISHING);
-        sessionRepository.abortSession(sessionId, reason.toApiValue(), new DomainCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
                 walkStateLiveData.postValue(WalkState.FINISHED);
             }
 

@@ -107,11 +107,6 @@ public class SessionFragment extends Fragment {
             }
 
             @Override
-            public void onAbortClicked(String sessionId) {
-                showCancelReasonDialog(sessionId); // re-uses cancel dialog as abort proxy
-            }
-
-            @Override
             public void onCompleteClicked(WalkSession session) {
                 // Navigate to tracking screen where complete is handled properly
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)

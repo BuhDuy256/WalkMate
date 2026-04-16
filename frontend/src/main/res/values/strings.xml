@@ -104,7 +104,7 @@
     <string name="label_pace_unit">min / km</string>
     <string name="pace_placeholder">--\'--\"</string>
     <string name="tracking_permission_denied">Location permission is required to track your walk.</string>
-    <string name="tracking_complete_too_early_format">Available in %ds</string>
+    <string name="tracking_complete_too_early_format">Can complete in %ds</string>
     <string name="complete_walk_confirm_title">Complete Walk?</string>
     <string name="complete_walk_confirm_message">Are you sure you want to finish the walk?</string>
     <string name="btn_complete_confirm">Complete</string>

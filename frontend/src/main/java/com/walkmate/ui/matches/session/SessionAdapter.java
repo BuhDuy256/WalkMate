@@ -35,7 +35,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     public interface SessionActionListener {
         void onArriveClicked(String sessionId);
-        void onAbortClicked(String sessionId);
         void onCompleteClicked(WalkSession session);
         void onReportClicked(String sessionId, String partnerId);
     }
@@ -101,7 +100,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         private final MaterialButton btnChat;
         private final MaterialButton btnCancelSession;
         final MaterialButton btnComplete;
-        final MaterialButton btnAbort;
         private final MaterialButton btnReportIssue;
 
         ViewHolder(@NonNull View itemView) {
@@ -114,7 +112,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             btnChat          = itemView.findViewById(R.id.btnChat);
             btnCancelSession = itemView.findViewById(R.id.btnCancelSession);
             btnComplete      = itemView.findViewById(R.id.btnComplete);
-            btnAbort         = itemView.findViewById(R.id.btnAbort);
             btnReportIssue   = itemView.findViewById(R.id.btnReportIssue);
         }
 
@@ -139,7 +136,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 activationBtn.bind(session.getScheduledTime(),
                         v -> { if (listener != null) listener.onArriveClicked(session.getSessionId()); });
                 btnComplete.setVisibility(View.GONE);
-                btnAbort.setVisibility(View.GONE);
                 btnReportIssue.setVisibility(View.GONE);
             } else if (session.getStatus() == WalkSession.Status.ACTIVE) {
                 activationBtn.setVisibility(View.GONE);
@@ -149,8 +145,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 btnComplete.setOnClickListener(v -> {
                     if (listener != null) listener.onCompleteClicked(session);
                 });
-                btnAbort.setVisibility(View.VISIBLE);
-                btnAbort.setOnClickListener(v -> { if (listener != null) listener.onAbortClicked(session.getSessionId()); });
                 btnReportIssue.setVisibility(View.VISIBLE);
                 btnReportIssue.setOnClickListener(v -> {
                     if (listener != null) listener.onReportClicked(session.getSessionId(), session.getPartnerId());
@@ -158,7 +152,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             } else {
                 activationBtn.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.GONE);
-                btnAbort.setVisibility(View.GONE);
                 btnReportIssue.setVisibility(View.GONE);
             }
         }
