@@ -28,6 +28,10 @@ import com.walkmate.ui.matches.MatchesViewModel;
 import com.walkmate.ui.report.ReportIncidentFragment;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class SessionFragment extends Fragment {
 
     private SwipeRefreshLayout swipeRefresh;
@@ -108,10 +112,14 @@ public class SessionFragment extends Fragment {
             }
 
             @Override
-            public void onCompleteClicked(String sessionId) {
+            public void onCompleteClicked(WalkSession session) {
                 // Navigate to tracking screen where complete is handled properly
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
-                        .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID, sessionId));
+                        .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   session.getSessionId())
+                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   session.getPartnerId())
+                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, session.getPartnerName())
+                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  session.getMeetingPointLat())
+                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  session.getMeetingPointLng()));
             }
 
             @Override
@@ -195,9 +203,11 @@ public class SessionFragment extends Fragment {
     private void renderState(MatchesUiState state) {
         swipeRefresh.setRefreshing(state.isLoading());
 
-        adapter.setItems(state.getActiveSessions());
+        List<WalkSession> visibleSessions = filterVisibleSessions(state.getActiveSessions());
 
-        boolean empty = !state.isLoading() && state.getActiveSessions().isEmpty();
+        adapter.setItems(visibleSessions);
+
+        boolean empty = !state.isLoading() && visibleSessions.isEmpty();
         txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
 
@@ -209,7 +219,7 @@ public class SessionFragment extends Fragment {
         // WINDOW_CLOSED post-reload: navigate to History if the session disappeared.
         if (pendingWindowClosedSessionId != null && !state.isLoading()) {
             boolean found = false;
-            for (WalkSession s : state.getActiveSessions()) {
+            for (WalkSession s : visibleSessions) {
                 if (pendingWindowClosedSessionId.equals(s.getSessionId())) {
                     found = true;
                     break;
@@ -223,6 +233,21 @@ public class SessionFragment extends Fragment {
                 } catch (Exception ignored) { /* already navigated */ }
             }
         }
+    }
+
+    private List<WalkSession> filterVisibleSessions(List<WalkSession> sessions) {
+        if (sessions == null || sessions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<WalkSession> visible = new ArrayList<>(sessions.size());
+        for (WalkSession session : sessions) {
+            WalkSession.Status status = session.getStatus();
+            if (status == WalkSession.Status.PENDING || status == WalkSession.Status.ACTIVE) {
+                visible.add(session);
+            }
+        }
+        return visible;
     }
 
     private void showCancelReasonDialog(String sessionId) {

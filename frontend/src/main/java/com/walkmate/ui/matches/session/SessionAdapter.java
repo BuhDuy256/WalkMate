@@ -36,7 +36,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     public interface SessionActionListener {
         void onArriveClicked(String sessionId);
         void onAbortClicked(String sessionId);
-        void onCompleteClicked(String sessionId);
+        void onCompleteClicked(WalkSession session);
         void onReportClicked(String sessionId, String partnerId);
     }
 
@@ -146,7 +146,9 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(true);
                 btnComplete.setText(R.string.btn_resume_walk);
-                btnComplete.setOnClickListener(v -> { if (listener != null) listener.onCompleteClicked(session.getSessionId()); });
+                btnComplete.setOnClickListener(v -> {
+                    if (listener != null) listener.onCompleteClicked(session);
+                });
                 btnAbort.setVisibility(View.VISIBLE);
                 btnAbort.setOnClickListener(v -> { if (listener != null) listener.onAbortClicked(session.getSessionId()); });
                 btnReportIssue.setVisibility(View.VISIBLE);

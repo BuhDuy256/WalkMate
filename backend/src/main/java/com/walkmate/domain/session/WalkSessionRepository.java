@@ -18,10 +18,10 @@ public interface WalkSessionRepository {
     boolean hasOverlappingActiveSession(String userId, Instant start, Instant end);
 
     /**
-     * Returns PENDING sessions whose activation window has fully closed.
-     * Window close = scheduledStart + {@link WalkSession#ACTIVATION_WINDOW_AFTER}.
+        * Returns PENDING sessions that have stayed unresolved past a safety TTL.
+        * Caller passes {@code now - pendingTtl} as the cutoff.
      */
-    List<WalkSession> findSessionsPastActivationWindow(Instant now);
+        List<WalkSession> findStalePendingSessions(Instant cutoff);
 
     /**
      * Returns ACTIVE sessions whose scheduled end is before the given cutoff.

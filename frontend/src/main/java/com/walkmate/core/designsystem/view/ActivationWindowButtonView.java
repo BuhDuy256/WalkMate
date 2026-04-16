@@ -2,8 +2,6 @@ package com.walkmate.core.designsystem.view;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,27 +12,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.walkmate.R;
-import com.walkmate.domain.walksession.WalkSession;
-
-import java.time.Instant;
 
 /**
  * ActivationWindowButtonView — shows the "I'm Here!" button together with a
- * status label, enabling/disabling the button based on whether the current
- * time falls inside the activation window defined by
- * WalkSession.ACTIVATION_WINDOW_BEFORE_MINUTES and
- * WalkSession.ACTIVATION_WINDOW_AFTER_MINUTES (per invariant S-3).
+ * status label.
  *
- * <p>Re-evaluates every 60 seconds via a {@link Handler#postDelayed} loop so
- * the button enables itself automatically once the window opens without
- * requiring a screen refresh from the Fragment.</p>
+ * <p>The activation button is intentionally always enabled when bound from a
+ * PENDING session card. The 5-minute rule belongs to tracking completion, not
+ * to this activation entry point.</p>
  *
  * <h3>Required lifecycle calls</h3>
  * <ul>
  *   <li>Call {@link #bind(String, View.OnClickListener)} from the Fragment /
- *       adapter once you have the session's scheduled start time.</li>
+ *       adapter once the session card is ready.</li>
  *   <li>Call {@link #release()} from {@code onDestroyView()} or
- *       {@code onViewRecycled()} to stop the re-evaluation loop.</li>
+ *       {@code onViewRecycled()} for API compatibility with previous versions.</li>
  * </ul>
  *
  * <h3>XML attrs</h3>
@@ -46,24 +38,10 @@ import java.time.Instant;
  */
 public class ActivationWindowButtonView extends LinearLayout {
 
-    private static final long WINDOW_OPEN_OFFSET_MS  =
-        WalkSession.ACTIVATION_WINDOW_BEFORE_MINUTES * 60_000L;
-    private static final long WINDOW_CLOSE_OFFSET_MS =
-        WalkSession.ACTIVATION_WINDOW_AFTER_MINUTES * 60_000L;
-    private static final long RE_EVAL_INTERVAL_MS    = 60_000L;        // re-check every 60 s
-
     private TextView       tvStatus;
     private WalkMateButton btnArrive;
 
     private String arriveLabel  = "Start Your Walk";
-    private String waitingLabel = "Not yet open";
-    private String closedLabel  = "Window closed";
-
-    private long windowOpenMs;
-    private long windowCloseMs;
-
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable reEvalRunnable = this::evaluate;
 
     // ─── Constructors ────────────────────────────────────────────────────────
 
@@ -97,9 +75,6 @@ public class ActivationWindowButtonView extends LinearLayout {
         try {
             String attr = a.getString(R.styleable.ActivationWindowButtonView_wm_arriveLabel);
             if (attr != null) arriveLabel = attr;
-
-            attr = a.getString(R.styleable.ActivationWindowButtonView_wm_waitingLabel);
-            if (attr != null) waitingLabel = attr;
         } finally {
             a.recycle();
         }
@@ -108,60 +83,21 @@ public class ActivationWindowButtonView extends LinearLayout {
     // ─── Public API ──────────────────────────────────────────────────────────
 
     /**
-     * Wire the view to a session's scheduled start time and the arrive handler.
-     * Immediately evaluates the window and schedules periodic re-evaluation.
+     * Wire the view to an arrive handler.
      *
-     * @param scheduledStartIso ISO-8601 instant of the session's scheduled start
+     * @param scheduledStartIso kept for API compatibility; no longer used
      * @param onArrivedClick    click listener for the "I'm Here!" button
      */
     public void bind(@NonNull String scheduledStartIso, @NonNull View.OnClickListener onArrivedClick) {
-        release(); // cancel any previous loop before rebinding
-
-        long epochMs = Instant.parse(scheduledStartIso).toEpochMilli();
-        windowOpenMs  = epochMs - WINDOW_OPEN_OFFSET_MS;
-        windowCloseMs = epochMs + WINDOW_CLOSE_OFFSET_MS;
-
         btnArrive.setOnClickListener(onArrivedClick);
-        evaluate();
+        tvStatus.setText(arriveLabel);
+        btnArrive.setEnabled(true);
     }
 
     /**
-     * Stop the re-evaluation loop. Must be called from {@code onDestroyView()}
-     * or the adapter's {@code onViewRecycled()} to prevent Handler leaks.
+     * No-op kept for backward compatibility with adapter lifecycle calls.
      */
     public void release() {
-        handler.removeCallbacks(reEvalRunnable);
-    }
-
-    // ─── Internal ────────────────────────────────────────────────────────────
-
-    private void evaluate() {
-        long now = System.currentTimeMillis();
-
-        if (now < windowOpenMs) {
-            // Too early — window not yet open
-            tvStatus.setText(waitingLabel);
-            btnArrive.setEnabled(false);
-            scheduleNextEval();
-
-        } else if (now <= windowCloseMs) {
-            // Inside the activation window — enable the button
-            tvStatus.setText(arriveLabel);
-            btnArrive.setEnabled(true);
-            scheduleNextEval();
-
-        } else {
-            // Past the window — disable permanently and stop re-evaluating
-            tvStatus.setText(closedLabel);
-            btnArrive.setEnabled(false);
-            // No further postDelayed — release() is a no-op here but we still
-            // remove any residual callbacks to be safe.
-            release();
-        }
-    }
-
-    private void scheduleNextEval() {
-        handler.removeCallbacks(reEvalRunnable); // avoid double-posting
-        handler.postDelayed(reEvalRunnable, RE_EVAL_INTERVAL_MS);
+        // no-op
     }
 }

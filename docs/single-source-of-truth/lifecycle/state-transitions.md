@@ -56,10 +56,9 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 ### Lifecycle Stages
 
 - **PENDING:** Session created, waiting for participants to arrive at the Hotspot and activate.
-- **ACTIVE:** Both participants successfully activated the session (Path tracing in progress).
+- **ACTIVE:** Both participants have activated the session (Path tracing in progress).
 - **COMPLETED:** The walk reached its destination or time limit.
-- **NO_SHOW:** Only one participant activated within the window.
-- **CANCELLED:** Manual cancellation prior to start or zero activation.
+- **CANCELLED:** Manual cancellation prior to start hoặc auto-cancel khi `PENDING` quá TTL cấu hình.
 - **ABORTED:** Session terminated due to reported issues or emergency.
 
 ### Transitions
@@ -67,9 +66,8 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 | From        | To            | Trigger                                    |
 | :---------- | :------------ | :----------------------------------------- |
 | [None]      | **PENDING**   | `MatchProposal` transitions to CONFIRMED.  |
-| **PENDING** | **ACTIVE**    | Mutual activation within the valid window. |
-| **PENDING** | **NO_SHOW**   | One-sided activation timeout.              |
-| **PENDING** | **CANCELLED** | Manual cancel or no one activates.         |
+| **PENDING** | **ACTIVE**    | Mutual activation (both participants press Arrive). |
+| **PENDING** | **CANCELLED** | Manual cancel or session exceeds `pending-ttl` policy. |
 | **ACTIVE**  | **COMPLETED** | Goal reached or time elapsed.              |
 | **ACTIVE**  | **ABORTED**   | Manual report or safety incident.          |
 
@@ -108,13 +106,13 @@ Trong `MatchProposal`, khi User A bấm **Accept** nhưng User B vẫn đang **P
 - **Vấn đề:** Khi Intent đang ở trạng thái `MATCHING` (đã có Proposal), User có được sửa thời gian hoặc Hotspot không?
 - **Giải pháp:** **Cấm sửa khi đã MATCHING.**
 
-### 4. Hậu quả của NO_SHOW và ABORTED (Reputation System)
+### 4. Hậu quả của CANCELLED/ABORTED (Reputation System)
 
 Vì app của bạn là WalkMate (gặp người lạ), sự tin tưởng là quan trọng nhất.
 
-- **Vấn đề:** Nếu một User chuyên gia bấm Accept cho sang chảnh rồi đến giờ lại `NO_SHOW` hoặc giữa chừng `ABORTED` mà không có lý do chính đáng.
+- **Vấn đề:** Nếu một User thường xuyên hủy (`CANCELLED`) hoặc giữa chừng `ABORTED` mà không có lý do chính đáng.
 - **Giải pháp:** \* Cần một bảng **UserReputation** (hoặc Karma điểm).
-  - Mỗi khi Session kết thúc với trạng thái `NO_SHOW` hoặc `ABORTED`, hệ thống tự động trừ điểm uy tín của User gây lỗi.
+  - Mỗi khi Session kết thúc với trạng thái `CANCELLED` hoặc `ABORTED`, hệ thống tự động cập nhật tín hiệu uy tín của User gây lỗi.
   - Khi điểm quá thấp, Matching Engine sẽ không ưu tiên ghép đôi họ nữa (dù Intent vẫn `OPEN`).
 
 ### 5. Race Condition (Tranh chấp dữ liệu)
