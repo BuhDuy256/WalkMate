@@ -16,12 +16,14 @@ package com.walkmate.domain.tracking;
  */
 public class LocationFilterPolicy {
 
-    /** Ignore fixes with an accuracy radius larger than this value (metres).
-     *  100 m includes indoor/weak-signal fixes; tighten to ~25 m for production. */
-    private static final float MAX_ACCURACY_METRES = 100.0f;
+    /**
+     * Ignore fixes with an accuracy radius larger than this value (metres)
+     * once a baseline point has been established.
+     */
+    private static final float MAX_ACCURACY_METRES = 150.0f;
 
     /** Ignore fixes that are closer than this distance to the last accepted point (metres). */
-    private static final float MIN_DISTANCE_METRES = 3.0f;
+    private static final float MIN_DISTANCE_METRES = 1.0f;
 
     private Double lastLat;
     private Double lastLng;
@@ -36,12 +38,12 @@ public class LocationFilterPolicy {
      * @param accuracy horizontal accuracy radius reported by the sensor (metres)
      */
     public boolean shouldAccept(double lat, double lng, float accuracy) {
+        if (lastLat == null) {
+            // Always accept the first fix so tracking starts immediately after Start.
+            return true;
+        }
         if (accuracy > MAX_ACCURACY_METRES) {
             return false;
-        }
-        if (lastLat == null) {
-            // No previous point — always accept the first fix.
-            return true;
         }
         return distanceMetres(lastLat, lastLng, lat, lng) >= MIN_DISTANCE_METRES;
     }

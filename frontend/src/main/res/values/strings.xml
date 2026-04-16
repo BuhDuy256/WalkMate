@@ -91,6 +91,7 @@
     <!-- Session lifecycle -->
     <string name="session_waiting_for_partner">Waiting for partner to arrive…</string>
     <string name="btn_complete_walk">Complete Walk</string>
+    <string name="btn_resume_walk">Resume Walk</string>
     <string name="btn_abort_walk">Emergency Abort</string>
 
     <!-- Tracking screen -->

@@ -18,6 +18,9 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -68,7 +71,6 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private static final String TAG = "TrackingScreenActivity";
     private static final int    REQUEST_LOCATION_PERMISSION = 100;
-    private static final float  MAP_DEFAULT_ZOOM   = 16.5f; // meeting-point overview
     private static final float  MAP_TRACKING_ZOOM  = 18.5f; // close follow during walk
     private static final int    POLYLINE_COLOR      = 0xFFFF7B3A; // orange_end
 
@@ -115,6 +117,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private boolean finishDialogShown = false;
     private int     bottomPanelHeightPx = 0;
+    private boolean shouldStartWalkAfterPermission = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -128,8 +131,6 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         bindViews();
         setupBottomPanel();
-        setupMap();
-        setupClickListeners();
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -142,6 +143,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }
         });
+
+        setupMap();
+        setupClickListeners();
     }
 
     /**
@@ -183,25 +187,25 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 == PackageManager.PERMISSION_GRANTED) {
             //noinspection MissingPermission
             map.setMyLocationEnabled(true);
+        } else {
+            // Ask once on map load so recenter/initial zoom can work immediately.
+            requestLocationPermission(false);
         }
 
-        // Fly to meeting point as the initial map position.
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(meetingLat, meetingLng), MAP_DEFAULT_ZOOM));
-
-        // Immediately try to centre on the device's real position so the blue dot
-        // is visible and the user isn't staring at the meeting-point coordinates
-        // (which could be 0,0 or far away).
-        // Don't mark hasInitialCameraFly here — the first GPS fix from the service
-        // should still trigger a zoom to start path tracing.
-        zoomToDeviceLocation(false);
+        // Immediately center on the device location as the initial map position.
+        // Don't move to meeting-point coordinates first.
+        // Mark initial fly now so stale cached route points cannot override this
+        // initial camera decision on map startup.
+        zoomToDeviceLocation(true);
 
         // Re-apply the latest ViewModel state in case GPS points arrived before
         // the map finished loading (rare, but possible on slow devices).
         TrackingUiState latestState = viewModel.getUiState().getValue();
         if (latestState != null && !latestState.getMapPoints().isEmpty()) {
             updatePolyline(latestState.getMapPoints());
-            handleCameraUpdate(latestState);
+            if (latestState.isCameraFollowingUser()) {
+                handleCameraUpdate(latestState);
+            }
         } else if (latestState != null && latestState.getWalkState() == WalkState.ACTIVE) {
             // Walk already started but service hasn't delivered a point yet — zoom
             // immediately to the device's cached last-known location.
@@ -234,7 +238,14 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
         // Re-center — animate camera to the latest GPS point.
-        fabRecenter.setOnClickListener(v -> recenterCamera());
+        fabRecenter.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                recenterCamera();
+            } else {
+                requestLocationPermission(false);
+            }
+        });
 
         // Start — requires ACCESS_FINE_LOCATION at runtime.
         btnStart.setOnClickListener(v -> {
@@ -246,9 +257,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 // the first GPS fix from WalkTrackerService.
                 zoomToDeviceLocation(true);
             } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        REQUEST_LOCATION_PERMISSION);
+                requestLocationPermission(true);
             }
         });
 
@@ -321,12 +330,27 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 //noinspection MissingPermission
                 googleMap.setMyLocationEnabled(true);
             }
-            viewModel.startWalk();
-            zoomToDeviceLocation(true);
+            // Always center the map once permission is granted.
+            zoomToDeviceLocation(false);
+
+            // Only auto-start walk when this permission request came from Start.
+            if (shouldStartWalkAfterPermission) {
+                shouldStartWalkAfterPermission = false;
+                viewModel.startWalk();
+                zoomToDeviceLocation(true);
+            }
         } else {
+            shouldStartWalkAfterPermission = false;
             Toast.makeText(this,
                     R.string.tracking_permission_denied, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void requestLocationPermission(boolean startWalkAfterGrant) {
+        shouldStartWalkAfterPermission = startWalkAfterGrant;
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                REQUEST_LOCATION_PERMISSION);
     }
 
     // ── State rendering ───────────────────────────────────────────────────────
@@ -343,6 +367,13 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         if (googleMap != null) {
             updatePolyline(state.getMapPoints());
             handleCameraUpdate(state);
+            if (state.isCameraFollowingUser()
+                    && state.getMapPoints().isEmpty()
+                    && !hasInitialCameraFly) {
+                // ACTIVE but no route points yet: keep trying to center on device
+                // so users don't stay stuck at a world/default viewport.
+                zoomToDeviceLocation(true);
+            }
         }
 
         if (state.getWalkState() == WalkState.FINISHED && !finishDialogShown) {
@@ -471,6 +502,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         LatLng latest = points.get(points.size() - 1);
 
         if (!hasInitialCameraFly) {
+            if (!state.isCameraFollowingUser()) {
+                return;
+            }
             hasInitialCameraFly = true;
             // First point: hard move (no animation) to avoid disorienting the user.
             googleMap.moveCamera(
@@ -536,10 +570,41 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                                         new LatLng(freshLocation.getLatitude(),
                                                 freshLocation.getLongitude()),
                                         MAP_TRACKING_ZOOM));
+                            } else {
+                                requestOneShotLocation(markInitialFly);
                             }
                         });
             }
         });
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void requestOneShotLocation(boolean markInitialFly) {
+        if (googleMap == null || fusedLocationClient == null) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) return;
+
+        LocationRequest request = new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY, 1_000L)
+                .setMinUpdateIntervalMillis(500L)
+                .setMaxUpdates(1)
+                .build();
+
+        LocationCallback callback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult result) {
+                android.location.Location loc = result.getLastLocation();
+                if (loc != null && googleMap != null) {
+                    if (markInitialFly) hasInitialCameraFly = true;
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                            new LatLng(loc.getLatitude(), loc.getLongitude()),
+                            MAP_TRACKING_ZOOM));
+                }
+                fusedLocationClient.removeLocationUpdates(this);
+            }
+        };
+
+        fusedLocationClient.requestLocationUpdates(request, callback, getMainLooper());
     }
 
     // ── Walk completed → Post-Session Summary ─────────────────────────────────

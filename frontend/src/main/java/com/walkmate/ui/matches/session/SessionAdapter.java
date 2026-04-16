@@ -144,7 +144,8 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             } else if (session.getStatus() == WalkSession.Status.ACTIVE) {
                 activationBtn.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.VISIBLE);
-                btnComplete.setEnabled(session.canComplete());
+                btnComplete.setEnabled(true);
+                btnComplete.setText(R.string.btn_resume_walk);
                 btnComplete.setOnClickListener(v -> { if (listener != null) listener.onCompleteClicked(session.getSessionId()); });
                 btnAbort.setVisibility(View.VISIBLE);
                 btnAbort.setOnClickListener(v -> { if (listener != null) listener.onAbortClicked(session.getSessionId()); });

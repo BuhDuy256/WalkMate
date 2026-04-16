@@ -168,10 +168,13 @@ public class SessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // NOTE: Polling is NOT started here. It is only started explicitly via
-        // startActivationPolling() after an activation Case A (waiting for partner).
-        // Starting it unconditionally here caused unwanted API reloads every time
-        // the user returned to the Matches tab.
+        // One-shot refresh when returning to Session tab so terminal transitions
+        // (e.g. COMPLETE in Tracking screen) are reflected immediately.
+        // This keeps polling disabled by default; polling is still only enabled
+        // for the explicit waiting-for-partner flow.
+        if (matchesViewModel != null) {
+            matchesViewModel.loadAll();
+        }
     }
 
     @Override
