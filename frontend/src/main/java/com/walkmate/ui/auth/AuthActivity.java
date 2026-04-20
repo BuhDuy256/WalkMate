@@ -41,7 +41,6 @@ public class AuthActivity extends AppCompatActivity {
     private WalkMateInputField fieldPassword;
     private WalkMateButton btnSignIn;
     private MaterialButton btnGoogleSignIn;
-    private MaterialButton btnGoogleSignIn;
 
     private LoginViewModel loginViewModel;
     private GoogleSignInClient googleSignInClient;

@@ -15,6 +15,8 @@ import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LogoutRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.SetVisibilityRequestDto;
+import com.walkmate.data.datasource.remote.dto.request.user.UpdateFcmTokenRequestDto;
+import com.walkmate.data.datasource.remote.dto.response.user.SetVisibilityResponseDto;
 import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
