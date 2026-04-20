@@ -16,13 +16,14 @@
 
 ### 23127179 – Nguyễn Bảo Duy
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Find bug in logic and improve the main flow.
+- Refactor the Use case list and update.
+- **Evidence:** [GitHub](https://github.com/BuhDuy256/WalkMate.git/tree/main)
 
 ### 23127006 – Trần Nguyễn Khải Luân
 
-- Task 1 description
-- **Evidence:** _(Jira screenshot link / output document / artifact)_
+- Write backend testing
+- **Evidence:** [GithHub](https://github.com/BuhDuy256/WalkMate/tree/merge/oauth)
 
 ### 23127438 – Đặng Trường Nguyên
 
@@ -39,13 +40,7 @@ Just reviewed the rating and profile workflow. No contribution this week.
 
 ### 23127179 – Nguyễn Bảo Duy
 
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
-
-### 23127006 – Trần Nguyễn Khải Luân
-
-- Prompt 1: _(paste prompt text)_
-- **Evidence:** _(paste AI chat/tool link)_
+- I re-defined the use case docs and let Claude anlayze the gap in current code base with expectation in updating. After that planning to execute.
 
 ### 23127438 – Đặng Trường Nguyên
 
