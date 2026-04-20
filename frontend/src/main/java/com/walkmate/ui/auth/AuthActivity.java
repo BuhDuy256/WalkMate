@@ -29,7 +29,7 @@ import com.walkmate.core.event.AuthEvent;
 import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.ui.auth.login.LoginViewModel;
 import com.walkmate.ui.auth.login.LoginViewModelFactory;
-import com.walkmate.ui.auth.phone.PhoneInputFragment;
+import com.walkmate.ui.auth.login.LoginViewModelFactory;
 import com.walkmate.ui.auth.register.RegisterActivity;
 import com.walkmate.ui.main.MainActivity;
 
@@ -41,8 +41,7 @@ public class AuthActivity extends AppCompatActivity {
     private WalkMateInputField fieldPassword;
     private WalkMateButton btnSignIn;
     private MaterialButton btnGoogleSignIn;
-    private View authContentContainer;
-    private FrameLayout fragmentContainer;
+    private MaterialButton btnGoogleSignIn;
 
     private LoginViewModel loginViewModel;
     private GoogleSignInClient googleSignInClient;
@@ -82,8 +81,6 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        authContentContainer = findViewById(R.id.auth_content_container);
-        fragmentContainer     = findViewById(R.id.auth_fragment_container);
         fieldEmail            = findViewById(R.id.field_email);
         fieldPassword         = findViewById(R.id.field_password);
         btnSignIn             = findViewById(R.id.btn_signin_action);
@@ -107,9 +104,6 @@ public class AuthActivity extends AppCompatActivity {
         TextView tvCreateAccount = findViewById(R.id.tv_create_account);
         tvCreateAccount.setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class)));
-
-        TextView tvPhoneSignIn = findViewById(R.id.tv_phone_signin);
-        tvPhoneSignIn.setOnClickListener(v -> showPhoneInputFragment());
     }
 
     private void observeUiState() {
@@ -155,32 +149,7 @@ public class AuthActivity extends AppCompatActivity {
         });
     }
 
-    // ── Phone OTP flow ────────────────────────────────────────────────────────
 
-    private void showPhoneInputFragment() {
-        authContentContainer.setVisibility(View.GONE);
-        fragmentContainer.setVisibility(View.VISIBLE);
-
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.auth_fragment_container, new PhoneInputFragment())
-                .addToBackStack(null)
-                .commit();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            getSupportFragmentManager().popBackStack();
-            // If no more fragments, restore auth content
-            if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
-                fragmentContainer.setVisibility(View.GONE);
-                authContentContainer.setVisibility(View.VISIBLE);
-            }
-        } else {
-            super.onBackPressed();
-        }
-    }
 
     // ── Google Sign-In ────────────────────────────────────────────────────────
 

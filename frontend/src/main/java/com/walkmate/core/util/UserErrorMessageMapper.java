@@ -54,14 +54,8 @@ public class UserErrorMessageMapper {
                 return new ErrorResult(R.string.error_user_invalid_credentials, ActionType.FIELD_ERROR);
             case "USER_EMAIL_ALREADY_EXISTS":
                 return new ErrorResult(R.string.error_user_email_already_exists, ActionType.FIELD_ERROR);
-            case "USER_PHONE_ALREADY_EXISTS":
-                return new ErrorResult(R.string.error_user_phone_already_exists, ActionType.FIELD_ERROR);
-            case "USER_DISPLAY_NAME_BLANK":
-                return new ErrorResult(R.string.error_user_display_name_blank, ActionType.FIELD_ERROR);
             case "USER_INVALID_EMAIL_FORMAT":
                 return new ErrorResult(R.string.error_user_invalid_email_format, ActionType.FIELD_ERROR);
-            case "USER_OTP_INVALID":
-                return new ErrorResult(R.string.error_user_otp_invalid, ActionType.FIELD_ERROR);
 
             // ── Toast errors ──────────────────────────────────────────────────
             case "GOOGLE_LOGIN_FAILED":
@@ -72,14 +66,6 @@ public class UserErrorMessageMapper {
                 return new ErrorResult(R.string.error_invalid_user_data, ActionType.TOAST);
             case "USER_PROVIDER_CONFLICT":
                 return new ErrorResult(R.string.error_user_provider_conflict, ActionType.TOAST);
-            case "USER_OTP_EXPIRED":
-                return new ErrorResult(R.string.error_user_otp_expired, ActionType.TOAST);
-            case "USER_OTP_ALREADY_USED":
-                return new ErrorResult(R.string.error_user_otp_already_used, ActionType.TOAST);
-            case "USER_OTP_ATTEMPTS_EXCEEDED":
-                return new ErrorResult(R.string.error_user_otp_attempts_exceeded, ActionType.TOAST);
-            case "USER_OTP_RATE_LIMITED":
-                return new ErrorResult(R.string.error_user_otp_rate_limited, ActionType.TOAST);
 
             default:
                 return new ErrorResult(R.string.error_generic, ActionType.TOAST);

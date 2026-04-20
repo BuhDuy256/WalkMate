@@ -5,8 +5,6 @@ import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LogoutRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RefreshTokenRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
-import com.walkmate.data.datasource.remote.dto.request.user.SendOtpRequestDto;
-import com.walkmate.data.datasource.remote.dto.request.user.VerifyOtpRequestDto;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.LoginResponseDto;
 
@@ -33,10 +31,4 @@ public interface AuthApiService {
 
     @POST("api/v1/auth/logout-all")
     Call<ApiResponse<Void>> logoutAll();
-
-    @POST("api/v1/auth/phone/send-otp")
-    Call<ApiResponse<Void>> sendOtp(@Body SendOtpRequestDto request);
-
-    @POST("api/v1/auth/phone/verify")
-    Call<ApiResponse<LoginResponseDto>> verifyOtp(@Body VerifyOtpRequestDto request);
 }

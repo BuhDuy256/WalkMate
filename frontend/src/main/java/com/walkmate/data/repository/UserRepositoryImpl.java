@@ -14,11 +14,7 @@ import com.walkmate.data.datasource.remote.dto.request.user.GoogleLoginRequestDt
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LogoutRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
-import com.walkmate.data.datasource.remote.dto.request.user.SendOtpRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.SetVisibilityRequestDto;
-import com.walkmate.data.datasource.remote.dto.request.user.UpdateFcmTokenRequestDto;
-import com.walkmate.data.datasource.remote.dto.response.user.SetVisibilityResponseDto;
-import com.walkmate.data.datasource.remote.dto.request.user.VerifyOtpRequestDto;
 import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
@@ -161,32 +157,7 @@ public class UserRepositoryImpl implements UserRepository {
                 });
     }
 
-    @Override
-    public void verifyOtp(String phone, String code, DomainCallback<String> callback) {
-        executor.execute(() -> {
-            try {
-                String deviceId = sessionManager.getOrGenerateDeviceId();
-                Response<ApiResponse<LoginResponseDto>> resp = authApiService
-                        .verifyOtp(new VerifyOtpRequestDto(phone, code, deviceId))
-                        .execute();
 
-                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    LoginResponseDto data = resp.body().getData();
-                    sessionManager.saveAccessToken(data.getAccessToken());
-                    sessionManager.saveRefreshToken(data.getRefreshToken());
-                    Log.d(TAG, "OTP verification succeeded");
-                    callback.onSuccess(data.getAccessToken());
-                } else {
-                    String errorCode = extractErrorCode(resp.body(), "USER_OTP_INVALID");
-                    Log.w(TAG, "OTP verification failed: " + errorCode);
-                    callback.onError(new Exception(errorCode));
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "OTP verification network error", e);
-                callback.onError(e);
-            }
-        });
-    }
 
     // ── Session management ────────────────────────────────────────────────────
 
@@ -243,30 +214,7 @@ public class UserRepositoryImpl implements UserRepository {
         });
     }
 
-    // ── OTP ───────────────────────────────────────────────────────────────────
 
-    @Override
-    public void sendOtp(String phone, DomainCallback<Void> callback) {
-        executor.execute(() -> {
-            try {
-                Response<ApiResponse<Void>> resp = authApiService
-                        .sendOtp(new SendOtpRequestDto(phone))
-                        .execute();
-
-                if (resp.isSuccessful()) {
-                    Log.d(TAG, "OTP sent to " + phone);
-                    callback.onSuccess(null);
-                } else {
-                    String errorCode = extractErrorCode(resp.body(), "SEND_OTP_FAILED");
-                    Log.w(TAG, "sendOtp failed: " + errorCode);
-                    callback.onError(new Exception(errorCode));
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "sendOtp network error", e);
-                callback.onError(e);
-            }
-        });
-    }
 
     // ── User settings ─────────────────────────────────────────────────────────
 

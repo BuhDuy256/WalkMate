@@ -2,9 +2,7 @@ package com.walkmate.application.user;
 
 import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.domain.user.AccountStatus;
-import com.walkmate.domain.user.OtpRecord;
-import com.walkmate.domain.user.OtpRecordRepository;
-import com.walkmate.domain.user.Phone;
+import com.walkmate.domain.user.AccountStatus;
 import com.walkmate.domain.user.RefreshToken;
 import com.walkmate.domain.user.RefreshTokenRepository;
 import com.walkmate.domain.user.User;
@@ -29,11 +27,9 @@ public class UserCommandService {
     private final UserRepository         userRepository;
     private final UserProfileRepository  profileRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final OtpRecordRepository    otpRecordRepository;
     private final PasswordEncoder        passwordEncoder;
     private final TokenProvider          tokenProvider;
     private final GoogleTokenVerifier    googleTokenVerifier;
-    private final SmsGateway             smsGateway;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -175,64 +171,7 @@ public class UserCommandService {
         return user.getVisibilityMode();
     }
 
-    // ── Phone OTP ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public void sendOtp(SendOtpCommand command) {
-        Phone phone = new Phone(command.phone());
-
-        // Rate-limit: block resend if a non-used OTP was issued less than 60 seconds ago.
-        // expiresAt = issuedAt + 300s, so issuedAt = expiresAt - 300s.
-        // "Less than 60s ago" ↔ now < issuedAt + 60 ↔ now < expiresAt - 240.
-        otpRecordRepository.findLatestByPhone(phone.value()).ifPresent(existing -> {
-            if (!existing.isUsed() && Instant.now().isBefore(existing.getExpiresAt().minusSeconds(240))) {
-                throw new DomainException(UserErrorCode.USER_OTP_RATE_LIMITED);
-            }
-        });
-
-        String  rawCode   = String.format("%06d", secureRandom.nextInt(1_000_000));
-        String  codeHash  = passwordEncoder.encode(rawCode);
-        Instant expiresAt = Instant.now().plusSeconds(300); // 5 minutes
-
-        otpRecordRepository.deleteByPhone(phone.value());
-        otpRecordRepository.save(OtpRecord.issue(phone.value(), codeHash, expiresAt));
-
-        smsGateway.send(phone.value(), "Your WalkMate OTP is: " + rawCode);
-    }
-
-    @Transactional
-    public LoginResult verifyOtp(VerifyOtpCommand command) {
-        Phone phone = new Phone(command.phone());
-
-        OtpRecord record = otpRecordRepository.findLatestByPhone(phone.value())
-                .orElseThrow(() -> new DomainException(UserErrorCode.USER_OTP_EXPIRED));
-
-        record.verify(command.code(), passwordEncoder::matches);
-        otpRecordRepository.save(record);
-
-        User user = userRepository.findByPhone(phone.value())
-                .orElseGet(() -> {
-                    User newUser = User.registerWithPhone(phone);
-                    User saved   = userRepository.save(newUser);
-                    profileRepository.save(UserProfile.createBlank(saved.getUserId()));
-                    return saved;
-                });
-
-        if (user.getStatus() != AccountStatus.ACTIVE) {
-            throw new DomainException(UserErrorCode.USER_ACCOUNT_SUSPENDED);
-        }
-
-        user.recordLogin();
-        userRepository.save(user);
-
-        TokenPair tokenPair    = tokenProvider.generateTokenPair(user);
-        Instant   refreshExpiry = Instant.now().plusSeconds(tokenPair.refreshTokenExpiresIn());
-        refreshTokenRepository.save(
-                RefreshToken.issue(user.getUserId(), command.deviceId(), tokenPair.refreshToken(), refreshExpiry));
-
-        return new LoginResult(tokenPair.accessToken(), tokenPair.accessTokenExpiresIn(),
-                tokenPair.refreshToken(), tokenPair.refreshTokenExpiresIn());
-    }
 
     // ── FCM ───────────────────────────────────────────────────────────────────
 

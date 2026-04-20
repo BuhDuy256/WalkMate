@@ -13,7 +13,7 @@ public interface UserRepository {
 
     void loginWithGoogle(String googleIdToken, String deviceId, DomainCallback<String> callback);
 
-    void verifyOtp(String phone, String code, DomainCallback<String> callback);
+
 
     // ── Session management ────────────────────────────────────────────────────
 
@@ -23,9 +23,7 @@ public interface UserRepository {
     /** Invalidates all refresh tokens for this user across all devices, then clears the local session. */
     void logoutAll(DomainCallback<Void> callback);
 
-    // ── OTP ───────────────────────────────────────────────────────────────────
 
-    void sendOtp(String phone, DomainCallback<Void> callback);
 
     // ── User settings ─────────────────────────────────────────────────────────
 

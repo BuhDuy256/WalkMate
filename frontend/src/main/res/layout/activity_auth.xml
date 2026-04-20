@@ -149,19 +149,7 @@
                 app:strokeColor="@color/bg_tag_inactive"
                 app:strokeWidth="1.5dp" />
 
-            <!-- ── PHONE SIGN-IN ──────────────────────────────────────────────────── -->
-            <TextView
-                android:id="@+id/tv_phone_signin"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:text="@string/btn_phone_signin"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp" />
+
 
             <!-- ── FOOTER LINK ────────────────────────────────────────────────────── -->
             <LinearLayout
@@ -196,12 +184,6 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- ── Phone OTP fragment container (hidden until phone flow starts) ──── -->
-    <FrameLayout
-        android:id="@+id/auth_fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/bg_cream"
-        android:visibility="gone" />
+
 
 </FrameLayout>

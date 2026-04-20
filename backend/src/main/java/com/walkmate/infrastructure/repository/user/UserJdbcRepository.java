@@ -46,13 +46,7 @@ public class UserJdbcRepository implements UserRepository {
                 .optional();
     }
 
-    @Override
-    public Optional<User> findByPhone(String phone) {
-        return jdbcClient.sql(selectAll() + "WHERE phone = :phone")
-                .param("phone", phone)
-                .query((rs, rowNum) -> mapRow(rs))
-                .optional();
-    }
+
 
     @Override
     public List<User> findTopByPoints(int limit) {
@@ -73,7 +67,6 @@ public class UserJdbcRepository implements UserRepository {
                 : new User(
                         userId,
                         user.getEmail(),
-                        user.getPhone(),
                         user.getProvider(),
                         user.getStatus(),
                         user.getVisibilityMode(),
@@ -89,12 +82,12 @@ public class UserJdbcRepository implements UserRepository {
 
         jdbcClient.sql("""
                         INSERT INTO user_account (
-                            user_id, email, phone, provider, status, visibility_mode, password_hash,
+                            user_id, email, provider, status, visibility_mode, password_hash,
                             provider_subject, created_at, last_login_at, trust_score,
                             total_points, fcm_token
                         )
                         VALUES (
-                            :userId, :email, :phone,
+                            :userId, :email,
                             CAST(:provider AS auth_provider),
                             CAST(:status AS account_status),
                             :visibilityMode, :passwordHash, :providerSubject, :createdAt, :lastLoginAt,
@@ -102,7 +95,6 @@ public class UserJdbcRepository implements UserRepository {
                         )
                         ON CONFLICT (user_id) DO UPDATE SET
                             email              = EXCLUDED.email,
-                            phone              = EXCLUDED.phone,
                             status             = EXCLUDED.status,
                             visibility_mode    = EXCLUDED.visibility_mode,
                             password_hash      = EXCLUDED.password_hash,
@@ -114,7 +106,6 @@ public class UserJdbcRepository implements UserRepository {
                         """)
                 .param("userId",            persisted.getUserId())
                 .param("email",             persisted.getEmail())
-                .param("phone",             persisted.getPhone())
                 .param("provider",          persisted.getProvider().name())
                 .param("status",            persisted.getStatus().name())
                 .param("visibilityMode",    persisted.getVisibilityMode() != null
@@ -148,7 +139,7 @@ public class UserJdbcRepository implements UserRepository {
 
     private String selectAll() {
         return """
-                SELECT user_id, email, phone, provider, status, visibility_mode, password_hash,
+                SELECT user_id, email, provider, status, visibility_mode, password_hash,
                        provider_subject, created_at, last_login_at, trust_score,
                   total_points, fcm_token
                 FROM user_account
@@ -161,7 +152,6 @@ public class UserJdbcRepository implements UserRepository {
         return new User(
                 rs.getObject("user_id", UUID.class),
                 rs.getString("email"),
-                rs.getString("phone"),
                 AuthProvider.valueOf(rs.getString("provider")),
                 AccountStatus.valueOf(rs.getString("status")),
                 visMode != null ? VisibilityMode.valueOf(visMode) : VisibilityMode.PUBLIC,

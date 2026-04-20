@@ -18,7 +18,6 @@ public class User {
 
     private UUID           userId;
     private String         email;
-    private String         phone;
     private AuthProvider   provider;
     private AccountStatus  status;
     private VisibilityMode visibilityMode;
@@ -36,14 +35,13 @@ public class User {
 
     // ── Rehydration constructor (repository → domain) ─────────────────────────
 
-    public User(UUID userId, String email, String phone, AuthProvider provider, AccountStatus status,
+    public User(UUID userId, String email, AuthProvider provider, AccountStatus status,
                 VisibilityMode visibilityMode, String passwordHash, String providerSubject,
                 Instant createdAt, Instant lastLoginAt,
                 int trustScore, int totalPoints, double totalDistanceKm, int completedSessions,
                 String fcmToken) {
         this.userId            = userId;
         this.email             = email;
-        this.phone             = phone;
         this.provider          = provider;
         this.status            = status;
         this.visibilityMode    = visibilityMode != null ? visibilityMode : VisibilityMode.PUBLIC;
@@ -62,7 +60,6 @@ public class User {
 
     private User(String email, String passwordHash) {
         this.email           = normalizeEmail(email);
-        this.phone           = null;
         this.provider        = DEFAULT_PROVIDER;
         this.status          = DEFAULT_STATUS;
         this.visibilityMode  = VisibilityMode.PUBLIC;
@@ -89,7 +86,6 @@ public class User {
     public static User registerWithGoogle(String email, String providerSubject) {
         User u = new User();
         u.email           = normalizeEmail(email);
-        u.phone           = null;
         u.provider        = AuthProvider.GOOGLE;
         u.status          = DEFAULT_STATUS;
         u.visibilityMode  = VisibilityMode.PUBLIC;
@@ -105,25 +101,7 @@ public class User {
         return u;
     }
 
-    /** Factory for brand-new phone+OTP users. */
-    public static User registerWithPhone(Phone phone) {
-        User u = new User();
-        u.email           = null;
-        u.phone           = phone.value();
-        u.provider        = AuthProvider.PHONE;
-        u.status          = DEFAULT_STATUS;
-        u.visibilityMode  = VisibilityMode.PUBLIC;
-        u.passwordHash    = null;
-        u.providerSubject = null;
-        u.lastLoginAt     = Instant.now();
-        u.createdAt         = Instant.now();
-        u.trustScore        = 0;
-        u.totalPoints       = 0;
-        u.totalDistanceKm   = 0.0;
-        u.completedSessions = 0;
-        u.fcmToken          = null;
-        return u;
-    }
+
 
     // ── Domain behaviour ──────────────────────────────────────────────────────
 

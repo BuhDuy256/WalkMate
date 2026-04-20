@@ -46,8 +46,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/google").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/phone/send-otp").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/phone/verify").permitAll()
                         // Phase 2: hotspot catalogue is public for map browsing
                         .requestMatchers(HttpMethod.GET, "/api/v1/hotspots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/hotspots/**").permitAll()

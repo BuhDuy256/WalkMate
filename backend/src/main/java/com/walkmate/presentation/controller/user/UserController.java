@@ -4,17 +4,7 @@ import com.walkmate.application.user.GoogleAuthCommand;
 import com.walkmate.application.user.LoginResult;
 import com.walkmate.application.user.LoginUserCommand;
 import com.walkmate.application.user.RegisterUserCommand;
-import com.walkmate.application.user.SendOtpCommand;
-import com.walkmate.application.user.UserCommandService;
-import com.walkmate.application.user.UserPrincipal;
-import com.walkmate.application.user.VerifyOtpCommand;
-import com.walkmate.presentation.dto.request.user.GoogleLoginRequest;
-import com.walkmate.presentation.dto.request.user.LoginUserRequest;
-import com.walkmate.presentation.dto.request.user.LogoutRequest;
-import com.walkmate.presentation.dto.request.user.RefreshTokenRequest;
 import com.walkmate.presentation.dto.request.user.RegisterUserRequest;
-import com.walkmate.presentation.dto.request.user.SendOtpRequest;
-import com.walkmate.presentation.dto.request.user.VerifyOtpRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.user.LoginUserResponse;
 import com.walkmate.presentation.mapper.user.UserMapper;
@@ -105,23 +95,5 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    // ── Phone OTP ─────────────────────────────────────────────────────────────
 
-    @PostMapping("/phone/send-otp")
-    public ResponseEntity<ApiResponse<Void>> sendOtp(
-            @Valid @RequestBody SendOtpRequest request) {
-
-        userCommandService.sendOtp(new SendOtpCommand(request.phone()));
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    @PostMapping("/phone/verify")
-    public ResponseEntity<ApiResponse<LoginUserResponse>> verifyOtp(
-            @Valid @RequestBody VerifyOtpRequest request) {
-
-        LoginResult loginResult = userCommandService.verifyOtp(
-                new VerifyOtpCommand(request.phone(), request.code(), request.deviceId()));
-
-        return ResponseEntity.ok(ApiResponse.success(userMapper.toLoginUserResponse(loginResult)));
-    }
 }
