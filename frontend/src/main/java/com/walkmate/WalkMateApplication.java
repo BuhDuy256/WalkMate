@@ -186,7 +186,7 @@ public class WalkMateApplication extends Application {
 
     public UserProfileRepository getUserProfileRepository() {
         if (userProfileRepository == null) {
-            userProfileRepository = new UserProfileRepositoryImpl(this);
+            userProfileRepository = new UserProfileRepositoryImpl(this, database.userProfileDao());
         }
         return userProfileRepository;
     }

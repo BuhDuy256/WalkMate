@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_cream"
-    android:overScrollMode="never"
     tools:context=".ui.profile.ProfileFragment">
+
+    <ProgressBar
+        android:id="@+id/progressProfile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+<androidx.core.widget.NestedScrollView
+    android:id="@+id/profileScrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:id="@+id/profileContentRoot"
@@ -77,16 +91,6 @@
                     android:scaleType="centerCrop"
                     android:contentDescription="@string/profile_avatar_cd"
                     tools:src="@drawable/ic_user" />
-
-                <View
-                    android:id="@+id/viewOnlineStatus"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_gravity="bottom|end"
-                    android:layout_marginEnd="2dp"
-                    android:layout_marginBottom="2dp"
-                    android:background="@drawable/bg_green_dot"
-                    android:visibility="gone" />
 
             </FrameLayout>
 
@@ -219,20 +223,13 @@
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp">
 
-                    <!-- Column boundary guides at 33.3% and 66.7% of width -->
+                    <!-- Column boundary guide at 50% — two equal columns (KM | Sessions) -->
                     <androidx.constraintlayout.widget.Guideline
                         android:id="@+id/guidelineCol1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        app:layout_constraintGuide_percent="0.333" />
-
-                    <androidx.constraintlayout.widget.Guideline
-                        android:id="@+id/guidelineCol2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        app:layout_constraintGuide_percent="0.667" />
+                        app:layout_constraintGuide_percent="0.5" />
 
                     <!-- ── Column 1: Total KM — vertical packed chain ── -->
                     <ImageView
@@ -294,7 +291,7 @@
                         android:src="@drawable/ic_session"
                         android:contentDescription="@string/profile_stat_sessions_cd"
                         app:layout_constraintStart_toEndOf="@id/guidelineCol1"
-                        app:layout_constraintEnd_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toTopOf="@id/txtStatSessionsValue"
                         app:layout_constraintVertical_chainStyle="packed" />
@@ -310,7 +307,7 @@
                         android:textStyle="bold"
                         tools:text="32"
                         app:layout_constraintStart_toEndOf="@id/guidelineCol1"
-                        app:layout_constraintEnd_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/icStatSessions"
                         app:layout_constraintBottom_toTopOf="@id/txtStatSessionsLabel" />
 
@@ -324,60 +321,8 @@
                         android:textColor="@color/text_muted"
                         android:textSize="11sp"
                         app:layout_constraintStart_toEndOf="@id/guidelineCol1"
-                        app:layout_constraintEnd_toStartOf="@id/guidelineCol2"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/txtStatSessionsValue"
-                        app:layout_constraintBottom_toBottomOf="parent" />
-
-                    <!-- Vertical divider 2 -->
-                    <View
-                        android:id="@+id/dividerStats2"
-                        android:layout_width="1dp"
-                        android:layout_height="0dp"
-                        android:background="@color/bg_tag_inactive"
-                        app:layout_constraintStart_toStartOf="@id/guidelineCol2"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent" />
-
-                    <!-- ── Column 3: Day Streak — vertical packed chain ── -->
-                    <TextView
-                        android:id="@+id/icStatStreakEmoji"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔥"
-                        android:textSize="22sp"
-                        app:layout_constraintStart_toEndOf="@id/guidelineCol2"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toTopOf="@id/txtStatStreakValue"
-                        app:layout_constraintVertical_chainStyle="packed" />
-
-                    <TextView
-                        android:id="@+id/txtStatStreakValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:gravity="center"
-                        android:textColor="@color/text_dark"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        tools:text="5"
-                        app:layout_constraintStart_toEndOf="@id/guidelineCol2"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/icStatStreakEmoji"
-                        app:layout_constraintBottom_toTopOf="@id/txtStatStreakLabel" />
-
-                    <TextView
-                        android:id="@+id/txtStatStreakLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:gravity="center"
-                        android:text="@string/profile_stat_streak"
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp"
-                        app:layout_constraintStart_toEndOf="@id/guidelineCol2"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/txtStatStreakValue"
                         app:layout_constraintBottom_toBottomOf="parent" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -830,52 +775,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Visibility toggle row -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_warm_circle"
-                        android:layout_marginEnd="14dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_eye_show"
-                            android:contentDescription="@string/profile_visibility_title" />
-
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/profile_visibility_title"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_dark" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchVisibility"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-
-                </LinearLayout>
-
-                <!-- Row divider -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginStart="66dp"
-                    android:background="@color/bg_tag_inactive" />
-
                 <!-- Log Out All Devices row -->
                 <LinearLayout
                     android:id="@+id/btnLogoutAll"
@@ -927,3 +826,5 @@
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>
+
+</FrameLayout>

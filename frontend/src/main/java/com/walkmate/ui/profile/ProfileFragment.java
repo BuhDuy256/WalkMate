@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,11 +20,9 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.util.GlideHelper;
-import com.walkmate.domain.user.VisibilityMode;
 import com.walkmate.ui.profile.edit.EditProfileFragment;
 
 import java.util.List;
@@ -43,8 +42,10 @@ public class ProfileFragment extends Fragment {
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
+    private ProgressBar progressBar;
+    private View profileScrollView;
+
     private ImageView imgProfileAvatar;
-    private View viewOnlineStatus;
     private TextView txtProfileName;
     private Chip chipTrustScore;
     private ChipGroup chipGroupTags;
@@ -55,7 +56,6 @@ public class ProfileFragment extends Fragment {
     // Milestone stats
     private TextView txtStatKmValue;
     private TextView txtStatSessionsValue;
-    private TextView txtStatStreakValue;
 
     // Badges
     private ImageView imgBadge1;
@@ -80,11 +80,7 @@ public class ProfileFragment extends Fragment {
     private View profileContentRoot;
 
     // Security section
-    private SwitchMaterial switchVisibility;
     private View btnLogoutAll;
-
-    // Suppress the switch listener re-entry when we programmatically set its state
-    private boolean suppressSwitchListener = false;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -175,18 +171,19 @@ public class ProfileFragment extends Fragment {
     }
 
     private void bindViews(View root) {
-        imgProfileAvatar    = root.findViewById(R.id.imgProfileAvatar);
-        viewOnlineStatus    = root.findViewById(R.id.viewOnlineStatus);
-        txtProfileName      = root.findViewById(R.id.txtProfileName);
-        chipTrustScore      = root.findViewById(R.id.chipTrustScore);
-        chipGroupTags       = root.findViewById(R.id.chipGroupTags);
-        chipTag1            = root.findViewById(R.id.chipTag1);
-        chipTag2            = root.findViewById(R.id.chipTag2);
-        chipTag3            = root.findViewById(R.id.chipTag3);
+        progressBar       = root.findViewById(R.id.progressProfile);
+        profileScrollView = root.findViewById(R.id.profileScrollView);
+
+        imgProfileAvatar     = root.findViewById(R.id.imgProfileAvatar);
+        txtProfileName       = root.findViewById(R.id.txtProfileName);
+        chipTrustScore       = root.findViewById(R.id.chipTrustScore);
+        chipGroupTags        = root.findViewById(R.id.chipGroupTags);
+        chipTag1             = root.findViewById(R.id.chipTag1);
+        chipTag2             = root.findViewById(R.id.chipTag2);
+        chipTag3             = root.findViewById(R.id.chipTag3);
 
         txtStatKmValue       = root.findViewById(R.id.txtStatKmValue);
         txtStatSessionsValue = root.findViewById(R.id.txtStatSessionsValue);
-        txtStatStreakValue   = root.findViewById(R.id.txtStatStreakValue);
 
         imgBadge1 = root.findViewById(R.id.imgBadge1);
         imgBadge2 = root.findViewById(R.id.imgBadge2);
@@ -203,14 +200,13 @@ public class ProfileFragment extends Fragment {
         menuSettings     = root.findViewById(R.id.menuSettings);
         menuFriends      = root.findViewById(R.id.menuFriends);
         menuBlockedUsers = root.findViewById(R.id.menuBlockedUsers);
-        switchVisibility = root.findViewById(R.id.switchVisibility);
         btnLogoutAll     = root.findViewById(R.id.btnLogoutAll);
     }
 
     private void setupViewModel() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
         ProfileViewModelFactory factory =
-                new ProfileViewModelFactory(app.getUserProfileRepository(), 
+                new ProfileViewModelFactory(app.getUserProfileRepository(),
                                             requireContext(),
                                             app.getGamificationRepository(),
                                             app.getReviewRepository());
@@ -228,12 +224,6 @@ public class ProfileFragment extends Fragment {
         menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());
         menuBlockedUsers.setOnClickListener(v -> viewModel.onBlockedUsersClicked());
 
-        switchVisibility.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (suppressSwitchListener) return;
-            VisibilityMode mode = isChecked ? VisibilityMode.PUBLIC : VisibilityMode.PRIVATE;
-            viewModel.setVisibility(mode);
-        });
-
         btnLogoutAll.setOnClickListener(v -> showLogoutAllConfirmation());
     }
 
@@ -242,11 +232,20 @@ public class ProfileFragment extends Fragment {
     /**
      * Single source of truth for all View mutations.
      * Called every time the LiveData emits a new ProfileUiState.
+     *
+     * On loading: shows the ProgressBar and hides the scroll content.
+     * After the cache delivers data (< 50 ms on warm launches), loading is immediately
+     * false and the ProgressBar is never visible to the user.
      */
     private void renderState(ProfileUiState state) {
         if (state.isLoading()) {
+            progressBar.setVisibility(View.VISIBLE);
+            profileScrollView.setVisibility(View.GONE);
             return;
         }
+
+        progressBar.setVisibility(View.GONE);
+        profileScrollView.setVisibility(View.VISIBLE);
 
         if (state.getError() != null) {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
@@ -255,9 +254,6 @@ public class ProfileFragment extends Fragment {
 
         // ── Avatar ──
         GlideHelper.loadCircle(imgProfileAvatar, state.getAvatarUrl());
-
-        // ── Online dot ──
-        viewOnlineStatus.setVisibility(state.isOnline() ? View.VISIBLE : View.GONE);
 
         // ── Name ──
         if (state.getName() != null) {
@@ -274,17 +270,9 @@ public class ProfileFragment extends Fragment {
         // ── Milestone stats ──
         txtStatKmValue.setText(String.valueOf((int) state.getTotalDistanceKm()));
         txtStatSessionsValue.setText(String.valueOf(state.getTotalSessions()));
-        txtStatStreakValue.setText(String.valueOf(state.getCurrentStreak()));
 
         // ── Badges (up to 3 slots in the layout) ──
         renderBadges(state.getBadges());
-
-        // ── Visibility switch ──
-        if (state.getVisibilityMode() != null) {
-            suppressSwitchListener = true;
-            switchVisibility.setChecked(state.getVisibilityMode() == VisibilityMode.PUBLIC);
-            suppressSwitchListener = false;
-        }
     }
 
     /**
@@ -306,10 +294,6 @@ public class ProfileFragment extends Fragment {
     /**
      * Populates up to 3 static badge slots with icon + label.
      * Hides any slot that has no corresponding badge.
-     *
-     * Badge labels are plain strings from the backend (e.g. "First Walk").
-     * Icon drawables are resource IDs; 0 means no specific asset yet — the slot
-     * keeps whatever placeholder the layout XML defines.
      */
     private void renderBadges(List<ProfileUiState.Badge> badges) {
         ImageView[] iconSlots  = {imgBadge1, imgBadge2, imgBadge3};

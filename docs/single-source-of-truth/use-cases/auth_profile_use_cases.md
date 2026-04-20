@@ -23,7 +23,6 @@
 | UC-10 | [Logout (This Device)](#uc-10--logout-this-device) | `POST /api/v1/auth/logout` |
 | UC-11 | [Logout All Devices](#uc-11--logout-all-devices) | `POST /api/v1/auth/logout-all` |
 | UC-12 | [Silent Token Refresh](#uc-12--silent-token-refresh) | `POST /api/v1/auth/refresh` |
-| UC-13 | [Set Profile Visibility](#uc-13--set-profile-visibility) | `PATCH /api/v1/users/me/visibility` |
 
 ---
 
@@ -439,37 +438,3 @@
 **Other activities:** None visible to the user. The refresh is fully transparent.
 
 **System state on completion:** New `accessToken` and `refreshToken` stored. Original API call succeeds. User session continues uninterrupted.
-
----
-
-### UC-13 — Set Profile Visibility
-
-**Use Case Name:** Set Profile Visibility
-
-**Initial assumption:** User is authenticated and on the Profile screen. The visibility toggle (SwitchMaterial) reflects the current `visibilityMode` from the last profile load.
-
-**Normal:**
-1. User toggles the "Visible to others" switch on the Profile screen.
-2. UI maps the switch state to a `VisibilityMode`: `ON → PUBLIC`, `OFF → PRIVATE`.
-3. UI calls `PATCH /api/v1/users/me/visibility`:
-   ```json
-   { "visibility": "PUBLIC" }
-   ```
-   or
-   ```json
-   { "visibility": "PRIVATE" }
-   ```
-4. Backend updates the user's visibility status and returns `200 OK`.
-5. `ProfileViewModel` calls `loadProfile()` to reload the full profile state, ensuring the switch reflects the persisted value.
-
-**What can go wrong:**
-
-| Condition | Error Code | UI Reaction |
-|-----------|-----------|-------------|
-| Backend returns non-2xx | `SET_VISIBILITY_FAILED` | Show toast with friendly error message. Switch reverts to previous state on next profile reload. |
-| Network failure | `IOException` | Show toast. Switch reverts on reload. |
-| 401 (token expired) | — | `TokenRefreshAuthenticator` retries transparently (UC-12). |
-
-**Other activities:** A successful visibility change affects whether this user appears in other users' hotspot discovery results (UC-14 in discovery_use_cases.md).
-
-**System state on completion:** User's visibility preference updated in the backend. Profile screen reflects the new state after reload.

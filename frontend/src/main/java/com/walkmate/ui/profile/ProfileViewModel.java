@@ -14,7 +14,6 @@ import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
-import com.walkmate.domain.user.VisibilityMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Edit flow:
  *   saveProfile(…) → calls updateProfile() → reloads profile on success.
  *   uploadAvatar(…) → calls uploadAvatar() → reloads profile on success.
- *   setVisibility(…) → calls UserRepository.setVisibility() → reloads profile on success.
  *   logoutAll() → calls UserRepository.logoutAll().
  */
 public class ProfileViewModel extends ViewModel {
@@ -121,25 +119,6 @@ public class ProfileViewModel extends ViewModel {
                         uiState.postValue(ProfileUiState.error(friendlyError(e)));
                     }
                 });
-    }
-
-    /**
-     * Sets the user's profile visibility and reloads the profile on success.
-     */
-    public void setVisibility(VisibilityMode mode) {
-        userRepository.setVisibility(mode, new DomainCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                loadProfile();
-            }
-
-            @Override
-            public void onError(Exception e) {
-                // SILENT errors (already public/private) are swallowed — no UI change needed.
-                // TOAST errors show a transient message via the error field.
-                uiState.postValue(ProfileUiState.error(friendlyError(e)));
-            }
-        });
     }
 
     /**
@@ -268,14 +247,11 @@ public class ProfileViewModel extends ViewModel {
                         false,
                         profile.getFullName(),
                         profile.getAvatarUrl(),
-                        false,                   // Gap 2.2: isOnline — no presence system yet; always false
                         (float) profile.getTrustScore(),
                         profile.getTags() != null ? profile.getTags() : Collections.emptyList(),
                         distanceKm,
                         sessions,
-                        0,                       // currentStreak — no backend endpoint yet
                         badgesHolder.get(),
-                        null,                    // visibilityMode: not yet returned by UserProfile API
                         reviewsHolder.get(),
                         null));
             }

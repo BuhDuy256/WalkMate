@@ -3,6 +3,8 @@ package com.walkmate.data.repository;
 import android.content.Context;
 import android.util.Log;
 
+import com.walkmate.data.datasource.local.dao.UserProfileDao;
+import com.walkmate.data.datasource.local.entity.UserProfileEntity;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.UserProfileApiService;
@@ -12,6 +14,7 @@ import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.AvatarUploadResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.UserProfileResponse;
+import com.walkmate.data.mapper.UserProfileEntityMapper;
 import com.walkmate.data.mapper.UserProfileMapper;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.UserProfile;
@@ -33,46 +36,89 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     private final SessionManager sessionManager;
     private final UserProfileApiService apiService;
+    private final UserProfileDao dao;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
-    public UserProfileRepositoryImpl(Context context) {
+    public UserProfileRepositoryImpl(Context context, UserProfileDao dao) {
         this.sessionManager = new SessionManager(context);
         this.apiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
                 .create(UserProfileApiService.class);
+        this.dao = dao;
     }
 
     // ── Interface implementation ──────────────────────────────────────────────
 
+    /**
+     * Offline-first fetch of the authenticated user's own profile.
+     *
+     * Phase A — instant cache read:
+     *   If a cached row exists in Room, callback.onSuccess() fires immediately with the
+     *   stale data so the UI can populate without any network wait.
+     *
+     * Phase B — silent background refresh:
+     *   A Retrofit call is always made regardless of whether Phase A found anything.
+     *   On success the fresh profile overwrites the cache and callback.onSuccess() fires
+     *   again, causing the UI to silently re-render with up-to-date data.
+     *   On network error:
+     *     - If Phase A already delivered cached data → error is swallowed silently.
+     *     - If there was no cache → error is forwarded to the caller.
+     *
+     * This dual-fire contract is intentional. ProfileViewModel.loadSupplementalData()
+     * and ProfileFragment.renderState() both handle repeated postValue() calls correctly.
+     */
     @Override
     public void getMyProfile(DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
+            // Track whether Phase A already gave the caller something to show.
+            final boolean[] cacheDelivered = {false};
+
+            // ── Phase A: instant cache read ───────────────────────────────────
+            String userId = sessionManager.getUserId();
+            if (userId != null) {
+                UserProfileEntity cached = dao.getProfileById(userId);
+                if (cached != null) {
+                    cacheDelivered[0] = true;
+                    callback.onSuccess(UserProfileEntityMapper.toDomain(cached));
+                }
+            }
+
+            // ── Phase B: silent background refresh ───────────────────────────
             try {
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.getMyProfile().execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    callback.onSuccess(UserProfileMapper.toDomain(resp.body().getData()));
+                    UserProfile fresh = UserProfileMapper.toDomain(resp.body().getData());
+                    dao.upsert(UserProfileEntityMapper.toEntity(fresh, System.currentTimeMillis()));
+                    callback.onSuccess(fresh);
                 } else {
                     if (resp.code() == 401) {
                         sessionManager.clearSession();
-                        callback.onError(new Exception("AUTH_UNAUTHORIZED"));
+                        if (!cacheDelivered[0]) {
+                            callback.onError(new Exception("AUTH_UNAUTHORIZED"));
+                        }
                         return;
                     }
-                    ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_FETCH_FAILED");
-                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
-                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
-                    } else {
-                        callback.onError(new Exception(apiError.getCode()));
+                    if (!cacheDelivered[0]) {
+                        ApiError apiError = ErrorParser.extractApiError(resp, "PROFILE_FETCH_FAILED");
+                        if ("VALIDATION_ERROR".equals(apiError.getCode())) {
+                            callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
+                        } else {
+                            callback.onError(new Exception(apiError.getCode()));
+                        }
                     }
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getMyProfile network error", e);
-                callback.onError(e);
+                if (!cacheDelivered[0]) {
+                    callback.onError(e);
+                }
             }
         });
     }
 
     @Override
     public void getProfile(String userId, DomainCallback<UserProfile> callback) {
+        // Public profiles are not cached — remote-only is acceptable here.
         executor.execute(() -> {
             try {
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.getPublicProfile(userId).execute();
@@ -94,6 +140,10 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
         });
     }
 
+    /**
+     * Write-through update: saves to backend, then upserts the fresh profile into the
+     * cache so the next cold-start sees the latest data immediately.
+     */
     @Override
     public void updateProfile(String fullName, String gender, String dateOfBirth,
             String bio, int searchRadius, List<String> tags,
@@ -106,7 +156,9 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.updateMyProfile(dto).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    callback.onSuccess(UserProfileMapper.toDomain(resp.body().getData()));
+                    UserProfile fresh = UserProfileMapper.toDomain(resp.body().getData());
+                    dao.upsert(UserProfileEntityMapper.toEntity(fresh, System.currentTimeMillis()));
+                    callback.onSuccess(fresh);
                 } else {
                     if (resp.code() == 401) {
                         sessionManager.clearSession();
