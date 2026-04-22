@@ -19,6 +19,9 @@ public class WalkProposalResponse {
     @SerializedName("matched_user_id")
     private String matchedUserId;
 
+    @SerializedName("matched_user_name")
+    private String matchedUserName;
+
     @SerializedName("proposed_time_start")
     private String proposedTimeStart;   // ISO-8601
 
@@ -56,6 +59,7 @@ public class WalkProposalResponse {
     public String getMatchedIntentId()  { return matchedIntentId; }
     public String getCallersUserId()    { return callersUserId; }
     public String getMatchedUserId()    { return matchedUserId; }
+    public String getMatchedUserName()  { return matchedUserName; }
     public String getProposedTimeStart(){ return proposedTimeStart; }
     public String getProposedTimeEnd()  { return proposedTimeEnd; }
     public double getProposedLat()      { return proposedLat; }

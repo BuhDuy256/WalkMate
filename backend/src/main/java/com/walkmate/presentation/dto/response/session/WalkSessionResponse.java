@@ -91,6 +91,9 @@ public record WalkSessionResponse(
         @JsonProperty("abort_reason")
         String abortReason,             // null unless ABORTED
 
+        @JsonProperty("partner_name")
+        String partnerName,
+
         @JsonProperty("is_reviewed")
         boolean isReviewed
 ) {}

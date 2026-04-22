@@ -82,11 +82,4 @@ public class WalkProposal {
     public boolean isConfirmed() { return Status.CONFIRMED == status && sessionId != null; }
     public boolean isPrivateInvite() { return isPrivateInvite; }
 
-    /** Returns a copy of this proposal with the given enriched display name. */
-    public WalkProposal withMatchedUserName(String enrichedName) {
-        return new WalkProposal(proposalId, intentId, matchedUserId, enrichedName,
-                matchedUserAge, trustScore, overlappingTags, overlappingTimeStart,
-                overlappingTimeEnd, status, expiresAt, meetingLat, meetingLng,
-                myAcceptanceStatus, sessionId, isPrivateInvite);
-    }
 }

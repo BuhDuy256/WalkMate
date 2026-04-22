@@ -2,6 +2,7 @@ package com.walkmate.presentation.controller.proposal;
 
 import com.walkmate.application.proposal.MatchingCommandService;
 import com.walkmate.application.user.UserPrincipal;
+import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.proposal.MatchProposal;
 import com.walkmate.domain.proposal.ProposalStatus;
 import com.walkmate.domain.session.WalkSession;
@@ -16,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Proposals", description = "Match proposal accept / pass lifecycle")
 @RestController
@@ -26,6 +28,7 @@ public class ProposalController {
     private final MatchingCommandService matchingCommandService;
     private final WalkSessionRepository  walkSessionRepository;
     private final ProposalMapper         proposalMapper;
+    private final UserQueryService       userQueryService;
 
     /**
      * GET /api/v1/proposals
@@ -38,7 +41,12 @@ public class ProposalController {
         List<WalkProposalResponse> responses = matchingCommandService
                 .getPendingProposals(principal.userId())
                 .stream()
-                .map(p -> proposalMapper.toResponse(p, principal.userId(), null))
+                .map(p -> {
+                    boolean callerIsA = principal.userId().equals(p.getUserIdA());
+                    String partnerId = callerIsA ? p.getUserIdB() : p.getUserIdA();
+                    return proposalMapper.toResponse(p, principal.userId(), null,
+                            resolveDisplayName(partnerId));
+                })
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(responses));
@@ -65,8 +73,12 @@ public class ProposalController {
                     .orElse(null);
         }
 
+        boolean callerIsA = principal.userId().equals(proposal.getUserIdA());
+        String partnerId = callerIsA ? proposal.getUserIdB() : proposal.getUserIdA();
+
         return ResponseEntity.ok(ApiResponse.success(
-                proposalMapper.toResponse(proposal, principal.userId(), sessionId)));
+                proposalMapper.toResponse(proposal, principal.userId(), sessionId,
+                        resolveDisplayName(partnerId))));
     }
 
     /**
@@ -87,6 +99,16 @@ public class ProposalController {
      * Hard-cancels the proposal and closes the caller's intent.
      * The partner's intent remains OPEN for further matching.
      */
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private String resolveDisplayName(String userId) {
+        try {
+            return userQueryService.getDisplayName(UUID.fromString(userId));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @DeleteMapping("/{proposalId}")
     public ResponseEntity<ApiResponse<Void>> cancelProposal(
             @AuthenticationPrincipal UserPrincipal principal,

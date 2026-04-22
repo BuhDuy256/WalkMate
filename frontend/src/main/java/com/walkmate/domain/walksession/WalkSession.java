@@ -121,14 +121,6 @@ public class WalkSession {
         return isCallerUserA ? userAActivatedAt != null : userBActivatedAt != null;
     }
 
-    /** Returns a copy of this session with the given enriched display name. */
-    public WalkSession withPartnerName(String enrichedName) {
-        return new WalkSession(sessionId, proposalId, partnerId, enrichedName, partnerAvatar,
-                meetingPointLat, meetingPointLng, scheduledTime, status, scheduledEnd,
-                startedAt, endedAt, userAActivatedAt, userBActivatedAt,
-                userAStatus, userBStatus, userAEndedAt, userBEndedAt, isReviewed, isCallerUserA);
-    }
-
     /** True when both participants have activated (legacy helper, kept for backward compat). */
     public boolean hasBothActivated() {
         return userAActivatedAt != null && userBActivatedAt != null;

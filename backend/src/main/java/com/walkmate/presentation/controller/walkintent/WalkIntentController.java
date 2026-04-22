@@ -1,6 +1,7 @@
 package com.walkmate.presentation.controller.walkintent;
 
 import com.walkmate.application.user.UserPrincipal;
+import com.walkmate.application.user.UserQueryService;
 import com.walkmate.application.proposal.MatchingCommandService;
 import com.walkmate.application.walkintent.CreateIntentResult;
 import com.walkmate.application.walkintent.CreateWalkIntentCommand;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "WalkIntent", description = "Create, list, and cancel walk intents")
 @RestController
@@ -38,12 +40,11 @@ public class WalkIntentController {
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final WalkIntentCommandService walkIntentCommandService;
-    
     private final WalkIntentQueryService   walkIntentQueryService;
     private final MatchingCommandService   matchingCommandService;
-    
     private final WalkIntentMapper         walkIntentMapper;
     private final ProposalMapper           proposalMapper;
+    private final UserQueryService         userQueryService;
 
     /**
      * POST /api/v1/intents
@@ -74,9 +75,14 @@ public class WalkIntentController {
         );
 
         WalkIntentResponse intentResp = walkIntentMapper.toResponse(result.intent());
-        WalkProposalResponse proposalResp = result.proposal() != null
-                ? proposalMapper.toResponse(result.proposal(), principal.userId(), null)
-                : null;
+        WalkProposalResponse proposalResp = null;
+        if (result.proposal() != null) {
+            MatchProposal p = result.proposal();
+            boolean callerIsA = principal.userId().equals(p.getUserIdA());
+            String partnerId = callerIsA ? p.getUserIdB() : p.getUserIdA();
+            proposalResp = proposalMapper.toResponse(p, principal.userId(), null,
+                    resolveDisplayName(partnerId));
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(new CreateIntentResponse(intentResp, proposalResp)));
@@ -117,8 +123,11 @@ public class WalkIntentController {
         if (proposal == null) {
             return ResponseEntity.noContent().build();
         }
+        boolean callerIsA = principal.userId().equals(proposal.getUserIdA());
+        String partnerId = callerIsA ? proposal.getUserIdB() : proposal.getUserIdA();
         return ResponseEntity.ok(ApiResponse.success(
-                proposalMapper.toResponse(proposal, principal.userId(), null)));
+                proposalMapper.toResponse(proposal, principal.userId(), null,
+                        resolveDisplayName(partnerId))));
     }
 
     /**
@@ -134,6 +143,14 @@ public class WalkIntentController {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private String resolveDisplayName(String userId) {
+        try {
+            return userQueryService.getDisplayName(UUID.fromString(userId));
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     /**
      * Converts a yyyy-MM-dd date string and a fractional-hour float

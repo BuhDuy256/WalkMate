@@ -12,11 +12,13 @@ public class ProposalMapper {
      * Maps a MatchProposal to a WalkProposalResponse from the perspective of the caller.
      * The caller's intent/user fields go to "callers_*" and the partner's to "matched_*".
      *
-     * @param proposal  the domain proposal
-     * @param callerId  the authenticated user's ID (determines which side is "callers")
-     * @param sessionId the sessionId if the proposal is CONFIRMED, else null
+     * @param proposal         the domain proposal
+     * @param callerId         the authenticated user's ID (determines which side is "callers")
+     * @param sessionId        the sessionId if the proposal is CONFIRMED, else null
+     * @param matchedUserName  the resolved display name of the matched partner
      */
-    public WalkProposalResponse toResponse(MatchProposal proposal, String callerId, String sessionId) {
+    public WalkProposalResponse toResponse(MatchProposal proposal, String callerId,
+                                           String sessionId, String matchedUserName) {
         boolean callerIsA = callerId.equals(proposal.getUserIdA());
 
         String callersIntentId   = callerIsA ? proposal.getIntentIdA() : proposal.getIntentIdB();
@@ -32,6 +34,7 @@ public class ProposalMapper {
                 matchedIntentId,
                 callersUserId,
                 matchedUserId,
+                matchedUserName,
                 proposal.getProposedStartTime().toString(),
                 proposal.getProposedEndTime().toString(),
                 proposal.getProposedLocationLat(),

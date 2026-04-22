@@ -22,7 +22,7 @@ public class WalkProposalMapper {
                 response.getProposalId(),
                 response.getCallersIntentId(),
                 response.getMatchedUserId(),
-                response.getMatchedUserId(),   // name not yet in API — use userId as placeholder
+                response.getMatchedUserName(),
                 0,                              // age not yet in API
                 0,                              // trustScore not yet in API
                 Collections.emptyList(),        // tags not yet in API

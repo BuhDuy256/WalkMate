@@ -31,6 +31,9 @@ public record WalkProposalResponse(
         @JsonProperty("matched_user_id")
         String matchedUserId,
 
+        @JsonProperty("matched_user_name")
+        String matchedUserName,
+
         @JsonProperty("proposed_time_start")
         String proposedTimeStart,   // ISO-8601
 

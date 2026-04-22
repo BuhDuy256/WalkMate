@@ -2,6 +2,7 @@ package com.walkmate.presentation.controller.session;
 
 import com.walkmate.application.session.SessionCommandService;
 import com.walkmate.application.user.UserPrincipal;
+import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.presentation.dto.request.session.CancelWalkSessionRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
@@ -15,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Sessions", description = "Walk session lifecycle management")
 @RestController
@@ -24,6 +26,7 @@ public class SessionController {
 
     private final SessionCommandService sessionCommandService;
     private final SessionMapper         sessionMapper;
+    private final UserQueryService      userQueryService;
 
     /**
      * GET /api/v1/sessions/active
@@ -36,7 +39,11 @@ public class SessionController {
         List<WalkSessionResponse> responses = sessionCommandService
                 .getActiveSessions(principal.userId())
                 .stream()
-                .map(s -> sessionMapper.toResponse(s, false))
+                .map(s -> {
+                    boolean callerIsA = principal.userId().equals(s.getUserIdA());
+                    String partnerId = callerIsA ? s.getUserIdB() : s.getUserIdA();
+                    return sessionMapper.toResponse(s, false, resolveDisplayName(partnerId));
+                })
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(responses));
@@ -53,7 +60,20 @@ public class SessionController {
             @PathVariable String sessionId) {
 
         WalkSession session = sessionCommandService.activateSession(sessionId, principal.userId());
-        return ResponseEntity.ok(ApiResponse.success(sessionMapper.toResponse(session, false)));
+        boolean callerIsA = principal.userId().equals(session.getUserIdA());
+        String partnerId = callerIsA ? session.getUserIdB() : session.getUserIdA();
+        return ResponseEntity.ok(ApiResponse.success(
+                sessionMapper.toResponse(session, false, resolveDisplayName(partnerId))));
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private String resolveDisplayName(String userId) {
+        try {
+            return userQueryService.getDisplayName(UUID.fromString(userId));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -79,6 +99,9 @@ public class SessionController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String sessionId) {
         WalkSession session = sessionCommandService.completeSession(sessionId, principal.userId());
-        return ResponseEntity.ok(ApiResponse.success(sessionMapper.toResponse(session, false)));
+        boolean callerIsA = principal.userId().equals(session.getUserIdA());
+        String partnerId = callerIsA ? session.getUserIdB() : session.getUserIdA();
+        return ResponseEntity.ok(ApiResponse.success(
+                sessionMapper.toResponse(session, false, resolveDisplayName(partnerId))));
     }
 }

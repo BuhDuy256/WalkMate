@@ -25,8 +25,7 @@ public class MatchesViewModelFactory implements ViewModelProvider.Factory {
             return (T) new MatchesViewModel(
                     app.getWalkIntentRepository(),
                     app.getWalkProposalRepository(),
-                    app.getWalkSessionRepository(),
-                    app.getUserProfileRepository());
+                    app.getWalkSessionRepository());
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

@@ -49,6 +49,14 @@ public class UserQueryService {
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
     }
 
+    /** Returns the display name for any user, or null if no profile exists. */
+    @Transactional(readOnly = true)
+    public String getDisplayName(UUID userId) {
+        return profileRepository.findByUserId(userId)
+                .map(UserProfile::getFullName)
+                .orElse(null);
+    }
+
     /** Returns all tags for the given user, ordered by insertion order. */
     @Transactional(readOnly = true)
     public List<String> getTagsByUserId(UUID userId) {

@@ -5,8 +5,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
-import com.walkmate.domain.user.UserProfile;
-import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.domain.walkproposal.WalkProposal;
@@ -15,10 +13,7 @@ import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MatchesViewModel extends ViewModel {
 
@@ -30,9 +25,6 @@ public class MatchesViewModel extends ViewModel {
     private final WalkIntentRepository intentRepository;
     private final WalkProposalRepository proposalRepository;
     private final WalkSessionRepository sessionRepository;
-    private final UserProfileRepository userProfileRepository;
-
-    private final Map<String, UserProfile> profileCache = new HashMap<>();
 
     private int lastViewedSubTab = MatchesPagerAdapter.TAB_FINDING;
 
@@ -41,12 +33,10 @@ public class MatchesViewModel extends ViewModel {
 
     public MatchesViewModel(WalkIntentRepository intentRepository,
                             WalkProposalRepository proposalRepository,
-                            WalkSessionRepository sessionRepository,
-                            UserProfileRepository userProfileRepository) {
+                            WalkSessionRepository sessionRepository) {
         this.intentRepository = intentRepository;
         this.proposalRepository = proposalRepository;
         this.sessionRepository = sessionRepository;
-        this.userProfileRepository = userProfileRepository;
     }
 
     public LiveData<MatchesUiState> getUiState() { return uiState; }
@@ -99,15 +89,13 @@ public class MatchesViewModel extends ViewModel {
         });
     }
 
-    /**
-     * Fetches proposals then blocks on profile API calls before posting state,
-     * so the UI never renders raw UUIDs as partner names.
-     */
     public void loadProposals() {
         setLoading();
         proposalRepository.getProposals(new DomainCallback<List<WalkProposal>>() {
             @Override public void onSuccess(List<WalkProposal> result) {
-                enrichAndPostProposals(result);
+                MatchesUiState c = safeGetState();
+                uiState.postValue(new MatchesUiState(
+                        false, c.getActiveIntents(), result, c.getActiveSessions(), null));
             }
             @Override public void onError(Exception error) {
                 MatchesUiState c = safeGetState();
@@ -122,7 +110,9 @@ public class MatchesViewModel extends ViewModel {
         setLoading();
         sessionRepository.getActiveSessions(new DomainCallback<List<WalkSession>>() {
             @Override public void onSuccess(List<WalkSession> result) {
-                enrichAndPostSessions(result);
+                MatchesUiState c = safeGetState();
+                uiState.postValue(new MatchesUiState(
+                        false, c.getActiveIntents(), c.getProposals(), result, null));
             }
             @Override public void onError(Exception error) {
                 MatchesUiState c = safeGetState();
@@ -226,13 +216,10 @@ public class MatchesViewModel extends ViewModel {
     }
 
     private void updateProposalInPlace(WalkProposal updated) {
-        UserProfile cached = profileCache.get(updated.getMatchedUserId());
-        WalkProposal enriched = cached != null
-                ? updated.withMatchedUserName(cached.getFullName()) : updated;
         MatchesUiState c = safeGetState();
         List<WalkProposal> updatedList = new ArrayList<>();
         for (WalkProposal p : c.getProposals()) {
-            updatedList.add(p.getProposalId().equals(enriched.getProposalId()) ? enriched : p);
+            updatedList.add(p.getProposalId().equals(updated.getProposalId()) ? updated : p);
         }
         uiState.postValue(new MatchesUiState(
                 false, c.getActiveIntents(), updatedList, c.getActiveSessions(), null));
@@ -296,96 +283,5 @@ public class MatchesViewModel extends ViewModel {
     private MatchesUiState safeGetState() {
         MatchesUiState s = uiState.getValue();
         return s != null ? s : MatchesUiState.initial();
-    }
-
-    private void enrichAndPostProposals(List<WalkProposal> proposals) {
-        List<String> uncachedIds = new ArrayList<>();
-        for (WalkProposal p : proposals) {
-            String uid = p.getMatchedUserId();
-            if (uid != null && !profileCache.containsKey(uid) && !uncachedIds.contains(uid)) {
-                uncachedIds.add(uid);
-            }
-        }
-        if (uncachedIds.isEmpty()) {
-            postEnrichedProposals(applyEnrichment(proposals));
-            return;
-        }
-        AtomicInteger pending = new AtomicInteger(uncachedIds.size());
-        for (String uid : uncachedIds) {
-            userProfileRepository.getProfile(uid, new DomainCallback<UserProfile>() {
-                @Override public void onSuccess(UserProfile profile) {
-                    profileCache.put(uid, profile);
-                    if (pending.decrementAndGet() == 0)
-                        postEnrichedProposals(applyEnrichment(proposals));
-                }
-                @Override public void onError(Exception e) {
-                    if (pending.decrementAndGet() == 0)
-                        postEnrichedProposals(applyEnrichment(proposals));
-                }
-            });
-        }
-    }
-
-    private List<WalkProposal> applyEnrichment(List<WalkProposal> proposals) {
-        List<WalkProposal> enriched = new ArrayList<>(proposals.size());
-        for (WalkProposal p : proposals) {
-            UserProfile cached = profileCache.get(p.getMatchedUserId());
-            enriched.add(cached != null ? p.withMatchedUserName(cached.getFullName()) : p);
-        }
-        return enriched;
-    }
-
-    private void postEnrichedProposals(List<WalkProposal> enriched) {
-        MatchesUiState c = safeGetState();
-        uiState.postValue(new MatchesUiState(
-                false, c.getActiveIntents(), enriched, c.getActiveSessions(), null));
-    }
-
-    private void enrichAndPostSessions(List<WalkSession> sessions) {
-        List<String> uncachedIds = new ArrayList<>();
-        for (WalkSession s : sessions) {
-            String uid = s.getPartnerId();
-            if (uid != null && (s.getPartnerName() == null || s.getPartnerName().isEmpty())
-                    && !profileCache.containsKey(uid) && !uncachedIds.contains(uid)) {
-                uncachedIds.add(uid);
-            }
-        }
-        if (uncachedIds.isEmpty()) {
-            postEnrichedSessions(applySessionEnrichment(sessions));
-            return;
-        }
-        AtomicInteger pending = new AtomicInteger(uncachedIds.size());
-        for (String uid : uncachedIds) {
-            userProfileRepository.getProfile(uid, new DomainCallback<UserProfile>() {
-                @Override public void onSuccess(UserProfile profile) {
-                    profileCache.put(uid, profile);
-                    if (pending.decrementAndGet() == 0)
-                        postEnrichedSessions(applySessionEnrichment(sessions));
-                }
-                @Override public void onError(Exception e) {
-                    if (pending.decrementAndGet() == 0)
-                        postEnrichedSessions(applySessionEnrichment(sessions));
-                }
-            });
-        }
-    }
-
-    private List<WalkSession> applySessionEnrichment(List<WalkSession> sessions) {
-        List<WalkSession> enriched = new ArrayList<>(sessions.size());
-        for (WalkSession s : sessions) {
-            if (s.getPartnerName() == null || s.getPartnerName().isEmpty()) {
-                UserProfile cached = profileCache.get(s.getPartnerId());
-                enriched.add(cached != null ? s.withPartnerName(cached.getFullName()) : s);
-            } else {
-                enriched.add(s);
-            }
-        }
-        return enriched;
-    }
-
-    private void postEnrichedSessions(List<WalkSession> enriched) {
-        MatchesUiState c = safeGetState();
-        uiState.postValue(new MatchesUiState(
-                false, c.getActiveIntents(), c.getProposals(), enriched, null));
     }
 }
