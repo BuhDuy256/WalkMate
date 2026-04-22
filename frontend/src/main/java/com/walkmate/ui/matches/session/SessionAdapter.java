@@ -16,6 +16,8 @@ import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 import com.walkmate.domain.walksession.WalkSession;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -128,17 +130,19 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             }
             cardHeader.hideCountdown();
 
-            // Zone 2: partner identity — fallback to "Walking Partner" until API returns name
+            // Zone 2: partner identity
             String partnerName = session.getPartnerName();
             String displayName = (partnerName != null && !partnerName.isEmpty())
-                    ? partnerName : "Walking Partner";
+                    ? partnerName : session.getPartnerId();
             avatarPartner.bind(displayName, null);
             txtPartnerName.setText(displayName);
             txtMeetingPoint.setText(formatMeetingPoint(
                     session.getMeetingPointLat(), session.getMeetingPointLng()));
 
-            // Zone 3: meeting time
-            txtMeetingTime.setText("🕐 " + formatScheduledTime(session.getScheduledTime()));
+            // Zone 3: time window (scheduled start – end)
+            String start = formatIsoTime(session.getScheduledTime());
+            String end   = formatIsoTime(session.getScheduledEnd());
+            txtMeetingTime.setText(end.isEmpty() ? start : start + "  –  " + end);
 
             btnChat.setOnClickListener(v -> {
                 if (chatListener != null) chatListener.onChatClick(session);
@@ -178,11 +182,16 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             return String.format(Locale.getDefault(), "📍 %.2f°N, %.2f°E", lat, lng);
         }
 
-        private String formatScheduledTime(String isoTime) {
+        private String formatIsoTime(String isoTime) {
             if (isoTime == null || isoTime.isEmpty()) return "";
-            int tIndex = isoTime.indexOf('T');
-            if (tIndex < 0 || tIndex + 5 > isoTime.length()) return isoTime;
-            return isoTime.substring(tIndex + 1, tIndex + 6);
+            try {
+                ZonedDateTime local = ZonedDateTime.parse(isoTime)
+                        .withZoneSameInstant(ZoneId.systemDefault());
+                return String.format(Locale.getDefault(), "%02d:%02d",
+                        local.getHour(), local.getMinute());
+            } catch (Exception e) {
+                return "";
+            }
         }
     }
 }

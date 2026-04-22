@@ -23,14 +23,8 @@ public class MatchesFragment extends Fragment {
     private ViewPager2 subTabPager;
     private MatchesPagerAdapter pagerAdapter;
 
-    // Shared ViewModel — scoped to Activity so it survives tab switches.
-    // Sub-fragments access it via ViewModelProvider(requireActivity()).
     private MatchesViewModel matchesViewModel;
 
-    /**
-     * Tracks the last-viewed sub-tab in the ViewModel as the user swipes.
-     * Registered in onViewCreated() and unregistered in onDestroyView().
-     */
     private final ViewPager2.OnPageChangeCallback pageChangeCallback =
             new ViewPager2.OnPageChangeCallback() {
                 @Override
@@ -72,20 +66,11 @@ public class MatchesFragment extends Fragment {
             }
         }).attach();
 
-        // Scope to Activity — VM survives tab switches and sub-fragments share the same instance.
         matchesViewModel = new ViewModelProvider(
                 requireActivity(), new MatchesViewModelFactory(requireActivity().getApplication()))
                 .get(MatchesViewModel.class);
 
-        // Track the active sub-tab so it can be restored on return visits.
         subTabPager.registerOnPageChangeCallback(pageChangeCallback);
-
-        boolean wasAlreadyLoaded = matchesViewModel.hasLoadedOnce();
-
-        // Only load when there is no cached data yet.
-        if (!matchesViewModel.hasLoadedOnce()) {
-            matchesViewModel.loadAll();
-        }
 
         // Phase 5a — handle navigation argument from ExploreFragment (match found)
         // or from AppEventBus (FCM notification via MainActivity).
@@ -98,12 +83,9 @@ public class MatchesFragment extends Fragment {
         }
 
         // Phase 5b — restore last-viewed sub-tab on return visits.
-        // On the first visit (wasAlreadyLoaded=false), keep the default Finding tab.
-        if (wasAlreadyLoaded) {
-            int lastTab = matchesViewModel.getLastViewedSubTab();
-            if (lastTab != MatchesPagerAdapter.TAB_FINDING) {
-                subTabPager.post(() -> scrollToSubTab(lastTab));
-            }
+        int lastTab = matchesViewModel.getLastViewedSubTab();
+        if (lastTab != MatchesPagerAdapter.TAB_FINDING) {
+            subTabPager.post(() -> scrollToSubTab(lastTab));
         }
 
         // Phase 5c — scroll to Session tab after accepting a proposal.
@@ -118,8 +100,6 @@ public class MatchesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Prevent memory leak: ViewPager2 holds a reference to the adapter which
-        // holds fragment instances. Null it out when the view is destroyed.
         if (subTabPager != null) {
             subTabPager.unregisterOnPageChangeCallback(pageChangeCallback);
             subTabPager.setAdapter(null);
@@ -129,10 +109,6 @@ public class MatchesFragment extends Fragment {
         pagerAdapter = null;
     }
 
-    /**
-     * Scrolls to the given sub-tab index.
-     * Called by navigation arguments and by the scrollToTabEvent observer.
-     */
     public void scrollToSubTab(int index) {
         if (subTabPager != null) {
             subTabPager.setCurrentItem(index, true);

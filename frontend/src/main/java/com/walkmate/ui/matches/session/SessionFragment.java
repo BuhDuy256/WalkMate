@@ -41,9 +41,7 @@ public class SessionFragment extends Fragment {
 
     private MatchesViewModel matchesViewModel;
 
-    /** Stores the sessionId of the most recent activateSession() call, used for WINDOW_CLOSED logic. */
     private String lastActivatingSessionId;
-    /** Set to the sessionId when SESSION_ACTIVATION_WINDOW_CLOSED fires; cleared in renderState(). */
     private String pendingWindowClosedSessionId;
 
     // ── Polling ───────────────────────────────────────────────────────────────
@@ -52,7 +50,7 @@ public class SessionFragment extends Fragment {
     private final Runnable pollRunnable = new Runnable() {
         @Override
         public void run() {
-            matchesViewModel.loadAll();
+            matchesViewModel.loadSessions();
             pollHandler.postDelayed(this, 15_000L);
         }
     };
@@ -75,7 +73,6 @@ public class SessionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Shared ViewModel scoped to Activity — same instance as MatchesFragment.
         matchesViewModel = new ViewModelProvider(requireActivity())
                 .get(MatchesViewModel.class);
 
@@ -108,7 +105,6 @@ public class SessionFragment extends Fragment {
 
             @Override
             public void onCompleteClicked(WalkSession session) {
-                // Navigate to tracking screen where complete is handled properly
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
                         .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   session.getSessionId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   session.getPartnerId())
@@ -130,37 +126,36 @@ public class SessionFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());
+        swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadSessions());
 
         matchesViewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
 
         matchesViewModel.getActivationResultEvent().observe(getViewLifecycleOwner(), result -> {
             if (result == null) return;
             matchesViewModel.consumeActivationResult();
-            
+
             if (result.session != null) {
                 if (result.session.getStatus() == WalkSession.Status.ACTIVE) {
                     // Case A: only this user activated (partner hasn't confirmed yet).
                     showWaitingForPartnerUi();
                     startActivationPolling();
-                }   
+                }
 
                 // Case B: both activated — launch tracking screen
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
-                            .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
-                            .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
-                            .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
-                            .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
-                            .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
+                        .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
+                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
+                        .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
+                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
+                        .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
 
             } else if ("SESSION_ACTIVATION_WINDOW_CLOSED".equals(result.errorCode)) {
                 Toast.makeText(requireContext(),
                         "Activation window closed. Waiting for status update.",
                         Toast.LENGTH_LONG).show();
-                // After 5 s, reload; renderState() will navigate to History if the session is gone.
                 pendingWindowClosedSessionId = lastActivatingSessionId;
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    if (matchesViewModel != null) matchesViewModel.loadAll();
+                    if (matchesViewModel != null) matchesViewModel.loadSessions();
                 }, 5_000L);
             } else if (result.errorCode != null) {
                 Toast.makeText(requireContext(), result.errorCode, Toast.LENGTH_SHORT).show();
@@ -171,12 +166,8 @@ public class SessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // One-shot refresh when returning to Session tab so terminal transitions
-        // (e.g. COMPLETE in Tracking screen) are reflected immediately.
-        // This keeps polling disabled by default; polling is still only enabled
-        // for the explicit waiting-for-partner flow.
         if (matchesViewModel != null) {
-            matchesViewModel.loadAll();
+            matchesViewModel.loadSessions();
         }
     }
 
@@ -211,7 +202,6 @@ public class SessionFragment extends Fragment {
             matchesViewModel.consumeError();
         }
 
-        // WINDOW_CLOSED post-reload: navigate to History if the session disappeared.
         if (pendingWindowClosedSessionId != null && !state.isLoading()) {
             boolean found = false;
             for (WalkSession s : visibleSessions) {
@@ -231,10 +221,7 @@ public class SessionFragment extends Fragment {
     }
 
     private List<WalkSession> filterVisibleSessions(List<WalkSession> sessions) {
-        if (sessions == null || sessions.isEmpty()) {
-            return Collections.emptyList();
-        }
-
+        if (sessions == null || sessions.isEmpty()) return Collections.emptyList();
         List<WalkSession> visible = new ArrayList<>(sessions.size());
         for (WalkSession session : sessions) {
             WalkSession.Status status = session.getStatus();
@@ -251,7 +238,6 @@ public class SessionFragment extends Fragment {
                 getString(R.string.cancel_reason_no_contact),
                 getString(R.string.cancel_reason_other)
         };
-
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.cancel_session_title)
                 .setItems(reasons, (dialog, which) ->

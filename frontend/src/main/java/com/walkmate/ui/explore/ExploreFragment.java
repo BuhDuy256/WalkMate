@@ -48,8 +48,6 @@ import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
 import com.walkmate.ui.auth.AuthActivity;
 import com.walkmate.ui.main.MainActivity;
-import com.walkmate.ui.matches.MatchesViewModel;
-import com.walkmate.ui.matches.MatchesViewModelFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -763,13 +761,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
      * so the data is always fresh (Finding list, Proposals, Sessions).
      */
     private void navigateToMatchesTab(int tabIndex) {
-        // MatchesViewModel is Activity-scoped — force a fresh reload before switching tabs.
-        MatchesViewModel matchesViewModel = new ViewModelProvider(
-                requireActivity(),
-                new MatchesViewModelFactory(requireActivity().getApplication()))
-                .get(MatchesViewModel.class);
-        matchesViewModel.loadAll();
-
         Bundle args = new Bundle();
         args.putInt("scrollToTab", tabIndex);
         Navigation.findNavController(requireView()).navigate(R.id.matchesFragment, args);

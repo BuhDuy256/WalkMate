@@ -181,10 +181,10 @@
         <!-- Zone 5 Tier 3: Destructive action -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelProposal"
-            style="@style/Widget.Material3.Button.TextButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="14dp"
             android:text="@string/btn_cancel_proposal"
             android:textColor="@color/color_danger"
             android:textSize="13sp"

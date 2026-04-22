@@ -48,7 +48,6 @@ public class ProposalFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Shared ViewModel scoped to Activity — same instance as MatchesFragment.
         matchesViewModel = new ViewModelProvider(requireActivity())
                 .get(MatchesViewModel.class);
 
@@ -77,7 +76,7 @@ public class ProposalFragment extends Fragment {
                 matchesViewModel.cancelProposal(proposalId);
             }
             @Override public void onProposalExpired() {
-                matchesViewModel.loadAll();
+                matchesViewModel.loadProposals();
             }
             @Override public void onViewProfile(String userId) {
                 Bundle args = new Bundle();
@@ -88,7 +87,7 @@ public class ProposalFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());
+        swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadProposals());
 
         matchesViewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
 
@@ -99,11 +98,12 @@ public class ProposalFragment extends Fragment {
                 showCelebrationAnimation();
             }
         });
+
+        matchesViewModel.loadProposals();
     }
 
     private void showCelebrationAnimation() {
         if (celebrationOverlay == null) return;
-        // Cancel any pending hide
         if (celebrationHideRunnable != null) {
             celebrationHandler.removeCallbacks(celebrationHideRunnable);
         }

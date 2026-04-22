@@ -39,7 +39,6 @@ public class FindingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Shared ViewModel scoped to Activity — same instance as MatchesFragment.
         matchesViewModel = new ViewModelProvider(requireActivity())
                 .get(MatchesViewModel.class);
 
@@ -57,15 +56,16 @@ public class FindingFragment extends Fragment {
 
             @Override
             public void onIntentExpired() {
-                matchesViewModel.loadAll();
+                matchesViewModel.loadIntents();
             }
         });
         recyclerView.setAdapter(adapter);
 
-        swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadAll());
+        swipeRefresh.setOnRefreshListener(() -> matchesViewModel.loadIntents());
 
         matchesViewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
 
+        matchesViewModel.loadIntents();
     }
 
     private void renderState(MatchesUiState state) {

@@ -78,7 +78,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="MEETING"
+            android:text="TIME WINDOW"
             android:textColor="@color/text_label"
             android:textSize="12sp"
             android:textStyle="bold"
