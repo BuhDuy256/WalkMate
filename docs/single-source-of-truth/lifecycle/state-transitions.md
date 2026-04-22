@@ -56,16 +56,16 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 ### Lifecycle Stages
 
 - **PENDING:** Session created, waiting for participants to arrive at the Hotspot and activate.
-- **ACTIVE:** Both participants have activated the session (Path tracing in progress).
-- **COMPLETED:** The walk reached its destination or time limit.
-- **CANCELLED:** Manual cancellation prior to start hoặc auto-cancel khi `PENDING` quá TTL cấu hình.
+- **ACTIVE:** At least one participant has activated. Each participant owns an independent `user_a_status` / `user_b_status`. The global `ACTIVE` state is set as soon as the first participant arrives — the second participant may still be `PENDING`.
+- **COMPLETED:** Both participants have reached a terminal state and at least one is `COMPLETED`. Path tracing and points are earned per participant independently.
+- **CANCELLED:** Manual cancellation before either participant activates, or auto-cancel when `PENDING` exceeds the configured TTL.
 
 ### Transitions
 
 | From        | To            | Trigger                                    |
 | :---------- | :------------ | :----------------------------------------- |
 | [None]      | **PENDING**   | `MatchProposal` transitions to CONFIRMED.  |
-| **PENDING** | **ACTIVE**    | Mutual activation (both participants press Arrive). |
+| **PENDING** | **ACTIVE**    | First participant presses Arrive (independent activation — second may follow later). |
 | **PENDING** | **CANCELLED** | Manual cancel or session exceeds `pending-ttl` policy. |
 | **ACTIVE**  | **COMPLETED** | Goal reached or time elapsed.              |
 

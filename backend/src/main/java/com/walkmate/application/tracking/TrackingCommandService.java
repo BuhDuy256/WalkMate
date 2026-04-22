@@ -46,15 +46,21 @@ public class TrackingCommandService {
     @Transactional
     public PushRoutePointsResponse syncRoutePoints(String sessionId, String callerId,
                                                    List<PushRoutePointsRequest.RoutePointPayload> points) {
-        // 1. Verify session exists, is ACTIVE, and caller is a participant
+        // 1. Verify session exists, caller is a participant, and caller's own status is ACTIVE.
+        //    The global session status is ACTIVE when anyone is walking, but a specific user
+        //    may still be PENDING (not arrived yet) or already COMPLETED — neither should be
+        //    allowed to push GPS data.
         WalkSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new DomainException(SessionErrorCode.SESSION_NOT_FOUND));
 
-        if (session.getStatus() != SessionStatus.ACTIVE) {
-            throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
-        }
-        if (!session.getUserIdA().equals(callerId) && !session.getUserIdB().equals(callerId)) {
+        boolean isCallerUserA = session.getUserIdA().equals(callerId);
+        if (!isCallerUserA && !session.getUserIdB().equals(callerId)) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_PARTICIPANT);
+        }
+
+        SessionStatus callerStatus = isCallerUserA ? session.getUserAStatus() : session.getUserBStatus();
+        if (callerStatus != SessionStatus.ACTIVE) {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
         }
 
         // 2. Validate all points

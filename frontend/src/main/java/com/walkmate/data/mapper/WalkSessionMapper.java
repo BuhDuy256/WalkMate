@@ -11,13 +11,8 @@ public class WalkSessionMapper {
     /**
      * Maps a {@link WalkSessionResponse} DTO to a {@link WalkSession} domain object.
      *
-     * <p>The API returns both user IDs but the domain model represents the session
-     * from the perspective of the viewing user as "partnerName / partnerAvatar".
-     * Those enrichment fields (name, avatar) are not yet provided by the session
-     * endpoint and use safe defaults until a profile endpoint is available.</p>
-     *
-     * @param response   raw DTO from the API
-     * @param callerId   the authenticated user's ID, used to determine which side is the partner
+     * @param response raw DTO from the API
+     * @param callerId the authenticated user's ID, used to determine caller vs partner side
      */
     public static WalkSession toDomain(WalkSessionResponse response, String callerId) {
         boolean isCallerUserA = callerId.equals(response.getUserIdA());
@@ -38,6 +33,10 @@ public class WalkSessionMapper {
                 response.getEndedAt(),
                 response.getUserAActivatedAt(),
                 response.getUserBActivatedAt(),
+                toStatus(response.getUserAStatus()),
+                toStatus(response.getUserBStatus()),
+                response.getUserAEndedAt(),
+                response.getUserBEndedAt(),
                 response.isReviewed(),
                 isCallerUserA
         );

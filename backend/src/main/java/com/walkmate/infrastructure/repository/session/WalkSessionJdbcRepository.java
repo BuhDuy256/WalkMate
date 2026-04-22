@@ -35,7 +35,10 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     user_a_activated_at, user_b_activated_at,
                     cancellation_reason, cancelled_by,
                     abort_reason, version,
-                    total_distance_km, total_duration_seconds
+                    user_a_status, user_b_status,
+                    user_a_ended_at, user_b_ended_at,
+                    user_a_distance_km, user_a_duration_seconds,
+                    user_b_distance_km, user_b_duration_seconds
                 )
                 VALUES (
                     :sessionId, :proposalId, :userIdA, :userIdB,
@@ -45,45 +48,61 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     :userAActivatedAt, :userBActivatedAt,
                     :cancellationReason, :cancelledBy,
                     :abortReason, :version,
-                    :totalDistanceKm, :totalDurationSeconds
+                    CAST(:userAStatus AS walk_session_status),
+                    CAST(:userBStatus AS walk_session_status),
+                    :userAEndedAt, :userBEndedAt,
+                    :userADistanceKm, :userADurationSeconds,
+                    :userBDistanceKm, :userBDurationSeconds
                 )
                 ON CONFLICT (session_id) DO UPDATE SET
-                    status                = CAST(EXCLUDED.status AS walk_session_status),
-                    started_at            = EXCLUDED.started_at,
-                    ended_at              = EXCLUDED.ended_at,
-                    user_a_activated_at   = EXCLUDED.user_a_activated_at,
-                    user_b_activated_at   = EXCLUDED.user_b_activated_at,
-                    cancellation_reason   = EXCLUDED.cancellation_reason,
-                    cancelled_by          = EXCLUDED.cancelled_by,
-                    abort_reason          = EXCLUDED.abort_reason,
-                    version               = EXCLUDED.version,
-                    total_distance_km     = EXCLUDED.total_distance_km,
-                    total_duration_seconds = EXCLUDED.total_duration_seconds
+                    status                 = CAST(EXCLUDED.status AS walk_session_status),
+                    started_at             = EXCLUDED.started_at,
+                    ended_at               = EXCLUDED.ended_at,
+                    user_a_activated_at    = EXCLUDED.user_a_activated_at,
+                    user_b_activated_at    = EXCLUDED.user_b_activated_at,
+                    cancellation_reason    = EXCLUDED.cancellation_reason,
+                    cancelled_by           = EXCLUDED.cancelled_by,
+                    abort_reason           = EXCLUDED.abort_reason,
+                    version                = EXCLUDED.version,
+                    user_a_status          = EXCLUDED.user_a_status,
+                    user_b_status          = EXCLUDED.user_b_status,
+                    user_a_ended_at        = EXCLUDED.user_a_ended_at,
+                    user_b_ended_at        = EXCLUDED.user_b_ended_at,
+                    user_a_distance_km     = EXCLUDED.user_a_distance_km,
+                    user_a_duration_seconds = EXCLUDED.user_a_duration_seconds,
+                    user_b_distance_km     = EXCLUDED.user_b_distance_km,
+                    user_b_duration_seconds = EXCLUDED.user_b_duration_seconds
                 """;
 
         jdbcClient.sql(sql)
-                .param("sessionId",          UUID.fromString(session.getSessionId()))
-                .param("proposalId",         UUID.fromString(session.getProposalId()))
-                .param("userIdA",            UUID.fromString(session.getUserIdA()))
-                .param("userIdB",            UUID.fromString(session.getUserIdB()))
-                .param("meetingPointLat",    session.getMeetingPointLat())
-                .param("meetingPointLng",    session.getMeetingPointLng())
-                .param("scheduledStart",     Timestamp.from(session.getScheduledStart()))
-                .param("scheduledEnd",       Timestamp.from(session.getScheduledEnd()))
-                .param("status",             session.getStatus().name())
-                .param("createdAt",          Timestamp.from(session.getCreatedAt()))
-                .param("startedAt",          toTs(session.getStartedAt()))
-                .param("endedAt",            toTs(session.getEndedAt()))
-                .param("userAActivatedAt",   toTs(session.getUserAActivatedAt()))
-                .param("userBActivatedAt",   toTs(session.getUserBActivatedAt()))
-                .param("cancellationReason", session.getCancellationReason())
-                .param("cancelledBy",          session.getCancelledBy() != null
+                .param("sessionId",             UUID.fromString(session.getSessionId()))
+                .param("proposalId",            UUID.fromString(session.getProposalId()))
+                .param("userIdA",               UUID.fromString(session.getUserIdA()))
+                .param("userIdB",               UUID.fromString(session.getUserIdB()))
+                .param("meetingPointLat",       session.getMeetingPointLat())
+                .param("meetingPointLng",       session.getMeetingPointLng())
+                .param("scheduledStart",        Timestamp.from(session.getScheduledStart()))
+                .param("scheduledEnd",          Timestamp.from(session.getScheduledEnd()))
+                .param("status",                session.getStatus().name())
+                .param("createdAt",             Timestamp.from(session.getCreatedAt()))
+                .param("startedAt",             toTs(session.getStartedAt()))
+                .param("endedAt",               toTs(session.getEndedAt()))
+                .param("userAActivatedAt",      toTs(session.getUserAActivatedAt()))
+                .param("userBActivatedAt",      toTs(session.getUserBActivatedAt()))
+                .param("cancellationReason",    session.getCancellationReason())
+                .param("cancelledBy",           session.getCancelledBy() != null
                         ? UUID.fromString(session.getCancelledBy()) : null)
-                .param("abortReason",          session.getAbortReason() != null
+                .param("abortReason",           session.getAbortReason() != null
                         ? session.getAbortReason().name() : null)
-                .param("version",              session.getVersion())
-                .param("totalDistanceKm",      session.getTotalDistanceKm())
-                .param("totalDurationSeconds", session.getTotalDurationSeconds())
+                .param("version",               session.getVersion())
+                .param("userAStatus",           session.getUserAStatus().name())
+                .param("userBStatus",           session.getUserBStatus().name())
+                .param("userAEndedAt",          toTs(session.getUserAEndedAt()))
+                .param("userBEndedAt",          toTs(session.getUserBEndedAt()))
+                .param("userADistanceKm",       session.getUserADistanceKm())
+                .param("userADurationSeconds",  session.getUserADurationSeconds())
+                .param("userBDistanceKm",       session.getUserBDistanceKm())
+                .param("userBDurationSeconds",  session.getUserBDurationSeconds())
                 .update();
 
         return session;
@@ -140,7 +159,6 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
 
     @Override
     public List<WalkSession> findStalePendingSessions(Instant cutoff) {
-        // PENDING sessions older than the configured scheduler cutoff.
         final String sql = selectAll() + """
                 WHERE status = 'PENDING'
                   AND created_at < :cutoff
@@ -153,7 +171,6 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
 
     @Override
     public List<WalkSession> findSessionsPastEndTime(Instant cutoff) {
-        // ACTIVE sessions whose scheduled_end is before the given cutoff
         final String sql = selectAll() + """
                 WHERE status = 'ACTIVE'
                   AND scheduled_end < :cutoff
@@ -168,7 +185,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     public List<WalkSession> findCompletedByUserId(String userId) {
         final String sql = selectAll() + """
                 WHERE (user_id_a = :userId OR user_id_b = :userId)
-                                                                        AND status IN ('COMPLETED', 'NO_SHOW', 'CANCELLED')
+                  AND status IN ('COMPLETED', 'NO_SHOW', 'CANCELLED')
                 ORDER BY COALESCE(ended_at, created_at) DESC
                 LIMIT 50
                 """;
@@ -213,7 +230,10 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                        user_a_activated_at, user_b_activated_at,
                        cancellation_reason, cancelled_by::text,
                        abort_reason, version,
-                       total_distance_km, total_duration_seconds
+                       user_a_status, user_b_status,
+                       user_a_ended_at, user_b_ended_at,
+                       user_a_distance_km, user_a_duration_seconds,
+                       user_b_distance_km, user_b_duration_seconds
                 FROM walk_session
                 """;
     }
@@ -241,8 +261,14 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 rs.getString("cancelled_by"),
                 abortReason,
                 rs.getLong("version"),
-                rs.getDouble("total_distance_km"),
-                rs.getLong("total_duration_seconds")
+                SessionStatus.valueOf(rs.getString("user_a_status")),
+                SessionStatus.valueOf(rs.getString("user_b_status")),
+                toInstant(rs, "user_a_ended_at"),
+                toInstant(rs, "user_b_ended_at"),
+                rs.getDouble("user_a_distance_km"),
+                rs.getLong("user_a_duration_seconds"),
+                rs.getDouble("user_b_distance_km"),
+                rs.getLong("user_b_duration_seconds")
         );
     }
 

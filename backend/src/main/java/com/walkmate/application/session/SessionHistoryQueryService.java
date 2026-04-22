@@ -32,16 +32,19 @@ public class SessionHistoryQueryService {
     }
 
     private SessionSummaryResponse toSummary(WalkSession s, String callerId) {
-        String  partnerId  = callerId.equals(s.getUserIdA()) ? s.getUserIdB() : s.getUserIdA();
-        boolean isReviewed = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
+        boolean isCallerUserA = callerId.equals(s.getUserIdA());
+        String  partnerId     = isCallerUserA ? s.getUserIdB() : s.getUserIdA();
+        boolean isReviewed    = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
+        double  distanceKm    = isCallerUserA ? s.getUserADistanceKm()      : s.getUserBDistanceKm();
+        long    durationSec   = isCallerUserA ? s.getUserADurationSeconds() : s.getUserBDurationSeconds();
         return new SessionSummaryResponse(
                 s.getSessionId(),
                 s.getStatus().name(),
                 partnerId,
                 s.getScheduledStart().toString(),
                 s.getScheduledEnd().toString(),
-                s.getTotalDistanceKm(),
-                (int) (s.getTotalDurationSeconds() / 60),
+                distanceKm,
+                (int) (durationSec / 60),
                 isReviewed
         );
     }

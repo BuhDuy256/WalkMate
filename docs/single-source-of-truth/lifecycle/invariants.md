@@ -33,10 +33,10 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 ## 3. Ràng buộc đối với WalkSession (Chuyến đi)
 
 - **S-1 Nguồn gốc hợp lệ:** Một chuyến đi chỉ được tạo ra từ một lời mời (`MatchProposal`) đã ở trạng thái `CONFIRMED`.
-- **S-2 Kích hoạt song phương (Cập nhật):** Trạng thái `ACTIVE` chỉ được xác lập khi `user_a_activated_at` và `user_b_activated_at` đều khác `NULL`.
+- **S-2 Kích hoạt độc lập (Cập nhật):** Mỗi người tham gia chuyển sang trạng thái `ACTIVE` ngay khi họ xác nhận đến điểm hẹn (`user_a_status` hoặc `user_b_status` = `ACTIVE`). Trạng thái toàn cục của Session được xác lập là `ACTIVE` ngay khi **ít nhất một** người đã kích hoạt. Không cần chờ đợi cả hai.
 - **S-3 Dọn dẹp Session PENDING theo TTL (Cập nhật):** Session `PENDING` không được treo vô hạn. Nếu quá TTL cấu hình, hệ thống tự động chuyển sang `CANCELLED`. Giá trị hiện tại lấy từ cấu hình `walkmate.session.pending-ttl` (mặc định `PT24H`, có thể override theo môi trường).
 - **S-4 Chính sách No-show (Cập nhật):** Luồng tự động chuyển `NO_SHOW` theo khung giờ kích hoạt đã tắt trong runtime hiện tại. `NO_SHOW` được giữ như trạng thái lịch sử/khả năng mở rộng, nhưng không còn là transition mặc định của scheduler.
-- **S-5 Điều kiện hoàn thành:** Một chuyến đi chỉ được chuyển sang `COMPLETED` từ trạng thái `ACTIVE` sau khi đã diễn ra tối thiểu 5 phút (tránh việc gian lận điểm).
+- **S-5 Hoàn thành độc lập (Cập nhật):** Mỗi người tham gia có thể hoàn thành (`user_a_status` / `user_b_status` = `COMPLETED`) độc lập sau khi đi tối thiểu 5 phút tính từ thời điểm họ tự kích hoạt. Trạng thái toàn cục chuyển sang `COMPLETED` chỉ khi **cả hai** người đã đạt trạng thái cuối và ít nhất một người là `COMPLETED`. Điều này đảm bảo người đến đúng giờ vẫn nhận được điểm ngay cả khi đối tác không đến.
 - **S-6 Giới hạn an toàn:** Một chuyến đi không được phép ở trạng thái `ACTIVE` quá 4 tiếng. Sau thời gian này, hệ thống sẽ tự động đóng Session để đảm bảo an toàn.
 - **S-7 Ràng buộc Chat (Bổ sung):** Người dùng chỉ có quyền gửi tin nhắn vào MongoDB khi `WalkSession` đang ở trạng thái `PENDING` hoặc `ACTIVE`. Khi Session chuyển sang `COMPLETED` hoặc `CANCELLED`, quyền ghi (Write) vào Chat của `session_id` đó phải bị khóa ngay lập tức.
 - **S-8 Tính nhất quán của Snapshot (Bổ sung):** Một khi Session đã được tạo, các thông tin `scheduled_start`, `scheduled_end` và `meeting_point` là bất biến (Immutable), không thay đổi theo sự biến động của dữ liệu gốc ở bảng Intent hay Hotspot.

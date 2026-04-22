@@ -41,14 +41,17 @@ public class TrackingQueryService {
         List<String> pathA = chunkRepository.findPolylinesBySessionAndUser(sessionId, session.getUserIdA());
         List<String> pathB = chunkRepository.findPolylinesBySessionAndUser(sessionId, session.getUserIdB());
 
-        int durationMinutes = (int) (session.getTotalDurationSeconds() / 60);
+        // Show the caller's own metrics in the route summary.
+        boolean isCallerUserA = callerId.equals(session.getUserIdA());
+        double  distanceKm    = isCallerUserA ? session.getUserADistanceKm()      : session.getUserBDistanceKm();
+        long    durationSec   = isCallerUserA ? session.getUserADurationSeconds() : session.getUserBDurationSeconds();
 
         return new SessionRouteResponse(
                 sessionId,
                 pathA,
                 pathB,
-                session.getTotalDistanceKm(),
-                durationMinutes
+                distanceKm,
+                (int) (durationSec / 60)
         );
     }
 }

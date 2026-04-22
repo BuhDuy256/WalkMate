@@ -29,14 +29,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SessionCommandService {
 
-    /**
-     * Minimum walk duration before a user-initiated complete is allowed (S-7).
-     */
+    /** Minimum walk duration before a user-initiated complete is allowed (S-5). */
     private static final Duration MIN_WALK_DURATION = Duration.ofSeconds(10);
 
-    /**
-     * After this duration past scheduledEnd the scheduler auto-completes the session (S-9).
-     */
+    /** After this duration past scheduledEnd the scheduler auto-completes the session (S-6). */
     private static final Duration MAX_ACTIVE_LIFESPAN = Duration.ofHours(4);
 
     private final WalkSessionRepository     sessionRepository;
@@ -44,10 +40,6 @@ public class SessionCommandService {
     private final NotificationPublisher     notificationPublisher;
     private final ChatRoomRepository        chatRoomRepository;
 
-    /**
-     * Safety cleanup TTL for unresolved PENDING sessions.
-     * Config key: walkmate.session.pending-ttl (ISO-8601 duration, e.g. PT24H).
-     */
     @Value("${walkmate.session.pending-ttl:PT24H}")
     private Duration pendingSessionTtl;
 
@@ -61,36 +53,38 @@ public class SessionCommandService {
     // ── Activate (arrive at meeting point) ────────────────────────────────────
 
     /**
-     * Records the caller's arrival. Transitions session to ACTIVE once both
-     * participants have activated (S-3).
+     * Records the caller's independent arrival. The caller's personal status
+     * transitions to ACTIVE immediately (S-2 revised). The global session
+     * status also becomes ACTIVE on the first arrival, unblocking the UI.
      */
     @Transactional
     public WalkSession activateSession(String sessionId, String callerId) {
         WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
 
         Instant now = Instant.now();
-
         SessionStatus prevStatus = session.getStatus();
+
         session.recordActivation(callerId, now);
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, prevStatus, session.getStatus(), callerId, "User arrived");
 
-        // When both participants have arrived, notify them that the walk is now ACTIVE
-        if (session.getStatus() == SessionStatus.ACTIVE) {
-            String partnerId = session.getUserIdA().equals(callerId)
-                    ? session.getUserIdB() : session.getUserIdA();
-            Map<String, Object> payload = Map.of("sessionId", sessionId);
-            notificationPublisher.publish(Notification.create(callerId,  NotificationType.SESSION_ACTIVE, payload));
-            notificationPublisher.publish(Notification.create(partnerId, NotificationType.SESSION_ACTIVE, payload));
-        }
+        // Notify as soon as this participant goes ACTIVE — their partner may still be on the way.
+        String partnerId = session.getUserIdA().equals(callerId)
+                ? session.getUserIdB() : session.getUserIdA();
+        Map<String, Object> payload = Map.of("sessionId", sessionId);
+        // Tell the activating user they can start walking.
+        notificationPublisher.publish(Notification.create(callerId, NotificationType.SESSION_ACTIVE, payload));
+        // Tell the partner that the other user has arrived.
+        notificationPublisher.publish(Notification.create(partnerId, NotificationType.SESSION_ACTIVE, payload));
 
         return session;
     }
 
-    // ── Cancel (before walk starts) ───────────────────────────────────────────
+    // ── Cancel (before either participant has started) ────────────────────────
 
     /**
-     * Cancels a PENDING session. Either participant may cancel.
+     * Cancels a PENDING session. Only valid when the global status is still
+     * PENDING (i.e. neither participant has activated yet).
      */
     @Transactional
     public void cancelSession(String sessionId, String callerId, String reason) {
@@ -100,7 +94,7 @@ public class SessionCommandService {
         sessionRepository.logStateChange(sessionId, SessionStatus.PENDING, SessionStatus.CANCELLED,
                 callerId, reason);
 
-        // S-7: lock the chat room after PostgreSQL commits
+        // S-7: lock the chat room after PostgreSQL commits.
         final String sid = session.getSessionId();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -111,43 +105,52 @@ public class SessionCommandService {
         });
     }
 
-    // ── Complete (user-initiated) ─────────────────────────────────────────────
+    // ── Complete (per-participant, user-initiated) ─────────────────────────────
 
     /**
-     * Marks a session as COMPLETED. Enforces the minimum walk guard (10 seconds, S-7).
+     * Marks the calling participant's walk as COMPLETED (S-5 revised).
+     * The chat room and gamification fire only when BOTH participants are done
+     * (global session transitions to a terminal state).
      */
     @Transactional
     public WalkSession completeSession(String sessionId, String callerId) {
         WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
 
         Instant now = Instant.now();
-        if (session.getStartedAt() != null
-                && Duration.between(session.getStartedAt(), now).compareTo(MIN_WALK_DURATION) < 0) {
+
+        // Enforce minimum walk duration per participant, using their individual start time.
+        Instant userStartedAt = session.getUserIdA().equals(callerId)
+                ? session.getUserAActivatedAt() : session.getUserBActivatedAt();
+        if (userStartedAt != null
+                && Duration.between(userStartedAt, now).compareTo(MIN_WALK_DURATION) < 0) {
             throw new DomainException(SessionErrorCode.SESSION_COMPLETE_TOO_EARLY);
         }
 
-        session.complete(now);
+        SessionStatus prevStatus = session.getStatus();
+        session.complete(callerId, now);
         sessionRepository.save(session);
-        sessionRepository.logStateChange(sessionId, SessionStatus.ACTIVE, SessionStatus.COMPLETED,
+        sessionRepository.logStateChange(sessionId, prevStatus, session.getStatus(),
                 callerId, "User completed walk");
-        eventPublisher.publishEvent(new SessionCompletedEvent(session));
 
-        // S-7: lock the chat room after PostgreSQL commits
-        final String sid = session.getSessionId();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try { chatRoomRepository.closeRoom(sid); }
-                catch (Exception e) { log.error("Chat room close failed on completeSession: sessionId={}", sid, e); }
-            }
-        });
+        // Fire terminal-state side-effects only when the global session is done.
+        if (session.getStatus() == SessionStatus.COMPLETED) {
+            eventPublisher.publishEvent(new SessionCompletedEvent(session));
 
-        // Notify both participants to leave a review
-        String partnerId = session.getUserIdA().equals(callerId)
-                ? session.getUserIdB() : session.getUserIdA();
-        Map<String, Object> reviewPayload = Map.of("sessionId", sessionId);
-        notificationPublisher.publish(Notification.create(callerId,  NotificationType.REVIEW_REQUESTED, reviewPayload));
-        notificationPublisher.publish(Notification.create(partnerId, NotificationType.REVIEW_REQUESTED, reviewPayload));
+            final String sid = session.getSessionId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try { chatRoomRepository.closeRoom(sid); }
+                    catch (Exception e) { log.error("Chat room close failed on completeSession: sessionId={}", sid, e); }
+                }
+            });
+
+            String partnerId = session.getUserIdA().equals(callerId)
+                    ? session.getUserIdB() : session.getUserIdA();
+            Map<String, Object> reviewPayload = Map.of("sessionId", sessionId);
+            notificationPublisher.publish(Notification.create(callerId,  NotificationType.REVIEW_REQUESTED, reviewPayload));
+            notificationPublisher.publish(Notification.create(partnerId, NotificationType.REVIEW_REQUESTED, reviewPayload));
+        }
 
         return session;
     }
@@ -156,16 +159,14 @@ public class SessionCommandService {
 
     /**
      * Called every 60 seconds by {@link SessionScheduler}. Handles two rules:
-     * <ul>
-     *   <li><b>PENDING TTL</b> — unresolved PENDING session older than cutoff → CANCELLED.</li>
-     *   <li><b>S-9</b> — ACTIVE session past scheduledEnd + maxLifespan → COMPLETED.</li>
-     * </ul>
+     * - PENDING TTL: unresolved PENDING session older than cutoff → CANCELLED.
+     * - S-6 safety ceiling: ACTIVE session past scheduledEnd + maxLifespan → COMPLETED.
      */
     @Transactional
     public void handleExpiredSessions() {
         Instant now = Instant.now();
 
-        // ── PENDING TTL cleanup: avoid indefinitely lingering unresolved sessions ──
+        // PENDING TTL cleanup
         Instant pendingCutoff = now.minus(pendingSessionTtl);
         List<WalkSession> stalePending = sessionRepository.findStalePendingSessions(pendingCutoff);
         for (WalkSession session : stalePending) {
@@ -191,17 +192,16 @@ public class SessionCommandService {
             log.info("Scheduler: session {} auto-cancelled by pending TTL", session.getSessionId());
         }
 
-        // ── S-9: ACTIVE sessions that have run past scheduledEnd + maxLifespan ──
+        // S-6: auto-complete overdue ACTIVE sessions
         Instant cutoff = now.minus(MAX_ACTIVE_LIFESPAN);
         List<WalkSession> overdueActive = sessionRepository.findSessionsPastEndTime(cutoff);
         for (WalkSession session : overdueActive) {
-            session.complete(now);
+            session.complete(now);  // completes both participants
             sessionRepository.save(session);
             sessionRepository.logStateChange(session.getSessionId(), SessionStatus.ACTIVE, SessionStatus.COMPLETED,
                     null, "scheduler-auto-complete");
             eventPublisher.publishEvent(new SessionCompletedEvent(session));
 
-            // S-7: lock the chat room after PostgreSQL commits
             final String autoSid = session.getSessionId();
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -211,7 +211,6 @@ public class SessionCommandService {
                 }
             });
 
-            // Notify both participants to leave a review (auto-completed walk)
             Map<String, Object> reviewPayload = Map.of("sessionId", session.getSessionId());
             notificationPublisher.publish(Notification.create(session.getUserIdA(), NotificationType.REVIEW_REQUESTED, reviewPayload));
             notificationPublisher.publish(Notification.create(session.getUserIdB(), NotificationType.REVIEW_REQUESTED, reviewPayload));
@@ -225,7 +224,6 @@ public class SessionCommandService {
     private WalkSession loadAndVerifyParticipant(String sessionId, String callerId) {
         WalkSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new DomainException(SessionErrorCode.SESSION_NOT_FOUND));
-
         if (!session.getUserIdA().equals(callerId) && !session.getUserIdB().equals(callerId)) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_PARTICIPANT);
         }

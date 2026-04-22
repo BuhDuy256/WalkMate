@@ -68,20 +68,23 @@ public class GamificationCommandService {
     // ── Core reward logic ─────────────────────────────────────────────────────
 
     private void rewardBothParticipants(WalkSession session) {
-        double distanceKm  = calculateTotalDistanceKm(session);
-        int    durationMin = calculateDurationMinutes(session.getStartedAt(), session.getEndedAt());
-        int    points      = (int) (distanceKm * 10) + (durationMin * 2);
+        double distKmA = calculateDistanceKm(session.getSessionId(), session.getUserIdA());
+        double distKmB = calculateDistanceKm(session.getSessionId(), session.getUserIdB());
+        int durMinA = calculateDurationMinutes(session.getUserAActivatedAt(), session.getUserAEndedAt());
+        int durMinB = calculateDurationMinutes(session.getUserBActivatedAt(), session.getUserBEndedAt());
 
-        log.info("Session {} — dist={}km, dur={}min, points={}",
-                session.getSessionId(), String.format("%.2f", distanceKm), durationMin, points);
+        log.info("Session {} — A: dist={}km dur={}min | B: dist={}km dur={}min",
+                session.getSessionId(),
+                String.format("%.2f", distKmA), durMinA,
+                String.format("%.2f", distKmB), durMinB);
 
-        // Persist the GPS-derived distance back to the session record so that
-        // session history queries can surface it without re-aggregating polylines.
-        session.recordFinalDistance(distanceKm);
+        // Persist GPS-derived distances per participant so history queries don't re-aggregate.
+        session.recordFinalDistance(session.getUserIdA(), distKmA);
+        session.recordFinalDistance(session.getUserIdB(), distKmB);
         sessionRepository.save(session);
 
-        rewardUser(session.getUserIdA(), points, distanceKm);
-        rewardUser(session.getUserIdB(), points, distanceKm);
+        rewardUser(session.getUserIdA(), (int) (distKmA * 10) + (durMinA * 2), distKmA);
+        rewardUser(session.getUserIdB(), (int) (distKmB * 10) + (durMinB * 2), distKmB);
     }
 
     private void rewardUser(String userId, int points, double distanceKm) {
@@ -112,17 +115,8 @@ public class GamificationCommandService {
                 outcome.name(), outcome.getDelta(), userId, newScore);
     }
 
-    private double calculateTotalDistanceKm(WalkSession session) {
-        String sid   = session.getSessionId();
-        String idA   = session.getUserIdA();
-        String idB   = session.getUserIdB();
-
-        int countA = trackingChunkRepository.countChunks(sid, idA);
-        int countB = trackingChunkRepository.countChunks(sid, idB);
-        // Use the participant with more chunks (better GPS coverage). Tiebreak: user_id_a.
-        String canonicalUserId = (countB > countA) ? idB : idA;
-
-        List<String> polylines = trackingChunkRepository.findPolylinesBySessionAndUser(sid, canonicalUserId);
+    private double calculateDistanceKm(String sessionId, String userId) {
+        List<String> polylines = trackingChunkRepository.findPolylinesBySessionAndUser(sessionId, userId);
         if (polylines.isEmpty()) return 0.0;
         return polylines.stream()
                 .mapToDouble(PolylineDecoder::calculateDistanceKm)
