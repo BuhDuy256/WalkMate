@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
-import com.walkmate.core.designsystem.view.CountdownTimerView;
+import com.walkmate.core.designsystem.view.MatchCardHeaderView;
 import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkproposal.WalkProposal;
 
@@ -30,7 +30,6 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         void onAccept(String proposalId);
         void onCancel(String proposalId);
         void onProposalExpired();
-        /** Called when the user taps the partner avatar or name on a proposal card. */
         void onViewProfile(String userId);
     }
 
@@ -65,7 +64,7 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
     @Override
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
-        holder.countdown.cancelCountdown();
+        holder.cardHeader.cancelCountdown();
     }
 
     @Override
@@ -77,12 +76,12 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
+        final MatchCardHeaderView cardHeader;
         private final AvatarInitialView avatarPartner;
         private final TextView txtName;
         private final TextView txtAge;
         private final TextView txtTrustScore;
         private final TextView txtTimeWindow;
-        private final CountdownTimerView countdown;
         private final TagChipGroup chipGroupTags;
         private final TextView txtWaitingOverlay;
         private final MaterialButton btnPass;
@@ -91,27 +90,40 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            avatarPartner      = itemView.findViewById(R.id.avatarPartner);
-            txtName            = itemView.findViewById(R.id.txtName);
-            txtAge             = itemView.findViewById(R.id.txtAge);
-            txtTrustScore      = itemView.findViewById(R.id.txtTrustScore);
-            txtTimeWindow      = itemView.findViewById(R.id.txtTimeWindow);
-            countdown          = itemView.findViewById(R.id.countdownTimer);
-            chipGroupTags      = itemView.findViewById(R.id.chipGroupTags);
-            txtWaitingOverlay  = itemView.findViewById(R.id.txtWaitingOverlay);
-            btnPass            = itemView.findViewById(R.id.btnPass);
-            btnAccept          = itemView.findViewById(R.id.btnAccept);
-            btnCancelProposal  = itemView.findViewById(R.id.btnCancelProposal);
+            cardHeader        = itemView.findViewById(R.id.cardHeader);
+            avatarPartner     = itemView.findViewById(R.id.avatarPartner);
+            txtName           = itemView.findViewById(R.id.txtName);
+            txtAge            = itemView.findViewById(R.id.txtAge);
+            txtTrustScore     = itemView.findViewById(R.id.txtTrustScore);
+            txtTimeWindow     = itemView.findViewById(R.id.txtTimeWindow);
+            chipGroupTags     = itemView.findViewById(R.id.chipGroupTags);
+            txtWaitingOverlay = itemView.findViewById(R.id.txtWaitingOverlay);
+            btnPass           = itemView.findViewById(R.id.btnPass);
+            btnAccept         = itemView.findViewById(R.id.btnAccept);
+            btnCancelProposal = itemView.findViewById(R.id.btnCancelProposal);
         }
 
         void bind(WalkProposal proposal) {
-            // Partner display name (may be userId placeholder until VM enriches it)
             String displayName = proposal.getMatchedUserName() != null
                     ? proposal.getMatchedUserName() : proposal.getMatchedUserId();
+
+            // Zone 1: header — status reflects acceptance sub-state
+            boolean waiting = proposal.isCurrentUserAccepted()
+                    && proposal.getStatus() == WalkProposal.Status.PENDING;
+            if (waiting) {
+                cardHeader.setStatus("Waiting…", MatchCardHeaderView.STYLE_PROPOSAL_WAITING);
+            } else {
+                cardHeader.setStatus("Decide Now", MatchCardHeaderView.STYLE_PROPOSAL_PENDING);
+            }
+            cardHeader.startCountdown(proposal.getExpiresAt());
+            cardHeader.setOnExpiredListener(() -> {
+                if (actionListener != null) actionListener.onProposalExpired();
+            });
+
+            // Zone 2: partner identity
             avatarPartner.bind(displayName, null);
             txtName.setText(displayName);
 
-            // Tap on avatar or name → navigate to PublicProfileFragment
             View.OnClickListener profileClick = v -> {
                 if (actionListener != null && proposal.getMatchedUserId() != null) {
                     actionListener.onViewProfile(proposal.getMatchedUserId());
@@ -123,7 +135,7 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
             txtTrustScore.setText(itemView.getContext().getString(
                     R.string.proposal_trust_format, proposal.getTrustScore()));
 
-            // Common time window
+            // Zone 3: common time window
             txtTimeWindow.setText(
                     formatTime(proposal.getOverlappingTimeStart())
                     + "  –  "
@@ -131,14 +143,8 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
             chipGroupTags.setTags(proposal.getOverlappingTags());
 
-            // Countdown timer (5-minute TTL)
-            countdown.startCountdown(proposal.getExpiresAt());
-            countdown.setOnExpiredListener(() -> {
-                if (actionListener != null) actionListener.onProposalExpired();
-            });
-
-            // Case A / private-invite sender pre-accepted → hide Accept/Pass, show waiting overlay
-            if (proposal.isCurrentUserAccepted() && proposal.getStatus() == WalkProposal.Status.PENDING) {
+            // Zone 5: actions — toggle between decision and waiting state
+            if (waiting) {
                 txtWaitingOverlay.setVisibility(View.VISIBLE);
                 btnAccept.setVisibility(View.GONE);
                 btnPass.setVisibility(View.GONE);

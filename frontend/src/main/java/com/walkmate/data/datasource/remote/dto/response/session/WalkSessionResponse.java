@@ -81,6 +81,9 @@ public class WalkSessionResponse {
     @SerializedName("abort_reason")
     private String abortReason;         // null unless ABORTED
 
+    @SerializedName("partner_name")
+    private String partnerName;
+
     @SerializedName("is_reviewed")
     private boolean isReviewed;
 
@@ -108,5 +111,6 @@ public class WalkSessionResponse {
     public long   getUserBDurationSeconds() { return userBDurationSeconds; }
     public String getCancellationReason()   { return cancellationReason; }
     public String getAbortReason()          { return abortReason; }
+    public String getPartnerName()          { return partnerName; }
     public boolean isReviewed()             { return isReviewed; }
 }

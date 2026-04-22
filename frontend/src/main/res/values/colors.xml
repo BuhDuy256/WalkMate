@@ -25,6 +25,10 @@
     <color name="color_danger">#FFE53935</color>
     <color name="color_confirmed">#FF2E7D32</color>
     <color name="color_confirmed_bg">#FFE8F5E9</color>
+    <color name="color_info">#FF1565C0</color>
+    <color name="bg_info_light">#FFE3F2FD</color>
+    <color name="color_success">#FF2E7D32</color>
+    <color name="bg_success_light">#FFE8F5E9</color>
 
     <!-- Misc -->
     <color name="handle_bar">#FFD4CBBF</color>

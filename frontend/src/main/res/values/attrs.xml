@@ -152,6 +152,28 @@
     </declare-styleable>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
+         MatchCardHeaderView
+         Shared header row for all Matches sub-fragment item cards.
+         Left: status badge chip. Right: optional countdown timer.
+         Used by item_finding_card, item_proposal_card, item_session_card.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="MatchCardHeaderView">
+        <!-- Status label text (e.g. "Searching…", "Matched 🔒", "Decide Now") -->
+        <attr name="wm_statusLabel" format="string" />
+        <!-- Visual style preset controlling badge background and text colour -->
+        <attr name="wm_statusStyle" format="enum">
+            <enum name="open"             value="0" />
+            <enum name="matching"         value="1" />
+            <enum name="proposal_pending" value="2" />
+            <enum name="proposal_waiting" value="3" />
+            <enum name="session_pending"  value="4" />
+            <enum name="session_active"   value="5" />
+        </attr>
+        <!-- Whether the countdown timer is visible at inflation time -->
+        <attr name="wm_showCountdown" format="boolean" />
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
          ActivationWindowButtonView
          Vertical view with a status label and a WalkMateButton that enables
          itself only while the session activation window is open

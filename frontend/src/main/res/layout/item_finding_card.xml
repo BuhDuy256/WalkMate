@@ -17,78 +17,29 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Row 1: Hotspot name + lock icon + Status badge -->
-        <LinearLayout
+        <!-- Zone 1: Shared header — status badge + countdown -->
+        <com.walkmate.core.designsystem.view.MatchCardHeaderView
+            android:id="@+id/cardHeader"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content" />
 
-            <TextView
-                android:id="@+id/txtHotspotName"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/text_dark"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <ImageView
-                android:id="@+id/imgLock"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_marginEnd="6dp"
-                android:src="@drawable/ic_lock"
-                android:visibility="gone"
-                android:contentDescription="" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                app:chipMinHeight="28dp"
-                app:chipStartPadding="10dp"
-                app:chipEndPadding="10dp"
-                app:chipCornerRadius="999dp"
-                app:chipStrokeWidth="0dp"
-                app:chipIconVisible="false"
-                app:checkedIconVisible="false"
-                android:clickable="false"
-                android:focusable="false" />
-
-        </LinearLayout>
-
-        <!-- Time window -->
+        <!-- Zone 2: Identity — hotspot name + meta chips -->
         <TextView
-            android:id="@+id/txtTimeWindow"
+            android:id="@+id/txtHotspotName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textColor="@color/text_muted"
-            android:textSize="13sp" />
+            android:layout_marginTop="12dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_dark"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-        <!-- Countdown timer (visible only when expiresAt is non-null) -->
-        <com.walkmate.core.designsystem.view.CountdownTimerView
-            android:id="@+id/countdownTimer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="12sp"
-            app:wm_urgentThresholdSec="300"
-            app:wm_urgentColor="@color/color_danger"
-            app:wm_normalColor="@color/text_muted" />
-
-        <!-- Chips row: Duration + Age range -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipDuration"
@@ -103,22 +54,51 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:textSize="13sp"
                 android:textColor="@color/text_label"
                 app:chipBackgroundColor="@color/bg_tag_inactive"
+                app:chipCornerRadius="999dp"
+                app:chipEndPadding="12dp"
+                app:chipIconVisible="false"
                 app:chipMinHeight="36dp"
                 app:chipStartPadding="12dp"
-                app:chipEndPadding="12dp"
-                app:chipCornerRadius="999dp"
                 app:chipStrokeWidth="0dp"
-                app:chipIconVisible="false"
-                app:checkedIconVisible="false"
-                android:clickable="false"
-                android:focusable="false" />
+                app:checkedIconVisible="false" />
 
         </LinearLayout>
 
-        <!-- Tags (hidden when empty) -->
+        <!-- Zone 2 → 3 divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:background="@color/handle_bar" />
+
+        <!-- Zone 3: Time window -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TIME WINDOW"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04" />
+
+        <TextView
+            android:id="@+id/txtTimeWindow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_time_window"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:textColor="@color/text_dark"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Zone 4: Tags -->
         <com.walkmate.core.designsystem.view.TagChipGroup
             android:id="@+id/chipGroupTags"
             android:layout_width="match_parent"
@@ -127,18 +107,19 @@
             app:chipSpacingHorizontal="6dp"
             app:chipSpacingVertical="4dp" />
 
-        <!-- Primary action button: "Find Match" (OPEN) or "View Proposal" (MATCHING) -->
+        <!-- Zone 5: Primary CTA — "View Proposal" (MATCHING) or hidden (OPEN) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFindMatch"
             style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_marginTop="14dp"
             android:text="@string/find_match"
             android:textSize="14sp"
+            android:visibility="gone"
             app:cornerRadius="999dp" />
 
-        <!-- Cancel button (GONE when MATCHING) -->
+        <!-- Zone 5: Secondary — Cancel Intent (OPEN, not expired) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelIntent"
             style="@style/Widget.Material3.Button.OutlinedButton"
@@ -146,9 +127,9 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:text="@string/btn_cancel_intent"
-            android:textColor="@color/orange_end"
+            android:textColor="@color/text_muted"
             android:textSize="14sp"
-            app:strokeColor="@color/orange_end"
+            app:strokeColor="@color/handle_bar"
             app:strokeWidth="1.5dp"
             app:cornerRadius="999dp" />
 

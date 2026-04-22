@@ -241,6 +241,7 @@ res/values/
 | `WalkMateCardHeader`  | `core.designsystem.view` | Flat ConstraintLayout header: emoji + title + chevron?   | `wm_headerEmoji`, `wm_headerTitle`, `wm_navigable`                     |
 | `OtpInputView`        | `core.designsystem.view` | 6-digit OTP input: auto-focus-advance + backspace-to-prev | No XML attrs — fully programmatic. API: `getOtp()`, `clear()`, `setEnabled()` |
 | `GlideHelper`         | `core.util`              | Utility: all Glide calls centralised (no layout file)    | N/A — static methods only                                              |
+| `MatchCardHeaderView` | `core.designsystem.view` | Shared header row for all Matches item cards: status badge (left) + optional countdown (right) | `wm_statusLabel`, `wm_statusStyle`, `wm_showCountdown` |
 
 **Note:** `TagChipGroup`, `OtpInputView`, and `GlideHelper` are documented exceptions to the "view_name.xml layout required" rule:
 - `TagChipGroup` extends `ChipGroup` directly — no extra ViewGroup layer needed.

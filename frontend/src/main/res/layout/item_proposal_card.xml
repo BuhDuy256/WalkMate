@@ -17,10 +17,17 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- ── Partner info row ── -->
+        <!-- Zone 1: Shared header — status badge + countdown -->
+        <com.walkmate.core.designsystem.view.MatchCardHeaderView
+            android:id="@+id/cardHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- Zone 2: Partner identity -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
@@ -29,7 +36,6 @@
                 android:layout_width="52dp"
                 android:layout_height="52dp" />
 
-            <!-- Name / Age / Trust score -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -37,7 +43,6 @@
                 android:layout_marginStart="12dp"
                 android:orientation="vertical">
 
-                <!-- Name + Age -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -48,11 +53,11 @@
                         android:id="@+id/txtName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:textColor="@color/text_dark"
                         android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/txtAge"
@@ -64,7 +69,6 @@
 
                 </LinearLayout>
 
-                <!-- Trust score -->
                 <TextView
                     android:id="@+id/txtTrustScore"
                     android:layout_width="wrap_content"
@@ -75,27 +79,16 @@
 
             </LinearLayout>
 
-            <!-- Countdown timer (top-right; proposal 5-minute TTL) -->
-            <com.walkmate.core.designsystem.view.CountdownTimerView
-                android:id="@+id/countdownTimer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textSize="12sp"
-                app:wm_urgentThresholdSec="60"
-                app:wm_urgentColor="@color/color_danger"
-                app:wm_normalColor="@color/text_muted" />
-
         </LinearLayout>
 
-        <!-- ── Divider ── -->
+        <!-- Zone 2 → 3 divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="12dp"
             android:background="@color/handle_bar" />
 
-        <!-- ── Common time window ── -->
+        <!-- Zone 3: Common time window -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -110,14 +103,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:background="@color/bg_warm_light"
+            android:background="@drawable/bg_time_window"
             android:paddingHorizontal="12dp"
             android:paddingVertical="6dp"
             android:textColor="@color/text_dark"
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <!-- ── Common interests ── -->
+        <!-- Zone 4: Common interests -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -136,14 +129,13 @@
             app:chipSpacingHorizontal="6dp"
             app:chipSpacingVertical="4dp" />
 
-        <!-- ── Action buttons ── -->
+        <!-- Zone 5: Accept / Pass buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="14dp">
 
-            <!-- Pass (outlined, muted) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPass"
                 style="@style/Widget.Material3.Button.OutlinedButton"
@@ -157,7 +149,6 @@
                 app:strokeWidth="1.5dp"
                 app:cornerRadius="999dp" />
 
-            <!-- Accept (orange gradient) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAccept"
                 android:layout_width="0dp"
@@ -187,7 +178,7 @@
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <!-- Cancel (full-width, danger text — destructive secondary action) -->
+        <!-- Zone 5 Tier 3: Destructive action -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelProposal"
             style="@style/Widget.Material3.Button.TextButton"

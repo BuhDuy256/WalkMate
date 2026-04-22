@@ -5,6 +5,7 @@ import java.util.List;
 public class WalkIntent {
     private final String id;
     private final String hotspotId;
+    private final String hotspotName; // nullable; populated when API returns hotspot_name
     private final String userId;
     private final float timeStart;   // hour in 0.0–24.0, e.g. 16.5 = 16:30
     private final float timeEnd;
@@ -25,7 +26,7 @@ public class WalkIntent {
                       List<String> tags,
                       String expiresAt, String description) {
         this(id, hotspotId, userId, timeStart, timeEnd, ageMin, ageMax,
-                status, createdAt, tags, expiresAt, description, null);
+                status, createdAt, tags, expiresAt, description, null, null);
     }
 
     public WalkIntent(String id, String hotspotId, String userId,
@@ -34,8 +35,19 @@ public class WalkIntent {
                       String status, String createdAt,
                       List<String> tags,
                       String expiresAt, String description, String proposalId) {
+        this(id, hotspotId, userId, timeStart, timeEnd, ageMin, ageMax,
+                status, createdAt, tags, expiresAt, description, proposalId, null);
+    }
+
+    public WalkIntent(String id, String hotspotId, String userId,
+                      float timeStart, float timeEnd,
+                      int ageMin, int ageMax,
+                      String status, String createdAt,
+                      List<String> tags,
+                      String expiresAt, String description, String proposalId, String hotspotName) {
         this.id = id;
         this.hotspotId = hotspotId;
+        this.hotspotName = hotspotName;
         this.userId = userId;
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
@@ -51,6 +63,7 @@ public class WalkIntent {
 
     public String getId() { return id; }
     public String getHotspotId() { return hotspotId; }
+    public String getHotspotName() { return hotspotName; }
     public String getUserId() { return userId; }
     public float getTimeStart() { return timeStart; }
     public float getTimeEnd() { return timeEnd; }

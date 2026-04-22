@@ -46,31 +46,6 @@ public class WalkProposalMapper {
         return result;
     }
 
-    /**
-     * Builds a WalkSession from a CONFIRMED WalkProposalResponse.
-     * Only call this when response.getSessionId() != null.
-     */
-    public static WalkSession toSession(WalkProposalResponse response) {
-        return new WalkSession(
-                response.getSessionId(),
-                response.getProposalId(),
-                response.getMatchedUserId(),    // partnerId
-                response.getMatchedUserId(),    // fallback: use partnerId until the API returns a name
-                null,                           // partnerAvatar not yet in API
-                response.getProposedLat(),
-                response.getProposedLng(),
-                response.getProposedTimeStart(),
-                WalkSession.Status.PENDING,
-                null,   // scheduledEnd
-                null,   // startedAt
-                null,   // endedAt
-                null,   // userAActivatedAt
-                null,   // userBActivatedAt
-                false,  // isReviewed
-                false   // isCallerUserA — unknown at proposal stage; corrected on session fetch
-        );
-    }
-
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static float toHourFloat(String instantString) {

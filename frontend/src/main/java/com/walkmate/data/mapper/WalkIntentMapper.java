@@ -27,7 +27,8 @@ public class WalkIntentMapper {
                 Collections.emptyList(),  // tags not yet in API contract
                 response.getExpiresAt(),
                 null,  // description not in API contract
-                response.getProposalId() // non-null when inline match was found
+                response.getProposalId(),
+                response.getHotspotName() // nullable; populated once backend includes hotspot_name
         );
     }
 

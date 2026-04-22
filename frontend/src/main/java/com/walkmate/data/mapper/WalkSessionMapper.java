@@ -18,11 +18,13 @@ public class WalkSessionMapper {
         boolean isCallerUserA = callerId.equals(response.getUserIdA());
         String partnerId = isCallerUserA ? response.getUserIdB() : response.getUserIdA();
 
+        String partnerName = response.getPartnerName();
+
         return new WalkSession(
                 response.getSessionId(),
                 response.getProposalId(),
                 partnerId,
-                partnerId,              // fallback: use partnerId until the API returns a name
+                partnerName,            // null when API has not yet returned a name
                 null,                   // partnerAvatar not yet in API
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),
