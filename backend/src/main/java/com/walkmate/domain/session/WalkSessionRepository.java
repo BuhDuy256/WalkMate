@@ -33,6 +33,6 @@ public interface WalkSessionRepository {
     void logStateChange(String sessionId, SessionStatus from, SessionStatus to,
                         String changedBy, String reason);
 
-    /** Returns terminal sessions (COMPLETED, NO_SHOW, CANCELLED) for a user. */
-    List<WalkSession> findCompletedByUserId(String userId);
+    /** Returns history sessions (ACTIVE, COMPLETED, NO_SHOW) for a user, newest first. */
+    List<WalkSession> findHistoryByUserId(String userId);
 }

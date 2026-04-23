@@ -160,6 +160,7 @@ CREATE TABLE public.session_report (
   evidence_url text,
   status USER-DEFINED NOT NULL DEFAULT 'OPEN'::report_status,
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  category USER-DEFINED,
   CONSTRAINT session_report_pkey PRIMARY KEY (report_id),
   CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
   CONSTRAINT session_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.user_account(user_id),

@@ -577,9 +577,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
      * UI without the user seeing the map underneath.
      */
     private void showPostSessionSummary(TrackingUiState state) {
-        boolean isAborted = false;
         PostSessionSummaryFragment fragment =
-                PostSessionSummaryFragment.newInstance(sessionId, partnerName, partnerId, isAborted);
+                PostSessionSummaryFragment.newInstance(sessionId, partnerName, partnerId);
 
         getSupportFragmentManager()
                 .beginTransaction()

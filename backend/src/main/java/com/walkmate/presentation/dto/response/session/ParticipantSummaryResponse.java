@@ -14,5 +14,8 @@ public record ParticipantSummaryResponse(
         double distanceKm,
 
         @JsonProperty("duration_minutes")
-        int durationMinutes
+        int durationMinutes,
+
+        @JsonProperty("user_status")
+        String userStatus
 ) {}

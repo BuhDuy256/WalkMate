@@ -45,21 +45,6 @@
         android:layout_marginBottom="24dp" />
 
     <Button
-        android:id="@+id/btnLeaveReview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Leave a Review"
-        android:layout_marginBottom="12dp" />
-
-    <Button
-        android:id="@+id/btnReportIncident"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Report Incident"
-        android:visibility="gone"
-        android:layout_marginBottom="12dp" />
-
-    <Button
         android:id="@+id/btnDoneSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

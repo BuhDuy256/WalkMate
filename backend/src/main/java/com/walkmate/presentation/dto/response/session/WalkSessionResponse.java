@@ -84,12 +84,8 @@ public record WalkSessionResponse(
         @JsonProperty("user_b_duration_seconds")
         long userBDurationSeconds,
 
-        // ── Cancellation / abort metadata ─────────────────────────────────────
         @JsonProperty("cancellation_reason")
-        String cancellationReason,      // null unless CANCELLED
-
-        @JsonProperty("abort_reason")
-        String abortReason,             // null unless ABORTED
+        String cancellationReason,
 
         @JsonProperty("partner_name")
         String partnerName,

@@ -18,18 +18,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
-import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.ui.history.routereplay.RouteReplayActivity;
 import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 import com.walkmate.ui.report.ReportIncidentFragment;
+import com.walkmate.ui.review.SubmitReviewFragment;
 
 /**
  * Session History screen.
  *
- * Displays a list of past sessions. Tap on any session → launches
- * {@link RouteReplayActivity} for that session.
- *
- * Entry point: ProfileFragment via navigateToHistoryEvent on ProfileViewModel.
+ * Displays a list of past sessions. Each card may show a "Leave a Review" or
+ * "Report" button based on the resolved per-user statuses (see UX invariant in
+ * SessionHistoryAdapter). Tapping a card launches RouteReplayActivity.
  */
 public class SessionHistoryFragment extends Fragment {
 
@@ -67,23 +66,32 @@ public class SessionHistoryFragment extends Fragment {
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
         adapter = new SessionHistoryAdapter();
+
         adapter.setOnSessionSelectedListener(sessionId -> {
             Intent intent = new Intent(requireContext(), RouteReplayActivity.class);
             intent.putExtra(RouteReplayActivity.EXTRA_SESSION_ID, sessionId);
             startActivity(intent);
         });
+
         adapter.setOnPartnerClickListener(partnerId -> {
             Bundle args = new Bundle();
             args.putString(PublicProfileFragment.ARG_USER_ID, partnerId);
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_sessionHistory_to_publicProfileFragment, args);
         });
-        adapter.setOnReportClickListener((sessionId, partnerId, status, terminalAtMs) -> {
+
+        adapter.setOnReviewClickListener(sessionId -> {
             Bundle args = new Bundle();
-            args.putString(ReportIncidentFragment.ARG_SESSION_ID,             sessionId);
-            args.putString(ReportIncidentFragment.ARG_REPORTED_UID,           partnerId);
-            args.putString(ReportIncidentFragment.ARG_SESSION_STATUS,         status != null ? status.name() : null);
-            args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS,   terminalAtMs);
+            args.putString(SubmitReviewFragment.ARG_SESSION_ID, sessionId);
+            NavHostFragment.findNavController(SessionHistoryFragment.this)
+                    .navigate(R.id.action_sessionHistory_to_submitReviewFragment, args);
+        });
+
+        adapter.setOnReportClickListener((sessionId, partnerId, terminalAtMs) -> {
+            Bundle args = new Bundle();
+            args.putString(ReportIncidentFragment.ARG_SESSION_ID,           sessionId);
+            args.putString(ReportIncidentFragment.ARG_REPORTED_UID,         partnerId);
+            args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS, terminalAtMs);
             NavHostFragment.findNavController(SessionHistoryFragment.this)
                     .navigate(R.id.action_sessionHistory_to_reportIncidentFragment, args);
         });

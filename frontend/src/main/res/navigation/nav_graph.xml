@@ -134,6 +134,14 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_sessionHistory_to_submitReviewFragment"
+            app:destination="@id/submitReviewFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -152,14 +160,20 @@
             android:defaultValue="" />
 
         <argument
-            android:name="SESSION_STATUS"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
             android:name="SESSION_TERMINAL_AT_MS"
             app:argType="long"
             android:defaultValue="0L" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/submitReviewFragment"
+        android:name="com.walkmate.ui.review.SubmitReviewFragment"
+        android:label="Leave a Review">
+
+        <argument
+            android:name="SESSION_ID"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 
     <fragment

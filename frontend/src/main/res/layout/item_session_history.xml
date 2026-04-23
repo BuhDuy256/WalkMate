@@ -57,15 +57,30 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="6dp">
 
-            <TextView
-                android:id="@+id/txtParticipant1Name"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="You" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtParticipant1Name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="You" />
+
+                <TextView
+                    android:id="@+id/txtParticipant1Status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_muted"
+                    tools:text="Completed" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/txtParticipant1Distance"
@@ -93,14 +108,29 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/txtParticipant2Name"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="13sp"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="Nguyen Van A" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtParticipant2Name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="Nguyen Van A" />
+
+                <TextView
+                    android:id="@+id/txtParticipant2Status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_muted"
+                    tools:text="No Show" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/txtParticipant2Distance"
@@ -121,19 +151,38 @@
 
         </LinearLayout>
 
-        <!-- Report action — visible for COMPLETED and NO_SHOW sessions -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnReport"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
+        <!-- Action row: Review (left) and Report (right) — visibility driven by UiState -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="4dp"
-            android:text="Report"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp"
-            android:visibility="gone"
-            tools:visibility="visible" />
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReview"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Leave a Review"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReport"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="end"
+                android:text="Report"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

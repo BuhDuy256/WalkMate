@@ -74,12 +74,9 @@ public class WalkSessionResponse {
     @SerializedName("user_b_duration_seconds")
     private long userBDurationSeconds;
 
-    // ── Cancellation / abort metadata ─────────────────────────────────────────
+    // ── Cancellation metadata ─────────────────────────────────────────────────
     @SerializedName("cancellation_reason")
-    private String cancellationReason;  // null unless CANCELLED
-
-    @SerializedName("abort_reason")
-    private String abortReason;         // null unless ABORTED
+    private String cancellationReason;
 
     @SerializedName("partner_name")
     private String partnerName;
@@ -110,7 +107,6 @@ public class WalkSessionResponse {
     public double getUserBDistanceKm()      { return userBDistanceKm; }
     public long   getUserBDurationSeconds() { return userBDurationSeconds; }
     public String getCancellationReason()   { return cancellationReason; }
-    public String getAbortReason()          { return abortReason; }
     public String getPartnerName()          { return partnerName; }
     public boolean isReviewed()             { return isReviewed; }
 }

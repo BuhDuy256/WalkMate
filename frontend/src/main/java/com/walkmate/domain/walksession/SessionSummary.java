@@ -41,8 +41,17 @@ public class SessionSummary {
     }
 
     /**
+     * Returns the partner's participant entry (the one that is NOT the current user).
+     */
+    public ParticipantSummary getPartnerParticipant(String currentUserId) {
+        for (ParticipantSummary p : participants) {
+            if (!p.getParticipantId().equals(currentUserId)) return p;
+        }
+        return null;
+    }
+
+    /**
      * Returns the participant ID that is NOT the current user.
-     * Used by the adapter to pass the partner ID to the report/profile flows.
      */
     public String getPartnerId(String currentUserId) {
         for (ParticipantSummary p : participants) {

@@ -5,7 +5,7 @@ import java.time.Instant;
 public class WalkSession {
 
     public enum Status {
-        PENDING, ACTIVE, CANCELLED, COMPLETED, NO_SHOW, ABORTED
+        PENDING, ACTIVE, CANCELLED, COMPLETED, NO_SHOW
     }
 
     public static final long ACTIVATION_WINDOW_BEFORE_MINUTES = 180L;

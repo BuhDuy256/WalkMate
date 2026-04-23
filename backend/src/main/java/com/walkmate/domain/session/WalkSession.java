@@ -48,10 +48,9 @@ public class WalkSession {
     private double userBDistanceKm;
     private long   userBDurationSeconds;
 
-    // ── Shared cancellation / abort metadata ──────────────────────────────────
+    // ── Shared cancellation metadata ──────────────────────────────────────────
     private String      cancellationReason;
     private String      cancelledBy;    // UUID string; null when system-initiated
-    private AbortReason abortReason;
     private long        version;
 
     protected WalkSession() {}
@@ -66,7 +65,7 @@ public class WalkSession {
                        Instant createdAt, Instant startedAt, Instant endedAt,
                        Instant userAActivatedAt, Instant userBActivatedAt,
                        String cancellationReason, String cancelledBy,
-                       AbortReason abortReason, long version,
+                       long version,
                        SessionStatus userAStatus, SessionStatus userBStatus,
                        Instant userAEndedAt, Instant userBEndedAt,
                        double userADistanceKm, long userADurationSeconds,
@@ -87,7 +86,6 @@ public class WalkSession {
         this.userBActivatedAt      = userBActivatedAt;
         this.cancellationReason    = cancellationReason;
         this.cancelledBy           = cancelledBy;
-        this.abortReason           = abortReason;
         this.version               = version;
         this.userAStatus           = userAStatus;
         this.userBStatus           = userBStatus;
@@ -134,10 +132,7 @@ public class WalkSession {
      * ACTIVE as soon as the first participant activates.
      */
     public void recordActivation(String userId, Instant now) {
-        if (this.status != SessionStatus.PENDING) {
-            throw new DomainException(SessionErrorCode.SESSION_NOT_PENDING);
-        }
-
+        // Per-user guard only — global may already be ACTIVE if partner arrived first (S-2).
         if (userId.equals(userIdA)) {
             if (this.userAStatus != SessionStatus.PENDING) {
                 throw new DomainException(SessionErrorCode.SESSION_NOT_PENDING);
@@ -235,41 +230,39 @@ public class WalkSession {
     }
 
     /**
-     * Aborts an ACTIVE session mid-walk (emergency / safety case).
-     * Terminates both participants immediately.
+     * Marks a specific participant as NO_SHOW. The global status derives to
+     * COMPLETED once both participants are in a terminal state (per invariant table).
+     * Valid only while the global session is still PENDING (neither user activated).
      */
-    public void abort(AbortReason reason, Instant now) {
-        if (this.status != SessionStatus.ACTIVE) {
-            throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
+    public void markNoShow(String userId, Instant now) {
+        if (this.status != SessionStatus.PENDING) {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_PENDING);
         }
-        if (userAStatus == SessionStatus.ACTIVE) {
-            this.userAStatus          = SessionStatus.ABORTED;
-            this.userAEndedAt         = now;
-            this.userADurationSeconds = userAActivatedAt != null
-                    ? Duration.between(userAActivatedAt, now).getSeconds() : 0L;
+        if (userId.equals(userIdA)) {
+            this.userAStatus  = SessionStatus.NO_SHOW;
+            this.userAEndedAt = now;
+        } else if (userId.equals(userIdB)) {
+            this.userBStatus  = SessionStatus.NO_SHOW;
+            this.userBEndedAt = now;
+        } else {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_PARTICIPANT);
         }
-        if (userBStatus == SessionStatus.ACTIVE) {
-            this.userBStatus          = SessionStatus.ABORTED;
-            this.userBEndedAt         = now;
-            this.userBDurationSeconds = userBActivatedAt != null
-                    ? Duration.between(userBActivatedAt, now).getSeconds() : 0L;
-        }
-        this.status      = SessionStatus.ABORTED;
-        this.abortReason = reason;
-        this.endedAt     = now;
+        deriveGlobalStatus(now);
         this.version++;
     }
 
     /**
-     * Marks a PENDING session as NO_SHOW (historical state, no longer auto-triggered).
+     * Marks both participants as NO_SHOW at once (scheduler use only — neither showed up).
      */
-    public void markNoShow() {
+    public void markBothNoShow(Instant now) {
         if (this.status != SessionStatus.PENDING) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_PENDING);
         }
-        this.userAStatus = SessionStatus.NO_SHOW;
-        this.userBStatus = SessionStatus.NO_SHOW;
-        this.status      = SessionStatus.NO_SHOW;
+        this.userAStatus  = SessionStatus.NO_SHOW;
+        this.userBStatus  = SessionStatus.NO_SHOW;
+        this.userAEndedAt = now;
+        this.userBEndedAt = now;
+        deriveGlobalStatus(now);
         this.version++;
     }
 
@@ -292,31 +285,30 @@ public class WalkSession {
 
     /**
      * Derives the global session status from the two per-participant statuses.
-     * Rules (per S-2 / S-5 revised):
-     * - ACTIVE  : at least one participant is ACTIVE (regardless of the other).
-     * - COMPLETED: both participants are terminal AND at least one is COMPLETED.
-     * - ABORTED  : both terminal, none COMPLETED, at least one ABORTED.
-     * - CANCELLED: both terminal, none COMPLETED or ABORTED.
-     * - PENDING  : neither participant has activated yet.
+     *
+     * Exhaustive, mutually exclusive rules:
+     *   Rule 1 — Both PENDING                          → PENDING
+     *   Rule 2 — Both in {COMPLETED, NO_SHOW}          → COMPLETED
+     *   Rule 3 — Any other combination                 → ACTIVE
+     *
+     * This ensures a session can never stay PENDING once any user has moved
+     * past PENDING (e.g. PENDING + COMPLETED correctly resolves to ACTIVE,
+     * not PENDING). CANCELLED is set directly by {@link #cancel}.
      */
     private void deriveGlobalStatus(Instant now) {
-        boolean aTerminal = isTerminal(userAStatus);
-        boolean bTerminal = isTerminal(userBStatus);
-
-        if (aTerminal && bTerminal) {
-            if (userAStatus == SessionStatus.COMPLETED || userBStatus == SessionStatus.COMPLETED) {
-                this.status  = SessionStatus.COMPLETED;
-            } else if (userAStatus == SessionStatus.ABORTED || userBStatus == SessionStatus.ABORTED) {
-                this.status  = SessionStatus.ABORTED;
-            } else {
-                this.status  = SessionStatus.CANCELLED;
-            }
-            this.endedAt = now;
-        } else if (userAStatus == SessionStatus.ACTIVE || userBStatus == SessionStatus.ACTIVE) {
-            this.status = SessionStatus.ACTIVE;
-        } else {
+        // Rule 1
+        if (userAStatus == SessionStatus.PENDING && userBStatus == SessionStatus.PENDING) {
             this.status = SessionStatus.PENDING;
+            return;
         }
+        // Rule 2
+        if (isTerminal(userAStatus) && isTerminal(userBStatus)) {
+            this.status  = SessionStatus.COMPLETED;
+            this.endedAt = now;
+            return;
+        }
+        // Rule 3 — any mix involving ACTIVE, or one PENDING + one terminal
+        this.status = SessionStatus.ACTIVE;
     }
 
     private SessionStatus participantStatus(String userId) {
@@ -326,9 +318,6 @@ public class WalkSession {
     }
 
     private static boolean isTerminal(SessionStatus s) {
-        return s == SessionStatus.COMPLETED
-            || s == SessionStatus.CANCELLED
-            || s == SessionStatus.ABORTED
-            || s == SessionStatus.NO_SHOW;
+        return s == SessionStatus.COMPLETED || s == SessionStatus.NO_SHOW;
     }
 }

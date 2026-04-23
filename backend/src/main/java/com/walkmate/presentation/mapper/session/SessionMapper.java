@@ -34,7 +34,6 @@ public class SessionMapper {
                 session.getUserBDistanceKm(),
                 session.getUserBDurationSeconds(),
                 session.getCancellationReason(),
-                session.getAbortReason() != null ? session.getAbortReason().name() : null,
                 partnerName,
                 isReviewed
         );

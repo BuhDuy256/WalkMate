@@ -21,44 +21,31 @@ import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.walksession.AbortReason;
 
 /**
- * Report Incident screen.
+ * Report Incident screen — standalone full-page Fragment.
  *
- * Shown from PostSessionSummaryFragment when the session was aborted.
- * The user selects a reason (mapped to {@link AbortReason} values) and
- * optionally provides an evidence URL.
+ * Launched from the Session History card when:
+ *   GlobalStatus == COMPLETED AND CurrentUser == COMPLETED AND Partner == NO_SHOW.
  *
- * On successful submission, shows a Toast and pops back.
+ * Arguments: SESSION_ID, REPORTED_UID, SESSION_TERMINAL_AT_MS.
+ * The reporting window is fixed at 72 h after the session ended.
  */
 public class ReportIncidentFragment extends Fragment {
 
     public static final String TAG                      = "ReportIncidentFragment";
     public static final String ARG_SESSION_ID           = "SESSION_ID";
     public static final String ARG_REPORTED_UID         = "REPORTED_UID";
-    public static final String ARG_SESSION_STATUS       = "SESSION_STATUS";
     /** Epoch-ms when the session reached a terminal state. 0 means "just happened". */
     public static final String ARG_SESSION_TERMINAL_AT_MS = "SESSION_TERMINAL_AT_MS";
 
-    /** Full constructor — passes all reporting-window context. */
     public static ReportIncidentFragment newInstance(String sessionId, String reportedUserId,
-                                                      String sessionStatus, long terminalAtMs) {
+                                                      long terminalAtMs) {
         ReportIncidentFragment f = new ReportIncidentFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_SESSION_ID,              sessionId);
-        args.putString(ARG_REPORTED_UID,            reportedUserId);
-        args.putString(ARG_SESSION_STATUS,          sessionStatus);
-        args.putLong(ARG_SESSION_TERMINAL_AT_MS,    terminalAtMs);
+        args.putString(ARG_SESSION_ID,           sessionId);
+        args.putString(ARG_REPORTED_UID,         reportedUserId);
+        args.putLong(ARG_SESSION_TERMINAL_AT_MS, terminalAtMs);
         f.setArguments(args);
         return f;
-    }
-
-    /** Legacy 1-arg constructor — preserved for PostSessionSummaryFragment. */
-    public static ReportIncidentFragment newInstance(String sessionId) {
-        return newInstance(sessionId, null, null, 0L);
-    }
-
-    /** Legacy 2-arg constructor — preserved for PostSessionSummaryFragment. */
-    public static ReportIncidentFragment newInstance(String sessionId, String reportedUserId) {
-        return newInstance(sessionId, reportedUserId, null, 0L);
     }
 
     // ── Views ─────────────────────────────────────────────────────────────────
@@ -99,26 +86,16 @@ public class ReportIncidentFragment extends Fragment {
         Bundle args           = getArguments();
         String sessionId      = args != null ? args.getString(ARG_SESSION_ID)             : null;
         String reportedUserId = args != null ? args.getString(ARG_REPORTED_UID)           : null;
-        String sessionStatus  = args != null ? args.getString(ARG_SESSION_STATUS)         : null;
         long terminalAtMs     = args != null ? args.getLong(ARG_SESSION_TERMINAL_AT_MS, 0L) : 0L;
 
-        // ── Reporting window guard (UC-32) ─────────────────────────────────────
-        // terminalAtMs == 0 → session just ended (PostSessionSummary path) → always open.
-        boolean windowExpired = false;
+        // ── Reporting window guard (72 h after session ended) ──────────────────
         if (terminalAtMs > 0) {
-            long nowMs = System.currentTimeMillis();
-            long elapsed = nowMs - terminalAtMs;
-            if ("COMPLETED".equals(sessionStatus)) {
-                windowExpired = elapsed > 72L * 60L * 60L * 1000L;
-            } else if ("ABORTED".equals(sessionStatus) || "NO_SHOW".equals(sessionStatus)) {
-                windowExpired = elapsed > 24L * 60L * 60L * 1000L;
+            long elapsed = System.currentTimeMillis() - terminalAtMs;
+            if (elapsed > 72L * 60L * 60L * 1000L) {
+                showWindowClosedBanner("The reporting window for this session has closed.");
+                disableForm();
+                return;
             }
-            // ACTIVE sessions: no gate. CANCELLED: should not reach here.
-        }
-        if (windowExpired) {
-            showWindowClosedBanner("The reporting window for this session has closed.");
-            disableForm();
-            return;
         }
 
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
@@ -167,7 +144,6 @@ public class ReportIncidentFragment extends Fragment {
         if (rgReason       != null) rgReason.setEnabled(false);
         if (etEvidenceUrl  != null) etEvidenceUrl.setEnabled(false);
         if (btnSubmitReport != null) btnSubmitReport.setEnabled(false);
-        // Disable each RadioButton individually
         if (rgReason != null) {
             for (int i = 0; i < rgReason.getChildCount(); i++) {
                 rgReason.getChildAt(i).setEnabled(false);
@@ -175,10 +151,6 @@ public class ReportIncidentFragment extends Fragment {
         }
     }
 
-    /**
-     * Maps the selected RadioButton to an {@link AbortReason} API value.
-     * Returns null if no selection has been made (ViewModel will surface an error).
-     */
     @Nullable
     private String selectedReason() {
         int selectedId = rgReason.getCheckedRadioButtonId();
@@ -187,10 +159,9 @@ public class ReportIncidentFragment extends Fragment {
         RadioButton rb = requireView().findViewById(selectedId);
         if (rb == null) return null;
 
-        // Map label text to AbortReason enum values used by the backend.
         String label = rb.getText().toString();
-        if (label.contains("Safety")) return AbortReason.SAFETY_CONCERN.toApiValue();
-        if (label.contains("Emergency")) return AbortReason.EMERGENCY.toApiValue();
+        if (label.contains("Safety"))     return AbortReason.SAFETY_CONCERN.toApiValue();
+        if (label.contains("Emergency"))  return AbortReason.EMERGENCY.toApiValue();
         if (label.contains("Misconduct")) return AbortReason.PARTNER_MISCONDUCT.toApiValue();
         return AbortReason.OTHER.toApiValue();
     }

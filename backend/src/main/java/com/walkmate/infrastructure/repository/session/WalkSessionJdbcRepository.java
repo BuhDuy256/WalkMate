@@ -1,6 +1,5 @@
 package com.walkmate.infrastructure.repository.session;
 
-import com.walkmate.domain.session.AbortReason;
 import com.walkmate.domain.session.SessionStatus;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
@@ -34,7 +33,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     status, created_at, started_at, ended_at,
                     user_a_activated_at, user_b_activated_at,
                     cancellation_reason, cancelled_by,
-                    abort_reason, version,
+                    version,
                     user_a_status, user_b_status,
                     user_a_ended_at, user_b_ended_at,
                     user_a_distance_km, user_a_duration_seconds,
@@ -47,7 +46,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     CAST(:status AS walk_session_status), :createdAt, :startedAt, :endedAt,
                     :userAActivatedAt, :userBActivatedAt,
                     :cancellationReason, :cancelledBy,
-                    :abortReason, :version,
+                    :version,
                     CAST(:userAStatus AS walk_session_status),
                     CAST(:userBStatus AS walk_session_status),
                     :userAEndedAt, :userBEndedAt,
@@ -55,22 +54,21 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                     :userBDistanceKm, :userBDurationSeconds
                 )
                 ON CONFLICT (session_id) DO UPDATE SET
-                    status                 = CAST(EXCLUDED.status AS walk_session_status),
-                    started_at             = EXCLUDED.started_at,
-                    ended_at               = EXCLUDED.ended_at,
-                    user_a_activated_at    = EXCLUDED.user_a_activated_at,
-                    user_b_activated_at    = EXCLUDED.user_b_activated_at,
-                    cancellation_reason    = EXCLUDED.cancellation_reason,
-                    cancelled_by           = EXCLUDED.cancelled_by,
-                    abort_reason           = EXCLUDED.abort_reason,
-                    version                = EXCLUDED.version,
-                    user_a_status          = EXCLUDED.user_a_status,
-                    user_b_status          = EXCLUDED.user_b_status,
-                    user_a_ended_at        = EXCLUDED.user_a_ended_at,
-                    user_b_ended_at        = EXCLUDED.user_b_ended_at,
-                    user_a_distance_km     = EXCLUDED.user_a_distance_km,
+                    status                  = CAST(EXCLUDED.status AS walk_session_status),
+                    started_at              = EXCLUDED.started_at,
+                    ended_at                = EXCLUDED.ended_at,
+                    user_a_activated_at     = EXCLUDED.user_a_activated_at,
+                    user_b_activated_at     = EXCLUDED.user_b_activated_at,
+                    cancellation_reason     = EXCLUDED.cancellation_reason,
+                    cancelled_by            = EXCLUDED.cancelled_by,
+                    version                 = EXCLUDED.version,
+                    user_a_status           = EXCLUDED.user_a_status,
+                    user_b_status           = EXCLUDED.user_b_status,
+                    user_a_ended_at         = EXCLUDED.user_a_ended_at,
+                    user_b_ended_at         = EXCLUDED.user_b_ended_at,
+                    user_a_distance_km      = EXCLUDED.user_a_distance_km,
                     user_a_duration_seconds = EXCLUDED.user_a_duration_seconds,
-                    user_b_distance_km     = EXCLUDED.user_b_distance_km,
+                    user_b_distance_km      = EXCLUDED.user_b_distance_km,
                     user_b_duration_seconds = EXCLUDED.user_b_duration_seconds
                 """;
 
@@ -92,8 +90,6 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 .param("cancellationReason",    session.getCancellationReason())
                 .param("cancelledBy",           session.getCancelledBy() != null
                         ? UUID.fromString(session.getCancelledBy()) : null)
-                .param("abortReason",           session.getAbortReason() != null
-                        ? session.getAbortReason().name() : null)
                 .param("version",               session.getVersion())
                 .param("userAStatus",           session.getUserAStatus().name())
                 .param("userBStatus",           session.getUserBStatus().name())
@@ -182,11 +178,11 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     }
 
     @Override
-    public List<WalkSession> findCompletedByUserId(String userId) {
+    public List<WalkSession> findHistoryByUserId(String userId) {
         final String sql = selectAll() + """
                 WHERE (user_id_a = :userId OR user_id_b = :userId)
-                  AND status IN ('COMPLETED', 'NO_SHOW', 'CANCELLED')
-                ORDER BY COALESCE(ended_at, created_at) DESC
+                  AND status NOT IN ('PENDING', 'CANCELLED')
+                ORDER BY COALESCE(ended_at, started_at, created_at) DESC
                 LIMIT 50
                 """;
         return jdbcClient.sql(sql)
@@ -229,7 +225,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                        status, created_at, started_at, ended_at,
                        user_a_activated_at, user_b_activated_at,
                        cancellation_reason, cancelled_by::text,
-                       abort_reason, version,
+                       version,
                        user_a_status, user_b_status,
                        user_a_ended_at, user_b_ended_at,
                        user_a_distance_km, user_a_duration_seconds,
@@ -239,9 +235,6 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     }
 
     private WalkSession mapRow(ResultSet rs) throws SQLException {
-        String abortReasonRaw = rs.getString("abort_reason");
-        AbortReason abortReason = abortReasonRaw != null ? AbortReason.valueOf(abortReasonRaw) : null;
-
         return new WalkSession(
                 rs.getString("session_id"),
                 rs.getString("proposal_id"),
@@ -259,7 +252,6 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 toInstant(rs, "user_b_activated_at"),
                 rs.getString("cancellation_reason"),
                 rs.getString("cancelled_by"),
-                abortReason,
                 rs.getLong("version"),
                 SessionStatus.valueOf(rs.getString("user_a_status")),
                 SessionStatus.valueOf(rs.getString("user_b_status")),

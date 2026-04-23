@@ -19,13 +19,13 @@ import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 
 /**
- * Submit Review screen.
+ * Submit Review screen — standalone full-page Fragment.
  *
- * Shown after a session completes (from PostSessionSummaryFragment).
- * Allows the user to rate (1–5 stars) and optionally comment.
+ * Launched from the Session History card when:
+ *   GlobalStatus == COMPLETED AND both participants' status == COMPLETED.
  *
- * If the session has already been reviewed, the form is disabled and a
- * message is shown. On successful submission, pops back to PostSessionSummary.
+ * If the session has already been reviewed the form is disabled and a message
+ * is shown. On successful submission pops back to Session History.
  */
 public class SubmitReviewFragment extends Fragment {
 
@@ -111,7 +111,6 @@ public class SubmitReviewFragment extends Fragment {
             }
         });
 
-        // Also observe the legacy submitState to handle the submit action.
         viewModel.getSubmitState().observe(getViewLifecycleOwner(), submitState -> {
             switch (submitState) {
                 case LOADING:
@@ -132,7 +131,7 @@ public class SubmitReviewFragment extends Fragment {
 
         btnSubmit.setOnClickListener(v -> {
             if (sessionId == null) return;
-            int stars    = (int) ratingBar.getRating();
+            int stars      = (int) ratingBar.getRating();
             String comment = etComment.getText().toString().trim();
             viewModel.submitReview(sessionId, stars, comment.isEmpty() ? null : comment);
         });

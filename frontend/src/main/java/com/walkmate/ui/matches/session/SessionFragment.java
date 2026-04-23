@@ -118,7 +118,6 @@ public class SessionFragment extends Fragment {
                 Bundle args = new Bundle();
                 args.putString(ReportIncidentFragment.ARG_SESSION_ID,           sessionId);
                 args.putString(ReportIncidentFragment.ARG_REPORTED_UID,         partnerId);
-                args.putString(ReportIncidentFragment.ARG_SESSION_STATUS,       "ACTIVE");
                 args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS, 0L);
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
                         .navigate(R.id.reportIncidentFragment, args);

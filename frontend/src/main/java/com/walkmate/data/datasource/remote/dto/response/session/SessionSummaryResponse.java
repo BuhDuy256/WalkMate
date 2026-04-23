@@ -49,9 +49,13 @@ public class SessionSummaryResponse {
         @SerializedName("duration_minutes")
         private int durationMinutes;
 
+        @SerializedName("user_status")
+        private String userStatus;
+
         public String getParticipantId()   { return participantId; }
         public String getFullName()        { return fullName; }
         public double getDistanceKm()      { return distanceKm; }
         public int    getDurationMinutes() { return durationMinutes; }
+        public String getUserStatus()      { return userStatus; }
     }
 }

@@ -51,17 +51,13 @@ public class ReportCommandService {
             throw new DomainException(ReportErrorCode.REPORT_SELF_NOT_ALLOWED);
         }
 
-        // 4. Validate by session status
+        // 4. Validate by session status — only COMPLETED sessions are reportable
         Instant now = Instant.now();
         switch (session.getStatus()) {
             case PENDING:
+            case ACTIVE:
             case CANCELLED:
                 throw new DomainException(ReportErrorCode.REPORT_SESSION_INVALID_STATUS);
-
-            case ACTIVE:
-            case NO_SHOW:
-                // always allowed
-                break;
 
             case COMPLETED:
                 if (now.isAfter(session.getEndedAt().plus(Duration.ofHours(completedWindowHours)))) {
@@ -69,7 +65,7 @@ public class ReportCommandService {
                 }
                 break;
 
-            case ABORTED:
+            default:
                 throw new DomainException(ReportErrorCode.REPORT_SESSION_INVALID_STATUS);
         }
 

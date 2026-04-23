@@ -22,8 +22,12 @@ import java.util.Locale;
 /**
  * RecyclerView adapter for the Session History list.
  *
- * Each card shows the session date, global status, and two participant rows
- * (name + distance + duration). The caller's row is labelled "You".
+ * Button visibility per UX invariant:
+ *   ACTIVE global          → both buttons hidden (silent wait)
+ *   COMPLETED global:
+ *     caller=COMPLETED + partner=COMPLETED → "Leave a Review"
+ *     caller=COMPLETED + partner=NO_SHOW  → "Report"
+ *     caller=NO_SHOW (any partner)        → both hidden
  */
 public class SessionHistoryAdapter
         extends ListAdapter<SessionSummary, SessionHistoryAdapter.ViewHolder> {
@@ -36,31 +40,28 @@ public class SessionHistoryAdapter
         void onPartnerClick(String partnerId);
     }
 
-    public interface OnReportClickListener {
-        void onReportClick(String sessionId, String partnerId,
-                           WalkSession.Status status, long terminalAtMs);
+    public interface OnReviewClickListener {
+        void onReviewClick(String sessionId);
     }
 
-    private OnSessionSelectedListener listener;
-    private OnPartnerClickListener partnerClickListener;
-    private OnReportClickListener reportClickListener;
+    public interface OnReportClickListener {
+        void onReportClick(String sessionId, String partnerId, long terminalAtMs);
+    }
+
+    private OnSessionSelectedListener sessionSelectedListener;
+    private OnPartnerClickListener    partnerClickListener;
+    private OnReviewClickListener     reviewClickListener;
+    private OnReportClickListener     reportClickListener;
     private String currentUserId = "";
 
     public SessionHistoryAdapter() {
         super(DIFF_CALLBACK);
     }
 
-    public void setOnSessionSelectedListener(OnSessionSelectedListener listener) {
-        this.listener = listener;
-    }
-
-    public void setOnPartnerClickListener(OnPartnerClickListener listener) {
-        this.partnerClickListener = listener;
-    }
-
-    public void setOnReportClickListener(OnReportClickListener listener) {
-        this.reportClickListener = listener;
-    }
+    public void setOnSessionSelectedListener(OnSessionSelectedListener l) { this.sessionSelectedListener = l; }
+    public void setOnPartnerClickListener(OnPartnerClickListener l)        { this.partnerClickListener = l; }
+    public void setOnReviewClickListener(OnReviewClickListener l)          { this.reviewClickListener = l; }
+    public void setOnReportClickListener(OnReportClickListener l)          { this.reportClickListener = l; }
 
     public void setCurrentUserId(String userId) {
         this.currentUserId = userId != null ? userId : "";
@@ -81,10 +82,11 @@ public class SessionHistoryAdapter
         holder.bind(summary, currentUserId);
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onSessionSelected(summary.getSessionId());
+            if (sessionSelectedListener != null) {
+                sessionSelectedListener.onSessionSelected(summary.getSessionId());
+            }
         });
 
-        // Wire partner name click for profile navigation
         String partnerId = summary.getPartnerId(currentUserId);
         holder.txtParticipant2Name.setOnClickListener(v -> {
             if (partnerClickListener != null && partnerId != null) {
@@ -92,49 +94,75 @@ public class SessionHistoryAdapter
             }
         });
 
-        // Report button — visible for reportable terminal statuses only
-        WalkSession.Status status = summary.getStatus();
-        boolean reportable = status == WalkSession.Status.COMPLETED
-                || status == WalkSession.Status.NO_SHOW;
-        holder.btnReport.setVisibility(reportable ? View.VISIBLE : View.GONE);
-        if (reportable) {
-            holder.btnReport.setOnClickListener(v -> {
-                if (reportClickListener != null) {
-                    reportClickListener.onReportClick(
-                            summary.getSessionId(),
-                            partnerId,
-                            status,
-                            summary.getTerminalAtMs());
+        // ── Button visibility per UX invariant ────────────────────────────────
+        WalkSession.Status global = summary.getStatus();
+
+        holder.btnReview.setVisibility(View.GONE);
+        holder.btnReport.setVisibility(View.GONE);
+
+        if (global == WalkSession.Status.COMPLETED) {
+            ParticipantSummary caller  = summary.getCallerParticipant(currentUserId);
+            ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
+
+            WalkSession.Status callerStatus  = caller  != null ? caller.getUserStatus()  : null;
+            WalkSession.Status partnerStatus = partner != null ? partner.getUserStatus() : null;
+
+            if (callerStatus == WalkSession.Status.COMPLETED) {
+                if (partnerStatus == WalkSession.Status.COMPLETED) {
+                    holder.btnReview.setVisibility(View.VISIBLE);
+                    holder.btnReview.setOnClickListener(v -> {
+                        if (reviewClickListener != null) {
+                            reviewClickListener.onReviewClick(summary.getSessionId());
+                        }
+                    });
+                } else if (partnerStatus == WalkSession.Status.NO_SHOW) {
+                    holder.btnReport.setVisibility(View.VISIBLE);
+                    holder.btnReport.setOnClickListener(v -> {
+                        if (reportClickListener != null) {
+                            reportClickListener.onReportClick(
+                                    summary.getSessionId(),
+                                    partnerId,
+                                    summary.getTerminalAtMs());
+                        }
+                    });
                 }
-            });
+            }
+            // callerStatus == NO_SHOW → both buttons stay GONE
         }
+        // global ACTIVE / PENDING / CANCELLED → both buttons stay GONE
     }
 
     // ── ViewHolder ────────────────────────────────────────────────────────────
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        final TextView txtDate;
-        final TextView txtStatus;
-        final TextView txtParticipant1Name;
-        final TextView txtParticipant1Distance;
-        final TextView txtParticipant1Duration;
-        final TextView txtParticipant2Name;
-        final TextView txtParticipant2Distance;
-        final TextView txtParticipant2Duration;
+        final TextView     txtDate;
+        final TextView     txtStatus;
+        final TextView     txtParticipant1Name;
+        final TextView     txtParticipant1Status;
+        final TextView     txtParticipant1Distance;
+        final TextView     txtParticipant1Duration;
+        final TextView     txtParticipant2Name;
+        final TextView     txtParticipant2Status;
+        final TextView     txtParticipant2Distance;
+        final TextView     txtParticipant2Duration;
+        final MaterialButton btnReview;
         final MaterialButton btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
-            txtDate               = itemView.findViewById(R.id.txtSessionDate);
-            txtStatus             = itemView.findViewById(R.id.txtSessionStatus);
-            txtParticipant1Name   = itemView.findViewById(R.id.txtParticipant1Name);
+            txtDate                 = itemView.findViewById(R.id.txtSessionDate);
+            txtStatus               = itemView.findViewById(R.id.txtSessionStatus);
+            txtParticipant1Name     = itemView.findViewById(R.id.txtParticipant1Name);
+            txtParticipant1Status   = itemView.findViewById(R.id.txtParticipant1Status);
             txtParticipant1Distance = itemView.findViewById(R.id.txtParticipant1Distance);
             txtParticipant1Duration = itemView.findViewById(R.id.txtParticipant1Duration);
-            txtParticipant2Name   = itemView.findViewById(R.id.txtParticipant2Name);
+            txtParticipant2Name     = itemView.findViewById(R.id.txtParticipant2Name);
+            txtParticipant2Status   = itemView.findViewById(R.id.txtParticipant2Status);
             txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
             txtParticipant2Duration = itemView.findViewById(R.id.txtParticipant2Duration);
-            btnReport             = itemView.findViewById(R.id.btnReport);
+            btnReview               = itemView.findViewById(R.id.btnReview);
+            btnReport               = itemView.findViewById(R.id.btnReport);
         }
 
         void bind(SessionSummary summary, String currentUserId) {
@@ -144,26 +172,32 @@ public class SessionHistoryAdapter
             List<ParticipantSummary> participants = summary.getParticipants();
             if (participants != null && participants.size() >= 2) {
                 bindParticipantRow(participants.get(0), currentUserId,
-                        txtParticipant1Name, txtParticipant1Distance, txtParticipant1Duration);
+                        txtParticipant1Name, txtParticipant1Status,
+                        txtParticipant1Distance, txtParticipant1Duration);
                 bindParticipantRow(participants.get(1), currentUserId,
-                        txtParticipant2Name, txtParticipant2Distance, txtParticipant2Duration);
+                        txtParticipant2Name, txtParticipant2Status,
+                        txtParticipant2Distance, txtParticipant2Duration);
             } else if (participants != null && participants.size() == 1) {
                 bindParticipantRow(participants.get(0), currentUserId,
-                        txtParticipant1Name, txtParticipant1Distance, txtParticipant1Duration);
+                        txtParticipant1Name, txtParticipant1Status,
+                        txtParticipant1Distance, txtParticipant1Duration);
                 txtParticipant2Name.setText("—");
+                txtParticipant2Status.setText("");
                 txtParticipant2Distance.setText("");
                 txtParticipant2Duration.setText("");
             }
         }
 
         private void bindParticipantRow(ParticipantSummary p, String currentUserId,
-                                         TextView nameView, TextView distView, TextView durView) {
+                                         TextView nameView, TextView statusView,
+                                         TextView distView, TextView durView) {
             String displayName = p.getParticipantId().equals(currentUserId)
                     ? "You"
                     : (p.getFullName() != null && !p.getFullName().isEmpty()
                             ? p.getFullName()
                             : "Unknown");
             nameView.setText(displayName);
+            statusView.setText(formatUserStatus(p.getUserStatus()));
             distView.setText(String.format(Locale.getDefault(), "%.2f km", p.getDistanceKm()));
             durView.setText(formatDuration(p.getDurationMinutes()));
         }
@@ -173,12 +207,22 @@ public class SessionHistoryAdapter
             return iso.substring(0, 10);
         }
 
+        private static String formatUserStatus(WalkSession.Status status) {
+            if (status == null) return "";
+            switch (status) {
+                case ACTIVE:    return "Walking...";
+                case COMPLETED: return "Completed";
+                case NO_SHOW:   return "No Show";
+                case PENDING:   return "Waiting...";
+                default:        return "";
+            }
+        }
+
         private static String formatStatus(WalkSession.Status status) {
             if (status == null) return "Unknown";
             switch (status) {
                 case COMPLETED: return "Completed";
                 case CANCELLED: return "Cancelled";
-                case ABORTED:   return "Aborted";
                 case NO_SHOW:   return "No Show";
                 case ACTIVE:    return "Active";
                 case PENDING:   return "Pending";

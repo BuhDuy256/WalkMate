@@ -27,7 +27,8 @@ public class SessionSummaryMapper {
                         p.getParticipantId(),
                         p.getFullName(),
                         p.getDistanceKm(),
-                        p.getDurationMinutes()
+                        p.getDurationMinutes(),
+                        toStatus(p.getUserStatus())
                 ));
             }
         }
@@ -57,7 +58,6 @@ public class SessionSummaryMapper {
             case "COMPLETED": return WalkSession.Status.COMPLETED;
             case "CANCELLED": return WalkSession.Status.CANCELLED;
             case "NO_SHOW":   return WalkSession.Status.NO_SHOW;
-            case "ABORTED":   return WalkSession.Status.ABORTED;
             default:          return WalkSession.Status.PENDING;
         }
     }

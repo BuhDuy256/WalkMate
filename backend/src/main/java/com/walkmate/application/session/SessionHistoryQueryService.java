@@ -32,7 +32,7 @@ public class SessionHistoryQueryService {
      */
     @Transactional(readOnly = true)
     public List<SessionSummaryResponse> getSessionHistory(String callerId) {
-        List<WalkSession> sessions = sessionRepository.findCompletedByUserId(callerId);
+        List<WalkSession> sessions = sessionRepository.findHistoryByUserId(callerId);
         if (sessions.isEmpty()) return Collections.emptyList();
 
         Set<UUID> allParticipantIds = new HashSet<>();
@@ -58,13 +58,15 @@ public class SessionHistoryQueryService {
                 s.getUserIdA(),
                 names.getOrDefault(userIdA, "Unknown"),
                 s.getUserADistanceKm(),
-                (int) (s.getUserADurationSeconds() / 60)
+                (int) (s.getUserADurationSeconds() / 60),
+                s.getUserAStatus().name()
         );
         ParticipantSummaryResponse participantB = new ParticipantSummaryResponse(
                 s.getUserIdB(),
                 names.getOrDefault(userIdB, "Unknown"),
                 s.getUserBDistanceKm(),
-                (int) (s.getUserBDurationSeconds() / 60)
+                (int) (s.getUserBDurationSeconds() / 60),
+                s.getUserBStatus().name()
         );
 
         String endedAt = s.getEndedAt() != null ? s.getEndedAt().toString() : null;

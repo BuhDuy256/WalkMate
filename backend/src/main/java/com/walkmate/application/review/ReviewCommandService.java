@@ -100,9 +100,7 @@ public class ReviewCommandService {
 
     private static SessionOutcome toOutcome(SessionStatus status) {
         switch (status) {
-            case COMPLETED: return SessionOutcome.COMPLETED;
             case NO_SHOW:   return SessionOutcome.NO_SHOW;
-            case ABORTED:   return SessionOutcome.ABORTED;
             case CANCELLED: return SessionOutcome.CANCELLED;
             default:        return SessionOutcome.COMPLETED;
         }

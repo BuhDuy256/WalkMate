@@ -61,7 +61,6 @@ public class WalkSessionMapper {
             case "COMPLETED": return WalkSession.Status.COMPLETED;
             case "CANCELLED": return WalkSession.Status.CANCELLED;
             case "NO_SHOW":   return WalkSession.Status.NO_SHOW;
-            case "ABORTED":   return WalkSession.Status.ABORTED;
             default:          return WalkSession.Status.PENDING;
         }
     }
