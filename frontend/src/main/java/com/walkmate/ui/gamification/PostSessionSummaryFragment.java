@@ -85,6 +85,7 @@ public class PostSessionSummaryFragment extends Fragment {
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
     private PostSessionSummaryViewModel viewModel;
+    private String currentUserId;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ public class PostSessionSummaryFragment extends Fragment {
         btnReportIncident.setVisibility(isAborted ? View.VISIBLE : View.GONE);
 
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
+        currentUserId = app.getSessionManager().getUserId();
         viewModel = new ViewModelProvider(this,
                 new PostSessionSummaryViewModelFactory(
                         app.getGamificationRepository(),
@@ -203,9 +205,13 @@ public class PostSessionSummaryFragment extends Fragment {
     private void renderSummary(SessionSummary summary) {
         if (summary == null) return;
 
-        txtSummaryDistance.setText(String.format(Locale.getDefault(),
-                "%.2f km", summary.getTotalDistanceKm()));
-        txtSummaryDuration.setText(summary.getDurationMinutes() + " min");
+        com.walkmate.domain.walksession.ParticipantSummary caller =
+                summary.getCallerParticipant(currentUserId);
+        if (caller != null) {
+            txtSummaryDistance.setText(String.format(Locale.getDefault(),
+                    "%.2f km", caller.getDistanceKm()));
+            txtSummaryDuration.setText(caller.getDurationMinutes() + " min");
+        }
 
         // "Leave a Review" is disabled if already reviewed.
         btnLeaveReview.setEnabled(!summary.isReviewed());

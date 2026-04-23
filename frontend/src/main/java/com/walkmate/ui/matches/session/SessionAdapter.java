@@ -122,8 +122,10 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         }
 
         void bind(WalkSession session, SessionActionListener listener) {
-            // Zone 1: header — status badge, no countdown for sessions
-            if (session.getStatus() == WalkSession.Status.ACTIVE) {
+            WalkSession.Status callerStatus = session.getCallerStatus();
+
+            // Zone 1: header badge reflects this user's own walk state
+            if (callerStatus == WalkSession.Status.ACTIVE) {
                 cardHeader.setStatus("Walk Active", MatchCardHeaderView.STYLE_SESSION_ACTIVE);
             } else {
                 cardHeader.setStatus("Ready to Walk", MatchCardHeaderView.STYLE_SESSION_PENDING);
@@ -151,14 +153,14 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 if (cancelListener != null) cancelListener.onCancelClick(session);
             });
 
-            // Zone 5: actions vary by session status
-            if (session.getStatus() == WalkSession.Status.PENDING) {
+            // Zone 5: actions driven by the caller's individual status (S-2 independent lifecycle)
+            if (callerStatus == WalkSession.Status.PENDING) {
                 activationBtn.setVisibility(View.VISIBLE);
                 activationBtn.bind(session.getScheduledTime(),
                         v -> { if (listener != null) listener.onArriveClicked(session.getSessionId()); });
                 btnComplete.setVisibility(View.GONE);
                 btnReportIssue.setVisibility(View.GONE);
-            } else if (session.getStatus() == WalkSession.Status.ACTIVE) {
+            } else if (callerStatus == WalkSession.Status.ACTIVE) {
                 activationBtn.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(true);

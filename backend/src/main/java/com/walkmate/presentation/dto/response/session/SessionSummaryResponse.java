@@ -2,12 +2,17 @@ package com.walkmate.presentation.dto.response.session;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 /**
  * Response DTO for GET /api/v1/sessions/history entries.
  *
- * isReviewed indicates whether the authenticated caller has already submitted
- * a review for this session. The UI uses this to show or hide the "Leave a Review"
- * button on each history card without an extra round-trip.
+ * {@code participants} contains one entry per walk partner (always two),
+ * each carrying the participant's resolved full name and personal walk stats.
+ * This avoids a second round-trip from the client to look up partner names.
+ *
+ * {@code isReviewed} signals whether the authenticated caller has already
+ * reviewed this session — the UI uses it to show/hide the "Leave a Review" button.
  */
 public record SessionSummaryResponse(
 
@@ -17,21 +22,15 @@ public record SessionSummaryResponse(
         @JsonProperty("status")
         String status,
 
-        @JsonProperty("partner_id")
-        String partnerId,
-
         @JsonProperty("scheduled_start")
         String scheduledStart,
 
-        @JsonProperty("scheduled_end")
-        String scheduledEnd,
-
-        @JsonProperty("total_distance_km")
-        double totalDistanceKm,
-
-        @JsonProperty("duration_minutes")
-        int durationMinutes,
+        @JsonProperty("ended_at")
+        String endedAt,
 
         @JsonProperty("is_reviewed")
-        boolean isReviewed
+        boolean isReviewed,
+
+        @JsonProperty("participants")
+        List<ParticipantSummaryResponse> participants
 ) {}

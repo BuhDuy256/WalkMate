@@ -135,13 +135,13 @@ public class SessionFragment extends Fragment {
             matchesViewModel.consumeActivationResult();
 
             if (result.session != null) {
-                if (result.session.getStatus() == WalkSession.Status.ACTIVE) {
-                    // Case A: only this user activated (partner hasn't confirmed yet).
+                if (!result.session.hasBothActivated()) {
+                    // Only this user has arrived — notify and poll until partner activates.
                     showWaitingForPartnerUi();
                     startActivationPolling();
                 }
 
-                // Case B: both activated — launch tracking screen
+                // Always launch tracking — per S-2 the caller can begin their walk immediately.
                 startActivity(new Intent(requireContext(), TrackingScreenActivity.class)
                         .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
@@ -224,8 +224,8 @@ public class SessionFragment extends Fragment {
         if (sessions == null || sessions.isEmpty()) return Collections.emptyList();
         List<WalkSession> visible = new ArrayList<>(sessions.size());
         for (WalkSession session : sessions) {
-            WalkSession.Status status = session.getStatus();
-            if (status == WalkSession.Status.PENDING || status == WalkSession.Status.ACTIVE) {
+            WalkSession.Status callerStatus = session.getCallerStatus();
+            if (callerStatus == WalkSession.Status.PENDING || callerStatus == WalkSession.Status.ACTIVE) {
                 visible.add(session);
             }
         }

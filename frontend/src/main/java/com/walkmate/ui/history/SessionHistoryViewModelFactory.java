@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
 /**
@@ -12,19 +11,19 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  *
  * Usage:
  *   WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
- *   SessionHistoryViewModelFactory factory = new SessionHistoryViewModelFactory(
- *       app.getWalkSessionRepository(), app.getUserProfileRepository());
- *   viewModel = new ViewModelProvider(this, factory).get(SessionHistoryViewModel.class);
+ *   String currentUserId = app.getSessionManager().getUserId();
+ *   viewModel = new ViewModelProvider(this,
+ *       new SessionHistoryViewModelFactory(app.getWalkSessionRepository(), currentUserId))
+ *       .get(SessionHistoryViewModel.class);
  */
 public class SessionHistoryViewModelFactory implements ViewModelProvider.Factory {
 
     private final WalkSessionRepository sessionRepo;
-    private final UserProfileRepository profileRepo;
+    private final String currentUserId;
 
-    public SessionHistoryViewModelFactory(WalkSessionRepository sessionRepo,
-                                          UserProfileRepository profileRepo) {
-        this.sessionRepo = sessionRepo;
-        this.profileRepo = profileRepo;
+    public SessionHistoryViewModelFactory(WalkSessionRepository sessionRepo, String currentUserId) {
+        this.sessionRepo   = sessionRepo;
+        this.currentUserId = currentUserId;
     }
 
     @NonNull
@@ -32,7 +31,7 @@ public class SessionHistoryViewModelFactory implements ViewModelProvider.Factory
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(SessionHistoryViewModel.class)) {
-            return (T) new SessionHistoryViewModel(sessionRepo, profileRepo);
+            return (T) new SessionHistoryViewModel(sessionRepo, currentUserId);
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

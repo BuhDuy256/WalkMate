@@ -4,6 +4,7 @@ import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSes
 import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.SessionRouteResponse;
+import com.walkmate.data.datasource.remote.dto.response.session.SessionSummaryResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public interface SessionApiService {
 
     // UC-22 — Fetch terminal session history list
     @GET("api/v1/sessions/history")
-    Call<ApiResponse<List<WalkSessionResponse>>> getSessionHistory();
+    Call<ApiResponse<List<SessionSummaryResponse>>> getSessionHistory();
 
     // UC-23 — Fetch GPS route for a completed session
     @GET("api/v1/sessions/{sessionId}/route")

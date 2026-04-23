@@ -12,6 +12,7 @@ import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.SessionRouteResponse;
+import com.walkmate.data.datasource.remote.dto.response.session.SessionSummaryResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
 import com.walkmate.data.mapper.SessionRouteMapper;
 import com.walkmate.data.mapper.SessionSummaryMapper;
@@ -153,14 +154,13 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
     public void getSessionHistory(DomainCallback<List<SessionSummary>> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<List<WalkSessionResponse>>> resp =
+                Response<ApiResponse<List<SessionSummaryResponse>>> resp =
                         apiService.getSessionHistory().execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    List<WalkSessionResponse> data = resp.body().getData();
-                    String callerId = sessionManager.getUserId();
+                    List<SessionSummaryResponse> data = resp.body().getData();
                     callback.onSuccess(SessionSummaryMapper.toDomainList(
-                            data != null ? data : Collections.emptyList(), callerId));
+                            data != null ? data : Collections.emptyList()));
                 } else {
                     ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_HISTORY_FAILED");
                     if ("VALIDATION_ERROR".equals(apiError.getCode())) {

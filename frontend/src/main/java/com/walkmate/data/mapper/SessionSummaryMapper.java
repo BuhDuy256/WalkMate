@@ -1,49 +1,51 @@
 package com.walkmate.data.mapper;
 
-import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
+import com.walkmate.data.datasource.remote.dto.response.session.SessionSummaryResponse;
+import com.walkmate.domain.walksession.ParticipantSummary;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * Maps {@link WalkSessionResponse} → {@link SessionSummary}.
- *
- * <p>Used for UC-22 history list. Only the 7 summary fields are mapped;
- * totalDistanceKm and durationMinutes are not available in WalkSessionResponse —
- * they come from SessionRouteResponse (fetched separately for UC-23).</p>
- */
 public class SessionSummaryMapper {
 
-    public static SessionSummary toDomain(WalkSessionResponse response, String callerId) {
-        String partnerId = callerId.equals(response.getUserIdA())
-                ? response.getUserIdB()
-                : response.getUserIdA();
-
+    public static SessionSummary toDomain(SessionSummaryResponse response) {
         long terminalAtMs = 0L;
         if (response.getEndedAt() != null) {
             try { terminalAtMs = Instant.parse(response.getEndedAt()).toEpochMilli(); }
             catch (Exception ignored) {}
         }
 
+        List<ParticipantSummary> participants = Collections.emptyList();
+        if (response.getParticipants() != null) {
+            participants = new ArrayList<>(response.getParticipants().size());
+            for (SessionSummaryResponse.ParticipantResponse p : response.getParticipants()) {
+                participants.add(new ParticipantSummary(
+                        p.getParticipantId(),
+                        p.getFullName(),
+                        p.getDistanceKm(),
+                        p.getDurationMinutes()
+                ));
+            }
+        }
+
         return new SessionSummary(
                 response.getSessionId(),
                 toStatus(response.getStatus()),
-                partnerId,
                 response.getScheduledStart(),
-                0.0,   // totalDistanceKm — not in WalkSessionResponse; use SessionRouteResponse
-                0,     // durationMinutes — not in WalkSessionResponse; use SessionRouteResponse
                 response.isReviewed(),
-                terminalAtMs
+                terminalAtMs,
+                participants
         );
     }
 
-    public static List<SessionSummary> toDomainList(List<WalkSessionResponse> responses, String callerId) {
+    public static List<SessionSummary> toDomainList(List<SessionSummaryResponse> responses) {
         List<SessionSummary> result = new ArrayList<>(responses.size());
-        for (WalkSessionResponse r : responses) {
-            result.add(toDomain(r, callerId));
+        for (SessionSummaryResponse r : responses) {
+            result.add(toDomain(r));
         }
         return result;
     }

@@ -96,7 +96,7 @@ public class SessionHistoryFragment extends Fragment {
         viewModel = new ViewModelProvider(this,
                 new SessionHistoryViewModelFactory(
                         app.getWalkSessionRepository(),
-                        app.getUserProfileRepository()))
+                        app.getSessionManager().getUserId()))
                 .get(SessionHistoryViewModel.class);
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
@@ -123,7 +123,7 @@ public class SessionHistoryFragment extends Fragment {
                 } else {
                     txtEmpty.setVisibility(View.GONE);
                     recyclerView.setVisibility(View.VISIBLE);
-                    adapter.setPartnerNames(state.partnerNames);
+                    adapter.setCurrentUserId(state.currentUserId);
                     adapter.submitList(state.sessions);
                 }
                 break;

@@ -12,18 +12,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
+import com.walkmate.domain.walksession.ParticipantSummary;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * RecyclerView adapter for the Session History list.
  *
- * Each item shows: formatted date, partner placeholder, status badge,
- * distance, duration. Tap → {@link OnSessionSelectedListener#onSessionSelected(String)}.
+ * Each card shows the session date, global status, and two participant rows
+ * (name + distance + duration). The caller's row is labelled "You".
  */
 public class SessionHistoryAdapter
         extends ListAdapter<SessionSummary, SessionHistoryAdapter.ViewHolder> {
@@ -32,12 +32,10 @@ public class SessionHistoryAdapter
         void onSessionSelected(String sessionId);
     }
 
-    /** Callback invoked when the partner name is tapped on a session history row. */
     public interface OnPartnerClickListener {
         void onPartnerClick(String partnerId);
     }
 
-    /** Callback for "Report" action on COMPLETED/NO_SHOW history items (GAP-15). */
     public interface OnReportClickListener {
         void onReportClick(String sessionId, String partnerId,
                            WalkSession.Status status, long terminalAtMs);
@@ -46,7 +44,7 @@ public class SessionHistoryAdapter
     private OnSessionSelectedListener listener;
     private OnPartnerClickListener partnerClickListener;
     private OnReportClickListener reportClickListener;
-    private Map<String, String> partnerNames = Collections.emptyMap();
+    private String currentUserId = "";
 
     public SessionHistoryAdapter() {
         super(DIFF_CALLBACK);
@@ -64,12 +62,8 @@ public class SessionHistoryAdapter
         this.reportClickListener = listener;
     }
 
-    /**
-     * Updates the partnerId → display name map and redraws visible items.
-     * Called by the Fragment each time the ViewModel posts an enriched state.
-     */
-    public void setPartnerNames(Map<String, String> names) {
-        this.partnerNames = names != null ? names : Collections.emptyMap();
+    public void setCurrentUserId(String userId) {
+        this.currentUserId = userId != null ? userId : "";
         notifyDataSetChanged();
     }
 
@@ -84,13 +78,17 @@ public class SessionHistoryAdapter
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         SessionSummary summary = getItem(position);
-        holder.bind(summary, partnerNames);
+        holder.bind(summary, currentUserId);
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onSessionSelected(summary.getSessionId());
         });
-        holder.txtPartner.setOnClickListener(v -> {
-            if (partnerClickListener != null && summary.getPartnerId() != null) {
-                partnerClickListener.onPartnerClick(summary.getPartnerId());
+
+        // Wire partner name click for profile navigation
+        String partnerId = summary.getPartnerId(currentUserId);
+        holder.txtParticipant2Name.setOnClickListener(v -> {
+            if (partnerClickListener != null && partnerId != null) {
+                partnerClickListener.onPartnerClick(partnerId);
             }
         });
 
@@ -104,7 +102,7 @@ public class SessionHistoryAdapter
                 if (reportClickListener != null) {
                     reportClickListener.onReportClick(
                             summary.getSessionId(),
-                            summary.getPartnerId(),
+                            partnerId,
                             status,
                             summary.getTerminalAtMs());
                 }
@@ -117,38 +115,62 @@ public class SessionHistoryAdapter
     static class ViewHolder extends RecyclerView.ViewHolder {
 
         final TextView txtDate;
-        final TextView txtPartner;
-        private final TextView txtStatus;
-        private final TextView txtDistance;
-        private final TextView txtDuration;
+        final TextView txtStatus;
+        final TextView txtParticipant1Name;
+        final TextView txtParticipant1Distance;
+        final TextView txtParticipant1Duration;
+        final TextView txtParticipant2Name;
+        final TextView txtParticipant2Distance;
+        final TextView txtParticipant2Duration;
         final MaterialButton btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
-            txtDate     = itemView.findViewById(R.id.txtSessionDate);
-            txtPartner  = itemView.findViewById(R.id.txtSessionPartner);
-            txtStatus   = itemView.findViewById(R.id.txtSessionStatus);
-            txtDistance = itemView.findViewById(R.id.txtSessionDistance);
-            txtDuration = itemView.findViewById(R.id.txtSessionDuration);
-            btnReport   = itemView.findViewById(R.id.btnReport);
+            txtDate               = itemView.findViewById(R.id.txtSessionDate);
+            txtStatus             = itemView.findViewById(R.id.txtSessionStatus);
+            txtParticipant1Name   = itemView.findViewById(R.id.txtParticipant1Name);
+            txtParticipant1Distance = itemView.findViewById(R.id.txtParticipant1Distance);
+            txtParticipant1Duration = itemView.findViewById(R.id.txtParticipant1Duration);
+            txtParticipant2Name   = itemView.findViewById(R.id.txtParticipant2Name);
+            txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
+            txtParticipant2Duration = itemView.findViewById(R.id.txtParticipant2Duration);
+            btnReport             = itemView.findViewById(R.id.btnReport);
         }
 
-        void bind(SessionSummary summary, Map<String, String> partnerNames) {
+        void bind(SessionSummary summary, String currentUserId) {
             txtDate.setText(formatDate(summary.getScheduledStart()));
-            String partnerId = summary.getPartnerId();
-            String displayName = (partnerId != null && partnerNames.containsKey(partnerId))
-                    ? partnerNames.get(partnerId)
-                    : (partnerId != null ? "Partner: " + partnerId : "Unknown partner");
-            txtPartner.setText(displayName);
             txtStatus.setText(formatStatus(summary.getStatus()));
-            txtDistance.setText(String.format(Locale.getDefault(),
-                    "%.2f km", summary.getTotalDistanceKm()));
-            txtDuration.setText(formatDuration(summary.getDurationMinutes()));
+
+            List<ParticipantSummary> participants = summary.getParticipants();
+            if (participants != null && participants.size() >= 2) {
+                bindParticipantRow(participants.get(0), currentUserId,
+                        txtParticipant1Name, txtParticipant1Distance, txtParticipant1Duration);
+                bindParticipantRow(participants.get(1), currentUserId,
+                        txtParticipant2Name, txtParticipant2Distance, txtParticipant2Duration);
+            } else if (participants != null && participants.size() == 1) {
+                bindParticipantRow(participants.get(0), currentUserId,
+                        txtParticipant1Name, txtParticipant1Distance, txtParticipant1Duration);
+                txtParticipant2Name.setText("—");
+                txtParticipant2Distance.setText("");
+                txtParticipant2Duration.setText("");
+            }
+        }
+
+        private void bindParticipantRow(ParticipantSummary p, String currentUserId,
+                                         TextView nameView, TextView distView, TextView durView) {
+            String displayName = p.getParticipantId().equals(currentUserId)
+                    ? "You"
+                    : (p.getFullName() != null && !p.getFullName().isEmpty()
+                            ? p.getFullName()
+                            : "Unknown");
+            nameView.setText(displayName);
+            distView.setText(String.format(Locale.getDefault(), "%.2f km", p.getDistanceKm()));
+            durView.setText(formatDuration(p.getDurationMinutes()));
         }
 
         private static String formatDate(String iso) {
             if (iso == null || iso.length() < 10) return "—";
-            return iso.substring(0, 10); // "YYYY-MM-DD"
+            return iso.substring(0, 10);
         }
 
         private static String formatStatus(WalkSession.Status status) {

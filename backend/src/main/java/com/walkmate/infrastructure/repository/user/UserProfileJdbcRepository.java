@@ -12,7 +12,11 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -95,6 +99,25 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
                 .param("userId", userId)
                 .query(String.class)
                 .list();
+    }
+
+    @Override
+    public Map<UUID, String> findNamesByUserIds(Collection<UUID> userIds) {
+        if (userIds == null || userIds.isEmpty()) return Collections.emptyMap();
+        return jdbcClient.sql("""
+                        SELECT user_id, full_name FROM user_profile
+                        WHERE user_id = ANY(:ids)
+                        """)
+                .param("ids", userIds.toArray(new UUID[0]))
+                .query(rs -> {
+                    Map<UUID, String> result = new HashMap<>();
+                    while (rs.next()) {
+                        UUID id   = rs.getObject("user_id", UUID.class);
+                        String name = rs.getString("full_name");
+                        result.put(id, name != null ? name : "");
+                    }
+                    return result;
+                });
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
