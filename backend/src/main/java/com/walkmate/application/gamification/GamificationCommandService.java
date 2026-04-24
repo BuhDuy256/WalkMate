@@ -20,6 +20,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import static com.walkmate.domain.review.SessionOutcome.CANCELLED_EARLY;
+import static com.walkmate.domain.review.SessionOutcome.CANCELLED_LATE;
+
 /**
  * Handles all gamification side-effects after a session is marked COMPLETED.
  *
@@ -65,6 +68,22 @@ public class GamificationCommandService {
         }
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSessionCancelled(SessionCancelledEvent event) {
+        try {
+            // Determine time remaining to scheduled start at the moment of cancellation.
+            // < 2 hours → CANCELLED_LATE (-20);  >= 2 hours → CANCELLED_EARLY (0).
+            long minutesUntilStart = Duration.between(event.getCancelledAt(),
+                    event.getScheduledStart()).toMinutes();
+            SessionOutcome outcome = minutesUntilStart < 120 ? CANCELLED_LATE : CANCELLED_EARLY;
+            applyPenalty(event.getCancelledByUserId(), outcome);
+        } catch (Exception ex) {
+            log.error("Gamification penalty failed for CANCELLED session={} user={}: {}",
+                    event.getSessionId(), event.getCancelledByUserId(), ex.getMessage(), ex);
+        }
+    }
+
     // ── Core reward logic ─────────────────────────────────────────────────────
 
     private void rewardBothParticipants(WalkSession session) {
@@ -95,6 +114,12 @@ public class GamificationCommandService {
         }
 
         user.applySessionReward(points, distanceKm);
+
+        // Stage 1: apply the COMPLETED trust-score bonus (+5) alongside the points reward.
+        int newScore = TrustScorePolicy.apply(user.getTrustScore(), SessionOutcome.COMPLETED);
+        user.applyTrustScore(newScore);
+        log.info("Gamification: COMPLETED trust reward for user {} — new trustScore={}", userId, newScore);
+
         userRepository.save(user);
 
         badgeEvaluationService.evaluateAndAward(user);

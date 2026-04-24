@@ -84,14 +84,14 @@ public class UserJdbcRepository implements UserRepository {
                         INSERT INTO user_account (
                             user_id, email, provider, status, visibility_mode, password_hash,
                             provider_subject, created_at, last_login_at, trust_score,
-                            total_points, fcm_token
+                            total_points, total_distance_km, completed_sessions, fcm_token
                         )
                         VALUES (
                             :userId, :email,
                             CAST(:provider AS auth_provider),
                             CAST(:status AS account_status),
                             :visibilityMode, :passwordHash, :providerSubject, :createdAt, :lastLoginAt,
-                            :trustScore, :totalPoints, :fcmToken
+                            :trustScore, :totalPoints, :totalDistanceKm, :completedSessions, :fcmToken
                         )
                         ON CONFLICT (user_id) DO UPDATE SET
                             email              = EXCLUDED.email,
@@ -102,6 +102,8 @@ public class UserJdbcRepository implements UserRepository {
                             last_login_at      = EXCLUDED.last_login_at,
                             trust_score        = EXCLUDED.trust_score,
                             total_points       = EXCLUDED.total_points,
+                            total_distance_km  = EXCLUDED.total_distance_km,
+                            completed_sessions = EXCLUDED.completed_sessions,
                             fcm_token          = EXCLUDED.fcm_token
                         """)
                 .param("userId",            persisted.getUserId())
@@ -117,6 +119,8 @@ public class UserJdbcRepository implements UserRepository {
                         ? Timestamp.from(persisted.getLastLoginAt()) : null)
                 .param("trustScore",        persisted.getTrustScore())
                 .param("totalPoints",       persisted.getTotalPoints())
+                .param("totalDistanceKm",   persisted.getTotalDistanceKm())
+                .param("completedSessions", persisted.getCompletedSessions())
                 .param("fcmToken",          persisted.getFcmToken())
                 .update();
 
@@ -141,7 +145,7 @@ public class UserJdbcRepository implements UserRepository {
         return """
                 SELECT user_id, email, provider, status, visibility_mode, password_hash,
                        provider_subject, created_at, last_login_at, trust_score,
-                  total_points, fcm_token
+                       total_points, total_distance_km, completed_sessions, fcm_token
                 FROM user_account
                 """;
     }
@@ -161,8 +165,8 @@ public class UserJdbcRepository implements UserRepository {
                 lastLogin != null ? lastLogin.toInstant() : null,
                 rs.getInt("trust_score"),
                 rs.getInt("total_points"),
-                0.0,
-                0,
+                rs.getDouble("total_distance_km"),
+                rs.getInt("completed_sessions"),
                 rs.getString("fcm_token")
         );
     }

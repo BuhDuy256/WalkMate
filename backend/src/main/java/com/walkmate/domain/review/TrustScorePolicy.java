@@ -18,11 +18,25 @@ public final class TrustScorePolicy {
      * clamped to [{@value #MIN_SCORE}, {@value #MAX_SCORE}].
      *
      * @param currentScore the reviewee's current trust score
-     * @param outcome      the session outcome driving the adjustment
+     * @param outcome      the session outcome driving the adjustment (Stage 1)
      * @return new bounded score
      */
     public static int apply(int currentScore, SessionOutcome outcome) {
-        int adjusted = currentScore + outcome.getDelta();
-        return Math.max(MIN_SCORE, Math.min(MAX_SCORE, adjusted));
+        return apply(currentScore, outcome.getDelta());
+    }
+
+    /**
+     * Returns the new trust score after applying an arbitrary raw delta,
+     * clamped to [{@value #MIN_SCORE}, {@value #MAX_SCORE}].
+     *
+     * <p>Use this overload for Stage 2 (review-driven) adjustments where the
+     * delta is computed from a star-rating curve rather than a {@link SessionOutcome}.
+     *
+     * @param currentScore the reviewee's current trust score
+     * @param delta        raw signed adjustment (positive or negative)
+     * @return new bounded score
+     */
+    public static int apply(int currentScore, int delta) {
+        return Math.max(MIN_SCORE, Math.min(MAX_SCORE, currentScore + delta));
     }
 }

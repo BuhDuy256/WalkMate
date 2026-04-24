@@ -67,7 +67,7 @@ public class User {
         this.providerSubject = null;
         this.lastLoginAt     = null;
         this.createdAt         = Instant.now();
-        this.trustScore        = 0;
+        this.trustScore        = 500;
         this.totalPoints       = 0;
         this.totalDistanceKm   = 0.0;
         this.completedSessions = 0;
@@ -93,7 +93,7 @@ public class User {
         u.providerSubject = requireText(providerSubject, "Provider subject is required");
         u.lastLoginAt     = Instant.now();
         u.createdAt         = Instant.now();
-        u.trustScore        = 0;
+        u.trustScore        = 500;
         u.totalPoints       = 0;
         u.totalDistanceKm   = 0.0;
         u.completedSessions = 0;

@@ -1,6 +1,8 @@
 package com.walkmate.application.session;
 
+import com.walkmate.application.gamification.SessionCancelledEvent;
 import com.walkmate.application.gamification.SessionCompletedEvent;
+import com.walkmate.application.gamification.SessionNoShowEvent;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationType;
 import com.walkmate.domain.chat.ChatRoomRepository;
@@ -89,10 +91,16 @@ public class SessionCommandService {
     @Transactional
     public void cancelSession(String sessionId, String callerId, String reason) {
         WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
+        Instant now = Instant.now();
         session.cancel(reason, callerId);
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, SessionStatus.PENDING, SessionStatus.CANCELLED,
                 callerId, reason);
+
+        // Publish cancellation event so GamificationCommandService can apply
+        // the correct time-based penalty (CANCELLED_LATE or CANCELLED_EARLY).
+        eventPublisher.publishEvent(
+                new SessionCancelledEvent(sessionId, callerId, session.getScheduledStart(), now));
 
         // S-7: lock the chat room after PostgreSQL commits.
         final String sid = session.getSessionId();
@@ -184,6 +192,29 @@ public class SessionCommandService {
     @Transactional
     public void handleExpiredSessions() {
         Instant now = Instant.now();
+
+        // ── NO_SHOW sweep (runs first so resolved sessions leave the PENDING pool) ──
+        // Any PENDING session whose scheduled_start is older than ACTIVATION_WINDOW_AFTER
+        // (180 min) means the arrival window has fully closed — mark all still-PENDING
+        // participants as NO_SHOW.
+        Instant noShowCutoff = now.minus(WalkSession.ACTIVATION_WINDOW_AFTER);
+        List<WalkSession> noShowSessions = sessionRepository.findPendingSessionsPastNoShowDeadline(noShowCutoff);
+        for (WalkSession session : noShowSessions) {
+            String noShowSid = session.getSessionId();
+            try {
+                session.markBothNoShow(now);
+                sessionRepository.save(session);
+                sessionRepository.logStateChange(noShowSid, SessionStatus.PENDING, SessionStatus.COMPLETED,
+                        null, "scheduler-no-show");
+
+                eventPublisher.publishEvent(new SessionNoShowEvent(noShowSid, session.getUserIdA()));
+                eventPublisher.publishEvent(new SessionNoShowEvent(noShowSid, session.getUserIdB()));
+
+                log.info("Scheduler: session {} marked both NO_SHOW", noShowSid);
+            } catch (Exception e) {
+                log.error("Scheduler: NO_SHOW sweep failed for session {}: {}", noShowSid, e.getMessage(), e);
+            }
+        }
 
         // PENDING TTL cleanup
         Instant pendingCutoff = now.minus(pendingSessionTtl);

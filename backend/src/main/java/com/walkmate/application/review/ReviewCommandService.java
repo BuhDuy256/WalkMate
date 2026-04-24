@@ -2,7 +2,6 @@ package com.walkmate.application.review;
 
 import com.walkmate.application.gamification.BadgeEvaluationService;
 import com.walkmate.domain.review.ReviewErrorCode;
-import com.walkmate.domain.review.SessionOutcome;
 import com.walkmate.domain.review.TrustScorePolicy;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.review.WalkReviewRepository;
@@ -30,11 +29,14 @@ public class ReviewCommandService {
     private final BadgeEvaluationService badgeEvaluationService;
 
     /**
-     * Submits a review for a completed walk session.
+     * Submits a review for a completed walk session (Stage 2 — review-driven scoring).
      *
-     * <p>All five steps execute inside a single database transaction so that
-     * the review row and the trust-score update are either both committed or
-     * both rolled back — no partial state is ever visible.</p>
+     * <p>All steps execute inside a single database transaction so that the review
+     * row and the trust-score update are either both committed or both rolled back.</p>
+     *
+     * <p>The trust-score delta is derived from the star rating using a non-linear
+     * curve (see {@link #ratingDelta}). This is independent of Stage 1 system-driven
+     * adjustments already applied by {@link com.walkmate.application.gamification.GamificationCommandService}.</p>
      *
      * @param sessionId   the session being reviewed
      * @param reviewerId  the authenticated user submitting the review
@@ -50,10 +52,9 @@ public class ReviewCommandService {
         WalkSession session = walkSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new DomainException(SessionErrorCode.SESSION_NOT_FOUND));
 
-        // TODO: Commend just to test, Uncomment when review feature is ready
-        // if (session.getStatus() != SessionStatus.COMPLETED) {
-        //     throw new DomainException(ReviewErrorCode.REVIEW_SESSION_NOT_COMPLETED);
-        // }
+        if (session.getStatus() != SessionStatus.COMPLETED) {
+            throw new DomainException(ReviewErrorCode.REVIEW_SESSION_NOT_COMPLETED);
+        }
 
         // 2. Verify the reviewer was a participant
         boolean isParticipant = reviewerId.equals(session.getUserIdA())
@@ -76,12 +77,12 @@ public class ReviewCommandService {
         WalkReview review = WalkReview.create(sessionId, reviewerId, revieweeId, ratingStars, comment);
         walkReviewRepository.save(review);
 
-        // 6. Apply the trust-score adjustment for the session outcome
-        SessionOutcome outcome = toOutcome(session.getStatus());
+        // 6. Apply the Stage-2 trust-score adjustment derived from the star rating.
+        //    The delta is non-linear: 5★→+10, 4★→+5, 3★→0, 2★→-10, 1★→-20.
         User reviewee = userRepository.findById(revieweeId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
-        int newScore = TrustScorePolicy.apply(reviewee.getTrustScore(), outcome);
+        int newScore = TrustScorePolicy.apply(reviewee.getTrustScore(), ratingDelta(ratingStars));
         reviewee.applyTrustScore(newScore);
         userRepository.save(reviewee);
         badgeEvaluationService.evaluateAndAward(reviewee);
@@ -98,11 +99,18 @@ public class ReviewCommandService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private static SessionOutcome toOutcome(SessionStatus status) {
-        switch (status) {
-            case NO_SHOW:   return SessionOutcome.NO_SHOW;
-            case CANCELLED: return SessionOutcome.CANCELLED;
-            default:        return SessionOutcome.COMPLETED;
+    /**
+     * Non-linear star-rating → trust-score delta (Stage 2).
+     *
+     * 5★ → +10 | 4★ → +5 | 3★ → 0 | 2★ → -10 | 1★ → -20
+     */
+    private static int ratingDelta(int stars) {
+        switch (stars) {
+            case 5:  return +10;
+            case 4:  return  +5;
+            case 3:  return   0;
+            case 2:  return -10;
+            default: return -20; // 1 star
         }
     }
 }

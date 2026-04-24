@@ -8,6 +8,9 @@ import com.walkmate.application.walkintent.CreateWalkIntentCommand;
 import com.walkmate.application.walkintent.WalkIntentCommandService;
 import com.walkmate.application.walkintent.WalkIntentQueryService;
 import com.walkmate.domain.proposal.MatchProposal;
+import com.walkmate.domain.shared.exception.DomainException;
+import com.walkmate.domain.user.UserProfile;
+import com.walkmate.domain.walkintent.WalkIntentErrorCode;
 import com.walkmate.presentation.dto.request.walkintent.CreateWalkIntentRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.proposal.WalkProposalResponse;
@@ -31,6 +34,11 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
+// Pre-defined interest tags surfaced during onboarding.
+// Stored here so the Android client can request the canonical list without
+// a dedicated endpoint and so the backend can validate against them.
+// Expanding this list is a non-breaking change.
+
 @Tag(name = "WalkIntent", description = "Create, list, and cancel walk intents")
 @RestController
 @RequestMapping("/api/v1/intents")
@@ -38,6 +46,15 @@ import java.util.UUID;
 public class WalkIntentController {
 
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
+    /** Canonical onboarding tags presented as selection options on the Android client. */
+    public static final List<String> DEFAULT_TAGS = List.of(
+            "Strolling",
+            "Power Walking",
+            "Talkative",
+            "Scenic & Quiet",
+            "Pet Friendly"
+    );
 
     private final WalkIntentCommandService walkIntentCommandService;
     private final WalkIntentQueryService   walkIntentQueryService;
@@ -56,6 +73,16 @@ public class WalkIntentController {
     public ResponseEntity<ApiResponse<CreateIntentResponse>> createIntent(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateWalkIntentRequest request) {
+
+        // Onboarding gate: gender and at least one interest tag are mandatory before a
+        // user can participate in public matching.  Missing these produces a 403 so the
+        // Android client knows to navigate to the onboarding screen rather than show
+        // a generic error.  Gender ANY is valid — only null is rejected.
+        UserProfile profile = userQueryService.getMyProfile(principal.userId());
+        List<String> tags   = userQueryService.getTagsByUserId(principal.userId());
+        if (profile.getGender() == null || tags.isEmpty()) {
+            throw new DomainException(WalkIntentErrorCode.PROFILE_INCOMPLETE_FOR_MATCHING);
+        }
 
         Instant start = toInstant(request.date(), request.timeStart());
         Instant end   = toInstant(request.date(), request.timeEnd());

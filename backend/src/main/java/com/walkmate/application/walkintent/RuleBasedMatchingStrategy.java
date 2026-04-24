@@ -1,6 +1,7 @@
 package com.walkmate.application.walkintent;
 
 import com.walkmate.domain.social.SocialRepository;
+import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +44,15 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
 
     // ── Scoring weights ───────────────────────────────────────────────────
     private static final int WEIGHT_OVERLAP_PER_MINUTE = 1;
-    // TODO (AI Upgrade — Tags):    private static final int WEIGHT_SHARED_TAG  = 10;
-    // TODO (AI Upgrade — Social):  private static final int WEIGHT_FOLLOWING   = 50;
-    // TODO (AI Upgrade — Trust):   private static final int WEIGHT_TRUST_POINT = 2;
-    // TODO (AI Upgrade — NoShow):  private static final int PENALTY_NOSHOW     = -30;
+    // TODO (AI Upgrade — Tags):   private static final int WEIGHT_SHARED_TAG = 10;
+    // TODO (AI Upgrade — Social): private static final int WEIGHT_FOLLOWING  = 50;
+
+    /** Trust score is normalised to a 0–10 bonus: score / 100, range [0, 1000]. */
+    private static final int TRUST_SCORE_DIVISOR = 100;
 
     private final WalkIntentRepository walkIntentRepository;
     private final SocialRepository     socialRepository;
+    private final UserRepository       userRepository;
 
     // ─────────────────────────────────────────────────────────────────────
     // Stage 1: DB-level hard filter
@@ -101,10 +104,9 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
                 ? a.getTimeWindowEnd() : b.getTimeWindowEnd();
 
         int totalScore = scoreOverlapDuration(overlapStart, overlapEnd);
+        totalScore += scoreTrustLevel(b.getUserId());
         // TODO (AI Upgrade — Tags):   totalScore += scoreSharedTags(a, b);
         // TODO (AI Upgrade — Social): totalScore += scoreFollowRelationship(a.getUserId(), b.getUserId());
-        // TODO (AI Upgrade — Trust):  totalScore += scoreTrustLevel(b.getUserId());
-        // TODO (AI Upgrade — NoShow): totalScore += penalizeNoShowHistory(b.getUserId());
 
         return new MatchResult(b, overlapStart, overlapEnd, totalScore);
     }
@@ -116,8 +118,21 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
         return (int) (overlapMinutes * WEIGHT_OVERLAP_PER_MINUTE);
     }
 
+    /**
+     * Returns a proportional trust bonus for a candidate.
+     *
+     * Formula: {@code trustScore / TRUST_SCORE_DIVISOR} → 0–10 range for scores 0–1000.
+     * A candidate at the default baseline (500) contributes +5; a perfect-trust user
+     * contributes +10; a zero-trust user contributes 0.
+     *
+     * Missing users (deleted accounts) return 0 rather than failing the match.
+     */
+    private int scoreTrustLevel(String userId) {
+        return userRepository.findById(userId)
+                .map(u -> u.getTrustScore() / TRUST_SCORE_DIVISOR)
+                .orElse(0);
+    }
+
     // TODO (AI Upgrade — Tags):   private int scoreSharedTags(WalkIntent a, WalkIntent b) { ... }
     // TODO (AI Upgrade — Social): private int scoreFollowRelationship(String userIdA, String userIdB) { ... }
-    // TODO (AI Upgrade — Trust):  private int scoreTrustLevel(String userId) { ... }
-    // TODO (AI Upgrade — NoShow): private int penalizeNoShowHistory(String userId) { ... }
 }

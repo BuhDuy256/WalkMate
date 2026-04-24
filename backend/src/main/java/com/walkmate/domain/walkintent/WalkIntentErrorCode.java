@@ -19,7 +19,8 @@ public enum WalkIntentErrorCode implements ErrorCode {
     INVALID_TIME_RANGE("Time start must be before time end"),
     INVALID_AGE_RANGE("Age min must be less than or equal to age max"),
     INTENT_PRIVATE_FRIEND_NOT_ACCEPTED("Private intent requires an ACCEPTED friendship with the invited user"),
-    INTENT_ALREADY_TERMINAL("Walk intent is already in a terminal state (CONSUMED, CANCELLED, or EXPIRED)");
+    INTENT_ALREADY_TERMINAL("Walk intent is already in a terminal state (CONSUMED, CANCELLED, or EXPIRED)"),
+    PROFILE_INCOMPLETE_FOR_MATCHING("Profile is incomplete. Please set your gender and at least one interest tag before searching for a walk partner.");
 
     private final String message;
 

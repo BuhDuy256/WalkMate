@@ -29,6 +29,14 @@ public interface WalkSessionRepository {
      */
     List<WalkSession> findSessionsPastEndTime(Instant cutoff);
 
+    /**
+     * Returns PENDING sessions whose activation deadline has passed.
+     * Caller passes {@code now − ACTIVATION_WINDOW_AFTER} as the cutoff so that
+     * any session whose scheduled_start is before the cutoff has definitively
+     * closed its arrival window and should be marked as a no-show.
+     */
+    List<WalkSession> findPendingSessionsPastNoShowDeadline(Instant cutoff);
+
     /** Appends one row to the session_state_change_log audit table. */
     void logStateChange(String sessionId, SessionStatus from, SessionStatus to,
                         String changedBy, String reason);

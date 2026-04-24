@@ -178,6 +178,18 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
     }
 
     @Override
+    public List<WalkSession> findPendingSessionsPastNoShowDeadline(Instant cutoff) {
+        final String sql = selectAll() + """
+                WHERE status = 'PENDING'
+                  AND scheduled_start < :cutoff
+                """;
+        return jdbcClient.sql(sql)
+                .param("cutoff", Timestamp.from(cutoff))
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
     public List<WalkSession> findHistoryByUserId(String userId) {
         final String sql = selectAll() + """
                 WHERE (user_id_a = :userId OR user_id_b = :userId)

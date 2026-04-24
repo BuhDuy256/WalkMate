@@ -1,6 +1,7 @@
 package com.walkmate.presentation.exception;
 
 import com.walkmate.domain.shared.exception.DomainException;
+import com.walkmate.domain.walkintent.WalkIntentErrorCode;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
@@ -27,6 +28,13 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode(), request.getMethod(), request.getRequestURI(), ex.getMessage());
 
         ApiResponse<Void> body = ApiResponse.error(ex.getErrorCode(), ex.getMessage());
+
+        // Onboarding gate: incomplete profile blocks matching with a 403 so the Android
+        // client can navigate to the onboarding flow rather than showing a generic error.
+        if (ex.getErrorCode() == WalkIntentErrorCode.PROFILE_INCOMPLETE_FOR_MATCHING) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+        }
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
