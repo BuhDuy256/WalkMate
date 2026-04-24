@@ -31,15 +31,17 @@ import retrofit2.Response;
 /**
  * Concrete implementation of {@link TrackingRepository}.
  *
+ * ── User scoping ───────────────────────────────────────────────────────────────
+ * Every Room read and write is scoped to the currently logged-in user
+ * (obtained via {@link SessionManager#getUserId()}). This prevents GPS path
+ * data from leaking between accounts when two users share the same device and
+ * participate in the same walk session (which shares a sessionId).
+ *
  * ── Local storage ──────────────────────────────────────────────────────────────
- * All Room writes/reads happen on a single background thread via the executor,
- * consistent with the architecture's ExecutorService mandate.
+ * All Room writes/reads happen on a single background thread via the executor.
  *
  * ── Backend Push ───────────────────────────────────────────────────────────────
  * {@link #pushRoutePoints} posts a batch of GPS points to {@code POST /api/v1/tracking/sync}.
- * On success the caller's {@link #triggerBatchSync} marks the same rows as synced.
- * On network failure the points remain in Room with {@code isSynced = false} and
- * will be retried the next time the 50-point threshold is crossed.
  */
 public class TrackingRepositoryImpl implements TrackingRepository {
 
@@ -74,13 +76,16 @@ public class TrackingRepositoryImpl implements TrackingRepository {
         executor.execute(() -> {
             try {
                 RoutePointEntity entity = RoutePointMapper.toEntity(point);
+                // Stamp the currently logged-in user so that points from different
+                // accounts on the same device are always isolated in Room.
+                entity.userId = currentUserId();
                 long rowId = dao.insertPoint(entity);
                 callback.onSuccess(rowId);
 
                 // Auto-trigger batch push when threshold is reached.
-                int unsyncedCount = dao.getUnsyncedCount(point.getSessionId());
+                int unsyncedCount = dao.getUnsyncedCount(point.getSessionId(), entity.userId);
                 if (unsyncedCount >= BATCH_SIZE_THRESHOLD) {
-                    triggerBatchSync(point.getSessionId());
+                    triggerBatchSync(point.getSessionId(), entity.userId);
                 }
             } catch (Exception e) {
                 callback.onError(e);
@@ -104,8 +109,9 @@ public class TrackingRepositoryImpl implements TrackingRepository {
 
     @Override
     public LiveData<List<RoutePoint>> getPointsForSession(String sessionId) {
+        String userId = currentUserId();
         return Transformations.map(
-                dao.getPointsBySessionId(sessionId),
+                dao.getPointsBySessionAndUser(sessionId, userId),
                 RoutePointMapper::toDomainList
         );
     }
@@ -114,7 +120,7 @@ public class TrackingRepositoryImpl implements TrackingRepository {
     public void getUnsyncedCount(String sessionId, DomainCallback<Integer> callback) {
         executor.execute(() -> {
             try {
-                int count = dao.getUnsyncedCount(sessionId);
+                int count = dao.getUnsyncedCount(sessionId, currentUserId());
                 callback.onSuccess(count);
             } catch (Exception e) {
                 callback.onError(e);
@@ -129,7 +135,6 @@ public class TrackingRepositoryImpl implements TrackingRepository {
                                 DomainCallback<Void> callback) {
         executor.execute(() -> {
             try {
-                // Convert domain objects → entities → remote payloads
                 List<RoutePointEntity> entities = new ArrayList<>(points.size());
                 for (RoutePoint p : points) entities.add(RoutePointMapper.toEntity(p));
 
@@ -175,7 +180,8 @@ public class TrackingRepositoryImpl implements TrackingRepository {
     @Override
     public void triggerPeriodicSync(String sessionId) {
         executor.execute(() -> {
-            List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId);
+            String userId = currentUserId();
+            List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId, userId);
             if (unsyncedEntities != null && !unsyncedEntities.isEmpty()) {
                 List<RoutePoint> domainPoints = RoutePointMapper.toDomainList(unsyncedEntities);
                 pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
@@ -192,31 +198,43 @@ public class TrackingRepositoryImpl implements TrackingRepository {
         });
     }
 
+    @Override
+    public void clearForUser(String userId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                if (userId != null && !userId.isEmpty()) {
+                    dao.deleteByUserId(userId);
+                }
+                callback.onSuccess(null);
+            } catch (Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
     // ── Internal helpers ──────────────────────────────────────────────────────
 
-    /**
-     * Fetches all unsynced points for the session and pushes them as a batch.
-     * Called internally from {@link #saveRoutePoint} when the threshold is crossed.
-     * On success marks the same rows as synced. On failure, points remain in Room
-     * for retry on the next threshold crossing.
-     */
-    private void triggerBatchSync(String sessionId) {
-        List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId);
+    private void triggerBatchSync(String sessionId, String userId) {
+        List<RoutePointEntity> unsyncedEntities = dao.getUnsyncedPoints(sessionId, userId);
         if (unsyncedEntities.isEmpty()) return;
 
         List<RoutePoint> domainPoints = RoutePointMapper.toDomainList(unsyncedEntities);
         pushRoutePoints(sessionId, domainPoints, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                // Acknowledged IDs are marked synced inside pushRoutePoints via the server response.
                 Log.d(TAG, "Batch sync completed — " + unsyncedEntities.size() + " points pushed");
             }
 
             @Override
             public void onError(Exception error) {
-                // Points remain unsynced; next threshold crossing will retry.
                 Log.e(TAG, "Batch sync failed — will retry: " + error.getMessage());
             }
         });
+    }
+
+    /** Returns the current user's ID, or an empty string when no session is active. */
+    private String currentUserId() {
+        String id = sessionManager.getUserId();
+        return id != null ? id : "";
     }
 }

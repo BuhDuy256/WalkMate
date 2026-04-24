@@ -3,6 +3,8 @@ package com.walkmate.data.repository;
 import android.content.Context;
 import android.util.Log;
 
+import com.walkmate.WalkMateApplication;
+
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -35,12 +37,14 @@ public class UserRepositoryImpl implements UserRepository {
 
     private static final String TAG = "UserRepositoryImpl";
 
-    private final SessionManager sessionManager;
-    private final AuthApiService authApiService;
-    private final UserApiService userApiService;
+    private final SessionManager       sessionManager;
+    private final AuthApiService       authApiService;
+    private final UserApiService       userApiService;
+    private final WalkMateApplication  application;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public UserRepositoryImpl(Context context) {
+        this.application    = (WalkMateApplication) context.getApplicationContext();
         this.sessionManager = new SessionManager(context);
         this.authApiService = ApiClient.getAuthApiService();
         this.userApiService = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
@@ -172,6 +176,11 @@ public class UserRepositoryImpl implements UserRepository {
                         .logout(new LogoutRequestDto(deviceId))
                         .execute();
 
+                // Clear GPS tracking caches BEFORE wiping the token so the
+                // userId can still be read from the JWT during cleanup.
+                String userId = sessionManager.getUserId();
+                application.clearTrackingCacheForUser(userId);
+
                 // Clear the local session regardless of backend response.
                 sessionManager.clearSession();
 
@@ -186,6 +195,8 @@ public class UserRepositoryImpl implements UserRepository {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "logout network error", e);
+                String userId = sessionManager.getUserId();
+                application.clearTrackingCacheForUser(userId);
                 sessionManager.clearSession();
                 callback.onSuccess(null); // Local logout always succeeds.
             }
@@ -197,6 +208,9 @@ public class UserRepositoryImpl implements UserRepository {
         executor.execute(() -> {
             try {
                 Response<ApiResponse<Void>> resp = authApiService.logoutAll().execute();
+
+                String userId = sessionManager.getUserId();
+                application.clearTrackingCacheForUser(userId);
 
                 sessionManager.clearSession();
 

@@ -32,6 +32,9 @@ Tài liệu này quy định các quy tắc nghiệp vụ cốt lõi nhằm đ�
 
 ## 3. Ràng buộc đối với WalkSession (Chuyến đi)
 
+> **PERSONAL STATE vs GLOBAL STATE** — `user_a_status` / `user_b_status` là trạng thái cá nhân của từng participant. `status` (global) là trạng thái dẫn xuất, được tính tự động từ hai trạng thái cá nhân qua `deriveGlobalStatus()`. **Mọi validation hành động của người dùng (activate, complete...) phải kiểm tra PERSONAL STATE của người dùng đó, không được block dựa trên GLOBAL STATE.** GLOBAL STATE chỉ dùng cho mục đích query lịch sử và hiển thị tổng quan.
+
+
 - **S-1 Nguồn gốc hợp lệ:** Một chuyến đi chỉ được tạo ra từ một lời mời (`MatchProposal`) đã ở trạng thái `CONFIRMED`.
 - **S-2 Kích hoạt độc lập (Cập nhật):** Mỗi người tham gia chuyển sang trạng thái `ACTIVE` ngay khi họ xác nhận đến điểm hẹn (`user_a_status` hoặc `user_b_status` = `ACTIVE`). Trạng thái toàn cục của Session được xác lập là `ACTIVE` ngay khi **ít nhất một** người đã kích hoạt. Không cần chờ đợi cả hai.
 - **S-3 Dọn dẹp Session PENDING theo TTL (Cập nhật):** Session `PENDING` không được treo vô hạn. Nếu quá TTL cấu hình, hệ thống tự động chuyển sang `CANCELLED`. Giá trị hiện tại lấy từ cấu hình `walkmate.session.pending-ttl` (mặc định `PT24H`, có thể override theo môi trường).

@@ -109,14 +109,31 @@ public class SessionCommandService {
 
     /**
      * Marks the calling participant's walk as COMPLETED (S-5 revised).
-     * The chat room and gamification fire only when BOTH participants are done
-     * (global session transitions to a terminal state).
+     *
+     * <p>Validation is against the caller's <em>personal</em> status
+     * ({@code user_a_status} / {@code user_b_status}), NOT the derived global
+     * {@code status}. Per the State Invariant Table, the global status remains
+     * ACTIVE while the partner is still walking, so blocking on GLOBAL would
+     * prevent User B from completing after User A finishes — which is the bug
+     * this guard explicitly prevents.
+     *
+     * <p>Side-effects (gamification, chat close, review notifications) fire only
+     * when BOTH participants reach a terminal state ({@code global == COMPLETED}).
      */
     @Transactional
     public WalkSession completeSession(String sessionId, String callerId) {
         WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
 
         Instant now = Instant.now();
+
+        // Guard: validate PERSONAL STATE, not GLOBAL STATE.
+        // This allows User B to complete independently even after User A has
+        // already finished (global would still be ACTIVE at that point).
+        SessionStatus callerPersonalStatus = session.getUserIdA().equals(callerId)
+                ? session.getUserAStatus() : session.getUserBStatus();
+        if (callerPersonalStatus != SessionStatus.ACTIVE) {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
+        }
 
         // Enforce minimum walk duration per participant, using their individual start time.
         Instant userStartedAt = session.getUserIdA().equals(callerId)
@@ -127,6 +144,8 @@ public class SessionCommandService {
         }
 
         SessionStatus prevStatus = session.getStatus();
+        // session.complete() re-checks personal status and calls deriveGlobalStatus()
+        // to update the global state based on the State Invariant Table.
         session.complete(callerId, now);
         sessionRepository.save(session);
         sessionRepository.logStateChange(sessionId, prevStatus, session.getStatus(),

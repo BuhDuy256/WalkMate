@@ -9,26 +9,24 @@ import java.util.List;
 /**
  * Repository interface for GPS tracking data.
  *
- * Write operations (saveRoutePoint, pushRoutePoints, markPointsSynced) are
- * one-shot and report results via DomainCallback on the calling thread.
- *
- * The read operation (getPointsForSession) returns a Room-backed LiveData that
- * fires on the main thread whenever a new row is inserted — the ViewModel
- * observes this to keep the map polyline current.
+ * All read/write operations are scoped to the current logged-in user to prevent
+ * GPS path data from leaking between accounts on a shared device. The
+ * implementation stamps the userId at the point of persistence and filters
+ * by it on every read.
  */
 public interface TrackingRepository {
 
     // ── Local (Room) ─────────────────────────────────────────────────────────
 
     /**
-     * Persists a single GPS fix. Must be called off the main thread.
-     * The assigned DB row ID is returned in {@code callback.onSuccess(id)}.
+     * Persists a single GPS fix. The implementation automatically stamps the
+     * currently logged-in user's ID. Must be called off the main thread.
      */
     void saveRoutePoint(RoutePoint point, DomainCallback<Long> callback);
 
     /**
      * Reactive read — emits the full ordered point list whenever a new row
-     * is inserted for the given session.
+     * is inserted for the given session and the currently logged-in user.
      */
     LiveData<List<RoutePoint>> getPointsForSession(String sessionId);
 
@@ -52,7 +50,13 @@ public interface TrackingRepository {
      */
     void markPointsSynced(List<Long> ids, DomainCallback<Void> callback);
 
-    // Triggered by the 30-second periodic scheduler. Syncs all unsynced points
-    // regardless of batch size threshold.
+    /** Triggered by the 30-second periodic scheduler. Syncs all unsynced points. */
     void triggerPeriodicSync(String sessionId);
+
+    /**
+     * Deletes all GPS points recorded by a specific user. Call this on logout
+     * to prevent the previous user's path data from being visible to the next
+     * user on the same device.
+     */
+    void clearForUser(String userId, DomainCallback<Void> callback);
 }

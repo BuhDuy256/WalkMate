@@ -69,6 +69,25 @@ The **WalkSession** domain governs the real-world execution and path tracing (St
 | **PENDING** | **CANCELLED** | Manual cancel or session exceeds `pending-ttl` policy. |
 | **ACTIVE**  | **COMPLETED** | Goal reached or time elapsed.              |
 
+### Personal State vs Global State (State Invariant Table)
+
+Each participant has an independent **PERSONAL STATE** (`user_a_status` / `user_b_status`). The **GLOBAL STATE** (`status`) is a derived value computed from the two personal states. **Individual user actions must always be validated against the user's own PERSONAL STATE, never against GLOBAL STATE.**
+
+| `user_a_status`    | `user_b_status`    | Derived `global status` |
+| :----------------- | :----------------- | :---------------------- |
+| PENDING            | PENDING            | **PENDING**             |
+| ACTIVE             | PENDING            | **ACTIVE**              |
+| PENDING            | ACTIVE             | **ACTIVE**              |
+| ACTIVE             | ACTIVE             | **ACTIVE**              |
+| COMPLETED          | ACTIVE             | **ACTIVE**              |
+| ACTIVE             | COMPLETED          | **ACTIVE**              |
+| COMPLETED          | COMPLETED          | **COMPLETED**           |
+| COMPLETED          | NO_SHOW            | **COMPLETED**           |
+| NO_SHOW            | COMPLETED          | **COMPLETED**           |
+| NO_SHOW            | NO_SHOW            | **COMPLETED**           |
+
+**Key invariant:** GLOBAL STATE transitions to COMPLETED only when **both** participants are in a terminal state (`COMPLETED` or `NO_SHOW`). A session where User A has COMPLETED but User B is still ACTIVE has GLOBAL STATE = ACTIVE. User B must be able to call "Complete" even when GLOBAL STATE already shows their partner finished.
+
 ---
 
 ## 4. Time Overlap Invariant (Domain Service Approach)

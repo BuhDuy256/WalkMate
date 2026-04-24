@@ -13,10 +13,12 @@ import java.util.concurrent.Executors;
 /**
  * Room-backed implementation of {@link TrackingStateRepository}.
  *
+ * Every DB operation is scoped to {@code (sessionId, userId)} so that two
+ * users who share a device and participate in the same session each maintain
+ * isolated timer state without overwriting each other.
+ *
  * All DB operations are offloaded to a single background thread so the
- * main thread is never blocked. Callbacks are delivered on that same
- * background thread — callers that need main-thread delivery must use
- * {@link androidx.lifecycle.MutableLiveData#postValue}.
+ * main thread is never blocked.
  */
 public class TrackingStateRepositoryImpl implements TrackingStateRepository {
 
@@ -33,6 +35,7 @@ public class TrackingStateRepositoryImpl implements TrackingStateRepository {
             try {
                 TrackingStateEntity entity = new TrackingStateEntity();
                 entity.sessionId           = state.getSessionId();
+                entity.userId              = state.getUserId() != null ? state.getUserId() : "";
                 entity.walkState           = state.getWalkState().name();
                 entity.walkStartEpochMs    = state.getWalkStartEpochMs();
                 entity.pausedAccumulatedMs = state.getPausedAccumulatedMs();
@@ -47,10 +50,11 @@ public class TrackingStateRepositoryImpl implements TrackingStateRepository {
     }
 
     @Override
-    public void loadState(String sessionId, DomainCallback<TrackingRuntimeState> callback) {
+    public void loadState(String sessionId, String userId, DomainCallback<TrackingRuntimeState> callback) {
         executor.execute(() -> {
             try {
-                TrackingStateEntity entity = dao.getBySessionId(sessionId);
+                String scopedUser = userId != null ? userId : "";
+                TrackingStateEntity entity = dao.getBySessionAndUser(sessionId, scopedUser);
                 if (entity == null) {
                     callback.onSuccess(null);
                     return;
@@ -59,11 +63,11 @@ public class TrackingStateRepositoryImpl implements TrackingStateRepository {
                 try {
                     walkState = WalkState.valueOf(entity.walkState);
                 } catch (IllegalArgumentException e) {
-                    // Unknown enum value (e.g. from a future schema) — treat as READY.
                     walkState = WalkState.READY;
                 }
                 callback.onSuccess(new TrackingRuntimeState(
                         entity.sessionId,
+                        entity.userId,
                         walkState,
                         entity.walkStartEpochMs,
                         entity.pausedAccumulatedMs,
@@ -77,10 +81,25 @@ public class TrackingStateRepositoryImpl implements TrackingStateRepository {
     }
 
     @Override
-    public void deleteState(String sessionId, DomainCallback<Void> callback) {
+    public void deleteState(String sessionId, String userId, DomainCallback<Void> callback) {
         executor.execute(() -> {
             try {
-                dao.deleteBySessionId(sessionId);
+                String scopedUser = userId != null ? userId : "";
+                dao.deleteBySessionAndUser(sessionId, scopedUser);
+                callback.onSuccess(null);
+            } catch (Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void clearForUser(String userId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                if (userId != null && !userId.isEmpty()) {
+                    dao.deleteByUserId(userId);
+                }
                 callback.onSuccess(null);
             } catch (Exception e) {
                 callback.onError(e);

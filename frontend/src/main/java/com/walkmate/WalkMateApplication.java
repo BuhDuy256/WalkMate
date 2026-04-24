@@ -156,6 +156,27 @@ public class WalkMateApplication extends Application {
         return trackingStateRepository;
     }
 
+    /**
+     * Clears all local GPS tracking caches for the given user. Must be called
+     * before {@link SessionManager#clearSession()} so the userId is still available.
+     * Callers do not need to wait for the callback — the operation is fire-and-forget.
+     */
+    public void clearTrackingCacheForUser(String userId) {
+        if (userId == null || userId.isEmpty()) return;
+        getTrackingRepository().clearForUser(userId, new com.walkmate.domain.shared.DomainCallback<Void>() {
+            @Override public void onSuccess(Void r) {}
+            @Override public void onError(Exception e) {
+                Log.w("WalkMateApp", "clearTrackingCacheForUser route-points error: " + e.getMessage());
+            }
+        });
+        getTrackingStateRepository().clearForUser(userId, new com.walkmate.domain.shared.DomainCallback<Void>() {
+            @Override public void onSuccess(Void r) {}
+            @Override public void onError(Exception e) {
+                Log.w("WalkMateApp", "clearTrackingCacheForUser state error: " + e.getMessage());
+            }
+        });
+    }
+
     public WalkIntentRepository getWalkIntentRepository() {
         if (walkIntentRepository == null) {
             walkIntentRepository = new WalkIntentRepositoryImpl(this);

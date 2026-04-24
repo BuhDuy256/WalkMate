@@ -76,6 +76,7 @@ public class TrackingViewModel extends AndroidViewModel {
     // ── Session metadata (set once via startTrackingSession) ──────────────────
 
     private String sessionId;
+    private String currentUserId;   // Logged-in user at the time the session was opened
     private String partnerId;
     private String partnerName;
     private double meetingLat;
@@ -166,6 +167,14 @@ public class TrackingViewModel extends AndroidViewModel {
         this.meetingLat  = meetingLat;
         this.meetingLng  = meetingLng;
 
+        // Capture the user ID once so all subsequent state reads/writes are
+        // scoped to the account that was logged in when the session opened.
+        // This prevents cross-account data leaks on a shared device.
+        if (currentUserId == null) {
+            WalkMateApplication app = (WalkMateApplication) getApplication();
+            currentUserId = app.getSessionManager().getUserId();
+        }
+
         if (routePointsLiveData == null) {
             routePointsLiveData = repository.getPointsForSession(sessionId);
             uiStateLiveData.addSource(routePointsLiveData, points -> {
@@ -175,7 +184,7 @@ public class TrackingViewModel extends AndroidViewModel {
         }
 
         // Load persisted state asynchronously and apply it.
-        stateRepository.loadState(sessionId, new DomainCallback<TrackingRuntimeState>() {
+        stateRepository.loadState(sessionId, currentUserId, new DomainCallback<TrackingRuntimeState>() {
             @Override
             public void onSuccess(TrackingRuntimeState saved) {
                 applyRestoredState(saved); // safe to call from background thread
@@ -344,6 +353,7 @@ public class TrackingViewModel extends AndroidViewModel {
         if (sessionId == null) return;
         TrackingRuntimeState snapshot = new TrackingRuntimeState(
                 sessionId,
+                currentUserId,
                 state,
                 walkStartEpochMs,
                 pausedAccumulatedMs,
@@ -362,7 +372,7 @@ public class TrackingViewModel extends AndroidViewModel {
      */
     private void clearPersistedState() {
         if (sessionId == null) return;
-        stateRepository.deleteState(sessionId, new DomainCallback<Void>() {
+        stateRepository.deleteState(sessionId, currentUserId, new DomainCallback<Void>() {
             @Override public void onSuccess(Void result) { /* no-op */ }
             @Override public void onError(Exception e)   { /* non-fatal, swallow */ }
         });

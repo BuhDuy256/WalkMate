@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private NavController navController;
     private int cachedBottomNavHeight = 0;
+    private boolean syncingBottomNav = false;
 
     /**
      * Handles the POST_NOTIFICATIONS runtime permission result (API 33+).
@@ -103,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
         // Fix: use a single NavOptions-based navigate instead of two back-to-back
         // NavController calls, which caused a race condition / animation flicker.
         bottomNav.setOnItemSelectedListener(item -> {
+            // Programmatic sync via setSelectedItemId — allow visual update, skip navigation.
+            if (syncingBottomNav) return true;
             if (item.getItemId() == R.id.homeFragment) {
                 navController.navigate(R.id.homeFragment,
                         null,
@@ -126,6 +129,19 @@ public class MainActivity extends AppCompatActivity {
             } else if (destId != R.id.exploreFragment) {
                 // Ensure nav bar is always visible on non-explore, non-notification destinations.
                 setBottomNavVisibility(true);
+            }
+            // Fix BottomNav desync: NavigationUI's listener only syncs the indicator
+            // when destId matches a menu item. For child destinations (e.g. sessionHistoryFragment)
+            // it silently no-ops, leaving the wrong tab highlighted after pressing Back.
+            // Walk the real back stack to find the nearest tab and defer the update one
+            // frame so it does not conflict with the in-flight fragment animation.
+            if (!isTopLevelTab(destId)) {
+                int tabId = findNearestTabInBackStack(controller);
+                bottomNav.post(() -> {
+                    syncingBottomNav = true;
+                    bottomNav.setSelectedItemId(tabId);
+                    syncingBottomNav = false;
+                });
             }
         });
 
@@ -327,6 +343,32 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
         }
+    }
+
+    // ── BottomNav helpers ─────────────────────────────────────────────────────
+
+    private boolean isTopLevelTab(int destId) {
+        return destId == R.id.homeFragment
+                || destId == R.id.matchesFragment
+                || destId == R.id.profileFragment;
+    }
+
+    /**
+     * Walks the live NavController back stack to find which tab is currently active.
+     * {@link NavController#getBackStackEntry(int)} throws {@link IllegalArgumentException}
+     * when the destination is not present in the current stack — we exploit this to probe
+     * each tab in order and return the first one that is actually on the stack.
+     */
+    private int findNearestTabInBackStack(NavController controller) {
+        try {
+            controller.getBackStackEntry(R.id.matchesFragment);
+            return R.id.matchesFragment;
+        } catch (IllegalArgumentException ignored) {}
+        try {
+            controller.getBackStackEntry(R.id.profileFragment);
+            return R.id.profileFragment;
+        } catch (IllegalArgumentException ignored) {}
+        return R.id.homeFragment;
     }
 
     // ── Public helper — called by ExploreFragment to control bottom-nav UI ─────
