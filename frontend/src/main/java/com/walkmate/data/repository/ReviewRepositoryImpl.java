@@ -11,7 +11,9 @@ import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.review.ReviewResponse;
+import com.walkmate.data.datasource.remote.dto.response.review.ReviewTagResponse;
 import com.walkmate.domain.review.ReviewRepository;
+import com.walkmate.domain.review.ReviewTag;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.shared.DomainCallback;
 
@@ -41,10 +43,10 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     @Override
     public void submitReview(String sessionId, int ratingStars, String comment,
-                             DomainCallback<WalkReview> callback) {
+                             List<String> tagIds, DomainCallback<WalkReview> callback) {
         executor.execute(() -> {
             try {
-                SubmitReviewRequest body = new SubmitReviewRequest(ratingStars, comment);
+                SubmitReviewRequest body = new SubmitReviewRequest(ratingStars, comment, tagIds);
                 Response<ApiResponse<ReviewResponse>> resp =
                         apiService.submitReview(sessionId, body).execute();
 
@@ -85,6 +87,33 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "getReviewsForUser network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void getReviewTags(DomainCallback<List<ReviewTag>> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<List<ReviewTagResponse>>> resp =
+                        apiService.getReviewTags().execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    List<ReviewTagResponse> data = resp.body().getData();
+                    List<ReviewTag> tags = new ArrayList<>();
+                    if (data != null) {
+                        for (ReviewTagResponse r : data) {
+                            tags.add(new ReviewTag(r.tagId, r.tagName, r.tagType));
+                        }
+                    }
+                    callback.onSuccess(tags);
+                } else {
+                    ApiError err = ErrorParser.extractApiError(resp, "TAGS_FETCH_FAILED");
+                    callback.onError(new Exception(err.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getReviewTags network error", e);
                 callback.onError(e);
             }
         });

@@ -2,10 +2,13 @@ package com.walkmate.presentation.controller.review;
 
 import com.walkmate.application.review.ReviewCommandService;
 import com.walkmate.application.user.UserPrincipal;
+import com.walkmate.domain.review.ReviewTag;
+import com.walkmate.domain.review.ReviewTagRepository;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.presentation.dto.request.review.SubmitReviewRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.review.ReviewResponse;
+import com.walkmate.presentation.dto.response.review.ReviewTagResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @Tag(name = "Reviews", description = "Post-session review and trust-score management")
@@ -21,6 +25,7 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewCommandService reviewCommandService;
+    private final ReviewTagRepository  reviewTagRepository;
 
     /**
      * POST /api/v1/sessions/{sessionId}/review
@@ -35,10 +40,29 @@ public class ReviewController {
             @PathVariable String sessionId,
             @Valid @RequestBody SubmitReviewRequest request) {
 
+        List<java.util.UUID> tagIds = request.tagIds() != null
+                ? request.tagIds() : Collections.emptyList();
+
         WalkReview review = reviewCommandService.submitReview(
-                sessionId, principal.userId(), request.ratingStars(), request.comment());
+                sessionId, principal.userId(), request.ratingStars(), request.comment(), tagIds);
 
         return ResponseEntity.ok(ApiResponse.success(toResponse(review)));
+    }
+
+    /**
+     * GET /api/v1/reviews/tags
+     *
+     * Returns all active tags from the master vocabulary.
+     * The client uses {@code tag_type} prefix (POSITIVE_* / NEGATIVE_*) to decide
+     * which tags to surface for a given star rating.
+     */
+    @GetMapping("/api/v1/reviews/tags")
+    public ResponseEntity<ApiResponse<List<ReviewTagResponse>>> getReviewTags() {
+        List<ReviewTagResponse> tags = reviewTagRepository.findAllActive()
+                .stream()
+                .map(t -> new ReviewTagResponse(t.tagId(), t.tagName(), t.tagType()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(tags));
     }
 
     /**

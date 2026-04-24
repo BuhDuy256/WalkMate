@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+import java.util.UUID;
+
 public record SubmitReviewRequest(
 
         @NotNull(message = "rating_stars is required")
@@ -14,5 +17,9 @@ public record SubmitReviewRequest(
         Integer ratingStars,
 
         @JsonProperty("comment")
-        String comment
+        String comment,
+
+        /** IDs of tags selected from {@code review_tag_master}; optional, may be null or empty. */
+        @JsonProperty("tag_ids")
+        List<UUID> tagIds
 ) {}

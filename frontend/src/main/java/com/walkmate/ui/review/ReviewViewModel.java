@@ -5,11 +5,13 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.review.ReviewRepository;
+import com.walkmate.domain.review.ReviewTag;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,6 +49,28 @@ public class ReviewViewModel extends ViewModel {
                            WalkSessionRepository sessionRepository) {
         this.reviewRepository  = reviewRepository;
         this.sessionRepository = sessionRepository;
+        loadReviewTags();
+    }
+
+    private void loadReviewTags() {
+        reviewRepository.getReviewTags(new DomainCallback<List<ReviewTag>>() {
+            @Override
+            public void onSuccess(List<ReviewTag> tags) {
+                ReviewUiState current = reviewUiState.getValue();
+                ReviewUiState updated = (current != null ? current : ReviewUiState.idle())
+                        .withTags(tags);
+                reviewUiState.postValue(updated);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Non-fatal: chips stay hidden; the user can still submit with stars only.
+                ReviewUiState current = reviewUiState.getValue();
+                ReviewUiState updated = (current != null ? current : ReviewUiState.idle())
+                        .withTags(Collections.emptyList());
+                reviewUiState.postValue(updated);
+            }
+        });
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -57,10 +81,12 @@ public class ReviewViewModel extends ViewModel {
      *
      * Called from {@code ReviewFragment} when the user taps "Submit".
      */
-    public void submitReview(String sessionId, int ratingStars, String comment) {
+    public void submitReview(String sessionId, int ratingStars, String comment,
+                             List<String> tagIds) {
         submitState.setValue(SubmitState.LOADING);
 
-        reviewRepository.submitReview(sessionId, ratingStars, comment, new DomainCallback<WalkReview>() {
+        reviewRepository.submitReview(sessionId, ratingStars, comment, tagIds,
+                new DomainCallback<WalkReview>() {
             @Override
             public void onSuccess(WalkReview review) {
                 submittedReview.postValue(review);

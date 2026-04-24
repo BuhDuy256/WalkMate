@@ -3,6 +3,7 @@ package com.walkmate.data.datasource.remote.api;
 import com.walkmate.data.datasource.remote.dto.request.review.SubmitReviewRequest;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.review.ReviewResponse;
+import com.walkmate.data.datasource.remote.dto.response.review.ReviewTagResponse;
 
 import java.util.List;
 
@@ -22,4 +23,7 @@ public interface ReviewApiService {
     @GET("api/v1/users/{userId}/reviews")
     Call<ApiResponse<List<ReviewResponse>>> getReviewsForUser(
             @Path("userId") String userId);
+
+    @GET("api/v1/reviews/tags")
+    Call<ApiResponse<List<ReviewTagResponse>>> getReviewTags();
 }
