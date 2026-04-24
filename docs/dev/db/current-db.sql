@@ -148,8 +148,8 @@ CREATE TABLE public.session_point_chunks (
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   user_id uuid NOT NULL,
   CONSTRAINT session_point_chunks_pkey PRIMARY KEY (chunk_id),
-  CONSTRAINT session_point_chunks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id),
-  CONSTRAINT session_point_chunks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
+  CONSTRAINT session_point_chunks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
+  CONSTRAINT session_point_chunks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
 );
 CREATE TABLE public.session_report (
   report_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -160,11 +160,10 @@ CREATE TABLE public.session_report (
   evidence_url text,
   status USER-DEFINED NOT NULL DEFAULT 'OPEN'::report_status,
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  category USER-DEFINED,
   CONSTRAINT session_report_pkey PRIMARY KEY (report_id),
-  CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
   CONSTRAINT session_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.user_account(user_id),
-  CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id)
+  CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
 );
 CREATE TABLE public.session_state_change_log (
   log_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -185,7 +184,6 @@ CREATE TABLE public.trust_score (
   completed_sessions integer NOT NULL DEFAULT 0,
   cancelled_sessions integer NOT NULL DEFAULT 0,
   no_show_sessions integer NOT NULL DEFAULT 0,
-  aborted_sessions integer NOT NULL DEFAULT 0,
   last_updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   total_distance_km numeric NOT NULL DEFAULT 0 CHECK (total_distance_km >= 0::numeric),
   CONSTRAINT trust_score_pkey PRIMARY KEY (user_id),
@@ -293,7 +291,6 @@ CREATE TABLE public.walk_session (
   user_b_activated_at timestamp without time zone,
   cancellation_reason character varying,
   cancelled_by uuid,
-  abort_reason character varying CHECK (abort_reason IS NULL OR (abort_reason::text = ANY (ARRAY['SAFETY_CONCERN'::character varying, 'EMERGENCY'::character varying, 'PARTNER_MISCONDUCT'::character varying, 'OTHER'::character varying]::text[]))),
   version bigint NOT NULL DEFAULT 0 CHECK (version >= 0),
   user_a_distance_km numeric NOT NULL DEFAULT 0 CHECK (user_a_distance_km >= 0::numeric),
   user_a_duration_seconds bigint NOT NULL DEFAULT 0 CHECK (user_a_duration_seconds >= 0),

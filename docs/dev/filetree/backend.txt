@@ -1,0 +1,286 @@
+📦walkmate
+ ┣ 📂application
+ ┃ ┣ 📂chat
+ ┃ ┣ 📂gamification
+ ┃ ┃ ┣ 📜BadgeEvaluationService.java
+ ┃ ┃ ┣ 📜GamificationCommandService.java
+ ┃ ┃ ┣ 📜SessionCompletedEvent.java
+ ┃ ┃ ┗ 📜SessionNoShowEvent.java
+ ┃ ┣ 📂hotspot
+ ┃ ┃ ┗ 📜HotspotQueryService.java
+ ┃ ┣ 📂notification
+ ┃ ┃ ┣ 📜NotificationCommandService.java
+ ┃ ┃ ┗ 📜PushNotificationProvider.java
+ ┃ ┣ 📂proposal
+ ┃ ┃ ┗ 📜MatchingCommandService.java
+ ┃ ┣ 📂report
+ ┃ ┃ ┗ 📜ReportCommandService.java
+ ┃ ┣ 📂review
+ ┃ ┃ ┗ 📜ReviewCommandService.java
+ ┃ ┣ 📂session
+ ┃ ┃ ┣ 📜SessionCommandService.java
+ ┃ ┃ ┣ 📜SessionHistoryQueryService.java
+ ┃ ┃ ┗ 📜SessionScheduler.java
+ ┃ ┣ 📂social
+ ┃ ┃ ┣ 📜FriendCommandService.java
+ ┃ ┃ ┣ 📜FriendQueryService.java
+ ┃ ┃ ┣ 📜SocialCommandService.java
+ ┃ ┃ ┗ 📜SocialQueryService.java
+ ┃ ┣ 📂tracking
+ ┃ ┃ ┣ 📜TrackingCommandService.java
+ ┃ ┃ ┗ 📜TrackingQueryService.java
+ ┃ ┣ 📂user
+ ┃ ┃ ┣ 📜GoogleAuthCommand.java
+ ┃ ┃ ┣ 📜GoogleIdentity.java
+ ┃ ┃ ┣ 📜GoogleTokenVerifier.java
+ ┃ ┃ ┣ 📜LoginResult.java
+ ┃ ┃ ┣ 📜LoginUserCommand.java
+ ┃ ┃ ┣ 📜LogoutCommand.java
+ ┃ ┃ ┣ 📜RegisterUserCommand.java
+ ┃ ┃ ┣ 📜SetVisibilityCommand.java
+ ┃ ┃ ┣ 📜TokenPair.java
+ ┃ ┃ ┣ 📜TokenProvider.java
+ ┃ ┃ ┣ 📜UpdateFcmTokenCommand.java
+ ┃ ┃ ┣ 📜UpdateProfileCommand.java
+ ┃ ┃ ┣ 📜UserCommandService.java
+ ┃ ┃ ┣ 📜UserPrincipal.java
+ ┃ ┃ ┣ 📜UserProfileCommandService.java
+ ┃ ┃ ┗ 📜UserQueryService.java
+ ┃ ┗ 📂walkintent
+ ┃ ┃ ┣ 📜CreateIntentResult.java
+ ┃ ┃ ┣ 📜CreateWalkIntentCommand.java
+ ┃ ┃ ┣ 📜IntentScheduler.java
+ ┃ ┃ ┣ 📜MatchingStrategy.java
+ ┃ ┃ ┣ 📜MatchResult.java
+ ┃ ┃ ┣ 📜RuleBasedMatchingStrategy.java
+ ┃ ┃ ┣ 📜WalkIntentCommandService.java
+ ┃ ┃ ┗ 📜WalkIntentQueryService.java
+ ┣ 📂domain
+ ┃ ┣ 📂chat
+ ┃ ┃ ┗ 📜ChatRoomRepository.java
+ ┃ ┣ 📂gamification
+ ┃ ┃ ┣ 📜Badge.java
+ ┃ ┃ ┣ 📜BadgePolicy.java
+ ┃ ┃ ┣ 📜UserBadgeRepository.java
+ ┃ ┃ ┗ 📜UserStats.java
+ ┃ ┣ 📂hotspot
+ ┃ ┃ ┣ 📜Hotspot.java
+ ┃ ┃ ┣ 📜HotspotErrorCode.java
+ ┃ ┃ ┗ 📜HotspotRepository.java
+ ┃ ┣ 📂notification
+ ┃ ┃ ┣ 📜Notification.java
+ ┃ ┃ ┣ 📜NotificationErrorCode.java
+ ┃ ┃ ┣ 📜NotificationRepository.java
+ ┃ ┃ ┣ 📜NotificationStatus.java
+ ┃ ┃ ┗ 📜NotificationType.java
+ ┃ ┣ 📂proposal
+ ┃ ┃ ┣ 📜MatchProposal.java
+ ┃ ┃ ┣ 📜MatchProposalRepository.java
+ ┃ ┃ ┣ 📜ProposalErrorCode.java
+ ┃ ┃ ┗ 📜ProposalStatus.java
+ ┃ ┣ 📂report
+ ┃ ┃ ┣ 📜ReportErrorCode.java
+ ┃ ┃ ┣ 📜SessionReport.java
+ ┃ ┃ ┗ 📜SessionReportRepository.java
+ ┃ ┣ 📂review
+ ┃ ┃ ┣ 📜ReviewErrorCode.java
+ ┃ ┃ ┣ 📜SessionOutcome.java
+ ┃ ┃ ┣ 📜TrustScorePolicy.java
+ ┃ ┃ ┣ 📜WalkReview.java
+ ┃ ┃ ┗ 📜WalkReviewRepository.java
+ ┃ ┣ 📂session
+ ┃ ┃ ┣ 📜AbortReason.java
+ ┃ ┃ ┣ 📜SessionErrorCode.java
+ ┃ ┃ ┣ 📜SessionStatus.java
+ ┃ ┃ ┣ 📜WalkSession.java
+ ┃ ┃ ┗ 📜WalkSessionRepository.java
+ ┃ ┣ 📂shared
+ ┃ ┃ ┣ 📂exception
+ ┃ ┃ ┃ ┣ 📜DomainException.java
+ ┃ ┃ ┃ ┗ 📜ErrorCode.java
+ ┃ ┃ ┣ 📂valueobject
+ ┃ ┃ ┃ ┗ 📜.gitkeep
+ ┃ ┃ ┗ 📜NotificationPublisher.java
+ ┃ ┣ 📂social
+ ┃ ┃ ┣ 📜BlockRelation.java
+ ┃ ┃ ┣ 📜FollowRelation.java
+ ┃ ┃ ┣ 📜Friendship.java
+ ┃ ┃ ┣ 📜FriendshipErrorCode.java
+ ┃ ┃ ┣ 📜SocialErrorCode.java
+ ┃ ┃ ┗ 📜SocialRepository.java
+ ┃ ┣ 📂tracking
+ ┃ ┃ ┗ 📜TrackingChunkRepository.java
+ ┃ ┣ 📂user
+ ┃ ┃ ┣ 📜AccountStatus.java
+ ┃ ┃ ┣ 📜AuthProvider.java
+ ┃ ┃ ┣ 📜Gender.java
+ ┃ ┃ ┣ 📜PasswordMatcher.java
+ ┃ ┃ ┣ 📜ProfileTag.java
+ ┃ ┃ ┣ 📜RefreshToken.java
+ ┃ ┃ ┣ 📜RefreshTokenRepository.java
+ ┃ ┃ ┣ 📜User.java
+ ┃ ┃ ┣ 📜UserErrorCode.java
+ ┃ ┃ ┣ 📜UserProfile.java
+ ┃ ┃ ┣ 📜UserProfileRepository.java
+ ┃ ┃ ┣ 📜UserRepository.java
+ ┃ ┃ ┗ 📜VisibilityMode.java
+ ┃ ┗ 📂walkintent
+ ┃ ┃ ┣ 📜IntentStatus.java
+ ┃ ┃ ┣ 📜MatchingConstraints.java
+ ┃ ┃ ┣ 📜WalkIntent.java
+ ┃ ┃ ┣ 📜WalkIntentErrorCode.java
+ ┃ ┃ ┗ 📜WalkIntentRepository.java
+ ┣ 📂infrastructure
+ ┃ ┣ 📂config
+ ┃ ┃ ┣ 📜FirebaseConfig.java
+ ┃ ┃ ┗ 📜SecurityConfig.java
+ ┃ ┣ 📂exception
+ ┃ ┃ ┗ 📜.gitkeep
+ ┃ ┣ 📂filter
+ ┃ ┃ ┗ 📜LoggingFilter.java
+ ┃ ┣ 📂logging
+ ┃ ┣ 📂notification
+ ┃ ┃ ┣ 📜FcmNotificationProvider.java
+ ┃ ┃ ┗ 📜NotificationPublisherImpl.java
+ ┃ ┣ 📂repository
+ ┃ ┃ ┣ 📂chat
+ ┃ ┃ ┃ ┣ 📂document
+ ┃ ┃ ┃ ┃ ┗ 📜ChatRoomDocument.java
+ ┃ ┃ ┃ ┗ 📜MongoChatRoomRepository.java
+ ┃ ┃ ┣ 📂embedding
+ ┃ ┃ ┃ ┗ 📜UserEmbeddingJdbcRepository.java
+ ┃ ┃ ┣ 📂gamification
+ ┃ ┃ ┃ ┗ 📜UserBadgeJdbcRepository.java
+ ┃ ┃ ┣ 📂hotspot
+ ┃ ┃ ┃ ┗ 📜HotspotJdbcRepository.java
+ ┃ ┃ ┣ 📂notification
+ ┃ ┃ ┃ ┗ 📜NotificationJdbcRepository.java
+ ┃ ┃ ┣ 📂proposal
+ ┃ ┃ ┃ ┗ 📜MatchProposalJdbcRepository.java
+ ┃ ┃ ┣ 📂report
+ ┃ ┃ ┃ ┗ 📜SessionReportJdbcRepository.java
+ ┃ ┃ ┣ 📂review
+ ┃ ┃ ┃ ┗ 📜WalkReviewJdbcRepository.java
+ ┃ ┃ ┣ 📂session
+ ┃ ┃ ┃ ┗ 📜WalkSessionJdbcRepository.java
+ ┃ ┃ ┣ 📂social
+ ┃ ┃ ┃ ┗ 📜SocialJdbcRepository.java
+ ┃ ┃ ┣ 📂tracking
+ ┃ ┃ ┃ ┗ 📜TrackingChunkJdbcRepository.java
+ ┃ ┃ ┣ 📂user
+ ┃ ┃ ┃ ┣ 📜RefreshTokenJdbcRepository.java
+ ┃ ┃ ┃ ┣ 📜UserJdbcRepository.java
+ ┃ ┃ ┃ ┗ 📜UserProfileJdbcRepository.java
+ ┃ ┃ ┗ 📂walkintent
+ ┃ ┃ ┃ ┗ 📜WalkIntentJdbcRepository.java
+ ┃ ┣ 📂security
+ ┃ ┃ ┣ 📂jwt
+ ┃ ┃ ┃ ┣ 📜JwtTokenProvider.java
+ ┃ ┃ ┃ ┗ 📜UserPrincipalConverter.java
+ ┃ ┃ ┗ 📂oauth
+ ┃ ┃ ┃ ┗ 📜FirebaseTokenVerifier.java
+ ┃ ┣ 📂sms
+ ┃ ┣ 📂storage
+ ┃ ┃ ┗ 📜AvatarStorageService.java
+ ┃ ┗ 📂util
+ ┃ ┃ ┣ 📜PolylineDecoder.java
+ ┃ ┃ ┗ 📜PolylineEncoder.java
+ ┣ 📂presentation
+ ┃ ┣ 📂controller
+ ┃ ┃ ┣ 📂gamification
+ ┃ ┃ ┃ ┗ 📜GamificationController.java
+ ┃ ┃ ┣ 📂hotspot
+ ┃ ┃ ┃ ┗ 📜HotspotController.java
+ ┃ ┃ ┣ 📂notification
+ ┃ ┃ ┃ ┗ 📜NotificationController.java
+ ┃ ┃ ┣ 📂proposal
+ ┃ ┃ ┃ ┗ 📜ProposalController.java
+ ┃ ┃ ┣ 📂report
+ ┃ ┃ ┃ ┗ 📜ReportController.java
+ ┃ ┃ ┣ 📂review
+ ┃ ┃ ┃ ┗ 📜ReviewController.java
+ ┃ ┃ ┣ 📂session
+ ┃ ┃ ┃ ┣ 📜SessionController.java
+ ┃ ┃ ┃ ┗ 📜SessionHistoryController.java
+ ┃ ┃ ┣ 📂social
+ ┃ ┃ ┃ ┣ 📜FriendsController.java
+ ┃ ┃ ┃ ┗ 📜SocialController.java
+ ┃ ┃ ┣ 📂tracking
+ ┃ ┃ ┃ ┗ 📜TrackingController.java
+ ┃ ┃ ┣ 📂user
+ ┃ ┃ ┃ ┣ 📜UserController.java
+ ┃ ┃ ┃ ┗ 📜UserProfileController.java
+ ┃ ┃ ┗ 📂walkintent
+ ┃ ┃ ┃ ┗ 📜WalkIntentController.java
+ ┃ ┣ 📂dto
+ ┃ ┃ ┣ 📂request
+ ┃ ┃ ┃ ┣ 📂report
+ ┃ ┃ ┃ ┃ ┗ 📜SubmitReportRequest.java
+ ┃ ┃ ┃ ┣ 📂review
+ ┃ ┃ ┃ ┃ ┗ 📜SubmitReviewRequest.java
+ ┃ ┃ ┃ ┣ 📂session
+ ┃ ┃ ┃ ┃ ┣ 📜AbortWalkSessionRequest.java
+ ┃ ┃ ┃ ┃ ┗ 📜CancelWalkSessionRequest.java
+ ┃ ┃ ┃ ┣ 📂tracking
+ ┃ ┃ ┃ ┃ ┗ 📜PushRoutePointsRequest.java
+ ┃ ┃ ┃ ┣ 📂user
+ ┃ ┃ ┃ ┃ ┣ 📜GoogleLoginRequest.java
+ ┃ ┃ ┃ ┃ ┣ 📜LoginUserRequest.java
+ ┃ ┃ ┃ ┃ ┣ 📜LogoutRequest.java
+ ┃ ┃ ┃ ┃ ┣ 📜RefreshTokenRequest.java
+ ┃ ┃ ┃ ┃ ┣ 📜RegisterUserRequest.java
+ ┃ ┃ ┃ ┃ ┣ 📜SetVisibilityRequest.java
+ ┃ ┃ ┃ ┃ ┣ 📜UpdateFcmTokenRequest.java
+ ┃ ┃ ┃ ┃ ┗ 📜UpdateProfileRequest.java
+ ┃ ┃ ┃ ┗ 📂walkintent
+ ┃ ┃ ┃ ┃ ┗ 📜CreateWalkIntentRequest.java
+ ┃ ┃ ┗ 📂response
+ ┃ ┃ ┃ ┣ 📂gamification
+ ┃ ┃ ┃ ┃ ┣ 📜BadgeResponse.java
+ ┃ ┃ ┃ ┃ ┣ 📜LeaderboardEntryResponse.java
+ ┃ ┃ ┃ ┃ ┗ 📜UserStatsResponse.java
+ ┃ ┃ ┃ ┣ 📂hotspot
+ ┃ ┃ ┃ ┃ ┗ 📜HotspotResponse.java
+ ┃ ┃ ┃ ┣ 📂notification
+ ┃ ┃ ┃ ┃ ┗ 📜NotificationResponse.java
+ ┃ ┃ ┃ ┣ 📂proposal
+ ┃ ┃ ┃ ┃ ┗ 📜WalkProposalResponse.java
+ ┃ ┃ ┃ ┣ 📂report
+ ┃ ┃ ┃ ┣ 📂review
+ ┃ ┃ ┃ ┃ ┗ 📜ReviewResponse.java
+ ┃ ┃ ┃ ┣ 📂session
+ ┃ ┃ ┃ ┃ ┣ 📜ParticipantSummaryResponse.java
+ ┃ ┃ ┃ ┃ ┣ 📜SessionRouteResponse.java
+ ┃ ┃ ┃ ┃ ┣ 📜SessionSummaryResponse.java
+ ┃ ┃ ┃ ┃ ┗ 📜WalkSessionResponse.java
+ ┃ ┃ ┃ ┣ 📂social
+ ┃ ┃ ┃ ┃ ┣ 📜FriendshipResponse.java
+ ┃ ┃ ┃ ┃ ┗ 📜UserSummaryResponse.java
+ ┃ ┃ ┃ ┣ 📂tracking
+ ┃ ┃ ┃ ┃ ┗ 📜PushRoutePointsResponse.java
+ ┃ ┃ ┃ ┣ 📂user
+ ┃ ┃ ┃ ┃ ┣ 📜AvatarUploadResponse.java
+ ┃ ┃ ┃ ┃ ┣ 📜LoginUserResponse.java
+ ┃ ┃ ┃ ┃ ┣ 📜SetVisibilityResponse.java
+ ┃ ┃ ┃ ┃ ┗ 📜UserProfileResponse.java
+ ┃ ┃ ┃ ┣ 📂walkintent
+ ┃ ┃ ┃ ┃ ┣ 📜CreateIntentResponse.java
+ ┃ ┃ ┃ ┃ ┗ 📜WalkIntentResponse.java
+ ┃ ┃ ┃ ┗ 📜ApiResponse.java
+ ┃ ┣ 📂exception
+ ┃ ┃ ┗ 📜GlobalExceptionHandler.java
+ ┃ ┗ 📂mapper
+ ┃ ┃ ┣ 📂hotspot
+ ┃ ┃ ┃ ┗ 📜HotspotMapper.java
+ ┃ ┃ ┣ 📂notification
+ ┃ ┃ ┃ ┗ 📜NotificationMapper.java
+ ┃ ┃ ┣ 📂proposal
+ ┃ ┃ ┃ ┗ 📜ProposalMapper.java
+ ┃ ┃ ┣ 📂session
+ ┃ ┃ ┃ ┗ 📜SessionMapper.java
+ ┃ ┃ ┣ 📂user
+ ┃ ┃ ┃ ┣ 📜UserMapper.java
+ ┃ ┃ ┃ ┗ 📜UserProfileMapper.java
+ ┃ ┃ ┗ 📂walkintent
+ ┃ ┃ ┃ ┗ 📜WalkIntentMapper.java
+ ┗ 📜Application.java
