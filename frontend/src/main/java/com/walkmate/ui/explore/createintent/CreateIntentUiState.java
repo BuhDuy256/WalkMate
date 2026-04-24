@@ -23,10 +23,14 @@ public class CreateIntentUiState {
     private final boolean isFriendListLoading;
     private final String privateIntentError; // field-level error for private walk config
 
+    // Onboarding gate: true when the backend rejects with PROFILE_INCOMPLETE_FOR_MATCHING.
+    // Fragment observes this to show OnboardingBottomSheet; ViewModel consumes it immediately.
+    private final boolean onboardingRequired;
+
     private CreateIntentUiState(boolean isLoading, String error, WalkIntent submittedIntent,
                                 boolean isPrivate, String invitedFriendId, String invitedFriendName,
                                 List<UserSummary> friendList, boolean isFriendListLoading,
-                                String privateIntentError) {
+                                String privateIntentError, boolean onboardingRequired) {
         this.isLoading           = isLoading;
         this.error               = error;
         this.submittedIntent     = submittedIntent;
@@ -36,11 +40,12 @@ public class CreateIntentUiState {
         this.friendList          = friendList != null ? friendList : Collections.emptyList();
         this.isFriendListLoading = isFriendListLoading;
         this.privateIntentError  = privateIntentError;
+        this.onboardingRequired  = onboardingRequired;
     }
 
     public static CreateIntentUiState initial() {
         return new CreateIntentUiState(false, null, null,
-                false, null, null, Collections.emptyList(), false, null);
+                false, null, null, Collections.emptyList(), false, null, false);
     }
 
     // ── Copy helpers ──────────────────────────────────────────────────────────
@@ -48,52 +53,58 @@ public class CreateIntentUiState {
     public CreateIntentUiState withLoading(boolean loading) {
         return new CreateIntentUiState(loading, error, submittedIntent,
                 isPrivate, invitedFriendId, invitedFriendName,
-                friendList, isFriendListLoading, privateIntentError);
+                friendList, isFriendListLoading, privateIntentError, onboardingRequired);
     }
 
     public CreateIntentUiState withError(String newError) {
         return new CreateIntentUiState(false, newError, submittedIntent,
                 isPrivate, invitedFriendId, invitedFriendName,
-                friendList, isFriendListLoading, privateIntentError);
+                friendList, isFriendListLoading, privateIntentError, false);
     }
 
     public CreateIntentUiState withSubmittedIntent(WalkIntent intent) {
         return new CreateIntentUiState(false, null, intent,
                 isPrivate, invitedFriendId, invitedFriendName,
-                friendList, isFriendListLoading, privateIntentError);
+                friendList, isFriendListLoading, privateIntentError, false);
     }
 
     public CreateIntentUiState withPrivate(boolean priv) {
-        // Clearing friend selection when toggling off private mode
         String newFriendId   = priv ? invitedFriendId   : null;
         String newFriendName = priv ? invitedFriendName : null;
         return new CreateIntentUiState(isLoading, error, submittedIntent,
                 priv, newFriendId, newFriendName,
-                friendList, isFriendListLoading, privateIntentError);
+                friendList, isFriendListLoading, privateIntentError, onboardingRequired);
     }
 
     public CreateIntentUiState withFriend(String friendId, String friendName) {
         return new CreateIntentUiState(isLoading, error, submittedIntent,
                 isPrivate, friendId, friendName,
-                friendList, isFriendListLoading, privateIntentError);
+                friendList, isFriendListLoading, privateIntentError, onboardingRequired);
     }
 
     public CreateIntentUiState withFriendList(List<UserSummary> list) {
         return new CreateIntentUiState(isLoading, error, submittedIntent,
                 isPrivate, invitedFriendId, invitedFriendName,
-                list, false, privateIntentError);
+                list, false, privateIntentError, onboardingRequired);
     }
 
     public CreateIntentUiState withFriendListLoading(boolean loading) {
         return new CreateIntentUiState(isLoading, error, submittedIntent,
                 isPrivate, invitedFriendId, invitedFriendName,
-                friendList, loading, privateIntentError);
+                friendList, loading, privateIntentError, onboardingRequired);
     }
 
     public CreateIntentUiState withPrivateIntentError(String msg) {
         return new CreateIntentUiState(isLoading, error, submittedIntent,
                 isPrivate, invitedFriendId, invitedFriendName,
-                friendList, isFriendListLoading, msg);
+                friendList, isFriendListLoading, msg, onboardingRequired);
+    }
+
+    /** Sets the onboarding-required gate signal. Pass false to consume/clear. */
+    public CreateIntentUiState withOnboardingRequired(boolean required) {
+        return new CreateIntentUiState(false, null, null,
+                isPrivate, invitedFriendId, invitedFriendName,
+                friendList, isFriendListLoading, privateIntentError, required);
     }
 
     // ── Getters ───────────────────────────────────────────────────────────────
@@ -107,4 +118,5 @@ public class CreateIntentUiState {
     public List<UserSummary> getFriendList()   { return friendList; }
     public boolean isFriendListLoading()       { return isFriendListLoading; }
     public String getPrivateIntentError()      { return privateIntentError; }
+    public boolean isOnboardingRequired()      { return onboardingRequired; }
 }

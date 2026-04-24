@@ -211,4 +211,18 @@
     <string name="invite_friend">Invite Friend</string>
     <string name="select_friend">Select…</string>
     <string name="no_friends_yet">No friends yet. Add friends to invite them.</string>
+
+    <!-- Onboarding gate bottom sheet -->
+    <string name="onboarding_title">One quick step before matching</string>
+    <string name="onboarding_subtitle">Let us know your gender and interests so we can find you the right walking partner.</string>
+    <string name="onboarding_gender_label">I identify as</string>
+    <string name="onboarding_tags_label">My walking style (pick at least one)</string>
+    <string name="onboarding_btn_save">Save &amp; Continue</string>
+    <string name="onboarding_error_gender_required">Please select a gender option to continue.</string>
+    <string name="onboarding_error_tags_required">Please select at least one interest tag.</string>
+    <string name="onboarding_error_save_failed">Could not save profile. Please try again.</string>
+
+    <!-- Review transparency notice -->
+    <string name="review_trust_score_notice">ⓘ Your 1–5 star rating directly impacts this user\'s Trust Score. Higher ratings reward reliability; lower ratings reflect genuine concerns. Please be fair and objective.</string>
+
 </resources>

@@ -20,8 +20,9 @@ import java.util.Map;
  */
 public class CreateIntentViewModel extends ViewModel {
 
-    private static final String VALIDATION_ERROR_PREFIX = "VALIDATION_ERROR|";
-    private static final String PRIVATE_INTENT_FRIEND_REQUIRED =
+    private static final String VALIDATION_ERROR_PREFIX         = "VALIDATION_ERROR|";
+    private static final String PROFILE_INCOMPLETE_FOR_MATCHING = "PROFILE_INCOMPLETE_FOR_MATCHING";
+    private static final String PRIVATE_INTENT_FRIEND_REQUIRED  =
             "A friend must be selected for a private walk.";
 
     private final WalkIntentRepository intentRepository;
@@ -98,15 +99,18 @@ public class CreateIntentViewModel extends ViewModel {
                     @Override
                     public void onError(Exception error) {
                         String msg = error.getMessage();
-                        if (msg != null && msg.startsWith(VALIDATION_ERROR_PREFIX)) {
+                        if (PROFILE_INCOMPLETE_FOR_MATCHING.equals(msg)) {
+                            // Backend returned 403: profile is missing gender or tags.
+                            // Signal the Fragment to show the OnboardingBottomSheet.
+                            uiState.postValue(current().withLoading(false).withOnboardingRequired(true));
+                        } else if (msg != null && msg.startsWith(VALIDATION_ERROR_PREFIX)) {
                             String raw = msg.substring(VALIDATION_ERROR_PREFIX.length());
                             Map<String, String> fieldErrors = ValidationErrorParser.parse(raw);
-                            // Surface the first validation error as a human-readable message
                             String firstError = fieldErrors.isEmpty()
                                     ? raw : fieldErrors.values().iterator().next();
                             uiState.postValue(current().withLoading(false).withError(firstError));
                         } else {
-                            uiState.postValue(current().withError(msg));
+                            uiState.postValue(current().withLoading(false).withError(msg));
                         }
                     }
                 });
@@ -122,6 +126,11 @@ public class CreateIntentViewModel extends ViewModel {
 
     public void consumeError() {
         post(current().withError(null));
+    }
+
+    /** Called by ExploreFragment once the OnboardingBottomSheet is shown. Clears the gate signal. */
+    public void consumeOnboardingRequired() {
+        post(current().withOnboardingRequired(false));
     }
 
     public void consumePrivateIntentError() {

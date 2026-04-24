@@ -78,8 +78,9 @@ public class WalkIntentController {
         // user can participate in public matching.  Missing these produces a 403 so the
         // Android client knows to navigate to the onboarding screen rather than show
         // a generic error.  Gender ANY is valid — only null is rejected.
-        UserProfile profile = userQueryService.getMyProfile(principal.userId());
-        List<String> tags   = userQueryService.getTagsByUserId(principal.userId());
+        UUID callerId = UUID.fromString(principal.userId());
+        UserProfile profile = userQueryService.getMyProfile(callerId);
+        List<String> tags   = userQueryService.getTagsByUserId(callerId);
         if (profile.getGender() == null || tags.isEmpty()) {
             throw new DomainException(WalkIntentErrorCode.PROFILE_INCOMPLETE_FOR_MATCHING);
         }

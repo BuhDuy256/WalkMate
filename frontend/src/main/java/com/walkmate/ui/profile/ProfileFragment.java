@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
+import androidx.core.content.ContextCompat;
+
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
@@ -26,6 +28,7 @@ import com.walkmate.core.util.GlideHelper;
 import com.walkmate.ui.profile.edit.EditProfileFragment;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Thin view for the Profile tab.
@@ -47,7 +50,8 @@ public class ProfileFragment extends Fragment {
 
     private ImageView imgProfileAvatar;
     private TextView txtProfileName;
-    private Chip chipTrustScore;
+    private Chip     chipTrustScore;
+    private TextView txtTrustTier;
     private ChipGroup chipGroupTags;
     private Chip chipTag1;
     private Chip chipTag2;
@@ -177,6 +181,7 @@ public class ProfileFragment extends Fragment {
         imgProfileAvatar     = root.findViewById(R.id.imgProfileAvatar);
         txtProfileName       = root.findViewById(R.id.txtProfileName);
         chipTrustScore       = root.findViewById(R.id.chipTrustScore);
+        txtTrustTier         = root.findViewById(R.id.txtTrustTier);
         chipGroupTags        = root.findViewById(R.id.chipGroupTags);
         chipTag1             = root.findViewById(R.id.chipTag1);
         chipTag2             = root.findViewById(R.id.chipTag2);
@@ -260,9 +265,13 @@ public class ProfileFragment extends Fragment {
             txtProfileName.setText(state.getName());
         }
 
-        // ── Trust score chip ──
-        chipTrustScore.setText(
-                getString(R.string.profile_trust_score_format, state.getTrustScore()));
+        // ── Trust score chip + tier badge ──
+        int scoreInt = (int) state.getTrustScore();
+        chipTrustScore.setText(String.format(Locale.getDefault(), "⭐ %d pts", scoreInt));
+
+        ProfileUiState.TrustTier tier = state.getTrustTier();
+        txtTrustTier.setText(tier.label);
+        txtTrustTier.setTextColor(ContextCompat.getColor(requireContext(), tier.colorRes));
 
         // ── Personality tag chips (up to 3 slots in the layout) ──
         renderTagChips(state.getPersonalityTags());

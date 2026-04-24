@@ -52,7 +52,18 @@
         android:numStars="5"
         android:stepSize="1"
         android:rating="0"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="8dp" />
+
+    <!-- Review transparency notice — informs the reviewer that stars affect trust score -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/review_trust_score_notice"
+        android:textSize="12sp"
+        android:textColor="@color/text_muted"
+        android:drawablePadding="6dp"
+        android:lineSpacingMultiplier="1.3"
+        android:layout_marginBottom="20dp" />
 
     <TextView
         android:layout_width="wrap_content"

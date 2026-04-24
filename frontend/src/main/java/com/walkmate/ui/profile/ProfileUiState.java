@@ -1,5 +1,6 @@
 package com.walkmate.ui.profile;
 
+import com.walkmate.R;
 import com.walkmate.domain.review.WalkReview;
 
 import java.util.List;
@@ -16,6 +17,35 @@ import java.util.List;
  *   - visibilityMode — not returned by the backend; switch removed from UI
  */
 public class ProfileUiState {
+
+    // ── Trust tier categorization ─────────────────────────────────────────────
+
+    /**
+     * Three-tier trust classification.
+     *
+     * Elite     ≥ 800 pts — consistently reliable, top-ranked in matching.
+     * Standard  300–799   — normal standing.
+     * Restricted < 300    — flagged behaviour; lower matching priority.
+     */
+    public enum TrustTier {
+        ELITE     ("Elite",      R.color.orange_primary),
+        STANDARD  ("Standard",   R.color.text_muted),
+        RESTRICTED("Restricted", R.color.color_danger);
+
+        public final String label;
+        public final int    colorRes;
+
+        TrustTier(String label, int colorRes) {
+            this.label    = label;
+            this.colorRes = colorRes;
+        }
+
+        public static TrustTier fromScore(int score) {
+            if (score >= 800) return ELITE;
+            if (score >= 300) return STANDARD;
+            return RESTRICTED;
+        }
+    }
 
     // ── Badge inner class ──────────────────────────────────────────────────────
 
@@ -94,6 +124,8 @@ public class ProfileUiState {
     public String getName()                  { return name; }
     public String getAvatarUrl()             { return avatarUrl; }
     public float getTrustScore()             { return trustScore; }
+    /** Returns the trust tier derived from the integer trust score (0–1000). */
+    public TrustTier getTrustTier()          { return TrustTier.fromScore((int) trustScore); }
     public List<String> getPersonalityTags() { return personalityTags; }
     public double getTotalDistanceKm()       { return totalDistanceKm; }
     public int getTotalSessions()            { return totalSessions; }

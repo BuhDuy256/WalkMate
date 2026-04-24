@@ -130,7 +130,19 @@
                 app:chipBackgroundColor="@color/bg_white"
                 app:chipStrokeColor="@color/orange_primary"
                 app:chipStrokeWidth="1.5dp"
-                tools:text="⭐ 4.9 / 5.0" />
+                tools:text="⭐ 650 pts" />
+
+            <!-- Trust tier badge — coloured label below the score chip -->
+            <TextView
+                android:id="@+id/txtTrustTier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
+                tools:text="Standard"
+                tools:textColor="@color/text_muted" />
 
             <!-- Personality tag chips -->
             <com.google.android.material.chip.ChipGroup

@@ -46,6 +46,7 @@ import com.walkmate.ui.explore.createintent.CreateIntentUiState;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
+import com.walkmate.ui.explore.OnboardingBottomSheet;
 import com.walkmate.ui.auth.AuthActivity;
 import com.walkmate.ui.main.MainActivity;
 import java.text.SimpleDateFormat;
@@ -839,10 +840,36 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             pickerSheet.setFriends(state.getFriendList(), state.isFriendListLoading());
         }
 
+        // Onboarding gate: backend rejected the intent because gender or tags are missing.
+        // Show the OnboardingBottomSheet; on completion it re-runs the same form submission.
+        if (state.isOnboardingRequired()) {
+            createIntentViewModel.consumeOnboardingRequired();
+            showOnboardingBottomSheet();
+            return;
+        }
+
         if (state.getError() != null) {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
             createIntentViewModel.consumeError();
         }
+    }
+
+    private void showOnboardingBottomSheet() {
+        // Guard against double-show on rapid re-renders.
+        if (getChildFragmentManager().findFragmentByTag(OnboardingBottomSheet.TAG) != null) return;
+
+        com.walkmate.WalkMateApplication app =
+                (com.walkmate.WalkMateApplication) requireActivity().getApplication();
+
+        OnboardingBottomSheet sheet = OnboardingBottomSheet.newInstance(
+                app.getUserProfileRepository());
+
+        sheet.setOnCompleteListener(() -> {
+            // Profile is now complete — re-submit the intent form with the same values.
+            submitCreateIntent();
+        });
+
+        sheet.show(getChildFragmentManager(), OnboardingBottomSheet.TAG);
     }
 
     /**
