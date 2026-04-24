@@ -46,7 +46,7 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
                             (user_id, full_name, gender, date_of_birth,
                              avatar_url, bio, search_radius, updated_at)
                         VALUES
-                            (:userId, :fullName, :gender, :dateOfBirth,
+                            (:userId, :fullName, CAST(:gender AS gender), :dateOfBirth,
                              :avatarUrl, :bio, :searchRadius, :updatedAt)
                         ON CONFLICT (user_id) DO UPDATE SET
                             full_name     = EXCLUDED.full_name,

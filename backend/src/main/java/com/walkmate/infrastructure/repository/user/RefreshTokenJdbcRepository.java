@@ -20,21 +20,42 @@ public class RefreshTokenJdbcRepository implements RefreshTokenRepository {
 
     @Override
     public RefreshToken save(RefreshToken refreshToken) {
-        UUID tokenId = refreshToken.getTokenId() != null ? refreshToken.getTokenId() : UUID.randomUUID();
-        RefreshToken persisted = refreshToken.getTokenId() != null
-                ? refreshToken
-                : new RefreshToken(
-                        tokenId,
-                        refreshToken.getUserId(),
-                        refreshToken.getDeviceId(),
-                        refreshToken.getTokenValue(),
-                        refreshToken.getCreatedAt(),
-                        refreshToken.getExpiresAt(),
-                        refreshToken.isRevoked());
+        if (refreshToken.getTokenId() != null) {
+            // Existing token (e.g. revoking during rotation) — targeted UPDATE by PK.
+            // A plain upsert here races: if the partial-index row was already flipped to
+            // revoked=true by a concurrent request, the ON CONFLICT WHERE revoked=false
+            // won't fire and the INSERT would hit a PK duplicate on token_id.
+            jdbcClient.sql("""
+                            UPDATE refresh_token SET
+                                token_value = :tokenValue,
+                                expires_at  = :expiresAt,
+                                revoked     = :revoked
+                            WHERE token_id = :tokenId
+                            """)
+                    .param("tokenId",    refreshToken.getTokenId())
+                    .param("tokenValue", refreshToken.getTokenValue())
+                    .param("expiresAt",  Timestamp.from(refreshToken.getExpiresAt()))
+                    .param("revoked",    refreshToken.isRevoked())
+                    .update();
+            return refreshToken;
+        }
+
+        // New token — INSERT, replacing any still-active token for this device.
+        UUID tokenId = UUID.randomUUID();
+        RefreshToken persisted = new RefreshToken(
+                tokenId,
+                refreshToken.getUserId(),
+                refreshToken.getDeviceId(),
+                refreshToken.getTokenValue(),
+                refreshToken.getCreatedAt(),
+                refreshToken.getExpiresAt(),
+                refreshToken.isRevoked());
 
         jdbcClient.sql("""
-                        INSERT INTO refresh_token (token_id, user_id, device_id, token_value, created_at, expires_at, revoked)
-                        VALUES (:tokenId, :userId, :deviceId, :tokenValue, :createdAt, :expiresAt, :revoked)
+                        INSERT INTO refresh_token
+                            (token_id, user_id, device_id, token_value, created_at, expires_at, revoked)
+                        VALUES
+                            (:tokenId, :userId, :deviceId, :tokenValue, :createdAt, :expiresAt, :revoked)
                         ON CONFLICT (user_id, device_id) WHERE revoked = false DO UPDATE SET
                             token_id    = EXCLUDED.token_id,
                             token_value = EXCLUDED.token_value,

@@ -113,16 +113,20 @@ public class OnboardingBottomSheet extends BottomSheetDialogFragment {
         profileRepository.getMyProfile(new DomainCallback<UserProfile>() {
             @Override
             public void onSuccess(UserProfile profile) {
-                cachedProfile = profile;
-                setLoading(false);
-                btnSave.setEnabled(true);
+                requireActivity().runOnUiThread(() -> {
+                    cachedProfile = profile;
+                    setLoading(false);
+                    btnSave.setEnabled(true);
+                });
             }
 
             @Override
             public void onError(Exception e) {
                 // Non-fatal: proceed with null cache; update will use empty defaults.
-                setLoading(false);
-                btnSave.setEnabled(true);
+                requireActivity().runOnUiThread(() -> {
+                    setLoading(false);
+                    btnSave.setEnabled(true);
+                });
             }
         });
 
@@ -160,19 +164,23 @@ public class OnboardingBottomSheet extends BottomSheetDialogFragment {
                 new DomainCallback<UserProfile>() {
                     @Override
                     public void onSuccess(UserProfile profile) {
-                        dismiss();
-                        if (onCompleteListener != null) {
-                            onCompleteListener.onOnboardingComplete();
-                        }
+                        requireActivity().runOnUiThread(() -> {
+                            dismiss();
+                            if (onCompleteListener != null) {
+                                onCompleteListener.onOnboardingComplete();
+                            }
+                        });
                     }
 
                     @Override
                     public void onError(Exception e) {
-                        setLoading(false);
-                        String msg = e.getMessage();
-                        txtError.setText(msg != null ? msg
-                                : getString(R.string.onboarding_error_save_failed));
-                        txtError.setVisibility(View.VISIBLE);
+                        requireActivity().runOnUiThread(() -> {
+                            setLoading(false);
+                            String msg = e.getMessage();
+                            txtError.setText(msg != null ? msg
+                                    : getString(R.string.onboarding_error_save_failed));
+                            txtError.setVisibility(View.VISIBLE);
+                        });
                     }
                 });
     }

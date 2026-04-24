@@ -21,7 +21,7 @@
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/bg_sheet_handle" />
+        android:background="@drawable/bg_handle_bar" />
 
     <!-- Title -->
     <TextView
