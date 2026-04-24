@@ -1,111 +1,84 @@
-# AI Matching Algo: Thiết Kế Kiến Trúc và Toán Học
+# AI Matching: Vòng Đời Học Hỏi và Tự Điều Chỉnh
 
-Việc thiết kế kiến trúc và hiểu rõ bản chất thuật toán trước khi code là hướng đi đúng của một Tech Lead. Ở giai đoạn hiện tại, khi hệ thống mới có dữ liệu nền từ onboarding và chưa có lịch sử hành vi lớn, AI Matching phù hợp nhất là:
+Để dễ hiểu, hãy nhớ nguyên tắc cốt lõi:
 
-**Dynamic Weighted Content-Based Filtering**
+- **Trust Score (Điểm Uy tín)**: thước đo **khách quan** đánh giá một người "Tốt hay Xấu".
+- **AI Weights (Trọng số)**: thước đo **chủ quan** xem người đó có "Hợp với gu của bạn" hay không.
 
-Tức là hệ gợi ý dựa trên nội dung, có trọng số động, và tự điều chỉnh theo hành vi người dùng.
+Dưới đây là **4 giai đoạn** trong vòng đời AI học hỏi và tự điều chỉnh.
 
----
+## 1. Giai đoạn 1: Khởi tạo (The Cold Start)
 
-## 1. Công Thức Cốt Lõi (Scoring Formula)
+Khi một người dùng mới hoàn thành onboarding (chọn giới tính và tags), hệ thống tạo bản ghi trong bảng `matching_preference_model`.
 
-Thay vì chỉ dùng thời gian như trước, điểm cuối của một ứng viên là tổng hợp của 3 yếu tố, mỗi yếu tố nhân với một trọng số cá nhân hóa lấy từ bảng `matching_preference_model`.
+Vì AI chưa biết gu thực sự của họ, trọng số ban đầu được chia đều:
 
-$$
-TotalScore = (W_{time} \times S_{time}) + (W_{interest} \times S_{tags}) + (W_{behavior} \times S_{trust})
-$$
+- `weight_time_overlap` (Trọng số Thời gian): **33%**
+- `weight_interest` (Trọng số Sở thích): **33%**
+- `weight_behavior` (Trọng số Uy tín/Hành vi): **33%**
 
-Trong đó:
+## 2. Giai đoạn 2: Ghép đôi ngầm (The Silent Matchmaker)
 
-- $W$ (Weights): trọng số ưu tiên của user (tổng bằng 1.0 hoặc 100%).
-- $S$ (Scores): điểm thành phần của ứng viên theo từng tiêu chí (chuẩn hóa về thang 0-100).
-
----
-
-## 2. Phân Tách Các Điểm Thành Phần (S Variables)
-
-Khi hiện thực trong Java, thuật toán cần tính 3 biến điểm cho mỗi cặp người tìm - ứng viên.
-
-### 2.1 Điểm Thời Gian ($S_{time}$)
-
-Dựa trên số phút trùng thời gian rảnh (overlap minutes).
-
-- Nếu trùng từ 60 phút trở lên: đạt tối đa 100 điểm.
-- Nếu dưới 60 phút: tính theo tỷ lệ.
+Hệ thống Auto-Match chạy ngầm ở backend, quét các cặp `WalkIntent` đang `OPEN` và tính tổng điểm:
 
 $$
-S_{time} = \min\left(\frac{OverlapMinutes}{60} \times 100, 100\right)
+TotalScore = (W_{time} \times Điểm_{ThờiGian}) + (W_{interest} \times Điểm_{SởThích}) + (W_{behavior} \times Điểm_{TrustScore})
 $$
 
-### 2.2 Điểm Sở Thích/Tags ($S_{tags}$)
+Lưu ý:
 
-Dùng **Jaccard Similarity** để so sánh hai tập tag.
+- `Điểm_Sở_Thích` tính bằng **Jaccard Similarity** (tỷ lệ % tag trùng nhau giữa 2 người).
+- `Điểm_Trust_Score` lấy từ hệ thống trust score thang **0-1000**.
 
-$$
-S_{tags} = \frac{|Tags_{A} \cap Tags_{B}|}{|Tags_{A} \cup Tags_{B}|} \times 100
-$$
+Nếu `TotalScore` vượt ngưỡng (ví dụ **70/100**), AI sẽ tạo `WalkSession` cho 2 người.
+
+## 3. Giai đoạn 3: Thu thập tín hiệu (Structured Feedback)
+
+Sau buổi đi bộ, màn hình review xuất hiện. Đây là lúc AI nhận dữ liệu phản hồi.
 
 Ví dụ:
 
-- User A: `[Đi dạo, Chó mèo]`
-- User B: `[Chó mèo, Nói chuyện]`
-- Giao nhau: `1` tag
-- Hợp: `3` tag
+- User A đánh giá User B **5 sao** kèm tag **"Enjoyable chat"**.
 
-Kết quả: $S_{tags} = (1/3) \times 100 = 33.3$
+Khi đó:
 
-### 2.3 Điểm Uy Tín ($S_{trust}$)
+- Backend lưu tag vào bảng `walk_review_tag_map`.
+- User B được cộng ngay **+10 trust score** (phần này đã hoàn thành).
 
-Quy đổi Trust Score từ thang `0-1000` sang thang `0-100`.
+## 4. Giai đoạn 4: AI học hỏi (The Weight Adjustment)
 
-$$
-S_{trust} = \frac{CandidateTrustScore}{10}
-$$
+Mỗi đêm, CronJob của AI quét dữ liệu review/tag và cập nhật `matching_preference_model` của User A.
 
----
+### 4.1 Tín hiệu tích cực
 
-## 3. Yếu Tố "AI" Nằm Ở Đâu? (Feedback Loop)
+- User A rate 5 sao và khen "Enjoyable chat".
 
-Nếu chỉ có công thức trên thì đây mới là thuật toán tính điểm tĩnh. Phần học máy nằm ở **vòng lặp phản hồi** để cập nhật trọng số theo hành vi thực tế.
+Suy luận:
 
-### 3.1 Khởi Động Lạnh (Cold Start)
+> User A rất coi trọng người có sở thích trò chuyện tương đồng.
 
-Khi user mới tạo tài khoản, dùng trọng số mặc định:
+Hành động:
 
-- $W_{time} = 0.4$
-- $W_{interest} = 0.3$
-- $W_{behavior} = 0.3$
+- Tăng `weight_interest` từ **33%** lên **45%**.
 
-### 3.2 Vòng Lặp Phản Hồi Ngầm (Implicit Feedback Loop)
+### 4.2 Tín hiệu tiêu cực
 
-Ví dụ mỗi lần hệ thống gợi ý 5 ứng viên, AI theo dõi user bấm "Gửi lời mời" cho ai.
+- Vào lần khác, User A rate 2 sao và chọn tag "Arrived late".
 
-Nếu user thường xuyên chọn người có $S_{tags}$ cao (dù $S_{time}$ không cao), một cronjob chạy đêm sẽ cập nhật trọng số trong `matching_preference_model`:
+Suy luận:
 
-- tăng $W_{interest}$ lên `0.5`
-- giảm $W_{time}$ xuống `0.2`
+> User A không chấp nhận sự trễ giờ; bộ lọc uy tín cần được ưu tiên cao hơn.
 
-Kết quả: các lần matching sau, hệ thống tự ưu tiên ứng viên hợp sở thích hơn.
+Hành động:
 
----
+- Tăng `weight_behavior` lên **50%**.
+- Giảm các trọng số còn lại.
 
-## 4. Mô Phỏng Trực Quan Thuật Toán (Interactive Simulation)
+## Kết quả
 
-Để dễ hình dung ảnh hưởng của trọng số đến thứ hạng ứng viên, có thể dựng bộ mô phỏng slider cho $W_{time}$, $W_{interest}$, $W_{behavior}$.
+Ở lần Auto-Match tiếp theo (quay lại Giai đoạn 2), công thức điểm của User A đã thay đổi.
 
-Giả sử có 3 ứng viên mẫu:
+Hệ thống sẽ:
 
-- **Ứng viên A**: thời gian trùng cao, nhưng khác sở thích.
-- **Ứng viên B**: sở thích trùng rất cao, nhưng thời gian trùng thấp.
-- **Ứng viên C**: trust score rất cao (elite), các chỉ số còn lại trung bình.
-
-Khi kéo trọng số, thứ hạng thay đổi tương ứng. Đây là cách kiểm chứng trực quan trước khi triển khai production.
-
----
-
-## 5. Tóm Tắt Triển Khai
-
-- Ngắn hạn: triển khai đúng công thức 3 thành phần với trọng số động.
-- Trung hạn: hoàn thiện feedback loop cập nhật trọng số tự động.
-- Dài hạn: khi có đủ dữ liệu hành vi lớn, mới cân nhắc nâng cấp sang mô hình học sâu.
+- Loại bỏ ứng viên có trust score thấp (vì `W_behavior` cao).
+- Ưu tiên ứng viên có tags sở thích tương đồng (vì `W_interest` cao).
