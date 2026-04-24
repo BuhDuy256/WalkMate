@@ -9,6 +9,12 @@ public interface ReviewTagRepository {
     List<ReviewTag> findAllActive();
 
     /**
+     * Returns the subset of tags whose IDs are in the supplied list.
+     * Missing IDs are silently absent from the result.
+     */
+    List<ReviewTag> findByIds(List<UUID> tagIds);
+
+    /**
      * Inserts rows into {@code walk_review_tag_map} for each tag selected by the reviewer.
      * Silently skips {@code tagIds} that do not exist in the master table (FK-safe insert).
      *

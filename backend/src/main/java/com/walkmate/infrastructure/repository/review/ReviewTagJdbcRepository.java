@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,20 @@ public class ReviewTagJdbcRepository implements ReviewTagRepository {
                         WHERE is_active = true
                         ORDER BY tag_type, tag_name
                         """)
+                .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public List<ReviewTag> findByIds(List<UUID> tagIds) {
+        if (tagIds == null || tagIds.isEmpty()) return Collections.emptyList();
+        return jdbcClient.sql("""
+                        SELECT tag_id, tag_name, tag_type
+                        FROM review_tag_master
+                        WHERE tag_id = ANY(:ids)
+                        ORDER BY tag_type, tag_name
+                        """)
+                .param("ids", tagIds.toArray(new UUID[0]))
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();
     }

@@ -1,6 +1,7 @@
 package com.walkmate.application.review;
 
 import com.walkmate.application.gamification.BadgeEvaluationService;
+import com.walkmate.application.walkintent.AiTrainingService;
 import com.walkmate.domain.review.ReviewErrorCode;
 import com.walkmate.domain.review.ReviewTagRepository;
 import com.walkmate.domain.review.TrustScorePolicy;
@@ -31,6 +32,7 @@ public class ReviewCommandService {
     private final ReviewTagRepository    reviewTagRepository;
     private final UserRepository         userRepository;
     private final BadgeEvaluationService badgeEvaluationService;
+    private final AiTrainingService      aiTrainingService;
 
     /**
      * Submits a review for a completed walk session (Stage 2 — review-driven scoring).
@@ -95,6 +97,14 @@ public class ReviewCommandService {
         // 7. Persist structured tag selections (all within the same transaction).
         List<UUID> effectiveTags = (tagIds != null) ? tagIds : Collections.emptyList();
         reviewTagRepository.saveTagMappings(review.getReviewId(), effectiveTags);
+
+        // 8. Async: adjust the reviewer's AI matching weights based on the selected tags.
+        //    Runs on a separate thread after this transaction commits; failures are non-fatal.
+        if (!effectiveTags.isEmpty()) {
+            aiTrainingService.trainWeightsFromReview(
+                    UUID.fromString(reviewerId),
+                    reviewTagRepository.findByIds(effectiveTags));
+        }
 
         return review;
     }

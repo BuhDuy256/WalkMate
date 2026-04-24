@@ -5,7 +5,6 @@ import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -31,7 +30,6 @@ import java.util.UUID;
  * To activate AI matching: create AiMatchingStrategy @Primary — this class
  * becomes the automatic fallback (no service or controller changes needed).
  */
-@Primary
 @Component
 @RequiredArgsConstructor
 public class RuleBasedMatchingStrategy implements MatchingStrategy {
