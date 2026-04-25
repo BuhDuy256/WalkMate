@@ -51,4 +51,9 @@ public class ReviewUiState {
     public ReviewUiState withTags(List<ReviewTag> tags) {
         return new ReviewUiState(kind, error, tags, false);
     }
+
+    /** Returns a copy of this state with a new kind, preserving the tag vocabulary. */
+    public ReviewUiState withKind(Kind newKind) {
+        return new ReviewUiState(newKind, null, availableTags, tagsLoading);
+    }
 }

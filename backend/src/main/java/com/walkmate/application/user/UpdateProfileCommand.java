@@ -11,5 +11,5 @@ public record UpdateProfileCommand(
         LocalDate    dateOfBirth,
         String       bio,
         int          searchRadius,
-        List<String> tags
+        List<UUID>   tagIds
 ) {}

@@ -6,6 +6,7 @@ import com.walkmate.application.user.UpdateProfileCommand;
 import com.walkmate.application.user.UserCommandService;
 import com.walkmate.application.user.UserProfileCommandService;
 import com.walkmate.application.user.UserQueryService;
+import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.VisibilityMode;
@@ -16,6 +17,7 @@ import com.walkmate.presentation.dto.request.user.UpdateFcmTokenRequest;
 import com.walkmate.presentation.dto.request.user.UpdateProfileRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.user.AvatarUploadResponse;
+import com.walkmate.presentation.dto.response.user.ProfileTagResponse;
 import com.walkmate.presentation.dto.response.user.SetVisibilityResponse;
 import com.walkmate.presentation.dto.response.user.UserProfileResponse;
 import com.walkmate.presentation.mapper.user.UserProfileMapper;
@@ -83,7 +85,7 @@ public class UserProfileController {
                 dob,
                 request.bio(),
                 request.searchRadius(),
-                request.tags()
+                request.tagIds()
         );
 
         UserProfile  updated = commandService.updateProfile(command);
@@ -91,6 +93,17 @@ public class UserProfileController {
         List<String> tags    = queryService.getTagsByUserId(callerId);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated, user, tags)));
+    }
+
+    // ── GET /api/v1/profile/tags ──────────────────────────────────────────────
+
+    @GetMapping("/api/v1/profile/tags")
+    public ResponseEntity<ApiResponse<List<ProfileTagResponse>>> getMasterTags() {
+        List<ProfileTagMaster> masterTags = queryService.getAllMasterTags();
+        List<ProfileTagResponse> response = masterTags.stream()
+                .map(t -> new ProfileTagResponse(t.tagId(), t.tagName()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // ── POST /api/v1/profile/avatar ───────────────────────────────────────────
@@ -137,10 +150,6 @@ public class UserProfileController {
 
     // ── PATCH /api/v1/users/me/fcm-token ─────────────────────────────────────
 
-    /**
-     * Registers or refreshes the device's FCM push token for the authenticated user.
-     * Called automatically by the Android client whenever Firebase rotates the token.
-     */
     @PatchMapping("/api/v1/users/me/fcm-token")
     public ResponseEntity<ApiResponse<Void>> updateFcmToken(
             @AuthenticationPrincipal UserPrincipal principal,

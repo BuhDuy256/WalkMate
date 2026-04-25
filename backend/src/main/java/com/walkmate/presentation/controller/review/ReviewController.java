@@ -1,9 +1,8 @@
 package com.walkmate.presentation.controller.review;
 
 import com.walkmate.application.review.ReviewCommandService;
+import com.walkmate.application.review.ReviewQueryService;
 import com.walkmate.application.user.UserPrincipal;
-import com.walkmate.domain.review.ReviewTag;
-import com.walkmate.domain.review.ReviewTagRepository;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.presentation.dto.request.review.SubmitReviewRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
@@ -25,7 +24,7 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewCommandService reviewCommandService;
-    private final ReviewTagRepository  reviewTagRepository;
+    private final ReviewQueryService   reviewQueryService;
 
     /**
      * POST /api/v1/sessions/{sessionId}/review
@@ -58,7 +57,7 @@ public class ReviewController {
      */
     @GetMapping("/api/v1/reviews/tags")
     public ResponseEntity<ApiResponse<List<ReviewTagResponse>>> getReviewTags() {
-        List<ReviewTagResponse> tags = reviewTagRepository.findAllActive()
+        List<ReviewTagResponse> tags = reviewQueryService.getActiveTags()
                 .stream()
                 .map(t -> new ReviewTagResponse(t.tagId(), t.tagName(), t.tagType()))
                 .toList();
@@ -74,7 +73,7 @@ public class ReviewController {
     public ResponseEntity<ApiResponse<List<ReviewResponse>>> getUserReviews(
             @PathVariable String userId) {
 
-        List<ReviewResponse> responses = reviewCommandService.getReviewsForUser(userId)
+        List<ReviewResponse> responses = reviewQueryService.getReviewsForUser(userId)
                 .stream()
                 .map(this::toResponse)
                 .toList();

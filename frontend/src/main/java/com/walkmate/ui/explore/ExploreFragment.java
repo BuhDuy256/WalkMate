@@ -46,11 +46,10 @@ import com.walkmate.ui.explore.createintent.CreateIntentUiState;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
-import com.walkmate.ui.explore.OnboardingBottomSheet;
 import com.walkmate.ui.auth.AuthActivity;
+import com.walkmate.ui.profile.edit.EditProfileFragment;
 import com.walkmate.ui.main.MainActivity;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -100,7 +99,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private LinearLayout rowDatePicker;
     private TextView txtSelectedDate;
     private String selectedDateIso = "";
-    private ChipGroup chipGroupTags;
     private RangeSlider sliderTime;
     private RangeSlider sliderAge;
     private TextView txtTimeStart;
@@ -208,7 +206,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         txtAgeMin             = root.findViewById(R.id.txtAgeMin);
         txtAgeMax             = root.findViewById(R.id.txtAgeMax);
         btnFindMatch          = root.findViewById(R.id.btnFindMatch);
-        chipGroupTags         = root.findViewById(R.id.chipGroupTags);
         layoutPublicOptions   = root.findViewById(R.id.layoutPublicOptions);
         txtPrivateModeHint    = root.findViewById(R.id.txtPrivateModeHint);
         switchPrivateWalk     = root.findViewById(R.id.switchPrivateWalk);
@@ -546,16 +543,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         int ageMin = ageValues.get(0).intValue();
         int ageMax = ageValues.get(1).intValue();
 
-        List<String> tags = new ArrayList<>();
-        if (chipGroupTags != null) {
-            for (int i = 0; i < chipGroupTags.getChildCount(); i++) {
-                View child = chipGroupTags.getChildAt(i);
-                if (child instanceof Chip && ((Chip) child).isChecked()) {
-                    tags.add(((Chip) child).getText().toString());
-                }
-            }
-        }
-
         CreateIntentUiState intentState = createIntentViewModel.getUiState().getValue();
         boolean isPrivate = intentState != null && intentState.isPrivate();
         String invitedFriendId = intentState != null ? intentState.getInvitedFriendId() : null;
@@ -567,7 +554,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             timeEnd,
             ageMin,
             ageMax,
-            tags,
+            java.util.Collections.emptyList(),
             isPrivate,
             invitedFriendId
         );
@@ -841,10 +828,18 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         }
 
         // Onboarding gate: backend rejected the intent because gender or tags are missing.
-        // Show the OnboardingBottomSheet; on completion it re-runs the same form submission.
+        // Redirect the user to Edit Profile to complete their profile.
         if (state.isOnboardingRequired()) {
             createIntentViewModel.consumeOnboardingRequired();
-            showOnboardingBottomSheet();
+            Toast.makeText(requireContext(),
+                    "Please complete your profile (Gender & Tags) to start matching.",
+                    Toast.LENGTH_LONG).show();
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new EditProfileFragment(),
+                            EditProfileFragment.TAG)
+                    .addToBackStack(null)
+                    .commit();
             return;
         }
 
@@ -852,24 +847,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
             createIntentViewModel.consumeError();
         }
-    }
-
-    private void showOnboardingBottomSheet() {
-        // Guard against double-show on rapid re-renders.
-        if (getChildFragmentManager().findFragmentByTag(OnboardingBottomSheet.TAG) != null) return;
-
-        com.walkmate.WalkMateApplication app =
-                (com.walkmate.WalkMateApplication) requireActivity().getApplication();
-
-        OnboardingBottomSheet sheet = OnboardingBottomSheet.newInstance(
-                app.getUserProfileRepository());
-
-        sheet.setOnCompleteListener(() -> {
-            // Profile is now complete — re-submit the intent form with the same values.
-            submitCreateIntent();
-        });
-
-        sheet.show(getChildFragmentManager(), OnboardingBottomSheet.TAG);
     }
 
     /**

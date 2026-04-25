@@ -27,24 +27,23 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.walkmate.ui.main.MainActivity;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.util.GlideHelper;
+import com.walkmate.domain.user.ProfileTagMaster;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Edit Profile screen.
  *
- * Responsibilities:
- *   1. Pre-fills all form fields from the current profile.
- *   2. Validates and saves changes via EditProfileViewModel.save().
- *   3. Launches the system image picker on avatar tap; delegates byte reading
- *      and upload to EditProfileViewModel.uploadAvatar().
- *   4. Observes saveSuccess → pops back to ProfileFragment.
+ * Tags are presented as a multi-select chip group populated from the master-tags API,
+ * replacing the former free-text input. Selected chips yield UUID tag IDs sent to the backend.
  */
 public class EditProfileFragment extends Fragment {
 
@@ -54,18 +53,20 @@ public class EditProfileFragment extends Fragment {
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private ProgressBar             progressBar;
-    private ImageView               imgAvatar;
-    private EditText                etFullName;
-    private AutoCompleteTextView    spinnerGender;
-    private EditText                etDateOfBirth;
-    private EditText                etBio;
-    private TextView                txtBioCount;
-    private EditText                etSearchRadius;
-    private EditText                etTags;
-    private Button                  btnSave;
-    private View                    btnBack;
-    private TextView                txtFieldError;
+    private ProgressBar          progressBar;
+    private ImageView            imgAvatar;
+    private EditText             etFullName;
+    private AutoCompleteTextView spinnerGender;
+    private EditText             etDateOfBirth;
+    private EditText             etBio;
+    private TextView             txtBioCount;
+    private EditText             etSearchRadius;
+    private ChipGroup            chipGroupTags;
+    private Button               btnSave;
+    private View                 btnBack;
+    private TextView             txtFieldError;
+
+    private boolean tagsPreSelected = false;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -143,7 +144,7 @@ public class EditProfileFragment extends Fragment {
         etBio          = root.findViewById(R.id.etBio);
         txtBioCount    = root.findViewById(R.id.txtBioCount);
         etSearchRadius = root.findViewById(R.id.etSearchRadius);
-        etTags         = root.findViewById(R.id.etTags);
+        chipGroupTags  = root.findViewById(R.id.chipGroupTags);
         btnSave        = root.findViewById(R.id.btnSaveProfile);
         btnBack        = root.findViewById(R.id.btnBackEditProfile);
         txtFieldError  = root.findViewById(R.id.txtEditProfileError);
@@ -169,14 +170,14 @@ public class EditProfileFragment extends Fragment {
         imgAvatar.setOnClickListener(v -> launchImagePicker());
 
         btnSave.setOnClickListener(v -> {
-            String fullName     = etFullName.getText().toString().trim();
-            String gender       = spinnerGender.getText().toString().trim();
-            String dob          = etDateOfBirth.getText().toString().trim();
-            String bio          = etBio.getText().toString().trim();
-            int    radius       = parseRadius(etSearchRadius.getText().toString().trim());
-            List<String> tags   = parseTags(etTags.getText().toString().trim());
+            String fullName = etFullName.getText().toString().trim();
+            String gender   = spinnerGender.getText().toString().trim();
+            String dob      = etDateOfBirth.getText().toString().trim();
+            String bio      = etBio.getText().toString().trim();
+            int    radius   = parseRadius(etSearchRadius.getText().toString().trim());
+            List<String> tagIds = collectSelectedTagIds();
 
-            viewModel.save(fullName, gender, dob, bio, radius, tags);
+            viewModel.save(fullName, gender, dob, bio, radius, tagIds);
         });
     }
 
@@ -197,7 +198,6 @@ public class EditProfileFragment extends Fragment {
         progressBar.setVisibility(state.isLoading ? View.VISIBLE : View.GONE);
         btnSave.setEnabled(!state.isLoading);
 
-        // Error banner
         if (state.fieldError != null) {
             txtFieldError.setText(state.fieldError);
             txtFieldError.setVisibility(View.VISIBLE);
@@ -205,14 +205,13 @@ public class EditProfileFragment extends Fragment {
             txtFieldError.setVisibility(View.GONE);
         }
 
-        // Pop back on successful save
         if (state.saveSuccess) {
             Toast.makeText(requireContext(), "Profile saved", Toast.LENGTH_SHORT).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
             return;
         }
 
-        // Pre-fill fields (only once when form fields are empty — avoids overwriting typing)
+        // Pre-fill text fields (only once — avoids overwriting in-progress edits).
         if (state.fullName != null && etFullName.getText().toString().isEmpty()) {
             etFullName.setText(state.fullName);
         }
@@ -228,13 +227,42 @@ public class EditProfileFragment extends Fragment {
         if (state.searchRadius > 0 && etSearchRadius.getText().toString().isEmpty()) {
             etSearchRadius.setText(String.valueOf(state.searchRadius));
         }
-        if (state.tags != null && !state.tags.isEmpty()
-                && etTags.getText().toString().isEmpty()) {
-            etTags.setText(joinTags(state.tags));
+
+        // Populate master tag chips whenever the list arrives (first time only).
+        if (!state.masterTags.isEmpty() && chipGroupTags.getChildCount() == 0) {
+            populateTagChips(state.masterTags, state.currentTagNames);
+            tagsPreSelected = true;
         }
 
         // Avatar
         GlideHelper.loadCircle(imgAvatar, state.avatarUrl);
+    }
+
+    // ── Tag chip helpers ──────────────────────────────────────────────────────
+
+    private void populateTagChips(List<ProfileTagMaster> masterTags, List<String> selectedNames) {
+        chipGroupTags.removeAllViews();
+        for (ProfileTagMaster tag : masterTags) {
+            Chip chip = new Chip(requireContext());
+            chip.setText(tag.getTagName());
+            chip.setTag(tag.getTagId());
+            chip.setCheckable(true);
+            boolean isSelected = selectedNames != null && selectedNames.contains(tag.getTagName());
+            chip.setChecked(isSelected);
+            chipGroupTags.addView(chip);
+        }
+    }
+
+    private List<String> collectSelectedTagIds() {
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < chipGroupTags.getChildCount(); i++) {
+            View child = chipGroupTags.getChildAt(i);
+            if (child instanceof Chip && ((Chip) child).isChecked()) {
+                Object tagId = child.getTag();
+                if (tagId instanceof String) result.add((String) tagId);
+            }
+        }
+        return result;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -251,29 +279,5 @@ public class EditProfileFragment extends Fragment {
         } catch (NumberFormatException e) {
             return 0;
         }
-    }
-
-    /**
-     * Parses a comma-separated tag string into a list.
-     * e.g. "Dog Friendly, Chatty" → ["Dog Friendly", "Chatty"]
-     */
-    private static List<String> parseTags(String raw) {
-        if (raw == null || raw.isEmpty()) return List.of();
-        String[] parts = raw.split(",");
-        java.util.List<String> tags = new java.util.ArrayList<>(parts.length);
-        for (String p : parts) {
-            String trimmed = p.trim();
-            if (!trimmed.isEmpty()) tags.add(trimmed);
-        }
-        return tags;
-    }
-
-    private static String joinTags(List<String> tags) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < tags.size(); i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(tags.get(i));
-        }
-        return sb.toString();
     }
 }

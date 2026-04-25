@@ -21,26 +21,25 @@ public class CreateIntentUiState {
     private final String invitedFriendName;
     private final List<UserSummary> friendList;
     private final boolean isFriendListLoading;
-    private final String privateIntentError; // field-level error for private walk config
+    private final String privateIntentError;
 
-    // Onboarding gate: true when the backend rejects with PROFILE_INCOMPLETE_FOR_MATCHING.
-    // Fragment observes this to show OnboardingBottomSheet; ViewModel consumes it immediately.
+    // Onboarding gate signal
     private final boolean onboardingRequired;
 
     private CreateIntentUiState(boolean isLoading, String error, WalkIntent submittedIntent,
                                 boolean isPrivate, String invitedFriendId, String invitedFriendName,
                                 List<UserSummary> friendList, boolean isFriendListLoading,
                                 String privateIntentError, boolean onboardingRequired) {
-        this.isLoading           = isLoading;
-        this.error               = error;
-        this.submittedIntent     = submittedIntent;
-        this.isPrivate           = isPrivate;
-        this.invitedFriendId     = invitedFriendId;
-        this.invitedFriendName   = invitedFriendName;
-        this.friendList          = friendList != null ? friendList : Collections.emptyList();
-        this.isFriendListLoading = isFriendListLoading;
-        this.privateIntentError  = privateIntentError;
-        this.onboardingRequired  = onboardingRequired;
+        this.isLoading            = isLoading;
+        this.error                = error;
+        this.submittedIntent      = submittedIntent;
+        this.isPrivate            = isPrivate;
+        this.invitedFriendId      = invitedFriendId;
+        this.invitedFriendName    = invitedFriendName;
+        this.friendList           = friendList != null ? friendList : Collections.emptyList();
+        this.isFriendListLoading  = isFriendListLoading;
+        this.privateIntentError   = privateIntentError;
+        this.onboardingRequired   = onboardingRequired;
     }
 
     public static CreateIntentUiState initial() {
@@ -100,7 +99,6 @@ public class CreateIntentUiState {
                 friendList, isFriendListLoading, msg, onboardingRequired);
     }
 
-    /** Sets the onboarding-required gate signal. Pass false to consume/clear. */
     public CreateIntentUiState withOnboardingRequired(boolean required) {
         return new CreateIntentUiState(false, null, null,
                 isPrivate, invitedFriendId, invitedFriendName,
@@ -109,14 +107,14 @@ public class CreateIntentUiState {
 
     // ── Getters ───────────────────────────────────────────────────────────────
 
-    public boolean isLoading()                 { return isLoading; }
-    public String getError()                   { return error; }
-    public WalkIntent getSubmittedIntent()     { return submittedIntent; }
-    public boolean isPrivate()                 { return isPrivate; }
-    public String getInvitedFriendId()         { return invitedFriendId; }
-    public String getInvitedFriendName()       { return invitedFriendName; }
-    public List<UserSummary> getFriendList()   { return friendList; }
-    public boolean isFriendListLoading()       { return isFriendListLoading; }
-    public String getPrivateIntentError()      { return privateIntentError; }
-    public boolean isOnboardingRequired()      { return onboardingRequired; }
+    public boolean isLoading()                          { return isLoading; }
+    public String getError()                            { return error; }
+    public WalkIntent getSubmittedIntent()              { return submittedIntent; }
+    public boolean isPrivate()                          { return isPrivate; }
+    public String getInvitedFriendId()                  { return invitedFriendId; }
+    public String getInvitedFriendName()                { return invitedFriendName; }
+    public List<UserSummary> getFriendList()            { return friendList; }
+    public boolean isFriendListLoading()                { return isFriendListLoading; }
+    public String getPrivateIntentError()               { return privateIntentError; }
+    public boolean isOnboardingRequired()               { return onboardingRequired; }
 }

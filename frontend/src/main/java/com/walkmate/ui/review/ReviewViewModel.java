@@ -126,7 +126,10 @@ public class ReviewViewModel extends ViewModel {
      * {@link ReviewUiState#idle()} if not.
      */
     public void loadReviewState(String sessionId) {
-        reviewUiState.postValue(ReviewUiState.loading());
+        ReviewUiState snapshot = reviewUiState.getValue();
+        ReviewUiState base = snapshot != null ? snapshot : ReviewUiState.idle();
+        reviewUiState.postValue(base.withKind(ReviewUiState.Kind.LOADING));
+
         sessionRepository.getSessionHistory(new DomainCallback<List<SessionSummary>>() {
             @Override
             public void onSuccess(List<SessionSummary> sessions) {
@@ -139,15 +142,18 @@ public class ReviewViewModel extends ViewModel {
                         }
                     }
                 }
-                reviewUiState.postValue(alreadyReviewed
-                        ? ReviewUiState.alreadyReviewed()
-                        : ReviewUiState.idle());
+                ReviewUiState cur = reviewUiState.getValue();
+                ReviewUiState next = cur != null ? cur : ReviewUiState.idle();
+                reviewUiState.postValue(next.withKind(
+                        alreadyReviewed ? ReviewUiState.Kind.ALREADY_REVIEWED : ReviewUiState.Kind.IDLE));
             }
 
             @Override
             public void onError(Exception e) {
                 // Non-fatal: default to allowing a review attempt.
-                reviewUiState.postValue(ReviewUiState.idle());
+                ReviewUiState cur = reviewUiState.getValue();
+                reviewUiState.postValue(
+                        (cur != null ? cur : ReviewUiState.idle()).withKind(ReviewUiState.Kind.IDLE));
             }
         });
     }

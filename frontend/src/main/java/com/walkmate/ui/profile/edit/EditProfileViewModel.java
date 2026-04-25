@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 
@@ -17,18 +18,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * ViewModel for the Edit Profile screen.
- *
- * Data flow:
- *   loadCurrentProfile() → fetches existing profile → pre-fills form fields via uiState.
- *   save(…)              → client-side validation → updateProfile() → postValue saveSuccess.
- *   uploadAvatar(…)      → reads bytes on background thread → uploadAvatar() → reloads profile.
- */
 public class EditProfileViewModel extends ViewModel {
 
-    private static final int MAX_BIO_LENGTH  = 500;
-    private static final int MAX_TAG_COUNT   = 10;
+    private static final int MAX_BIO_LENGTH = 500;
+    private static final int MAX_TAG_COUNT  = 10;
 
     private final MutableLiveData<EditProfileUiState> uiState =
             new MutableLiveData<>(EditProfileUiState.idle());
@@ -40,21 +33,19 @@ public class EditProfileViewModel extends ViewModel {
         this.profileRepo = profileRepo;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
-
     public LiveData<EditProfileUiState> getUiState() {
         return uiState;
     }
 
-    /**
-     * Loads the current user's profile and pre-fills all form fields.
-     */
+    // ── Public API ────────────────────────────────────────────────────────────
+
     public void loadCurrentProfile() {
         uiState.postValue(EditProfileUiState.loading());
 
         profileRepo.getMyProfile(new DomainCallback<UserProfile>() {
             @Override
             public void onSuccess(UserProfile profile) {
+                EditProfileUiState current = currentState();
                 uiState.postValue(new EditProfileUiState(
                         false,
                         profile.getFullName(),
@@ -65,7 +56,8 @@ public class EditProfileViewModel extends ViewModel {
                         profile.getTags(),
                         profile.getAvatarUrl(),
                         false,
-                        null));
+                        null,
+                        current.masterTags));
             }
 
             @Override
@@ -73,15 +65,27 @@ public class EditProfileViewModel extends ViewModel {
                 uiState.postValue(EditProfileUiState.idle().withError(friendlyError(e)));
             }
         });
+
+        // Eagerly fetch master tags in parallel with the profile load.
+        profileRepo.getMasterTags(new DomainCallback<List<ProfileTagMaster>>() {
+            @Override
+            public void onSuccess(List<ProfileTagMaster> tags) {
+                uiState.postValue(currentState().withMasterTags(tags));
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Non-blocking: chip group stays empty; user can retry by re-opening.
+            }
+        });
     }
 
     /**
      * Validates inputs then persists profile changes.
-     * On success, uiState.saveSuccess is set to true — the Fragment pops back.
+     * tagIds is a list of UUID strings from profile_tag_master.
      */
     public void save(String fullName, String gender, String dob,
-                     String bio, int radius, List<String> tags) {
-        // ── Client-side validation ────────────────────────────────────────────
+                     String bio, int radius, List<String> tagIds) {
         if (fullName == null || fullName.trim().isEmpty()) {
             postError("Full name cannot be empty.");
             return;
@@ -90,14 +94,14 @@ public class EditProfileViewModel extends ViewModel {
             postError("Bio must be " + MAX_BIO_LENGTH + " characters or fewer.");
             return;
         }
-        if (tags != null && tags.size() > MAX_TAG_COUNT) {
+        if (tagIds != null && tagIds.size() > MAX_TAG_COUNT) {
             postError("You can have at most " + MAX_TAG_COUNT + " tags.");
             return;
         }
 
         uiState.postValue(currentState().withLoading(true));
 
-        profileRepo.updateProfile(fullName.trim(), gender, dob, bio, radius, tags,
+        profileRepo.updateProfile(fullName.trim(), gender, dob, bio, radius, tagIds,
                 new DomainCallback<UserProfile>() {
                     @Override
                     public void onSuccess(UserProfile profile) {
@@ -111,25 +115,20 @@ public class EditProfileViewModel extends ViewModel {
                 });
     }
 
-    /**
-     * Reads image bytes from the given URI on a background thread, then uploads
-     * them. On success, reloads the profile so the new avatar URL is reflected.
-     */
     public void uploadAvatar(Uri imageUri, ContentResolver resolver) {
         uiState.postValue(currentState().withLoading(true));
 
         executor.execute(() -> {
             try {
                 byte[] bytes = readBytes(resolver, imageUri);
-                String filename  = "avatar_" + System.currentTimeMillis() + ".jpg";
-                String mimeType  = resolver.getType(imageUri);
+                String filename = "avatar_" + System.currentTimeMillis() + ".jpg";
+                String mimeType = resolver.getType(imageUri);
                 if (mimeType == null) mimeType = "image/jpeg";
 
                 profileRepo.uploadAvatar(bytes, filename, mimeType,
                         new DomainCallback<String>() {
                             @Override
                             public void onSuccess(String avatarUrl) {
-                                // Reload so all form fields reflect the fresh profile.
                                 loadCurrentProfile();
                             }
 

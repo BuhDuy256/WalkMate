@@ -12,11 +12,14 @@ public interface UserProfileRepository {
 
     UserProfile save(UserProfile profile);
 
-    /** Replaces all tags for the given user atomically. */
-    void replaceTags(UUID userId, List<String> tags);
+    /** Replaces all tag mappings for the given user using master tag IDs (wipe-and-replace). */
+    void replaceTagsByIds(UUID userId, List<UUID> tagIds);
 
-    /** Returns all tag names for a user, ordered by insertion order. */
+    /** Returns all tag names for a user, ordered by tag name. */
     List<String> findTagsByUserId(UUID userId);
+
+    /** Returns all master tags available for selection. */
+    List<ProfileTagMaster> findAllMasterTags();
 
     /** Batch-fetches full names for the given user IDs. Missing IDs are absent from the map. */
     Map<UUID, String> findNamesByUserIds(Collection<UUID> userIds);

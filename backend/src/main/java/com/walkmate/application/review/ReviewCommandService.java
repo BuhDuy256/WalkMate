@@ -109,13 +109,6 @@ public class ReviewCommandService {
         return review;
     }
 
-    // ── Read ──────────────────────────────────────────────────────────────────
-
-    @Transactional(readOnly = true)
-    public List<WalkReview> getReviewsForUser(String userId) {
-        return walkReviewRepository.findByRevieweeId(userId);
-    }
-
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**

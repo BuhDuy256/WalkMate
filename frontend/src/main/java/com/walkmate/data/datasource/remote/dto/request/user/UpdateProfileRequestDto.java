@@ -21,16 +21,16 @@ public class UpdateProfileRequestDto {
     @SerializedName("searchRadius")
     public final int          searchRadius;
 
-    @SerializedName("tags")
-    public final List<String> tags;
+    @SerializedName("tagIds")
+    public final List<String> tagIds;
 
     public UpdateProfileRequestDto(String fullName, String gender, String dateOfBirth,
-                                   String bio, int searchRadius, List<String> tags) {
-        this.fullName     = fullName;
-        this.gender       = gender;
-        this.dateOfBirth  = dateOfBirth;
-        this.bio          = bio;
+                                   String bio, int searchRadius, List<String> tagIds) {
+        this.fullName    = fullName;
+        this.gender      = gender;
+        this.dateOfBirth = dateOfBirth;
+        this.bio         = bio;
         this.searchRadius = searchRadius;
-        this.tags         = tags;
+        this.tagIds      = tagIds;
     }
 }

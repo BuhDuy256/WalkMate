@@ -105,6 +105,7 @@ public class SubmitReviewFragment extends Fragment {
             int currentRating = (int) ratingBar.getRating();
             if (!state.availableTags.isEmpty() && currentRating > 0) {
                 populateChips(state.availableTags, currentRating);
+                layoutTagSection.setVisibility(View.VISIBLE);
             }
 
             switch (state.kind) {

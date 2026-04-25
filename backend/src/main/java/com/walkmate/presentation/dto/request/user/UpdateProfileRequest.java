@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
+import java.util.UUID;
 
 public record UpdateProfileRequest(
 
@@ -23,5 +24,5 @@ public record UpdateProfileRequest(
         int searchRadius,
 
         @Size(max = 10, message = "at most 10 tags allowed")
-        List<String> tags
+        List<UUID> tagIds
 ) {}

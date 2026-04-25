@@ -16,7 +16,6 @@ import java.util.Map;
 
 /**
  * Owns the Create Intent form submission logic, including private walk configuration.
- * Observed by ExploreFragment (not a sub-Fragment).
  */
 public class CreateIntentViewModel extends ViewModel {
 
@@ -26,7 +25,7 @@ public class CreateIntentViewModel extends ViewModel {
             "A friend must be selected for a private walk.";
 
     private final WalkIntentRepository intentRepository;
-    private final SocialRepository socialRepository;
+    private final SocialRepository     socialRepository;
 
     private final MutableLiveData<CreateIntentUiState> uiState =
             new MutableLiveData<>(CreateIntentUiState.initial());
@@ -43,7 +42,6 @@ public class CreateIntentViewModel extends ViewModel {
 
     // ── Private walk actions ──────────────────────────────────────────────────
 
-    /** Toggles the private-walk switch and loads the friend list on first enable. */
     public void togglePrivate() {
         CreateIntentUiState s = current();
         boolean nowPrivate = !s.isPrivate();
@@ -53,12 +51,10 @@ public class CreateIntentViewModel extends ViewModel {
         }
     }
 
-    /** Called when the user picks a friend from the bottom sheet. */
     public void selectFriend(String userId, String fullName) {
         post(current().withFriend(userId, fullName).withPrivateIntentError(null));
     }
 
-    /** Loads the authenticated user's friends list for the friend picker. */
     public void loadFriends() {
         post(current().withFriendListLoading(true));
         socialRepository.getFriends(new DomainCallback<List<UserSummary>>() {
@@ -69,7 +65,6 @@ public class CreateIntentViewModel extends ViewModel {
 
             @Override
             public void onError(Exception error) {
-                // Non-blocking: silently clear the loading state; picker shows empty
                 uiState.postValue(current().withFriendListLoading(false));
             }
         });
@@ -80,7 +75,6 @@ public class CreateIntentViewModel extends ViewModel {
     public void submit(String hotspotId, String date, float timeStart, float timeEnd,
                        int ageMin, int ageMax, java.util.List<String> tags,
                        boolean isPrivate, String invitedFriendId) {
-        // Guard: private walk requires a selected friend
         if (isPrivate && (invitedFriendId == null || invitedFriendId.isEmpty())) {
             post(current().withPrivateIntentError(PRIVATE_INTENT_FRIEND_REQUIRED));
             return;
@@ -100,8 +94,6 @@ public class CreateIntentViewModel extends ViewModel {
                     public void onError(Exception error) {
                         String msg = error.getMessage();
                         if (PROFILE_INCOMPLETE_FOR_MATCHING.equals(msg)) {
-                            // Backend returned 403: profile is missing gender or tags.
-                            // Signal the Fragment to show the OnboardingBottomSheet.
                             uiState.postValue(current().withLoading(false).withOnboardingRequired(true));
                         } else if (msg != null && msg.startsWith(VALIDATION_ERROR_PREFIX)) {
                             String raw = msg.substring(VALIDATION_ERROR_PREFIX.length());
@@ -116,10 +108,6 @@ public class CreateIntentViewModel extends ViewModel {
                 });
     }
 
-    /**
-     * Called by ExploreFragment after it has handled the submitted intent navigation.
-     * Clears the submittedIntent signal so it is not re-delivered on rotation/re-render.
-     */
     public void consumeSubmission() {
         post(CreateIntentUiState.initial());
     }
@@ -128,7 +116,6 @@ public class CreateIntentViewModel extends ViewModel {
         post(current().withError(null));
     }
 
-    /** Called by ExploreFragment once the OnboardingBottomSheet is shown. Clears the gate signal. */
     public void consumeOnboardingRequired() {
         post(current().withOnboardingRequired(false));
     }

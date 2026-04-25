@@ -155,15 +155,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Personality Tags (comma-separated)"
+            android:text="Personality Tags"
             android:textSize="13sp"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="8dp" />
 
-        <EditText
-            android:id="@+id/etTags"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupTags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
             android:layout_marginBottom="8dp" />
 
         <TextView

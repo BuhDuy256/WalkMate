@@ -1,6 +1,7 @@
 package com.walkmate.application.user;
 
 import com.walkmate.domain.shared.exception.DomainException;
+import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserErrorCode;
 import com.walkmate.domain.user.UserProfile;
@@ -57,10 +58,16 @@ public class UserQueryService {
                 .orElse(null);
     }
 
-    /** Returns all tags for the given user, ordered by insertion order. */
+    /** Returns all tags for the given user, ordered by name. */
     @Transactional(readOnly = true)
     public List<String> getTagsByUserId(UUID userId) {
         return profileRepository.findTagsByUserId(userId);
+    }
+
+    /** Returns all master tags available for selection. */
+    @Transactional(readOnly = true)
+    public List<ProfileTagMaster> getAllMasterTags() {
+        return profileRepository.findAllMasterTags();
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

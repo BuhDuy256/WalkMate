@@ -13,14 +13,17 @@ import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.AvatarUploadResponse;
+import com.walkmate.data.datasource.remote.dto.response.user.ProfileTagResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.UserProfileResponse;
 import com.walkmate.data.mapper.UserProfileEntityMapper;
 import com.walkmate.data.mapper.UserProfileMapper;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,28 +54,14 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     /**
      * Offline-first fetch of the authenticated user's own profile.
      *
-     * Phase A — instant cache read:
-     *   If a cached row exists in Room, callback.onSuccess() fires immediately with the
-     *   stale data so the UI can populate without any network wait.
-     *
-     * Phase B — silent background refresh:
-     *   A Retrofit call is always made regardless of whether Phase A found anything.
-     *   On success the fresh profile overwrites the cache and callback.onSuccess() fires
-     *   again, causing the UI to silently re-render with up-to-date data.
-     *   On network error:
-     *     - If Phase A already delivered cached data → error is swallowed silently.
-     *     - If there was no cache → error is forwarded to the caller.
-     *
-     * This dual-fire contract is intentional. ProfileViewModel.loadSupplementalData()
-     * and ProfileFragment.renderState() both handle repeated postValue() calls correctly.
+     * Phase A — instant cache read.
+     * Phase B — silent background refresh.
      */
     @Override
     public void getMyProfile(DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
-            // Track whether Phase A already gave the caller something to show.
             final boolean[] cacheDelivered = {false};
 
-            // ── Phase A: instant cache read ───────────────────────────────────
             String userId = sessionManager.getUserId();
             if (userId != null) {
                 UserProfileEntity cached = dao.getProfileById(userId);
@@ -82,7 +71,6 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                 }
             }
 
-            // ── Phase B: silent background refresh ───────────────────────────
             try {
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.getMyProfile().execute();
 
@@ -118,7 +106,6 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public void getProfile(String userId, DomainCallback<UserProfile> callback) {
-        // Public profiles are not cached — remote-only is acceptable here.
         executor.execute(() -> {
             try {
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.getPublicProfile(userId).execute();
@@ -140,18 +127,41 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
         });
     }
 
-    /**
-     * Write-through update: saves to backend, then upserts the fresh profile into the
-     * cache so the next cold-start sees the latest data immediately.
-     */
+    @Override
+    public void getMasterTags(DomainCallback<List<ProfileTagMaster>> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<List<ProfileTagResponse>>> resp =
+                        apiService.getMasterTags().execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    List<ProfileTagResponse> raw = resp.body().getData();
+                    List<ProfileTagMaster> result = new ArrayList<>(raw != null ? raw.size() : 0);
+                    if (raw != null) {
+                        for (ProfileTagResponse r : raw) {
+                            result.add(new ProfileTagMaster(r.tagId, r.tagName));
+                        }
+                    }
+                    callback.onSuccess(result);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "TAGS_FETCH_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getMasterTags network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
     @Override
     public void updateProfile(String fullName, String gender, String dateOfBirth,
-            String bio, int searchRadius, List<String> tags,
+            String bio, int searchRadius, List<String> tagIds,
             DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
             try {
                 UpdateProfileRequestDto dto = new UpdateProfileRequestDto(
-                        fullName, gender, dateOfBirth, bio, searchRadius, tags);
+                        fullName, gender, dateOfBirth, bio, searchRadius, tagIds);
 
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.updateMyProfile(dto).execute();
 
@@ -210,5 +220,4 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
             }
         });
     }
-
 }

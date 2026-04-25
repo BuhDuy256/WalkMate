@@ -12,9 +12,15 @@ public interface UserProfileRepository {
     /** Fetches any user's public profile by their userId. */
     void getProfile(String userId, DomainCallback<UserProfile> callback);
 
-    /** Updates the authenticated user's profile fields. */
+    /** Returns all master tags available for user selection. */
+    void getMasterTags(DomainCallback<List<ProfileTagMaster>> callback);
+
+    /**
+     * Updates the authenticated user's profile fields.
+     * tagIds is a list of UUID strings from profile_tag_master.
+     */
     void updateProfile(String fullName, String gender, String dateOfBirth,
-                       String bio, int searchRadius, List<String> tags,
+                       String bio, int searchRadius, List<String> tagIds,
                        DomainCallback<UserProfile> callback);
 
     /** Uploads an avatar image (byte array) and returns the new avatar URL. */

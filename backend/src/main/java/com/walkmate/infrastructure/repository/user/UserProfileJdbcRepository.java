@@ -1,6 +1,7 @@
 package com.walkmate.infrastructure.repository.user;
 
 import com.walkmate.domain.user.Gender;
+import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -73,31 +74,47 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
 
     @Override
     @Transactional
-    public void replaceTags(UUID userId, List<String> tags) {
-        jdbcClient.sql("DELETE FROM profile_tag WHERE user_id = :userId")
+    public void replaceTagsByIds(UUID userId, List<UUID> tagIds) {
+        jdbcClient.sql("DELETE FROM user_profile_tag_map WHERE user_id = :userId")
                 .param("userId", userId)
                 .update();
 
-        for (String tag : tags) {
-            String trimmed = tag.strip();
-            if (!trimmed.isBlank()) {
-                jdbcClient.sql("INSERT INTO profile_tag (user_id, tag_name) VALUES (:userId, :tagName)")
-                        .param("userId",  userId)
-                        .param("tagName", trimmed)
-                        .update();
-            }
+        for (UUID tagId : tagIds) {
+            jdbcClient.sql("""
+                    INSERT INTO user_profile_tag_map (user_id, tag_id)
+                    VALUES (:userId, :tagId)
+                    ON CONFLICT DO NOTHING
+                    """)
+                    .param("userId", userId)
+                    .param("tagId",  tagId)
+                    .update();
         }
     }
 
     @Override
     public List<String> findTagsByUserId(UUID userId) {
         return jdbcClient.sql("""
-                        SELECT tag_name FROM profile_tag
-                        WHERE user_id = :userId
-                        ORDER BY ctid
+                        SELECT ptm.tag_name
+                        FROM   user_profile_tag_map uptm
+                        JOIN   profile_tag_master   ptm ON uptm.tag_id = ptm.tag_id
+                        WHERE  uptm.user_id = :userId
+                        ORDER  BY ptm.tag_name
                         """)
                 .param("userId", userId)
                 .query(String.class)
+                .list();
+    }
+
+    @Override
+    public List<ProfileTagMaster> findAllMasterTags() {
+        return jdbcClient.sql("""
+                        SELECT tag_id, tag_name
+                        FROM   profile_tag_master
+                        ORDER  BY tag_name
+                        """)
+                .query((rs, rowNum) -> new ProfileTagMaster(
+                        rs.getObject("tag_id", UUID.class),
+                        rs.getString("tag_name")))
                 .list();
     }
 

@@ -35,8 +35,8 @@ public class UserProfileCommandService {
 
         UserProfile saved = profileRepository.save(profile);
 
-        List<String> tags = command.tags() != null ? command.tags() : List.of();
-        profileRepository.replaceTags(command.callerId(), tags);
+        List<UUID> tagIds = command.tagIds() != null ? command.tagIds() : List.of();
+        profileRepository.replaceTagsByIds(command.callerId(), tagIds);
 
         return saved;
     }
