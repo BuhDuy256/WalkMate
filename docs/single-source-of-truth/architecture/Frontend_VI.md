@@ -242,6 +242,7 @@ res/values/
 | `OtpInputView`        | `core.designsystem.view` | 6-digit OTP input: auto-focus-advance + backspace-to-prev | No XML attrs — fully programmatic. API: `getOtp()`, `clear()`, `setEnabled()` |
 | `GlideHelper`         | `core.util`              | Utility: all Glide calls centralised (no layout file)    | N/A — static methods only                                              |
 | `MatchCardHeaderView` | `core.designsystem.view` | Shared header row for all Matches item cards: status badge (left) + optional countdown (right) | `wm_statusLabel`, `wm_statusStyle`, `wm_showCountdown` |
+| `GoogleSignInButton`  | `core.designsystem.view` | Standardised "Continue with Google" pill button (white fill, Google icon, grey stroke). Reused in AuthActivity and RegisterActivity. No XML attrs. API: `setEnabled()` | No XML attrs — styling fixed in `view_google_signin_button.xml` |
 
 **Note:** `TagChipGroup`, `OtpInputView`, and `GlideHelper` are documented exceptions to the "view_name.xml layout required" rule:
 - `TagChipGroup` extends `ChipGroup` directly — no extra ViewGroup layer needed.

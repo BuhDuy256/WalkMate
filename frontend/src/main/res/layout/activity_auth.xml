@@ -132,22 +132,11 @@
             </LinearLayout>
 
             <!-- ── SOCIAL LOGIN ───────────────────────────────────────────────────── -->
-            <com.google.android.material.button.MaterialButton
+            <com.walkmate.core.designsystem.view.GoogleSignInButton
                 android:id="@+id/btn_google_signin"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="16dp"
-                android:backgroundTint="@color/bg_white"
-                android:text="Continue with Google"
-                android:textAllCaps="false"
-                android:textColor="@color/text_dark"
-                android:textSize="14sp"
-                app:cornerRadius="999dp"
-                app:icon="@drawable/ic_google"
-                app:iconGravity="textStart"
-                app:iconTint="@android:color/transparent"
-                app:strokeColor="@color/bg_tag_inactive"
-                app:strokeWidth="1.5dp" />
+                android:layout_marginTop="16dp" />
 
 
 

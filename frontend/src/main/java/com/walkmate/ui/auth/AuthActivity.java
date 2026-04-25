@@ -20,9 +20,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.designsystem.view.GoogleSignInButton;
 import com.walkmate.core.designsystem.view.WalkMateButton;
 import com.walkmate.core.designsystem.view.WalkMateInputField;
 import com.walkmate.core.event.AuthEvent;
@@ -40,7 +40,7 @@ public class AuthActivity extends AppCompatActivity {
     private WalkMateInputField fieldEmail;
     private WalkMateInputField fieldPassword;
     private WalkMateButton btnSignIn;
-    private MaterialButton btnGoogleSignIn;
+    private GoogleSignInButton btnGoogleSignIn;
 
     private LoginViewModel loginViewModel;
     private GoogleSignInClient googleSignInClient;
@@ -92,7 +92,9 @@ public class AuthActivity extends AppCompatActivity {
 
         btnGoogleSignIn.setOnClickListener(v -> {
             btnGoogleSignIn.setEnabled(false);
-            googleSignInLauncher.launch(googleSignInClient.getSignInIntent());
+            // Sign out first to clear any cached account so the picker always appears.
+            googleSignInClient.signOut().addOnCompleteListener(this, task ->
+                    googleSignInLauncher.launch(googleSignInClient.getSignInIntent()));
         });
 
         TextView tvForgotPassword = findViewById(R.id.tv_forgot_password);

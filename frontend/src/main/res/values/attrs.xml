@@ -174,6 +174,17 @@
     </declare-styleable>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
+         GoogleSignInButton
+         Standardised "Continue with Google" pill button reused across all auth
+         screens.  No XML-configurable attributes — all styling is fixed in
+         view_google_signin_button.xml.  Use setEnabled() to disable while a
+         sign-in is in flight.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <declare-styleable name="GoogleSignInButton">
+        <!-- No XML-configurable attributes; icon, colours, and label are fixed. -->
+    </declare-styleable>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
          ActivationWindowButtonView
          Vertical view with a status label and a WalkMateButton that enables
          itself only while the session activation window is open

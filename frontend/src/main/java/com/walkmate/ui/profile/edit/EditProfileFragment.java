@@ -36,8 +36,11 @@ import com.walkmate.WalkMateApplication;
 import com.walkmate.core.util.GlideHelper;
 import com.walkmate.domain.user.ProfileTagMaster;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Edit Profile screen.
@@ -65,6 +68,8 @@ public class EditProfileFragment extends Fragment {
     private View                 btnBack;
     private TextView             txtFieldError;
 
+    // Tracks the DOB selected via DatePickerDialog in yyyy-MM-dd format.
+    private String selectedDob = "";
     private boolean tagsPreSelected = false;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
@@ -152,6 +157,9 @@ public class EditProfileFragment extends Fragment {
                 android.R.layout.simple_dropdown_item_1line,
                 GENDER_OPTIONS);
         spinnerGender.setAdapter(genderAdapter);
+        // inputType="none" suppresses keyboard but also blocks the default auto-show;
+        // force-show the dropdown on every tap.
+        spinnerGender.setOnClickListener(v -> spinnerGender.showDropDown());
     }
 
     private void setupViewModel() {
@@ -167,13 +175,15 @@ public class EditProfileFragment extends Fragment {
 
         imgAvatar.setOnClickListener(v -> launchImagePicker());
 
+        etDateOfBirth.setOnClickListener(v -> showDatePicker());
+
         btnSave.setOnClickListener(v -> {
-            String fullName    = etFullName.getText().toString().trim();
+            String fullName      = etFullName.getText().toString().trim();
             String displayGender = spinnerGender.getText().toString().trim();
-            String gender      = toApiGender(displayGender);
-            String dob         = etDateOfBirth.getText().toString().trim();
-            String bio         = etBio.getText().toString().trim();
-            List<String> tagIds = collectSelectedTagIds();
+            String gender        = toApiGender(displayGender);
+            String dob           = selectedDob.isEmpty() ? null : selectedDob;
+            String bio           = etBio.getText().toString().trim();
+            List<String> tagIds  = collectSelectedTagIds();
 
             viewModel.save(fullName, gender, dob, bio, tagIds);
         });
@@ -216,7 +226,8 @@ public class EditProfileFragment extends Fragment {
         if (state.gender != null && spinnerGender.getText().toString().isEmpty()) {
             spinnerGender.setText(toDisplayGender(state.gender), false);
         }
-        if (state.dateOfBirth != null && etDateOfBirth.getText().toString().isEmpty()) {
+        if (state.dateOfBirth != null && selectedDob.isEmpty()) {
+            selectedDob = state.dateOfBirth;
             etDateOfBirth.setText(state.dateOfBirth);
         }
         if (state.bio != null && etBio.getText().toString().isEmpty()) {
@@ -266,6 +277,33 @@ public class EditProfileFragment extends Fragment {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
         imagePickerLauncher.launch(intent);
+    }
+
+    private void showDatePicker() {
+        Calendar cal = Calendar.getInstance();
+
+        // Initialise picker to the already-selected date if available.
+        if (!selectedDob.isEmpty()) {
+            try {
+                cal.setTime(new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(selectedDob));
+            } catch (Exception ignored) {}
+        }
+
+        android.app.DatePickerDialog dialog = new android.app.DatePickerDialog(
+                requireContext(),
+                (view, year, month, day) -> {
+                    cal.set(year, month, day);
+                    selectedDob = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            .format(cal.getTime());
+                    etDateOfBirth.setText(selectedDob);
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH));
+
+        // Birth date cannot be in the future.
+        dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        dialog.show();
     }
 
     private static String toApiGender(String display) {

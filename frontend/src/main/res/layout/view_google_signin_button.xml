@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GoogleSignInButton — compound view layout.
+  Root is <merge> because the host class extends FrameLayout.
+  All styling (icon, colours, stroke, corner radius) is declared here once
+  so neither activity_auth.xml nor activity_register.xml need to repeat it.
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_google"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:backgroundTint="@color/bg_white"
+        android:text="Continue with Google"
+        android:textAllCaps="false"
+        android:textColor="@color/text_dark"
+        android:textSize="14sp"
+        app:cornerRadius="999dp"
+        app:icon="@drawable/ic_google"
+        app:iconGravity="textStart"
+        app:iconTint="@android:color/transparent"
+        app:strokeColor="@color/bg_tag_inactive"
+        app:strokeWidth="1.5dp"
+        tools:ignore="HardcodedText" />
+
+</merge>

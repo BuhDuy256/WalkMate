@@ -90,12 +90,13 @@
             android:id="@+id/spinnerGender"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:inputType="none"
             android:layout_marginBottom="12dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Date of Birth (YYYY-MM-DD)"
+            android:text="Date of Birth"
             android:textSize="13sp"
             android:layout_marginBottom="4dp" />
 
@@ -103,7 +104,11 @@
             android:id="@+id/etDateOfBirth"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="date"
+            android:inputType="none"
+            android:focusable="false"
+            android:clickable="true"
+            android:cursorVisible="false"
+            android:hint="Tap to select"
             android:layout_marginBottom="12dp" />
 
         <LinearLayout

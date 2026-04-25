@@ -1,5 +1,6 @@
 package com.walkmate.presentation.dto.request.user;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -12,7 +13,8 @@ public record UpdateProfileRequest(
 
         String gender,          // "MALE" | "FEMALE"
 
-        String dateOfBirth,     // "YYYY-MM-DD"
+        @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "dateOfBirth must be in yyyy-MM-dd format")
+        String dateOfBirth,     // "YYYY-MM-DD" — null skips validation
 
         @Size(max = 500, message = "bio must be at most 500 characters")
         String bio,
