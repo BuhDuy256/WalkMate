@@ -116,11 +116,9 @@ public class AuthTokenFactory {
                                String fullName,
                                String bio,
                                List<String> tags) throws Exception {
-        // searchRadius is a primitive int with @Min(1) — must always be provided.
         Map<String, Object> profilePayload = new java.util.HashMap<>();
         profilePayload.put("fullName",     fullName);
         profilePayload.put("bio",          bio);
-        profilePayload.put("searchRadius", 5000);
         profilePayload.put("tags",         tags != null ? tags : List.of());
 
         String body = objectMapper.writeValueAsString(profilePayload);

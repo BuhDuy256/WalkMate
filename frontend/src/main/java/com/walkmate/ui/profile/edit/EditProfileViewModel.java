@@ -52,7 +52,6 @@ public class EditProfileViewModel extends ViewModel {
                         profile.getGender(),
                         profile.getDateOfBirth(),
                         profile.getBio(),
-                        profile.getSearchRadius(),
                         profile.getTags(),
                         profile.getAvatarUrl(),
                         false,
@@ -85,7 +84,7 @@ public class EditProfileViewModel extends ViewModel {
      * tagIds is a list of UUID strings from profile_tag_master.
      */
     public void save(String fullName, String gender, String dob,
-                     String bio, int radius, List<String> tagIds) {
+                     String bio, List<String> tagIds) {
         if (fullName == null || fullName.trim().isEmpty()) {
             postError("Full name cannot be empty.");
             return;
@@ -101,7 +100,7 @@ public class EditProfileViewModel extends ViewModel {
 
         uiState.postValue(currentState().withLoading(true));
 
-        profileRepo.updateProfile(fullName.trim(), gender, dob, bio, radius, tagIds,
+        profileRepo.updateProfile(fullName.trim(), gender, dob, bio, tagIds,
                 new DomainCallback<UserProfile>() {
                     @Override
                     public void onSuccess(UserProfile profile) {

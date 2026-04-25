@@ -49,7 +49,7 @@ public class EditProfileFragment extends Fragment {
 
     public static final String TAG = "EditProfileFragment";
 
-    private static final String[] GENDER_OPTIONS = {"Male", "Female", "Non-binary", "Prefer not to say"};
+    private static final String[] GENDER_OPTIONS = {"Male", "Female"};
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,6 @@ public class EditProfileFragment extends Fragment {
     private EditText             etDateOfBirth;
     private EditText             etBio;
     private TextView             txtBioCount;
-    private EditText             etSearchRadius;
     private ChipGroup            chipGroupTags;
     private Button               btnSave;
     private View                 btnBack;
@@ -143,7 +142,6 @@ public class EditProfileFragment extends Fragment {
         etDateOfBirth  = root.findViewById(R.id.etDateOfBirth);
         etBio          = root.findViewById(R.id.etBio);
         txtBioCount    = root.findViewById(R.id.txtBioCount);
-        etSearchRadius = root.findViewById(R.id.etSearchRadius);
         chipGroupTags  = root.findViewById(R.id.chipGroupTags);
         btnSave        = root.findViewById(R.id.btnSaveProfile);
         btnBack        = root.findViewById(R.id.btnBackEditProfile);
@@ -170,14 +168,14 @@ public class EditProfileFragment extends Fragment {
         imgAvatar.setOnClickListener(v -> launchImagePicker());
 
         btnSave.setOnClickListener(v -> {
-            String fullName = etFullName.getText().toString().trim();
-            String gender   = spinnerGender.getText().toString().trim();
-            String dob      = etDateOfBirth.getText().toString().trim();
-            String bio      = etBio.getText().toString().trim();
-            int    radius   = parseRadius(etSearchRadius.getText().toString().trim());
+            String fullName    = etFullName.getText().toString().trim();
+            String displayGender = spinnerGender.getText().toString().trim();
+            String gender      = toApiGender(displayGender);
+            String dob         = etDateOfBirth.getText().toString().trim();
+            String bio         = etBio.getText().toString().trim();
             List<String> tagIds = collectSelectedTagIds();
 
-            viewModel.save(fullName, gender, dob, bio, radius, tagIds);
+            viewModel.save(fullName, gender, dob, bio, tagIds);
         });
     }
 
@@ -216,16 +214,13 @@ public class EditProfileFragment extends Fragment {
             etFullName.setText(state.fullName);
         }
         if (state.gender != null && spinnerGender.getText().toString().isEmpty()) {
-            spinnerGender.setText(state.gender, false);
+            spinnerGender.setText(toDisplayGender(state.gender), false);
         }
         if (state.dateOfBirth != null && etDateOfBirth.getText().toString().isEmpty()) {
             etDateOfBirth.setText(state.dateOfBirth);
         }
         if (state.bio != null && etBio.getText().toString().isEmpty()) {
             etBio.setText(state.bio);
-        }
-        if (state.searchRadius > 0 && etSearchRadius.getText().toString().isEmpty()) {
-            etSearchRadius.setText(String.valueOf(state.searchRadius));
         }
 
         // Populate master tag chips whenever the list arrives (first time only).
@@ -273,11 +268,15 @@ public class EditProfileFragment extends Fragment {
         imagePickerLauncher.launch(intent);
     }
 
-    private static int parseRadius(String raw) {
-        try {
-            return Integer.parseInt(raw);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+    private static String toApiGender(String display) {
+        if ("Male".equalsIgnoreCase(display))   return "MALE";
+        if ("Female".equalsIgnoreCase(display)) return "FEMALE";
+        return null;
+    }
+
+    private static String toDisplayGender(String api) {
+        if ("MALE".equals(api))   return "Male";
+        if ("FEMALE".equals(api)) return "Female";
+        return "";
     }
 }

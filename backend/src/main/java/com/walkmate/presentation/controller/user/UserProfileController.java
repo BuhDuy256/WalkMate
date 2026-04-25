@@ -84,7 +84,6 @@ public class UserProfileController {
                 request.gender(),
                 dob,
                 request.bio(),
-                request.searchRadius(),
                 request.tagIds()
         );
 

@@ -29,8 +29,7 @@ public class UserProfileCommandService {
                 command.fullName(),
                 gender,
                 command.dateOfBirth(),
-                command.bio(),
-                command.searchRadius()
+                command.bio()
         );
 
         UserProfile saved = profileRepository.save(profile);

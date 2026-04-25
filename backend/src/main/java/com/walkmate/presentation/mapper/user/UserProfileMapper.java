@@ -25,7 +25,6 @@ public class UserProfileMapper {
                 profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : null,
                 profile.getAvatarUrl(),
                 profile.getBio(),
-                profile.getSearchRadius(),
                 user.getTrustScore(),
                 user.getTotalDistanceKm(),
                 user.getCompletedSessions(),

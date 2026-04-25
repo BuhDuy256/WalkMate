@@ -46,14 +46,14 @@ public class WalkIntentRepositoryImpl implements WalkIntentRepository {
 
     @Override
     public void createIntent(String hotspotId, String date, float timeStart, float timeEnd,
-                             int ageMin, int ageMax, List<String> tags,
+                             int ageMin, int ageMax, String preferredGender, List<String> tags,
                              boolean isPrivate, String invitedFriendId,
                              String description,
                              DomainCallback<WalkIntent> callback) {
         executor.execute(() -> {
             try {
                 CreateWalkIntentRequest request = new CreateWalkIntentRequest(
-                        hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
+                        hotspotId, date, timeStart, timeEnd, ageMin, ageMax, preferredGender, tags,
                         isPrivate, invitedFriendId, description);
 
                 Response<ApiResponse<WalkIntentResponse>> resp =

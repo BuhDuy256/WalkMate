@@ -63,7 +63,8 @@ public class AiWeightedMatchingStrategy implements MatchingStrategy {
                 intent.getMatchingConstraints().ageMin(),
                 intent.getMatchingConstraints().ageMax(),
                 intent.getUserId(),
-                MIN_WALK_DURATION
+                MIN_WALK_DURATION,
+                intent.getMatchingConstraints().preferredGender()
         );
 
         UUID callerId = UUID.fromString(intent.getUserId());

@@ -66,7 +66,8 @@ public class RuleBasedMatchingStrategy implements MatchingStrategy {
                 intent.getMatchingConstraints().ageMin(),
                 intent.getMatchingConstraints().ageMax(),
                 intent.getUserId(),
-                MIN_WALK_DURATION
+                MIN_WALK_DURATION,
+                intent.getMatchingConstraints().preferredGender()
         );
 
         // Stage 1b: Block filter — load the caller's full exclusion set in ONE

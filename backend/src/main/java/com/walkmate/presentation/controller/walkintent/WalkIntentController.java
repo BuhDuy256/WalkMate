@@ -96,6 +96,7 @@ public class WalkIntentController {
                         end,
                         request.ageMin(),
                         request.ageMax(),
+                        request.preferredGender() != null ? request.preferredGender() : "ANY",
                         request.isPrivate(),
                         request.invitedFriendId(),
                         request.description()

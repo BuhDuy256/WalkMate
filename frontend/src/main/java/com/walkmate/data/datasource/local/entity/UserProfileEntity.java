@@ -26,7 +26,6 @@ public class UserProfileEntity {
     public String dateOfBirth;
     public String avatarUrl;
     public String bio;
-    public int    searchRadius;
     public int    trustScore;
     public double totalDistanceKm;
     public int    totalSessions;

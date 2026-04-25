@@ -43,6 +43,10 @@ public record CreateWalkIntentRequest(
         @JsonProperty("age_max")
         int ageMax,
 
+        /** Preferred gender of the walking partner: "ANY", "MALE", or "FEMALE". Defaults to "ANY". */
+        @JsonProperty("preferred_gender")
+        String preferredGender,
+
         @JsonProperty("is_private")
         boolean isPrivate,
 

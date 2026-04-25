@@ -94,8 +94,9 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     user_id::text,
                     time_window_start,
                     time_window_end,
-                    (matching_constraints->>'age_min')::int  AS age_min,
-                    (matching_constraints->>'age_max')::int  AS age_max,
+                    (matching_constraints->>'age_min')::int       AS age_min,
+                    (matching_constraints->>'age_max')::int       AS age_max,
+                    matching_constraints->>'preferred_gender'     AS preferred_gender,
                     status,
                     created_at,
                     expires_at,
@@ -123,8 +124,9 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     user_id::text,
                     time_window_start,
                     time_window_end,
-                    (matching_constraints->>'age_min')::int AS age_min,
-                    (matching_constraints->>'age_max')::int AS age_max,
+                    (matching_constraints->>'age_min')::int       AS age_min,
+                    (matching_constraints->>'age_max')::int       AS age_max,
+                    matching_constraints->>'preferred_gender'     AS preferred_gender,
                     status,
                     created_at,
                     expires_at,
@@ -160,8 +162,9 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     user_id::text,
                     time_window_start,
                     time_window_end,
-                    (matching_constraints->>'age_min')::int AS age_min,
-                    (matching_constraints->>'age_max')::int AS age_max,
+                    (matching_constraints->>'age_min')::int       AS age_min,
+                    (matching_constraints->>'age_max')::int       AS age_max,
+                    matching_constraints->>'preferred_gender'     AS preferred_gender,
                     status,
                     created_at,
                     expires_at,
@@ -229,29 +232,36 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
             int ageMin,
             int ageMax,
             String excludeUserId,
-            Duration minDuration) {
+            Duration minDuration,
+            String preferredGender) {
 
         Instant boundaryEnd   = timeWindowEnd.minus(minDuration);
         Instant boundaryStart = timeWindowStart.plus(minDuration);
 
+        if (preferredGender == null || preferredGender.isBlank()) preferredGender = "ANY";
+
+        // Gender filter: if preferredGender != "ANY", only include candidates whose
+        // user_profile.gender matches the requested value.
         final String sql = """
                 SELECT
-                    intent_id::text,
-                    hotspot_id::text,
-                    user_id::text,
-                    time_window_start,
-                    time_window_end,
-                    (matching_constraints->>'age_min')::int  AS age_min,
-                    (matching_constraints->>'age_max')::int  AS age_max,
-                    status,
-                    created_at,
-                    expires_at,
-                    version,
-                    is_private,
-                    invited_friend_id::text,
-                    description,
-                    excluded_user_ids
+                    wi.intent_id::text,
+                    wi.hotspot_id::text,
+                    wi.user_id::text,
+                    wi.time_window_start,
+                    wi.time_window_end,
+                    (wi.matching_constraints->>'age_min')::int       AS age_min,
+                    (wi.matching_constraints->>'age_max')::int       AS age_max,
+                    wi.matching_constraints->>'preferred_gender'     AS preferred_gender,
+                    wi.status,
+                    wi.created_at,
+                    wi.expires_at,
+                    wi.version,
+                    wi.is_private,
+                    wi.invited_friend_id::text,
+                    wi.description,
+                    wi.excluded_user_ids
                 FROM walk_intent wi
+                LEFT JOIN user_profile up ON up.user_id = wi.user_id
                 WHERE wi.hotspot_id          = :hotspotId
                   AND wi.status              = 'OPEN'
                   AND wi.user_id            != :excludeUserId
@@ -261,17 +271,19 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                   AND (wi.matching_constraints->>'age_max')::int >= :ageMin
                   AND wi.time_window_start   < :boundaryEnd
                   AND wi.time_window_end     > :boundaryStart
+                  AND (:preferredGender = 'ANY' OR up.gender::text = :preferredGender)
                 ORDER BY wi.created_at ASC
                 """;
 
         return jdbcClient.sql(sql)
-                .param("hotspotId",     UUID.fromString(hotspotId))
-                .param("excludeUserId", UUID.fromString(excludeUserId))
-                .param("callerId",      UUID.fromString(excludeUserId))
-                .param("ageMin",        ageMin)
-                .param("ageMax",        ageMax)
-                .param("boundaryEnd",   Timestamp.from(boundaryEnd))
-                .param("boundaryStart", Timestamp.from(boundaryStart))
+                .param("hotspotId",       UUID.fromString(hotspotId))
+                .param("excludeUserId",   UUID.fromString(excludeUserId))
+                .param("callerId",        UUID.fromString(excludeUserId))
+                .param("ageMin",          ageMin)
+                .param("ageMax",          ageMax)
+                .param("boundaryEnd",     Timestamp.from(boundaryEnd))
+                .param("boundaryStart",   Timestamp.from(boundaryStart))
+                .param("preferredGender", preferredGender)
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();
     }
@@ -288,8 +300,9 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     user_id::text,
                     time_window_start,
                     time_window_end,
-                    (matching_constraints->>'age_min')::int AS age_min,
-                    (matching_constraints->>'age_max')::int AS age_max,
+                    (matching_constraints->>'age_min')::int       AS age_min,
+                    (matching_constraints->>'age_max')::int       AS age_max,
+                    matching_constraints->>'preferred_gender'     AS preferred_gender,
                     status,
                     created_at,
                     expires_at,
@@ -322,8 +335,9 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                     user_id::text,
                     time_window_start,
                     time_window_end,
-                    (matching_constraints->>'age_min')::int AS age_min,
-                    (matching_constraints->>'age_max')::int AS age_max,
+                    (matching_constraints->>'age_min')::int       AS age_min,
+                    (matching_constraints->>'age_max')::int       AS age_max,
+                    matching_constraints->>'preferred_gender'     AS preferred_gender,
                     status,
                     created_at,
                     expires_at,
@@ -347,13 +361,15 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
     // ── Private helpers ───────────────────────────────────────────────────
 
     private WalkIntent mapRow(java.sql.ResultSet rs) throws java.sql.SQLException {
+        String pg = rs.getString("preferred_gender");
+        if (pg == null || pg.isBlank()) pg = "ANY";
         return new WalkIntent(
                 rs.getString("intent_id"),
                 rs.getString("hotspot_id"),
                 rs.getString("user_id"),
                 rs.getTimestamp("time_window_start").toInstant(),
                 rs.getTimestamp("time_window_end").toInstant(),
-                new MatchingConstraints(rs.getInt("age_min"), rs.getInt("age_max")),
+                new MatchingConstraints(rs.getInt("age_min"), rs.getInt("age_max"), pg),
                 IntentStatus.valueOf(rs.getString("status")),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("expires_at").toInstant(),
@@ -395,7 +411,7 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
      * Uses String.format to avoid a Jackson dependency in the repository.
      */
     private String toJsonb(MatchingConstraints constraints) {
-        return String.format("{\"age_min\":%d,\"age_max\":%d}",
-                constraints.ageMin(), constraints.ageMax());
+        return String.format("{\"age_min\":%d,\"age_max\":%d,\"preferred_gender\":\"%s\"}",
+                constraints.ageMin(), constraints.ageMax(), constraints.preferredGender());
     }
 }

@@ -9,6 +9,7 @@ public record CreateWalkIntentCommand(
         Instant timeWindowEnd,
         int ageMin,
         int ageMax,
+        String preferredGender,  // "ANY", "MALE", or "FEMALE"
         boolean isPrivate,
         String invitedFriendId,
         String description

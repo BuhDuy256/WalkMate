@@ -86,10 +86,10 @@ public class ProfileViewModel extends ViewModel {
      * Persists profile changes to the backend then reloads the profile.
      */
     public void saveProfile(String fullName, String gender, String dateOfBirth,
-                            String bio, int searchRadius, List<String> tags) {
+                            String bio, List<String> tags) {
         uiState.postValue(ProfileUiState.loading());
 
-        profileRepo.updateProfile(fullName, gender, dateOfBirth, bio, searchRadius, tags,
+        profileRepo.updateProfile(fullName, gender, dateOfBirth, bio, tags,
                 new DomainCallback<UserProfile>() {
                     @Override
                     public void onSuccess(UserProfile profile) {

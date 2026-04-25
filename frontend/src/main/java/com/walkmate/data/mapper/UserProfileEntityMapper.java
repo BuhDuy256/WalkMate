@@ -28,7 +28,6 @@ public final class UserProfileEntityMapper {
         e.dateOfBirth     = domain.getDateOfBirth();
         e.avatarUrl       = domain.getAvatarUrl();
         e.bio             = domain.getBio();
-        e.searchRadius    = domain.getSearchRadius();
         e.trustScore      = domain.getTrustScore();
         e.totalDistanceKm = domain.getTotalDistanceKm();
         e.totalSessions   = domain.getTotalSessions();
@@ -46,7 +45,6 @@ public final class UserProfileEntityMapper {
                 e.dateOfBirth,
                 e.avatarUrl,
                 e.bio,
-                e.searchRadius,
                 e.trustScore,
                 e.totalDistanceKm,
                 e.totalSessions,

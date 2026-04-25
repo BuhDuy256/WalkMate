@@ -9,7 +9,6 @@ public record UserProfileResponse(
         String       dateOfBirth,   // "YYYY-MM-DD" or null
         String       avatarUrl,
         String       bio,
-        int          searchRadius,
         int          trustScore,
         double       totalDistanceKm,
         int          totalSessions,

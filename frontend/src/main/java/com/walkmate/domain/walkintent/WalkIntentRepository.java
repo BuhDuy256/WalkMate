@@ -8,7 +8,7 @@ import java.util.List;
 public interface WalkIntentRepository {
 
     void createIntent(String hotspotId, String date, float timeStart, float timeEnd,
-                      int ageMin, int ageMax, List<String> tags,
+                      int ageMin, int ageMax, String preferredGender, List<String> tags,
                       boolean isPrivate, String invitedFriendId,
                       String description,
                       DomainCallback<WalkIntent> callback);

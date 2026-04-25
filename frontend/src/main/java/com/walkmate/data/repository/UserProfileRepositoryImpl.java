@@ -156,12 +156,12 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public void updateProfile(String fullName, String gender, String dateOfBirth,
-            String bio, int searchRadius, List<String> tagIds,
+            String bio, List<String> tagIds,
             DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
             try {
                 UpdateProfileRequestDto dto = new UpdateProfileRequestDto(
-                        fullName, gender, dateOfBirth, bio, searchRadius, tagIds);
+                        fullName, gender, dateOfBirth, bio, tagIds);
 
                 Response<ApiResponse<UserProfileResponse>> resp = apiService.updateMyProfile(dto).execute();
 

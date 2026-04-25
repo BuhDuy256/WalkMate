@@ -15,7 +15,6 @@ public class EditProfileUiState {
     public final String                gender;
     public final String                dateOfBirth;
     public final String                bio;
-    public final int                   searchRadius;
     /** Tag names currently saved for the user — used to pre-select chips on load. */
     public final List<String>          currentTagNames;
     public final String                avatarUrl;
@@ -30,7 +29,6 @@ public class EditProfileUiState {
             String gender,
             String dateOfBirth,
             String bio,
-            int searchRadius,
             List<String> currentTagNames,
             String avatarUrl,
             boolean saveSuccess,
@@ -41,7 +39,6 @@ public class EditProfileUiState {
         this.gender          = gender;
         this.dateOfBirth     = dateOfBirth;
         this.bio             = bio;
-        this.searchRadius    = searchRadius;
         this.currentTagNames = currentTagNames != null ? currentTagNames : Collections.emptyList();
         this.avatarUrl       = avatarUrl;
         this.saveSuccess     = saveSuccess;
@@ -53,12 +50,12 @@ public class EditProfileUiState {
 
     public static EditProfileUiState loading() {
         return new EditProfileUiState(
-                true, null, null, null, null, 0, null, null, false, null, Collections.emptyList());
+                true, null, null, null, null, null, null, false, null, Collections.emptyList());
     }
 
     public static EditProfileUiState idle() {
         return new EditProfileUiState(
-                false, null, null, null, null, 0, null, null, false, null, Collections.emptyList());
+                false, null, null, null, null, null, null, false, null, Collections.emptyList());
     }
 
     // ── Copy-mutators ─────────────────────────────────────────────────────────
@@ -66,30 +63,30 @@ public class EditProfileUiState {
     public EditProfileUiState withLoading(boolean loading) {
         return new EditProfileUiState(
                 loading, fullName, gender, dateOfBirth, bio,
-                searchRadius, currentTagNames, avatarUrl, saveSuccess, fieldError, masterTags);
+                currentTagNames, avatarUrl, saveSuccess, fieldError, masterTags);
     }
 
     public EditProfileUiState withError(String error) {
         return new EditProfileUiState(
                 false, fullName, gender, dateOfBirth, bio,
-                searchRadius, currentTagNames, avatarUrl, false, error, masterTags);
+                currentTagNames, avatarUrl, false, error, masterTags);
     }
 
     public EditProfileUiState withSaveSuccess() {
         return new EditProfileUiState(
                 false, fullName, gender, dateOfBirth, bio,
-                searchRadius, currentTagNames, avatarUrl, true, null, masterTags);
+                currentTagNames, avatarUrl, true, null, masterTags);
     }
 
     public EditProfileUiState withAvatarUrl(String newAvatarUrl) {
         return new EditProfileUiState(
                 false, fullName, gender, dateOfBirth, bio,
-                searchRadius, currentTagNames, newAvatarUrl, saveSuccess, null, masterTags);
+                currentTagNames, newAvatarUrl, saveSuccess, null, masterTags);
     }
 
     public EditProfileUiState withMasterTags(List<ProfileTagMaster> tags) {
         return new EditProfileUiState(
                 isLoading, fullName, gender, dateOfBirth, bio,
-                searchRadius, currentTagNames, avatarUrl, saveSuccess, fieldError, tags);
+                currentTagNames, avatarUrl, saveSuccess, fieldError, tags);
     }
 }

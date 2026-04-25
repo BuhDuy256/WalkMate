@@ -20,7 +20,7 @@ public interface UserProfileRepository {
      * tagIds is a list of UUID strings from profile_tag_master.
      */
     void updateProfile(String fullName, String gender, String dateOfBirth,
-                       String bio, int searchRadius, List<String> tagIds,
+                       String bio, List<String> tagIds,
                        DomainCallback<UserProfile> callback);
 
     /** Uploads an avatar image (byte array) and returns the new avatar URL. */

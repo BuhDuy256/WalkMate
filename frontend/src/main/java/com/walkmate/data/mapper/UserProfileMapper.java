@@ -23,7 +23,6 @@ public final class UserProfileMapper {
                 dto.dateOfBirth,
                 dto.avatarUrl,
                 dto.bio,
-                dto.searchRadius,
                 dto.trustScore,
                 dto.totalDistanceKm,
                 dto.totalSessions,

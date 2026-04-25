@@ -32,7 +32,7 @@ import com.walkmate.data.datasource.local.entity.UserProfileEntity;
  */
 @Database(
         entities = {RoutePointEntity.class, TrackingStateEntity.class, UserProfileEntity.class},
-        version = 3,
+        version = 4,
         exportSchema = false
 )
 public abstract class WalkMateDatabase extends RoomDatabase {
@@ -94,6 +94,34 @@ public abstract class WalkMateDatabase extends RoomDatabase {
         }
     };
 
+    /**
+     * 3 → 4: Removes the {@code searchRadius} column from {@code user_profile}.
+     * SQLite < 3.35 (Android < 12) cannot drop columns, so the table is
+     * recreated without it. All data is discarded; the cache is repopulated
+     * on the next profile fetch.
+     */
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("DROP TABLE IF EXISTS `user_profile`");
+            database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `user_profile` ("
+                    + "`userId` TEXT NOT NULL, "
+                    + "`fullName` TEXT, "
+                    + "`gender` TEXT, "
+                    + "`dateOfBirth` TEXT, "
+                    + "`avatarUrl` TEXT, "
+                    + "`bio` TEXT, "
+                    + "`trustScore` INTEGER NOT NULL DEFAULT 0, "
+                    + "`totalDistanceKm` REAL NOT NULL DEFAULT 0, "
+                    + "`totalSessions` INTEGER NOT NULL DEFAULT 0, "
+                    + "`tags` TEXT, "
+                    + "`cachedAtEpochMs` INTEGER NOT NULL DEFAULT 0, "
+                    + "PRIMARY KEY(`userId`))"
+            );
+        }
+    };
+
     // ── Singleton ─────────────────────────────────────────────────────────────
 
     public static WalkMateDatabase getInstance(Context context) {
@@ -104,7 +132,7 @@ public abstract class WalkMateDatabase extends RoomDatabase {
                                     context.getApplicationContext(),
                                     WalkMateDatabase.class,
                                     DATABASE_NAME)
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                             .fallbackToDestructiveMigration()
                             .build();
                 }

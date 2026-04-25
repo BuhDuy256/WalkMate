@@ -10,6 +10,5 @@ public record UpdateProfileCommand(
         String       gender,      // raw string; mapped to Gender enum in service
         LocalDate    dateOfBirth,
         String       bio,
-        int          searchRadius,
         List<UUID>   tagIds
 ) {}

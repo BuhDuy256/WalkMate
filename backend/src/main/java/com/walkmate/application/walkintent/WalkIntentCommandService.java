@@ -80,7 +80,7 @@ public class WalkIntentCommandService {
                     command.userId(),
                     command.timeWindowStart(),
                     command.timeWindowEnd(),
-                    new MatchingConstraints(command.ageMin(), command.ageMax()),
+                    new MatchingConstraints(command.ageMin(), command.ageMax(), command.preferredGender()),
                     false,
                     null,
                     command.description()
@@ -143,7 +143,7 @@ public class WalkIntentCommandService {
         WalkIntent senderIntent = WalkIntent.create(
                 command.hotspotId(), senderId,
                 command.timeWindowStart(), command.timeWindowEnd(),
-                new MatchingConstraints(command.ageMin(), command.ageMax()),
+                new MatchingConstraints(command.ageMin(), command.ageMax(), command.preferredGender()),
                 true, receiverId, command.description()
         );
         senderIntent.lock();
@@ -165,7 +165,7 @@ public class WalkIntentCommandService {
         WalkIntent receiverIntent = WalkIntent.create(
                 command.hotspotId(), receiverId,
                 command.timeWindowStart(), command.timeWindowEnd(),
-                new MatchingConstraints(command.ageMin(), command.ageMax()),
+                new MatchingConstraints(command.ageMin(), command.ageMax(), command.preferredGender()),
                 true, senderId, null
         );
         receiverIntent.lock();

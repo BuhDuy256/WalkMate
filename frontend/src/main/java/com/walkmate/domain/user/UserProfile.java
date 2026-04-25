@@ -11,14 +11,13 @@ public class UserProfile {
     private final String       dateOfBirth;    // "YYYY-MM-DD", nullable
     private final String       avatarUrl;      // nullable
     private final String       bio;            // nullable
-    private final int          searchRadius;   // metres
     private final int          trustScore;
     private final double       totalDistanceKm;
     private final int          totalSessions;
     private final List<String> tags;
 
     public UserProfile(String userId, String fullName, String gender, String dateOfBirth,
-                       String avatarUrl, String bio, int searchRadius,
+                       String avatarUrl, String bio,
                        int trustScore, double totalDistanceKm, int totalSessions,
                        List<String> tags) {
         this.userId          = userId;
@@ -27,7 +26,6 @@ public class UserProfile {
         this.dateOfBirth     = dateOfBirth;
         this.avatarUrl       = avatarUrl;
         this.bio             = bio;
-        this.searchRadius    = searchRadius;
         this.trustScore      = trustScore;
         this.totalDistanceKm = totalDistanceKm;
         this.totalSessions   = totalSessions;
@@ -40,7 +38,6 @@ public class UserProfile {
     public String       getDateOfBirth()     { return dateOfBirth; }
     public String       getAvatarUrl()       { return avatarUrl; }
     public String       getBio()             { return bio; }
-    public int          getSearchRadius()    { return searchRadius; }
     public int          getTrustScore()      { return trustScore; }
     public double       getTotalDistanceKm() { return totalDistanceKm; }
     public int          getTotalSessions()   { return totalSessions; }

@@ -73,7 +73,7 @@ public class CreateIntentViewModel extends ViewModel {
     // ── Submission ────────────────────────────────────────────────────────────
 
     public void submit(String hotspotId, String date, float timeStart, float timeEnd,
-                       int ageMin, int ageMax, java.util.List<String> tags,
+                       int ageMin, int ageMax, String preferredGender, java.util.List<String> tags,
                        boolean isPrivate, String invitedFriendId) {
         if (isPrivate && (invitedFriendId == null || invitedFriendId.isEmpty())) {
             post(current().withPrivateIntentError(PRIVATE_INTENT_FRIEND_REQUIRED));
@@ -82,8 +82,8 @@ public class CreateIntentViewModel extends ViewModel {
 
         post(current().withLoading(true));
 
-        intentRepository.createIntent(hotspotId, date, timeStart, timeEnd, ageMin, ageMax, tags,
-                isPrivate, invitedFriendId, null,
+        intentRepository.createIntent(hotspotId, date, timeStart, timeEnd, ageMin, ageMax,
+                preferredGender, tags, isPrivate, invitedFriendId, null,
                 new DomainCallback<WalkIntent>() {
                     @Override
                     public void onSuccess(WalkIntent intent) {

@@ -24,9 +24,6 @@ public class UserProfileResponse {
     @SerializedName("bio")
     public String bio;
 
-    @SerializedName("searchRadius")
-    public int searchRadius;
-
     @SerializedName("trustScore")
     public int trustScore;
 

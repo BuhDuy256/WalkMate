@@ -106,6 +106,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private TextView txtAgeMin;
     private TextView txtAgeMax;
     private LinearLayout layoutPublicOptions;
+    private ChipGroup chipGroupGender;
     private TextView txtPrivateModeHint;
     private SwitchCompat switchPrivateWalk;
     private LinearLayout rowFriendPicker;
@@ -207,6 +208,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         txtAgeMax             = root.findViewById(R.id.txtAgeMax);
         btnFindMatch          = root.findViewById(R.id.btnFindMatch);
         layoutPublicOptions   = root.findViewById(R.id.layoutPublicOptions);
+        chipGroupGender       = root.findViewById(R.id.chipGroupGender);
         txtPrivateModeHint    = root.findViewById(R.id.txtPrivateModeHint);
         switchPrivateWalk     = root.findViewById(R.id.switchPrivateWalk);
         rowFriendPicker       = root.findViewById(R.id.rowFriendPicker);
@@ -547,6 +549,8 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         boolean isPrivate = intentState != null && intentState.isPrivate();
         String invitedFriendId = intentState != null ? intentState.getInvitedFriendId() : null;
 
+        String preferredGender = resolvePreferredGender();
+
         createIntentViewModel.submit(
             hotspotId,
             selectedDateIso,
@@ -554,6 +558,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             timeEnd,
             ageMin,
             ageMax,
+            preferredGender,
             java.util.Collections.emptyList(),
             isPrivate,
             invitedFriendId
@@ -1126,6 +1131,18 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     // ════════════════════════════════════════════════════════════════════
     // FORMAT HELPERS
     // ════════════════════════════════════════════════════════════════════
+
+    /**
+     * Returns the API gender preference value based on the selected chip in chipGroupGender.
+     * "Any" chip is the default (pre-checked in XML); falls back to "ANY" if nothing is selected.
+     */
+    private String resolvePreferredGender() {
+        if (chipGroupGender == null) return "ANY";
+        int checkedId = chipGroupGender.getCheckedChipId();
+        if (checkedId == R.id.chipMale)   return "MALE";
+        if (checkedId == R.id.chipFemale) return "FEMALE";
+        return "ANY";
+    }
 
     /** Converts a float hour value (e.g. 16.5) to "HH:MM" (e.g. "16:30"). */
     private String formatTime(float val) {

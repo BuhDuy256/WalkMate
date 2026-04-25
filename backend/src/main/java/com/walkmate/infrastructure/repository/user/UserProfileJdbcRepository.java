@@ -31,7 +31,7 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
     public Optional<UserProfile> findByUserId(UUID userId) {
         return jdbcClient.sql("""
                         SELECT user_id, full_name, gender, date_of_birth,
-                               avatar_url, bio, search_radius
+                               avatar_url, bio
                         FROM user_profile
                         WHERE user_id = :userId
                         """)
@@ -45,28 +45,26 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
         jdbcClient.sql("""
                         INSERT INTO user_profile
                             (user_id, full_name, gender, date_of_birth,
-                             avatar_url, bio, search_radius, updated_at)
+                             avatar_url, bio, updated_at)
                         VALUES
                             (:userId, :fullName, CAST(:gender AS gender), :dateOfBirth,
-                             :avatarUrl, :bio, :searchRadius, :updatedAt)
+                             :avatarUrl, :bio, :updatedAt)
                         ON CONFLICT (user_id) DO UPDATE SET
                             full_name     = EXCLUDED.full_name,
                             gender        = EXCLUDED.gender,
                             date_of_birth = EXCLUDED.date_of_birth,
                             avatar_url    = EXCLUDED.avatar_url,
                             bio           = EXCLUDED.bio,
-                            search_radius = EXCLUDED.search_radius,
                             updated_at    = EXCLUDED.updated_at
                         """)
-                .param("userId",       profile.getUserId())
-                .param("fullName",     profile.getFullName())
-                .param("gender",       profile.getGender() != null ? profile.getGender().name() : null)
-                .param("dateOfBirth",  profile.getDateOfBirth() != null
+                .param("userId",      profile.getUserId())
+                .param("fullName",    profile.getFullName())
+                .param("gender",      profile.getGender() != null ? profile.getGender().name() : null)
+                .param("dateOfBirth", profile.getDateOfBirth() != null
                         ? Date.valueOf(profile.getDateOfBirth()) : null)
-                .param("avatarUrl",    profile.getAvatarUrl())
-                .param("bio",          profile.getBio())
-                .param("searchRadius", profile.getSearchRadius())
-                .param("updatedAt",    java.sql.Timestamp.from(Instant.now()))
+                .param("avatarUrl",   profile.getAvatarUrl())
+                .param("bio",         profile.getBio())
+                .param("updatedAt",   java.sql.Timestamp.from(Instant.now()))
                 .update();
 
         return profile;
@@ -151,8 +149,7 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
                 gender,
                 dob != null ? dob.toLocalDate() : null,
                 rs.getString("avatar_url"),
-                rs.getString("bio"),
-                rs.getInt("search_radius")
+                rs.getString("bio")
         );
     }
 }
