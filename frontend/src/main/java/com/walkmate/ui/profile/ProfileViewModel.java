@@ -18,7 +18,6 @@ import com.walkmate.domain.user.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -261,7 +260,7 @@ public class ProfileViewModel extends ViewModel {
         gamificationRepo.getBadges(userId, new DomainCallback<List<UserBadge>>() {
             @Override
             public void onSuccess(List<UserBadge> userBadges) {
-                badgesHolder.set(mapBadges(userBadges));
+                badgesHolder.set(toBadgeUiList(userBadges));
                 publish.run();
             }
             @Override
@@ -300,34 +299,13 @@ public class ProfileViewModel extends ViewModel {
         });
     }
 
-    /**
-     * Converts backend {@link UserBadge} objects to UI badges.
-     * Badge names are formatted for display (e.g. "FIRST_WALK" → "First Walk").
-     * Icon drawable IDs are intentionally 0 for now — Phase 14 will wire specific
-     * drawables per badge name once the asset library is finalised.
-     */
-    private static List<ProfileUiState.Badge> mapBadges(List<UserBadge> userBadges) {
+    private static List<ProfileUiState.Badge> toBadgeUiList(List<UserBadge> userBadges) {
         if (userBadges == null || userBadges.isEmpty()) return Collections.emptyList();
         List<ProfileUiState.Badge> result = new ArrayList<>(userBadges.size());
         for (UserBadge b : userBadges) {
-            result.add(new ProfileUiState.Badge(formatBadgeName(b.getBadgeName()), 0));
+            result.add(new ProfileUiState.Badge(b.getDisplayName(), b.getIconUrl()));
         }
         return result;
-    }
-
-    /** Converts "FIRST_WALK" → "First Walk". */
-    private static String formatBadgeName(String name) {
-        if (name == null || name.isEmpty()) return "";
-        String[] words = name.toLowerCase(Locale.ROOT).split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String word : words) {
-            if (sb.length() > 0) sb.append(' ');
-            if (!word.isEmpty()) {
-                sb.append(Character.toUpperCase(word.charAt(0)));
-                sb.append(word.substring(1));
-            }
-        }
-        return sb.toString();
     }
 
     private static String friendlyError(Exception e) {

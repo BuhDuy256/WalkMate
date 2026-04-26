@@ -50,19 +50,14 @@ public class ProfileUiState {
     // ── Badge inner class ──────────────────────────────────────────────────────
 
     public static class Badge {
-        /**
-         * Display label resolved from the backend badge name (e.g. "First Walk").
-         */
+        /** Display label served directly from the backend badge metadata. */
         public final String label;
-        /**
-         * Drawable resource ID for the badge icon.
-         * 0 means "no specific icon" — the Fragment uses a generic placeholder.
-         */
-        public final int iconDrawableResId;
+        /** Remote URL for the badge icon image, served from the badge master table. */
+        public final String iconUrl;
 
-        public Badge(String label, int iconDrawableResId) {
-            this.label = label;
-            this.iconDrawableResId = iconDrawableResId;
+        public Badge(String label, String iconUrl) {
+            this.label   = label;
+            this.iconUrl = iconUrl;
         }
     }
 

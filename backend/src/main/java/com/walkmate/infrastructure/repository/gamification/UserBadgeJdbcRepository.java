@@ -47,15 +47,40 @@ public class UserBadgeJdbcRepository implements UserBadgeRepository {
     @Override
     public List<UserBadgeRecord> findByUserId(String userId) {
         return jdbcClient.sql("""
-                        SELECT badge_name, awarded_at::text
-                        FROM user_badge
-                        WHERE user_id = :userId
-                        ORDER BY awarded_at ASC
+                        SELECT ub.badge_name,
+                               b.display_name,
+                               b.description,
+                               b.icon_url,
+                               ub.awarded_at::text
+                        FROM user_badge ub
+                        JOIN badge b ON b.name = ub.badge_name
+                        WHERE ub.user_id = :userId
+                        ORDER BY ub.awarded_at ASC
                         """)
                 .param("userId", UUID.fromString(userId))
                 .query((rs, rowNum) -> new UserBadgeRecord(
                         rs.getString("badge_name"),
+                        rs.getString("display_name"),
+                        rs.getString("description"),
+                        rs.getString("icon_url"),
                         rs.getString("awarded_at")
+                ))
+                .list();
+    }
+
+    @Override
+    public List<BadgeCatalogRecord> findAllActive() {
+        return jdbcClient.sql("""
+                        SELECT name, display_name, description, icon_url
+                        FROM badge
+                        WHERE is_active = true
+                        ORDER BY name ASC
+                        """)
+                .query((rs, rowNum) -> new BadgeCatalogRecord(
+                        rs.getString("name"),
+                        rs.getString("display_name"),
+                        rs.getString("description"),
+                        rs.getString("icon_url")
                 ))
                 .list();
     }

@@ -124,7 +124,7 @@ public class GamificationRepositoryImpl implements GamificationRepository {
     private static List<UserBadge> toBadgeDomainList(List<BadgeResponse> responses) {
         List<UserBadge> result = new ArrayList<>(responses.size());
         for (BadgeResponse r : responses) {
-            result.add(new UserBadge(r.badgeName, r.awardedAt));
+            result.add(new UserBadge(r.badgeName, r.displayName, r.description, r.iconUrl, r.awardedAt));
         }
         return result;
     }

@@ -4,6 +4,7 @@ import com.walkmate.domain.gamification.UserBadgeRepository;
 import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.gamification.BadgeCatalogResponse;
 import com.walkmate.presentation.dto.response.gamification.BadgeResponse;
 import com.walkmate.presentation.dto.response.gamification.LeaderboardEntryResponse;
 import com.walkmate.presentation.dto.response.gamification.UserStatsResponse;
@@ -35,10 +36,22 @@ public class GamificationController {
 
         List<BadgeResponse> badges = badgeRepository.findByUserId(userId)
                 .stream()
-                .map(r -> new BadgeResponse(r.badgeName(), r.awardedAt()))
+                .map(r -> new BadgeResponse(
+                        r.badgeName(), r.displayName(), r.description(), r.iconUrl(), r.awardedAt()))
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(badges));
+    }
+
+    // ── GET /api/v1/badges/catalog ────────────────────────────────────────────
+
+    @GetMapping("/badges/catalog")
+    public ResponseEntity<ApiResponse<List<BadgeCatalogResponse>>> getBadgeCatalog() {
+        List<BadgeCatalogResponse> catalog = badgeRepository.findAllActive()
+                .stream()
+                .map(r -> new BadgeCatalogResponse(r.name(), r.displayName(), r.description(), r.iconUrl()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(catalog));
     }
 
     // ── GET /api/v1/users/{userId}/stats ──────────────────────────────────────

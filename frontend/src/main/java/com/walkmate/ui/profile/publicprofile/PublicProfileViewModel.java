@@ -17,7 +17,6 @@ import com.walkmate.ui.profile.ProfileUiState.Badge;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -119,7 +118,7 @@ public class PublicProfileViewModel extends ViewModel {
         gamificationRepo.getBadges(userId, new DomainCallback<List<UserBadge>>() {
             @Override
             public void onSuccess(List<UserBadge> userBadges) {
-                badgesHolder.set(mapBadges(userBadges));
+                badgesHolder.set(toBadgeUiList(userBadges));
                 publish.run();
             }
             @Override
@@ -212,26 +211,13 @@ public class PublicProfileViewModel extends ViewModel {
         uiState.postValue(PublicProfileUiState.error(friendlyError(e)));
     }
 
-    private static List<Badge> mapBadges(List<UserBadge> userBadges) {
+    private static List<Badge> toBadgeUiList(List<UserBadge> userBadges) {
         if (userBadges == null) return Collections.emptyList();
         List<Badge> result = new ArrayList<>(userBadges.size());
         for (UserBadge ub : userBadges) {
-            result.add(new Badge(formatBadgeName(ub.getBadgeName()), 0));
+            result.add(new Badge(ub.getDisplayName(), ub.getIconUrl()));
         }
         return result;
-    }
-
-    /** Converts "FIRST_WALK" → "First Walk". */
-    private static String formatBadgeName(String raw) {
-        if (raw == null || raw.isEmpty()) return raw;
-        String[] parts = raw.split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String part : parts) {
-            if (sb.length() > 0) sb.append(' ');
-            sb.append(part.substring(0, 1).toUpperCase(Locale.ROOT))
-              .append(part.substring(1).toLowerCase(Locale.ROOT));
-        }
-        return sb.toString();
     }
 
     private static String friendlyError(Exception e) {

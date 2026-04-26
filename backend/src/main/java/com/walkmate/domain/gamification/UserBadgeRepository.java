@@ -14,8 +14,22 @@ public interface UserBadgeRepository {
      */
     void saveAll(String userId, List<Badge> badges);
 
-    /** Returns all badge records for a user, ordered by awarded_at. */
+    /** Returns all badge records for a user joined with badge metadata, ordered by awarded_at. */
     List<UserBadgeRecord> findByUserId(String userId);
 
-    record UserBadgeRecord(String badgeName, String awardedAt) {}
+    /** Returns all active badge definitions from the master catalog. */
+    List<BadgeCatalogRecord> findAllActive();
+
+    record UserBadgeRecord(
+            String badgeName,
+            String displayName,
+            String description,
+            String iconUrl,
+            String awardedAt) {}
+
+    record BadgeCatalogRecord(
+            String name,
+            String displayName,
+            String description,
+            String iconUrl) {}
 }

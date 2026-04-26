@@ -7,6 +7,15 @@ public class BadgeResponse {
     @SerializedName("badgeName")
     public String badgeName;
 
+    @SerializedName("displayName")
+    public String displayName;
+
+    @SerializedName("description")
+    public String description;
+
+    @SerializedName("iconUrl")
+    public String iconUrl;
+
     @SerializedName("awardedAt")
     public String awardedAt;
 }

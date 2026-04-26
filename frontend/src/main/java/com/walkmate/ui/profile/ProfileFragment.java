@@ -313,9 +313,7 @@ public class ProfileFragment extends Fragment {
             if (badges != null && i < badges.size()) {
                 ProfileUiState.Badge badge = badges.get(i);
                 labelSlots[i].setText(badge.label);
-                if (badge.iconDrawableResId != 0) {
-                    iconSlots[i].setImageResource(badge.iconDrawableResId);
-                }
+                GlideHelper.loadCircle(iconSlots[i], badge.iconUrl);
                 parent.setVisibility(View.VISIBLE);
             } else {
                 parent.setVisibility(View.GONE);
