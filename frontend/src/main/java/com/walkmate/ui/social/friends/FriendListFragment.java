@@ -51,6 +51,7 @@ public class FriendListFragment extends Fragment {
             @Override public void onViewProfile(String userId) {
                 Bundle args = new Bundle();
                 args.putString("userId", userId);
+                args.putString(com.walkmate.ui.profile.publicprofile.PublicProfileFragment.ARG_VIEW_MODE, "FRIEND");
                 NavHostFragment.findNavController(FriendListFragment.this)
                         .navigate(R.id.action_friendsFragment_to_publicProfileFragment, args);
             }

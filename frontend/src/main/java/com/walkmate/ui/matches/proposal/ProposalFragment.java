@@ -81,6 +81,7 @@ public class ProposalFragment extends Fragment {
             @Override public void onViewProfile(String userId) {
                 Bundle args = new Bundle();
                 args.putString("userId", userId);
+                args.putBoolean(com.walkmate.ui.profile.publicprofile.PublicProfileFragment.ARG_ALLOW_FRIEND_REQUEST, false);
                 NavHostFragment.findNavController(ProposalFragment.this)
                         .navigate(R.id.action_matches_to_publicProfileFragment, args);
             }

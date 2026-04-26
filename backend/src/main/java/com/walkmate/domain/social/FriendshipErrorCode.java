@@ -10,7 +10,8 @@ public enum FriendshipErrorCode implements ErrorCode {
     FRIEND_REQUEST_NOT_FOUND("Friend request not found"),
     FRIEND_REQUEST_NOT_PARTICIPANT("You are not a participant of this friend request"),
     FRIEND_REQUEST_ALREADY_RESOLVED("This friend request has already been resolved"),
-    FRIEND_REMOVE_NOT_FRIENDS("You are not friends with this user");
+    FRIEND_REMOVE_NOT_FRIENDS("You are not friends with this user"),
+    FRIEND_REQUEST_NOT_REQUESTER("Only the requester can cancel a friend request");
 
     private final String message;
 

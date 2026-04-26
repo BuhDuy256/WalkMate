@@ -52,8 +52,10 @@ import java.util.Locale;
  */
 public class PublicProfileFragment extends Fragment {
 
-    public static final String TAG      = "PublicProfileFragment";
-    public static final String ARG_USER_ID = "userId";
+    public static final String TAG                    = "PublicProfileFragment";
+    public static final String ARG_USER_ID            = "userId";
+    public static final String ARG_VIEW_MODE          = "viewMode";
+    public static final String ARG_ALLOW_FRIEND_REQUEST = "allowFriendRequest";
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
@@ -88,14 +90,21 @@ public class PublicProfileFragment extends Fragment {
     private View                btnOverflowMenu;
     private View                btnBack;
 
+    // ── Friend-only extras ────────────────────────────────────────────────────
+
+    private View     layoutLastActiveAt;
+    private TextView txtLastActiveAt;
+
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
     private PublicProfileViewModel viewModel;
 
     // Cached for friendship mutation callbacks
-    private String currentUserId;
+    private String  currentUserId;
     // requestId when PENDING_RECEIVED — populated from the profile state
-    private String pendingRequestId;
+    private String  pendingRequestId;
+    // false when the caller does not allow friend requests (e.g. Proposal screen)
+    private boolean allowFriendRequest = true;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -116,7 +125,8 @@ public class PublicProfileFragment extends Fragment {
         setupViewModel();
 
         Bundle args = getArguments();
-        currentUserId = args != null ? args.getString(ARG_USER_ID) : null;
+        currentUserId      = args != null ? args.getString(ARG_USER_ID) : null;
+        allowFriendRequest = args == null || args.getBoolean(ARG_ALLOW_FRIEND_REQUEST, true);
 
         setupClickListeners(view);
 
@@ -153,6 +163,9 @@ public class PublicProfileFragment extends Fragment {
 
         rvReviews       = root.findViewById(R.id.rvPublicProfileReviews);
         txtNoReviews    = root.findViewById(R.id.txtNoReviews);
+
+        layoutLastActiveAt = root.findViewById(R.id.layoutLastActiveAt);
+        txtLastActiveAt    = root.findViewById(R.id.txtLastActiveAt);
 
         layoutFriendshipActions = root.findViewById(R.id.layoutFriendshipActions);
         btnAddFriend            = root.findViewById(R.id.btnAddFriend);
@@ -242,6 +255,7 @@ public class PublicProfileFragment extends Fragment {
         contentView.setVisibility(View.VISIBLE);
 
         renderIdentity(state.getProfile());
+        renderFriendExtras(state.getProfile(), state.isFriend());
         renderStats(state.getStats(), state.getProfile());
         renderBadges(state.getBadges());
         renderReviews(state.getReviews());
@@ -327,10 +341,21 @@ public class PublicProfileFragment extends Fragment {
         }
     }
 
+    private void renderFriendExtras(UserSummary profile, boolean isFriend) {
+        if (layoutLastActiveAt == null) return;
+        if (isFriend && profile != null && profile.getLastActiveAt() != null) {
+            txtLastActiveAt.setText(profile.getLastActiveAt());
+            layoutLastActiveAt.setVisibility(View.VISIBLE);
+        } else {
+            layoutLastActiveAt.setVisibility(View.GONE);
+        }
+    }
+
     private void renderFriendshipActions(UserSummary profile, String status, boolean isSelf) {
-        // Hide all friendship views when viewing own profile
-        layoutFriendshipActions.setVisibility(isSelf ? View.GONE : View.VISIBLE);
-        if (isSelf) return;
+        // Hide all friendship views when viewing own profile or when caller disallows it
+        boolean hide = isSelf || !allowFriendRequest;
+        layoutFriendshipActions.setVisibility(hide ? View.GONE : View.VISIBLE);
+        if (hide) return;
 
         // Reset all to gone, then show the relevant subset
         btnAddFriend.setVisibility(View.GONE);

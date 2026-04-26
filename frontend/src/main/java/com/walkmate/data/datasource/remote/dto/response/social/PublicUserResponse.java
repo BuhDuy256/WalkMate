@@ -32,4 +32,7 @@ public class PublicUserResponse {
 
     @SerializedName("pendingRequestId")
     public String pendingRequestId;
+
+    @SerializedName("lastActiveAt")
+    public String lastActiveAt;
 }

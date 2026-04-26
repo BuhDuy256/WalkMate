@@ -27,6 +27,8 @@ public class FriendRequestsAdapter extends ListAdapter<FriendRequest, FriendRequ
     public interface ActionListener {
         void onAccept(String requestId);
         void onDecline(String requestId);
+        void onCancel(String requestId);
+        void onViewProfile(String userId);
     }
 
     private final boolean showActions;
@@ -60,28 +62,32 @@ public class FriendRequestsAdapter extends ListAdapter<FriendRequest, FriendRequ
         private final TextView          txtName;
         private final WalkMateButton    btnAccept;
         private final WalkMateButton    btnDecline;
-        private final TextView          txtPending;
+        private final WalkMateButton    btnCancel;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            avatarView  = itemView.findViewById(R.id.avatarRequest);
-            txtName     = itemView.findViewById(R.id.txtRequestName);
-            btnAccept   = itemView.findViewById(R.id.btnRequestAccept);
-            btnDecline  = itemView.findViewById(R.id.btnRequestDecline);
-            txtPending  = itemView.findViewById(R.id.txtRequestPending);
+            avatarView = itemView.findViewById(R.id.avatarRequest);
+            txtName    = itemView.findViewById(R.id.txtRequestName);
+            btnAccept  = itemView.findViewById(R.id.btnRequestAccept);
+            btnDecline = itemView.findViewById(R.id.btnRequestDecline);
+            btnCancel  = itemView.findViewById(R.id.btnRequestCancel);
         }
 
         void bind(FriendRequest request, boolean showActions, ActionListener listener) {
-            // For incoming: show sender info. For outgoing: show receiver info via senderName
-            // (the adapter is generic; callers set the appropriate name on the request model).
             String name = request.getSenderName();
             avatarView.bind(name, request.getSenderAvatarUrl());
             txtName.setText(name);
 
+            // Tapping the card navigates to the other person's profile
+            String viewableUserId = showActions ? request.getSenderId() : request.getReceiverId();
+            itemView.setOnClickListener(v -> {
+                if (listener != null) listener.onViewProfile(viewableUserId);
+            });
+
             if (showActions) {
                 btnAccept.setVisibility(View.VISIBLE);
                 btnDecline.setVisibility(View.VISIBLE);
-                txtPending.setVisibility(View.GONE);
+                btnCancel.setVisibility(View.GONE);
 
                 btnAccept.setOnClickListener(v -> {
                     if (listener != null) listener.onAccept(request.getRequestId());
@@ -92,7 +98,10 @@ public class FriendRequestsAdapter extends ListAdapter<FriendRequest, FriendRequ
             } else {
                 btnAccept.setVisibility(View.GONE);
                 btnDecline.setVisibility(View.GONE);
-                txtPending.setVisibility(View.VISIBLE);
+                btnCancel.setVisibility(View.VISIBLE);
+                btnCancel.setOnClickListener(v -> {
+                    if (listener != null) listener.onCancel(request.getRequestId());
+                });
             }
         }
     }

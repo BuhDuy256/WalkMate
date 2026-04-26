@@ -132,6 +132,35 @@
 
             </LinearLayout>
 
+            <!-- Friend-only: Last Active ───────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/layoutLastActiveAt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="12dp"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Last active:"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_muted"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:id="@+id/txtLastActiveAt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_muted"
+                    tools:text="2026-04-25T08:30:00Z" />
+
+            </LinearLayout>
+
             <!-- Stats Row ───────────────────────────────────────────────────── -->
             <LinearLayout
                 android:layout_width="match_parent"

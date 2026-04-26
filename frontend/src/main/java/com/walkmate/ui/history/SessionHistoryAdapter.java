@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
+import com.walkmate.core.designsystem.view.AvatarInitialView;
 import com.walkmate.domain.walksession.ParticipantSummary;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
@@ -93,6 +94,13 @@ public class SessionHistoryAdapter
                 partnerClickListener.onPartnerClick(partnerId);
             }
         });
+        if (holder.avatarPartner != null) {
+            holder.avatarPartner.setOnClickListener(v -> {
+                if (partnerClickListener != null && partnerId != null) {
+                    partnerClickListener.onPartnerClick(partnerId);
+                }
+            });
+        }
 
         // ── Button visibility per UX invariant ────────────────────────────────
         WalkSession.Status global = summary.getStatus();
@@ -142,12 +150,13 @@ public class SessionHistoryAdapter
         final TextView     txtParticipant1Status;
         final TextView     txtParticipant1Distance;
         final TextView     txtParticipant1Duration;
-        final TextView     txtParticipant2Name;
-        final TextView     txtParticipant2Status;
-        final TextView     txtParticipant2Distance;
-        final TextView     txtParticipant2Duration;
-        final MaterialButton btnReview;
-        final MaterialButton btnReport;
+        final TextView        txtParticipant2Name;
+        final TextView        txtParticipant2Status;
+        final TextView        txtParticipant2Distance;
+        final TextView        txtParticipant2Duration;
+        final AvatarInitialView avatarPartner;
+        final MaterialButton  btnReview;
+        final MaterialButton  btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -161,6 +170,7 @@ public class SessionHistoryAdapter
             txtParticipant2Status   = itemView.findViewById(R.id.txtParticipant2Status);
             txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
             txtParticipant2Duration = itemView.findViewById(R.id.txtParticipant2Duration);
+            avatarPartner           = itemView.findViewById(R.id.avatarPartner);
             btnReview               = itemView.findViewById(R.id.btnReview);
             btnReport               = itemView.findViewById(R.id.btnReport);
         }
@@ -185,6 +195,15 @@ public class SessionHistoryAdapter
                 txtParticipant2Status.setText("");
                 txtParticipant2Distance.setText("");
                 txtParticipant2Duration.setText("");
+            }
+
+            // Bind partner avatar
+            if (avatarPartner != null) {
+                ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
+                if (partner != null) {
+                    String name = partner.getFullName() != null ? partner.getFullName() : "?";
+                    avatarPartner.bind(name, partner.getAvatarUrl());
+                }
             }
         }
 

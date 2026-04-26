@@ -18,6 +18,13 @@ public class UserProfileMapper {
      * @param tags    pre-loaded tag list for this user
      */
     public UserProfileResponse toResponse(UserProfile profile, User user, List<String> tags) {
+        return toResponse(profile, user, tags, null, null, null);
+    }
+
+    public UserProfileResponse toResponse(UserProfile profile, User user, List<String> tags,
+                                           String lastActiveAt,
+                                           String friendshipStatus,
+                                           String pendingRequestId) {
         return new UserProfileResponse(
                 user.getUserId().toString(),
                 profile.getFullName(),
@@ -28,7 +35,10 @@ public class UserProfileMapper {
                 user.getTrustScore(),
                 user.getTotalDistanceKm(),
                 user.getCompletedSessions(),
-                tags
+                tags,
+                lastActiveAt,
+                friendshipStatus,
+                pendingRequestId
         );
     }
 }

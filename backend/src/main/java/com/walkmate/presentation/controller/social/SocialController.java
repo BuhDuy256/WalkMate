@@ -4,6 +4,7 @@ import com.walkmate.application.social.SocialCommandService;
 import com.walkmate.application.social.SocialQueryService;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.application.user.UserQueryService;
+import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.social.UserSummaryResponse;
@@ -73,10 +74,12 @@ public class SocialController {
 
     private UserSummaryResponse toSummary(UUID userId) {
         UserProfile profile = userQueryService.getProfile(userId);
+        User        user    = userQueryService.getUser(userId);
         return new UserSummaryResponse(
                 userId.toString(),
                 profile.getFullName(),
-                profile.getAvatarUrl()
+                profile.getAvatarUrl(),
+                user.getTrustScore()
         );
     }
 }

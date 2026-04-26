@@ -1,5 +1,6 @@
 package com.walkmate.presentation.controller.user;
 
+import com.walkmate.application.social.SocialQueryService;
 import com.walkmate.application.user.SetVisibilityCommand;
 import com.walkmate.application.user.UpdateFcmTokenCommand;
 import com.walkmate.application.user.UpdateProfileCommand;
@@ -12,6 +13,7 @@ import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.VisibilityMode;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.infrastructure.storage.AvatarStorageService;
+import java.time.Instant;
 import com.walkmate.presentation.dto.request.user.SetVisibilityRequest;
 import com.walkmate.presentation.dto.request.user.UpdateFcmTokenRequest;
 import com.walkmate.presentation.dto.request.user.UpdateProfileRequest;
@@ -45,6 +47,7 @@ import java.util.UUID;
 public class UserProfileController {
 
     private final UserQueryService           queryService;
+    private final SocialQueryService         socialQueryService;
     private final UserCommandService         userCommandService;
     private final UserProfileCommandService  commandService;
     private final AvatarStorageService       storageService;
@@ -123,6 +126,7 @@ public class UserProfileController {
 
     @GetMapping("/api/v1/users/{userId}")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getPublicProfile(
+            @AuthenticationPrincipal(errorOnInvalidType = false) UserPrincipal principal,
             @PathVariable String userId) {
 
         UUID         uid     = UUID.fromString(userId);
@@ -130,7 +134,26 @@ public class UserProfileController {
         User         user    = queryService.getUser(uid);
         List<String> tags    = queryService.getTagsByUserId(uid);
 
-        return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(profile, user, tags)));
+        String lastActiveAt     = null;
+        String friendshipStatus = null;
+        String pendingRequestId = null;
+
+        if (principal != null) {
+            UUID callerId = UUID.fromString(principal.userId());
+            if (!callerId.equals(uid)) {
+                com.walkmate.application.social.FriendshipStatusResult fs =
+                        socialQueryService.getFriendshipStatus(callerId, uid);
+                friendshipStatus = fs.status();
+                pendingRequestId = fs.pendingRequestId();
+                if ("FRIENDS".equals(friendshipStatus)) {
+                    Instant ts = queryService.getLastActiveAt(uid);
+                    lastActiveAt = ts != null ? ts.toString() : null;
+                }
+            }
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(
+                mapper.toResponse(profile, user, tags, lastActiveAt, friendshipStatus, pendingRequestId)));
     }
 
     // ── PATCH /api/v1/users/me/visibility ────────────────────────────────────

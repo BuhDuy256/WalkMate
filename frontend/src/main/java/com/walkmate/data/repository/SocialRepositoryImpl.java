@@ -147,6 +147,19 @@ public class SocialRepositoryImpl implements SocialRepository {
     }
 
     @Override
+    public void cancelFriendRequest(String requestId, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = apiService.cancelFriendRequest(requestId).execute();
+                handleVoidResponse(resp, "CANCEL_REQUEST_FAILED", callback);
+            } catch (IOException e) {
+                Log.e(TAG, "cancelFriendRequest network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
     public void getPublicProfile(String userId, DomainCallback<UserSummary> callback) {
         executor.execute(() -> {
             try {

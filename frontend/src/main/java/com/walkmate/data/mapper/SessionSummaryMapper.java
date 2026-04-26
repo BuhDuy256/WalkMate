@@ -26,6 +26,7 @@ public class SessionSummaryMapper {
                 participants.add(new ParticipantSummary(
                         p.getParticipantId(),
                         p.getFullName(),
+                        p.getAvatarUrl(),
                         p.getDistanceKm(),
                         p.getDurationMinutes(),
                         toStatus(p.getUserStatus())

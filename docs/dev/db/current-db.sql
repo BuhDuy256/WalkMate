@@ -112,13 +112,10 @@ CREATE TABLE public.otp_record (
   created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT otp_record_pkey PRIMARY KEY (otp_id)
 );
-CREATE TABLE public.profile_tag (
-  tag_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  tag_name character varying NOT NULL CHECK (length(TRIM(BOTH FROM tag_name)) > 0),
-  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT profile_tag_pkey PRIMARY KEY (tag_id),
-  CONSTRAINT profile_tag_user_profile_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(user_id)
+CREATE TABLE public.profile_tag_master (
+  tag_id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tag_name character varying NOT NULL UNIQUE,
+  CONSTRAINT profile_tag_master_pkey PRIMARY KEY (tag_id)
 );
 CREATE TABLE public.refresh_token (
   token_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -135,6 +132,7 @@ CREATE TABLE public.review_tag_master (
   tag_id uuid NOT NULL DEFAULT gen_random_uuid(),
   tag_name character varying NOT NULL UNIQUE,
   tag_type character varying,
+  is_active boolean NOT NULL DEFAULT true,
   CONSTRAINT review_tag_master_pkey PRIMARY KEY (tag_id)
 );
 CREATE TABLE public.session_point_chunks (
@@ -148,8 +146,8 @@ CREATE TABLE public.session_point_chunks (
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   user_id uuid NOT NULL,
   CONSTRAINT session_point_chunks_pkey PRIMARY KEY (chunk_id),
-  CONSTRAINT session_point_chunks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
-  CONSTRAINT session_point_chunks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
+  CONSTRAINT session_point_chunks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT session_point_chunks_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
 );
 CREATE TABLE public.session_report (
   report_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -161,9 +159,9 @@ CREATE TABLE public.session_report (
   status USER-DEFINED NOT NULL DEFAULT 'OPEN'::report_status,
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT session_report_pkey PRIMARY KEY (report_id),
+  CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
   CONSTRAINT session_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.user_account(user_id),
-  CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id),
-  CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
+  CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id)
 );
 CREATE TABLE public.session_state_change_log (
   log_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -177,18 +175,6 @@ CREATE TABLE public.session_state_change_log (
   CONSTRAINT session_state_change_log_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id),
   CONSTRAINT session_state_change_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.user_account(user_id)
 );
-CREATE TABLE public.trust_score (
-  user_id uuid NOT NULL,
-  score integer NOT NULL DEFAULT 100 CHECK (score >= 0 AND score <= 1000),
-  total_sessions integer NOT NULL DEFAULT 0,
-  completed_sessions integer NOT NULL DEFAULT 0,
-  cancelled_sessions integer NOT NULL DEFAULT 0,
-  no_show_sessions integer NOT NULL DEFAULT 0,
-  last_updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  total_distance_km numeric NOT NULL DEFAULT 0 CHECK (total_distance_km >= 0::numeric),
-  CONSTRAINT trust_score_pkey PRIMARY KEY (user_id),
-  CONSTRAINT trust_score_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
-);
 CREATE TABLE public.user_account (
   user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
   email character varying UNIQUE CHECK (email::text ~* '^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$'::text),
@@ -198,12 +184,14 @@ CREATE TABLE public.user_account (
   status USER-DEFINED NOT NULL DEFAULT 'ACTIVE'::account_status,
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_login_at timestamp without time zone,
-  trust_score integer NOT NULL DEFAULT 0,
+  trust_score integer NOT NULL DEFAULT 500,
   total_points integer NOT NULL DEFAULT 0,
   fcm_token text,
   provider_subject character varying,
   visibility_mode character varying NOT NULL DEFAULT 'PUBLIC'::character varying,
   last_active_at timestamp without time zone DEFAULT now(),
+  completed_sessions integer NOT NULL DEFAULT 0,
+  total_distance_km numeric NOT NULL DEFAULT 0,
   CONSTRAINT user_account_pkey PRIMARY KEY (user_id)
 );
 CREATE TABLE public.user_badge (
@@ -227,11 +215,17 @@ CREATE TABLE public.user_profile (
   date_of_birth date CHECK (date_of_birth IS NULL OR date_of_birth < (CURRENT_DATE - '13 years'::interval)),
   avatar_url text,
   bio text,
-  search_radius integer DEFAULT 5000 CHECK (search_radius > 0 AND search_radius <= 50000),
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT user_profile_pkey PRIMARY KEY (user_id),
   CONSTRAINT user_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
+);
+CREATE TABLE public.user_profile_tag_map (
+  user_id uuid NOT NULL,
+  tag_id uuid NOT NULL,
+  CONSTRAINT user_profile_tag_map_pkey PRIMARY KEY (user_id, tag_id),
+  CONSTRAINT user_profile_tag_map_user_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(user_id),
+  CONSTRAINT user_profile_tag_map_tag_fkey FOREIGN KEY (tag_id) REFERENCES public.profile_tag_master(tag_id)
 );
 CREATE TABLE public.walk_intent (
   intent_id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -250,9 +244,9 @@ CREATE TABLE public.walk_intent (
   updated_at timestamp without time zone NOT NULL DEFAULT now(),
   excluded_user_ids ARRAY NOT NULL DEFAULT '{}'::uuid[],
   CONSTRAINT walk_intent_pkey PRIMARY KEY (intent_id),
-  CONSTRAINT walk_intent_invited_friend_fkey FOREIGN KEY (invited_friend_id) REFERENCES public.user_account(user_id),
   CONSTRAINT walk_intent_hotspot_id_fkey FOREIGN KEY (hotspot_id) REFERENCES public.hotspot(id),
-  CONSTRAINT walk_intent_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
+  CONSTRAINT walk_intent_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT walk_intent_invited_friend_fkey FOREIGN KEY (invited_friend_id) REFERENCES public.user_account(user_id)
 );
 CREATE TABLE public.walk_review (
   review_id uuid NOT NULL DEFAULT uuid_generate_v4(),

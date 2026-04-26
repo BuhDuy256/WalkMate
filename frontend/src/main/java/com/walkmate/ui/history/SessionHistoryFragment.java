@@ -76,6 +76,7 @@ public class SessionHistoryFragment extends Fragment {
         adapter.setOnPartnerClickListener(partnerId -> {
             Bundle args = new Bundle();
             args.putString(PublicProfileFragment.ARG_USER_ID, partnerId);
+            args.putBoolean(PublicProfileFragment.ARG_ALLOW_FRIEND_REQUEST, true);
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_sessionHistory_to_publicProfileFragment, args);
         });

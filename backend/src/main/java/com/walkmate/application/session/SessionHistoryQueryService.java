@@ -4,6 +4,7 @@ import com.walkmate.domain.review.WalkReviewRepository;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.user.UserProfileRepository;
+import com.walkmate.domain.user.UserProfileSnapshot;
 import com.walkmate.presentation.dto.response.session.ParticipantSummaryResponse;
 import com.walkmate.presentation.dto.response.session.SessionSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,30 +41,35 @@ public class SessionHistoryQueryService {
             allParticipantIds.add(UUID.fromString(s.getUserIdA()));
             allParticipantIds.add(UUID.fromString(s.getUserIdB()));
         }
-        Map<UUID, String> names = profileRepository.findNamesByUserIds(allParticipantIds);
+        Map<UUID, UserProfileSnapshot> snapshots = profileRepository.findSnapshotsByUserIds(allParticipantIds);
 
         return sessions.stream()
-                .map(s -> toSummary(s, callerId, names))
+                .map(s -> toSummary(s, callerId, snapshots))
                 .collect(Collectors.toList());
     }
 
     private SessionSummaryResponse toSummary(WalkSession s, String callerId,
-                                              Map<UUID, String> names) {
+                                              Map<UUID, UserProfileSnapshot> snapshots) {
         boolean isReviewed = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
 
         UUID userIdA = UUID.fromString(s.getUserIdA());
         UUID userIdB = UUID.fromString(s.getUserIdB());
 
+        UserProfileSnapshot snapA = snapshots.getOrDefault(userIdA, new UserProfileSnapshot("Unknown", null));
+        UserProfileSnapshot snapB = snapshots.getOrDefault(userIdB, new UserProfileSnapshot("Unknown", null));
+
         ParticipantSummaryResponse participantA = new ParticipantSummaryResponse(
                 s.getUserIdA(),
-                names.getOrDefault(userIdA, "Unknown"),
+                snapA.fullName(),
+                snapA.avatarUrl(),
                 s.getUserADistanceKm(),
                 (int) (s.getUserADurationSeconds() / 60),
                 s.getUserAStatus().name()
         );
         ParticipantSummaryResponse participantB = new ParticipantSummaryResponse(
                 s.getUserIdB(),
-                names.getOrDefault(userIdB, "Unknown"),
+                snapB.fullName(),
+                snapB.avatarUrl(),
                 s.getUserBDistanceKm(),
                 (int) (s.getUserBDurationSeconds() / 60),
                 s.getUserBStatus().name()

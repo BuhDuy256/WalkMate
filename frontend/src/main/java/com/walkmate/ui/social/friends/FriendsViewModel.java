@@ -140,6 +140,15 @@ public class FriendsViewModel extends ViewModel {
         });
     }
 
+    public void cancelRequest(String requestId) {
+        socialRepository.cancelFriendRequest(requestId, new DomainCallback<Void>() {
+            @Override public void onSuccess(Void v) { loadAll(); }
+            @Override public void onError(Exception e) {
+                uiState.postValue(FriendsUiState.error(friendlyError(e)));
+            }
+        });
+    }
+
     /**
      * Posts a navigation event so the container FriendsFragment can deep-link
      * to ExploreFragment with the friend's id pre-filled.

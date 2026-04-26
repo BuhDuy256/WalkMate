@@ -47,6 +47,12 @@ public class Friendship {
         this.updatedAt = Instant.now();
     }
 
+    public void cancel() {
+        guardPending();
+        this.status    = "CANCELLED";
+        this.updatedAt = Instant.now();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public boolean isPending()  { return "PENDING".equals(status); }

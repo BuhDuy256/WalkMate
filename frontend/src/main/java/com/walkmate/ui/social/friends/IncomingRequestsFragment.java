@@ -10,10 +10,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
+import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 
 /**
  * Incoming Requests tab — shows pending friend requests sent to the current user.
@@ -48,6 +50,14 @@ public class IncomingRequestsFragment extends Fragment {
             }
             @Override public void onDecline(String requestId) {
                 viewModel.declineRequest(requestId);
+            }
+            @Override public void onCancel(String requestId) {}
+            @Override public void onViewProfile(String userId) {
+                Bundle args = new Bundle();
+                args.putString("userId", userId);
+                args.putBoolean(PublicProfileFragment.ARG_ALLOW_FRIEND_REQUEST, true);
+                NavHostFragment.findNavController(IncomingRequestsFragment.this)
+                        .navigate(R.id.action_friendsFragment_to_publicProfileFragment, args);
             }
         });
 

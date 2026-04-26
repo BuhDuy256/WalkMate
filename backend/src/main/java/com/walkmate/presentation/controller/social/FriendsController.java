@@ -5,8 +5,10 @@ import com.walkmate.application.social.FriendQueryService;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.social.Friendship;
+import com.walkmate.domain.user.User;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.social.FriendRequestResponse;
 import com.walkmate.presentation.dto.response.social.FriendshipResponse;
 import com.walkmate.presentation.dto.response.social.UserSummaryResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -75,8 +77,13 @@ public class FriendsController {
         List<UserSummaryResponse> result = friendQueryService.getFriends(callerId)
                 .stream()
                 .map(uid -> {
-                    UserProfile profile = userQueryService.getProfile(uid);
-                    return new UserSummaryResponse(uid.toString(), profile.getFullName(), profile.getAvatarUrl());
+                    UserProfile profile  = userQueryService.getProfile(uid);
+                    User        user     = userQueryService.getUser(uid);
+                    return new UserSummaryResponse(
+                            uid.toString(),
+                            profile.getFullName(),
+                            profile.getAvatarUrl(),
+                            user.getTrustScore());
                 })
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -85,13 +92,23 @@ public class FriendsController {
     // ── Get incoming requests (UC-38) ─────────────────────────────────────────
 
     @GetMapping("/requests/incoming")
-    public ResponseEntity<ApiResponse<List<FriendshipResponse>>> getIncomingRequests(
+    public ResponseEntity<ApiResponse<List<FriendRequestResponse>>> getIncomingRequests(
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID callerId = UUID.fromString(principal.userId());
-        List<FriendshipResponse> result = friendQueryService.getIncomingRequests(callerId)
+        List<FriendRequestResponse> result = friendQueryService.getIncomingRequests(callerId)
                 .stream()
-                .map(this::toFriendshipResponse)
+                .map(fs -> {
+                    UserProfile senderProfile = userQueryService.getProfile(fs.getRequesterId());
+                    return new FriendRequestResponse(
+                            fs.getFriendshipId(),
+                            fs.getRequesterId().toString(),
+                            senderProfile.getFullName(),
+                            senderProfile.getAvatarUrl(),
+                            fs.getAddresseeId().toString(),
+                            fs.getStatus(),
+                            fs.getCreatedAt().toString());
+                })
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(result));
     }
@@ -99,15 +116,38 @@ public class FriendsController {
     // ── Get outgoing requests (UC-38) ─────────────────────────────────────────
 
     @GetMapping("/requests/outgoing")
-    public ResponseEntity<ApiResponse<List<FriendshipResponse>>> getOutgoingRequests(
+    public ResponseEntity<ApiResponse<List<FriendRequestResponse>>> getOutgoingRequests(
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID callerId = UUID.fromString(principal.userId());
-        List<FriendshipResponse> result = friendQueryService.getOutgoingRequests(callerId)
+        List<FriendRequestResponse> result = friendQueryService.getOutgoingRequests(callerId)
                 .stream()
-                .map(this::toFriendshipResponse)
+                .map(fs -> {
+                    // For outgoing: show the addressee's profile (adapter uses senderName for both directions)
+                    UserProfile receiverProfile = userQueryService.getProfile(fs.getAddresseeId());
+                    return new FriendRequestResponse(
+                            fs.getFriendshipId(),
+                            fs.getRequesterId().toString(),
+                            receiverProfile.getFullName(),
+                            receiverProfile.getAvatarUrl(),
+                            fs.getAddresseeId().toString(),
+                            fs.getStatus(),
+                            fs.getCreatedAt().toString());
+                })
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // ── Cancel outgoing friend request (UC-39) ───────────────────────────────
+
+    @DeleteMapping("/requests/{requestId}")
+    public ResponseEntity<ApiResponse<Void>> cancelFriendRequest(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String requestId) {
+
+        UUID callerId = UUID.fromString(principal.userId());
+        friendCommandService.cancelFriendRequest(callerId, requestId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     // ── Remove friend (UC-36) ─────────────────────────────────────────────────

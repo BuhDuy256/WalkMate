@@ -62,4 +62,5 @@ public class PublicProfileUiState {
     public List<WalkReview> getReviews()   { return reviews; }
     public String getFriendshipStatus()    { return friendshipStatus; }
     public boolean isSelf()               { return isSelf; }
+    public boolean isFriend()             { return "FRIENDS".equals(friendshipStatus); }
 }

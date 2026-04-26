@@ -52,10 +52,14 @@ public class SessionSummaryResponse {
         @SerializedName("user_status")
         private String userStatus;
 
+        @SerializedName("avatar_url")
+        private String avatarUrl;
+
         public String getParticipantId()   { return participantId; }
         public String getFullName()        { return fullName; }
         public double getDistanceKm()      { return distanceKm; }
         public int    getDurationMinutes() { return durationMinutes; }
         public String getUserStatus()      { return userStatus; }
+        public String getAvatarUrl()       { return avatarUrl; }
     }
 }

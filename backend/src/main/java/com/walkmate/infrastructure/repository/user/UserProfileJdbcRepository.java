@@ -4,6 +4,7 @@ import com.walkmate.domain.user.Gender;
 import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
+import com.walkmate.domain.user.UserProfileSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -132,6 +134,42 @@ public class UserProfileJdbcRepository implements UserProfileRepository {
                         result.put(id, name != null ? name : "");
                     }
                     return result;
+                });
+    }
+
+    @Override
+    public Map<UUID, UserProfileSnapshot> findSnapshotsByUserIds(Collection<UUID> userIds) {
+        if (userIds == null || userIds.isEmpty()) return Collections.emptyMap();
+        return jdbcClient.sql("""
+                        SELECT user_id, full_name, avatar_url FROM user_profile
+                        WHERE user_id = ANY(:ids)
+                        """)
+                .param("ids", userIds.toArray(new UUID[0]))
+                .query(rs -> {
+                    Map<UUID, UserProfileSnapshot> result = new HashMap<>();
+                    while (rs.next()) {
+                        UUID id = rs.getObject("user_id", UUID.class);
+                        result.put(id, new UserProfileSnapshot(
+                                rs.getString("full_name"),
+                                rs.getString("avatar_url")));
+                    }
+                    return result;
+                });
+    }
+
+    @Override
+    public Instant findLastActiveAtById(UUID userId) {
+        return jdbcClient.sql("""
+                        SELECT last_active_at FROM user_account
+                        WHERE user_id = :userId
+                        """)
+                .param("userId", userId)
+                .query(rs -> {
+                    if (rs.next()) {
+                        Timestamp ts = rs.getTimestamp("last_active_at");
+                        return ts != null ? ts.toInstant() : null;
+                    }
+                    return null;
                 });
     }
 

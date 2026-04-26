@@ -10,6 +10,9 @@ public record ParticipantSummaryResponse(
         @JsonProperty("full_name")
         String fullName,
 
+        @JsonProperty("avatar_url")
+        String avatarUrl,
+
         @JsonProperty("distance_km")
         double distanceKm,
 

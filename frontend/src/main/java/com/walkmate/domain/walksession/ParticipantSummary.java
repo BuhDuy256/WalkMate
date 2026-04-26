@@ -4,15 +4,17 @@ public class ParticipantSummary {
 
     private final String            participantId;
     private final String            fullName;
+    private final String            avatarUrl;
     private final double            distanceKm;
     private final int               durationMinutes;
     private final WalkSession.Status userStatus;
 
-    public ParticipantSummary(String participantId, String fullName,
+    public ParticipantSummary(String participantId, String fullName, String avatarUrl,
                                double distanceKm, int durationMinutes,
                                WalkSession.Status userStatus) {
         this.participantId   = participantId;
         this.fullName        = fullName;
+        this.avatarUrl       = avatarUrl;
         this.distanceKm      = distanceKm;
         this.durationMinutes = durationMinutes;
         this.userStatus      = userStatus;
@@ -20,6 +22,7 @@ public class ParticipantSummary {
 
     public String             getParticipantId()   { return participantId; }
     public String             getFullName()        { return fullName; }
+    public String             getAvatarUrl()       { return avatarUrl; }
     public double             getDistanceKm()      { return distanceKm; }
     public int                getDurationMinutes() { return durationMinutes; }
     public WalkSession.Status getUserStatus()      { return userStatus; }

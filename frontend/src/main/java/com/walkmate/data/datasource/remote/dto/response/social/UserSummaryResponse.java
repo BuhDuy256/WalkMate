@@ -12,4 +12,7 @@ public class UserSummaryResponse {
 
     @SerializedName("avatarUrl")
     public String avatarUrl;
+
+    @SerializedName("trustScore")
+    public int trustScore;
 }

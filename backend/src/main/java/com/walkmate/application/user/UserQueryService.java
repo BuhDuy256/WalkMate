@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,6 +69,12 @@ public class UserQueryService {
     @Transactional(readOnly = true)
     public List<ProfileTagMaster> getAllMasterTags() {
         return profileRepository.findAllMasterTags();
+    }
+
+    /** Returns the last_active_at timestamp for the given user, or null if unavailable. */
+    @Transactional(readOnly = true)
+    public Instant getLastActiveAt(UUID userId) {
+        return profileRepository.findLastActiveAtById(userId);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

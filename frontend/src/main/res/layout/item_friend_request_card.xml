@@ -66,15 +66,13 @@
                 app:wm_text="Decline" />
 
             <!-- Shown for outgoing requests -->
-            <TextView
-                android:id="@+id/txtRequestPending"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pending"
-                android:textSize="13sp"
-                android:textColor="@color/text_muted"
+            <com.walkmate.core.designsystem.view.WalkMateButton
+                android:id="@+id/btnRequestCancel"
+                android:layout_width="110dp"
+                android:layout_height="36dp"
                 android:visibility="gone"
-                tools:visibility="visible" />
+                app:wm_buttonStyle="outlined"
+                app:wm_text="Cancel Request" />
 
         </LinearLayout>
 

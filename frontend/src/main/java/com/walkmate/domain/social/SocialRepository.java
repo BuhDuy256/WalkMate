@@ -22,6 +22,8 @@ public interface SocialRepository {
 
     void removeFriend(String userId, DomainCallback<Void> callback);
 
+    void cancelFriendRequest(String requestId, DomainCallback<Void> callback);
+
     void getPublicProfile(String userId, DomainCallback<UserSummary> callback);
 
     // ── Block ─────────────────────────────────────────────────────────────────

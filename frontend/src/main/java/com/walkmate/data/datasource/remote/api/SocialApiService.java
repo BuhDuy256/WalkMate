@@ -17,7 +17,7 @@ public interface SocialApiService {
 
     // ── Friends ───────────────────────────────────────────────────────────────
 
-    @GET("api/v1/users/me/friends")
+    @GET("api/v1/friends")
     Call<ApiResponse<List<UserSummaryResponse>>> getFriends();
 
     @POST("api/v1/friends/{userId}/request")
@@ -37,6 +37,9 @@ public interface SocialApiService {
 
     @DELETE("api/v1/friends/{userId}")
     Call<ApiResponse<Void>> removeFriend(@Path("userId") String userId);
+
+    @DELETE("api/v1/friends/requests/{id}")
+    Call<ApiResponse<Void>> cancelFriendRequest(@Path("id") String id);
 
     @GET("api/v1/users/{userId}")
     Call<ApiResponse<PublicUserResponse>> getPublicProfile(@Path("userId") String userId);

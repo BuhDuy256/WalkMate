@@ -96,6 +96,19 @@ public class FriendCommandService {
                 Map.of("friendshipId", friendshipId)));
     }
 
+    // ── Cancel outgoing friend request (UC-39) ───────────────────────────────
+
+    public void cancelFriendRequest(UUID callerId, String friendshipId) {
+        Friendship friendship = socialRepository.findFriendshipById(friendshipId)
+                .orElseThrow(() -> new DomainException(FriendshipErrorCode.FRIEND_REQUEST_NOT_FOUND));
+
+        if (!friendship.getRequesterId().equals(callerId))
+            throw new DomainException(FriendshipErrorCode.FRIEND_REQUEST_NOT_REQUESTER);
+
+        friendship.cancel();
+        socialRepository.saveFriendship(friendship);
+    }
+
     // ── Remove friend (UC-36) ─────────────────────────────────────────────────
 
     public void removeFriend(UUID callerId, UUID targetId) {
