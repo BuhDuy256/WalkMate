@@ -160,14 +160,8 @@ public class SessionFragment extends Fragment {
                 Toast.makeText(requireContext(), result.errorCode, Toast.LENGTH_SHORT).show();
             }
         });
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (matchesViewModel != null) {
-            matchesViewModel.loadSessions();
-        }
+        matchesViewModel.loadSessions();
     }
 
     @Override

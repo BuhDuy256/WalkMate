@@ -2,6 +2,7 @@ package com.walkmate.ui.tracking;
 
 import android.app.Application;
 import android.content.Intent;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -265,8 +266,18 @@ public class TrackingViewModel extends AndroidViewModel {
 
     /**
      * Requests walk completion via the backend API.
-     * Enforces the minimum gate (10 seconds) — posts remaining seconds to UiState if too early.
-     * Transitions ACTIVE/PAUSED → FINISHING → FINISHED (or back to previous state on error).
+     *
+     * <p>Enforces the minimum gate ({@link WalkSession#MINIMUM_WALK_DURATION_SECONDS}) —
+     * posts remaining seconds to UiState if too early.
+     *
+     * <p>R1 — Final flush: stops the GPS service, then forces a synchronous push of
+     * every remaining unsynced Room point before calling {@code completeSession()}.
+     * This guarantees no GPS data is stranded locally after the backend marks the
+     * session COMPLETED (which would reject any future sync calls for that session).
+     * If the flush itself fails the walk is still completed — the user must not be
+     * stuck on the FINISHING screen due to a network error.
+     *
+     * <p>State flow: ACTIVE|PAUSED → FINISHING → FINISHED (or back on error).
      */
     public void requestCompleteWalk() {
         WalkState currentState = valueOrDefault(walkStateLiveData, WalkState.READY);
@@ -275,7 +286,6 @@ public class TrackingViewModel extends AndroidViewModel {
         long elapsed = valueOrDefault(elapsedSecondsLiveData, 0L);
         long minDurationSeconds = WalkSession.MINIMUM_WALK_DURATION_SECONDS;
         if (elapsed < minDurationSeconds) {
-            // Gate not yet reached — UiState already shows remaining time via rebuildUiState()
             rebuildUiState();
             return;
         }
@@ -283,6 +293,30 @@ public class TrackingViewModel extends AndroidViewModel {
         stopTimer();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHING);
+
+        // R1: flush all remaining unsynced Room points before completing on the backend.
+        repository.flushUnsyncedBeforeComplete(sessionId, new DomainCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                completeOnBackend(currentState);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Flush failed (e.g. network down) — still complete the session so the
+                // user is not stranded indefinitely on the FINISHING screen.
+                Log.w("TrackingViewModel",
+                        "Pre-complete flush failed, proceeding anyway: " + e.getMessage());
+                completeOnBackend(currentState);
+            }
+        });
+    }
+
+    /**
+     * Calls the backend to mark the session COMPLETED.
+     * On error the ViewModel reverts to {@code previousState} so the user can retry.
+     */
+    private void completeOnBackend(WalkState previousState) {
         sessionRepository.completeSession(sessionId, new DomainCallback<WalkSession>() {
             @Override
             public void onSuccess(WalkSession result) {
@@ -292,8 +326,8 @@ public class TrackingViewModel extends AndroidViewModel {
 
             @Override
             public void onError(Exception e) {
-                walkStateLiveData.postValue(currentState);
-                if (currentState == WalkState.ACTIVE) {
+                walkStateLiveData.postValue(previousState);
+                if (previousState == WalkState.ACTIVE) {
                     startTimer();
                     startGpsService();
                 }

@@ -13,6 +13,11 @@ import java.util.List;
 
 public record PushRoutePointsRequest(
 
+        /** R2: Client-generated deduplication key for this push attempt. */
+        @NotBlank(message = "sync_request_id is required")
+        @JsonProperty("sync_request_id")
+        String syncRequestId,
+
         @NotBlank(message = "session_id is required")
         @JsonProperty("session_id")
         String sessionId,

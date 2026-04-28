@@ -67,19 +67,22 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
 
     @Override
     public void saveChunk(String sessionId, String userId, int chunkIndex, String polyline,
-                          byte[] timestamps, int pointCount) {
+                          byte[] timestamps, int pointCount, String syncRequestId) {
         jdbcClient.sql("""
                         INSERT INTO session_point_chunks
-                            (session_id, user_id, chunk_index, polyline, timestamps, point_count)
+                            (session_id, user_id, chunk_index, polyline, timestamps,
+                             point_count, sync_request_id)
                         VALUES
-                            (:sessionId, :userId, :chunkIndex, :polyline, :timestamps, :pointCount)
+                            (:sessionId, :userId, :chunkIndex, :polyline, :timestamps,
+                             :pointCount, :syncRequestId)
                         """)
-                .param("sessionId",  UUID.fromString(sessionId))
-                .param("userId",     UUID.fromString(userId))
-                .param("chunkIndex", chunkIndex)
-                .param("polyline",   polyline)
-                .param("timestamps", timestamps)
-                .param("pointCount", pointCount)
+                .param("sessionId",     UUID.fromString(sessionId))
+                .param("userId",        UUID.fromString(userId))
+                .param("chunkIndex",    chunkIndex)
+                .param("polyline",      polyline)
+                .param("timestamps",    timestamps)
+                .param("pointCount",    pointCount)
+                .param("syncRequestId", UUID.fromString(syncRequestId))
                 .update();
     }
 }

@@ -29,13 +29,15 @@ public interface TrackingChunkRepository {
     /**
      * Persists a single compressed chunk of GPS route data, tagged to the uploading user.
      *
-     * @param sessionId   the owning walk session
-     * @param userId      the user uploading this chunk
-     * @param chunkIndex  monotonically increasing index scoped per (session, user)
-     * @param polyline    Google Encoded Polyline string for the batch of coordinates
-     * @param timestamps  packed big-endian longs (8 bytes × pointCount) of epoch-ms timestamps
-     * @param pointCount  number of GPS points in this chunk
+     * @param sessionId      the owning walk session
+     * @param userId         the user uploading this chunk
+     * @param chunkIndex     monotonically increasing index scoped per (session, user)
+     * @param polyline       Google Encoded Polyline string for the batch of coordinates
+     * @param timestamps     packed big-endian longs (8 bytes × pointCount) of epoch-ms timestamps
+     * @param pointCount     number of GPS points in this chunk
+     * @param syncRequestId  R2: client-generated UUID for this push attempt; stored in a UNIQUE
+     *                       column so the DB rejects duplicate inserts at constraint level
      */
     void saveChunk(String sessionId, String userId, int chunkIndex, String polyline,
-                   byte[] timestamps, int pointCount);
+                   byte[] timestamps, int pointCount, String syncRequestId);
 }

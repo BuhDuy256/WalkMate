@@ -2,18 +2,8 @@ package com.walkmate.presentation.dto.response.proposal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Response payload for all proposal-related endpoints.
- *
- * When status == "CONFIRMED", sessionId is populated with the created
- * session's ID. The client can then call GET /api/v1/sessions/active
- * to load the full session details.
- *
- * myAcceptanceStatus reflects whether the authenticated caller has already
- * tapped "Accept" on this proposal: "ACCEPTED" or "PENDING".
- * The UI uses this to render the correct button state on the proposal card
- * (e.g., show "Waiting for partner..." instead of "Accept" when ACCEPTED).
- */
+import java.util.List;
+
 public record WalkProposalResponse(
 
         @JsonProperty("proposal_id")
@@ -33,6 +23,15 @@ public record WalkProposalResponse(
 
         @JsonProperty("matched_user_name")
         String matchedUserName,
+
+        @JsonProperty("matched_user_age")
+        int matchedUserAge,
+
+        @JsonProperty("matched_user_trust_score")
+        int matchedUserTrustScore,
+
+        @JsonProperty("overlapping_tags")
+        List<String> overlappingTags,
 
         @JsonProperty("proposed_time_start")
         String proposedTimeStart,   // ISO-8601
@@ -55,6 +54,9 @@ public record WalkProposalResponse(
         String sessionId,           // null until CONFIRMED
 
         @JsonProperty("my_acceptance_status")
-        String myAcceptanceStatus   // "PENDING" | "ACCEPTED"
+        String myAcceptanceStatus,  // "PENDING" | "ACCEPTED"
+
+        @JsonProperty("is_private")
+        boolean isPrivate
 ) {
 }

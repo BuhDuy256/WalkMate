@@ -10,6 +10,8 @@ import com.walkmate.infrastructure.util.PolylineEncoder;
 import com.walkmate.presentation.dto.request.tracking.PushRoutePointsRequest;
 import com.walkmate.presentation.dto.response.tracking.PushRoutePointsResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TrackingCommandService {
@@ -34,17 +37,26 @@ public class TrackingCommandService {
      *   <li>Validate every point's lat/lng bounds and that no timestamp is in the future.</li>
      *   <li>Encode coordinates as a Google Encoded Polyline string.</li>
      *   <li>Pack timestamps as a big-endian {@code BYTEA}.</li>
-     *   <li>Atomically assign the next {@code chunk_index} and insert the chunk row.</li>
+     *   <li>Assign the next {@code chunk_index} and insert the chunk row.</li>
      *   <li>Return the echoed {@code localId} values so the client can mark those rows synced.</li>
      * </ol>
      *
-     * @param sessionId the session the points belong to
-     * @param callerId  the authenticated user's ID
-     * @param points    the batch from the client (validated by the controller's @Valid)
+     * <p>R2 — Idempotent insertion: the chunk INSERT includes {@code syncRequestId} which
+     * is stored in a UNIQUE column. If the same UUID is received a second time (due to a
+     * network retry or an Android double-push), the {@link DataIntegrityViolationException}
+     * is caught and the method returns HTTP 200 with the same acknowledged IDs — the
+     * client marks its Room rows as synced as if it were the first successful response.
+     *
+     * @param syncRequestId client-generated UUID uniquely identifying this push attempt
+     * @param sessionId     the session the points belong to
+     * @param callerId      the authenticated user's ID
+     * @param points        the batch from the client (validated by the controller's @Valid)
      * @return a response containing the acknowledged local IDs
      */
     @Transactional
-    public PushRoutePointsResponse syncRoutePoints(String sessionId, String callerId,
+    public PushRoutePointsResponse syncRoutePoints(String syncRequestId,
+                                                   String sessionId,
+                                                   String callerId,
                                                    List<PushRoutePointsRequest.RoutePointPayload> points) {
         // 1. Verify session exists, caller is a participant, and caller's own status is ACTIVE.
         //    The global session status is ACTIVE when anyone is walking, but a specific user
@@ -64,8 +76,7 @@ public class TrackingCommandService {
         }
 
         // 2. Validate all points
-        Instant now = Instant.now();
-        long    nowMs = now.toEpochMilli();
+        long nowMs = Instant.now().toEpochMilli();
         for (PushRoutePointsRequest.RoutePointPayload p : points) {
             if (p.lat() < -90.0 || p.lat() > 90.0) {
                 throw new IllegalArgumentException("Point lat out of range: " + p.lat());
@@ -90,15 +101,27 @@ public class TrackingCommandService {
         // 4. Pack timestamps as big-endian BYTEA (8 bytes × pointCount)
         byte[] timestampBytes = packTimestamps(points);
 
-        // 5. Get next chunk index (per-user) and persist
-        int chunkIndex = chunkRepository.nextChunkIndex(sessionId, callerId);
-        chunkRepository.saveChunk(sessionId, callerId, chunkIndex, polyline, timestampBytes, points.size());
-
-        // 6. Return acknowledged local IDs
+        // 5. Build the acknowledged ID list before attempting the insert so it is
+        //    available for the idempotent-success branch as well.
         List<Long> acknowledgedIds = new ArrayList<>(points.size());
         for (PushRoutePointsRequest.RoutePointPayload p : points) {
             acknowledgedIds.add(p.localId());
         }
+
+        // 6. Assign next chunk index and persist.
+        //    R2: If the UNIQUE constraint on sync_request_id fires, this batch was already
+        //    stored — return the same acknowledged IDs so the client can mark its Room rows
+        //    as synced (idempotent success).
+        try {
+            int chunkIndex = chunkRepository.nextChunkIndex(sessionId, callerId);
+            chunkRepository.saveChunk(sessionId, callerId, chunkIndex, polyline,
+                                      timestampBytes, points.size(), syncRequestId);
+        } catch (DataIntegrityViolationException e) {
+            log.info("Duplicate sync_request_id '{}' for session '{}' — returning idempotent success",
+                     syncRequestId, sessionId);
+            return new PushRoutePointsResponse(acknowledgedIds);
+        }
+
         return new PushRoutePointsResponse(acknowledgedIds);
     }
 

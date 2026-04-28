@@ -2,7 +2,6 @@ package com.walkmate.data.mapper;
 
 import com.walkmate.data.datasource.remote.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.domain.walkproposal.WalkProposal;
-import com.walkmate.domain.walksession.WalkSession;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -12,20 +11,18 @@ import java.util.List;
 
 public class WalkProposalMapper {
 
-    /**
-     * Maps a WalkProposalResponse DTO to a WalkProposal domain object.
-     * Fields not provided by the API (matchedUserName, trustScore, tags) use safe defaults
-     * until a user-profile enrichment endpoint is added.
-     */
     public static WalkProposal toDomain(WalkProposalResponse response) {
+        List<String> tags = response.getOverlappingTags() != null
+                ? response.getOverlappingTags()
+                : Collections.emptyList();
         return new WalkProposal(
                 response.getProposalId(),
                 response.getCallersIntentId(),
                 response.getMatchedUserId(),
                 response.getMatchedUserName(),
-                0,                              // age not yet in API
-                0,                              // trustScore not yet in API
-                Collections.emptyList(),        // tags not yet in API
+                response.getMatchedUserAge(),
+                response.getMatchedUserTrustScore(),
+                tags,
                 toHourFloat(response.getProposedTimeStart()),
                 toHourFloat(response.getProposedTimeEnd()),
                 toStatus(response.getStatus()),

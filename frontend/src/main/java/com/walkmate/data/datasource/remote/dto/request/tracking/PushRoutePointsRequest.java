@@ -12,18 +12,24 @@ import java.util.List;
  */
 public class PushRoutePointsRequest {
 
+    /** R2: Unique ID for this push attempt. Backend uses it as a deduplication key. */
+    @SerializedName("sync_request_id")
+    private final String syncRequestId;
+
     @SerializedName("session_id")
     private final String sessionId;
 
     @SerializedName("points")
     private final List<RoutePointPayload> points;
 
-    public PushRoutePointsRequest(String sessionId, List<RoutePointPayload> points) {
-        this.sessionId = sessionId;
-        this.points = points;
+    public PushRoutePointsRequest(String syncRequestId, String sessionId, List<RoutePointPayload> points) {
+        this.syncRequestId = syncRequestId;
+        this.sessionId     = sessionId;
+        this.points        = points;
     }
 
-    public String getSessionId() { return sessionId; }
+    public String getSyncRequestId()           { return syncRequestId; }
+    public String getSessionId()               { return sessionId; }
     public List<RoutePointPayload> getPoints() { return points; }
 
     // ── Nested payload ────────────────────────────────────────────────────────

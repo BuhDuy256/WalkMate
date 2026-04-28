@@ -38,7 +38,7 @@ public class TrackingController {
             @Valid @RequestBody PushRoutePointsRequest request) {
 
         PushRoutePointsResponse response = trackingCommandService.syncRoutePoints(
-                request.sessionId(), principal.userId(), request.points());
+                request.syncRequestId(), request.sessionId(), principal.userId(), request.points());
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

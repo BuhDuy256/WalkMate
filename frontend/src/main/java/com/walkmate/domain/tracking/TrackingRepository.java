@@ -59,4 +59,21 @@ public interface TrackingRepository {
      * user on the same device.
      */
     void clearForUser(String userId, DomainCallback<Void> callback);
+
+    /**
+     * Force-flushes all remaining unsynced Room points for the given session.
+     *
+     * <p>Must be called just before {@code sessionRepository.completeSession()} so
+     * that no GPS data is stranded in the local DB after the backend marks the
+     * session COMPLETED (which would reject any future sync calls for that session).
+     *
+     * <p>Bypasses the {@code syncInFlight} guard — the GPS service is already
+     * stopped at this point, so no new points can arrive. The implementation
+     * queues on the same single-thread executor, which guarantees any in-flight
+     * periodic sync finishes before the flush begins.
+     *
+     * <p>On HTTP failure the caller should still proceed with completion rather
+     * than leaving the user stranded on the FINISHING screen.
+     */
+    void flushUnsyncedBeforeComplete(String sessionId, DomainCallback<Void> callback);
 }

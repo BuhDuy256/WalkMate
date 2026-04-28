@@ -22,6 +22,15 @@ public class WalkProposalResponse {
     @SerializedName("matched_user_name")
     private String matchedUserName;
 
+    @SerializedName("matched_user_age")
+    private int matchedUserAge;
+
+    @SerializedName("matched_user_trust_score")
+    private int matchedUserTrustScore;
+
+    @SerializedName("overlapping_tags")
+    private java.util.List<String> overlappingTags;
+
     @SerializedName("proposed_time_start")
     private String proposedTimeStart;   // ISO-8601
 
@@ -58,9 +67,12 @@ public class WalkProposalResponse {
     public String getCallersIntentId()  { return callersIntentId; }
     public String getMatchedIntentId()  { return matchedIntentId; }
     public String getCallersUserId()    { return callersUserId; }
-    public String getMatchedUserId()    { return matchedUserId; }
-    public String getMatchedUserName()  { return matchedUserName; }
-    public String getProposedTimeStart(){ return proposedTimeStart; }
+    public String getMatchedUserId()          { return matchedUserId; }
+    public String getMatchedUserName()        { return matchedUserName; }
+    public int getMatchedUserAge()            { return matchedUserAge; }
+    public int getMatchedUserTrustScore()     { return matchedUserTrustScore; }
+    public java.util.List<String> getOverlappingTags() { return overlappingTags; }
+    public String getProposedTimeStart()      { return proposedTimeStart; }
     public String getProposedTimeEnd()  { return proposedTimeEnd; }
     public double getProposedLat()      { return proposedLat; }
     public double getProposedLng()      { return proposedLng; }
