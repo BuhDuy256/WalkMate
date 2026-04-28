@@ -47,7 +47,6 @@ import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
 import com.walkmate.ui.auth.AuthActivity;
-import com.walkmate.ui.profile.edit.EditProfileFragment;
 import com.walkmate.ui.main.MainActivity;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -839,12 +838,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             Toast.makeText(requireContext(),
                     "Please complete your profile (Gender & Tags) to start matching.",
                     Toast.LENGTH_LONG).show();
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new EditProfileFragment(),
-                            EditProfileFragment.TAG)
-                    .addToBackStack(null)
-                    .commit();
+            Navigation.findNavController(requireView()).navigate(R.id.action_explore_to_editProfile);
             return;
         }
 

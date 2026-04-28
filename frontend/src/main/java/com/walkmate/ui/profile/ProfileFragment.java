@@ -25,7 +25,6 @@ import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.core.util.GlideHelper;
-import com.walkmate.ui.profile.edit.EditProfileFragment;
 
 import java.util.List;
 import java.util.Locale;
@@ -114,11 +113,7 @@ public class ProfileFragment extends Fragment {
         viewModel.getNavigateToEditEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
             if (!Boolean.TRUE.equals(shouldNavigate)) return;
             viewModel.consumeNavigateToEdit();
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new EditProfileFragment(), EditProfileFragment.TAG)
-                    .addToBackStack(null)
-                    .commit();
+            NavHostFragment.findNavController(this).navigate(R.id.action_profile_to_editProfile);
         });
 
         viewModel.getNavigateToHistoryEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {

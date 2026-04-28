@@ -45,7 +45,16 @@
     <fragment
         android:id="@+id/exploreFragment"
         android:name="com.walkmate.ui.explore.ExploreFragment"
-        android:label="Home" />
+        android:label="Home">
+
+        <action
+            android:id="@+id/action_explore_to_editProfile"
+            app:destination="@id/editProfileFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
 
     <fragment
         android:id="@+id/matchesFragment"
@@ -80,6 +89,14 @@
         android:id="@+id/profileFragment"
         android:name="com.walkmate.ui.profile.ProfileFragment"
         android:label="Profile">
+
+        <action
+            android:id="@+id/action_profile_to_editProfile"
+            app:destination="@id/editProfileFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
         <action
             android:id="@+id/action_profile_to_sessionHistoryFragment"
@@ -245,5 +262,10 @@
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
+
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.walkmate.ui.profile.edit.EditProfileFragment"
+        android:label="Edit Profile" />
 
 </navigation>

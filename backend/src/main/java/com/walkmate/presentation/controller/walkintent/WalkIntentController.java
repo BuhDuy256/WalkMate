@@ -16,6 +16,7 @@ import com.walkmate.presentation.dto.response.ApiResponse;
 import com.walkmate.presentation.dto.response.proposal.WalkProposalResponse;
 import com.walkmate.presentation.dto.response.walkintent.CreateIntentResponse;
 import com.walkmate.presentation.dto.response.walkintent.WalkIntentResponse;
+import com.walkmate.domain.walkintent.WalkIntentRepository;
 import com.walkmate.presentation.mapper.proposal.ProposalMapper;
 import com.walkmate.presentation.mapper.walkintent.WalkIntentMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +31,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Period;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,6 +66,7 @@ public class WalkIntentController {
     private final WalkIntentMapper         walkIntentMapper;
     private final ProposalMapper           proposalMapper;
     private final UserQueryService         userQueryService;
+    private final WalkIntentRepository     walkIntentRepository;
 
     /**
      * POST /api/v1/intents
@@ -110,7 +115,11 @@ public class WalkIntentController {
             boolean callerIsA = principal.userId().equals(p.getUserIdA());
             String partnerId = callerIsA ? p.getUserIdB() : p.getUserIdA();
             proposalResp = proposalMapper.toResponse(p, principal.userId(), null,
-                    resolveDisplayName(partnerId));
+                    resolveDisplayName(partnerId),
+                    resolveMatchedUserAge(partnerId),
+                    resolveMatchedUserTrustScore(partnerId),
+                    resolveOverlappingTags(principal.userId(), partnerId),
+                    request.isPrivate());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -156,7 +165,11 @@ public class WalkIntentController {
         String partnerId = callerIsA ? proposal.getUserIdB() : proposal.getUserIdA();
         return ResponseEntity.ok(ApiResponse.success(
                 proposalMapper.toResponse(proposal, principal.userId(), null,
-                        resolveDisplayName(partnerId))));
+                        resolveDisplayName(partnerId),
+                        resolveMatchedUserAge(partnerId),
+                        resolveMatchedUserTrustScore(partnerId),
+                        resolveOverlappingTags(principal.userId(), partnerId),
+                        resolveIsPrivate(intentId))));
     }
 
     /**
@@ -178,6 +191,45 @@ public class WalkIntentController {
             return userQueryService.getDisplayName(UUID.fromString(userId));
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    private int resolveMatchedUserAge(String userId) {
+        try {
+            LocalDate dob = userQueryService.getProfile(UUID.fromString(userId)).getDateOfBirth();
+            return dob != null ? Period.between(dob, LocalDate.now()).getYears() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private int resolveMatchedUserTrustScore(String userId) {
+        try {
+            return userQueryService.getUser(UUID.fromString(userId)).getTrustScore();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private List<String> resolveOverlappingTags(String callerUserId, String partnerUserId) {
+        try {
+            List<String> callerTags  = userQueryService.getTagsByUserId(UUID.fromString(callerUserId));
+            List<String> partnerTags = userQueryService.getTagsByUserId(UUID.fromString(partnerUserId));
+            List<String> intersection = new ArrayList<>(callerTags);
+            intersection.retainAll(partnerTags);
+            return intersection;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private boolean resolveIsPrivate(String intentId) {
+        try {
+            return walkIntentRepository.findById(intentId)
+                    .map(i -> i.isPrivate())
+                    .orElse(false);
+        } catch (Exception e) {
+            return false;
         }
     }
 

@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             int destId = destination.getId();
             // Hide bottom nav for full-screen sub-pages (Explore form, Notifications).
             // Explore manages its own visibility via ExploreFragment.renderState().
-            if (destId == R.id.notificationFragment) {
+            if (destId == R.id.notificationFragment || destId == R.id.editProfileFragment) {
                 setBottomNavVisibility(false);
             } else if (destId != R.id.exploreFragment) {
                 // Ensure nav bar is always visible on non-explore, non-notification destinations.

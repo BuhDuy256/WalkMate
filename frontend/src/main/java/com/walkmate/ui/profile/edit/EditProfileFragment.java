@@ -29,7 +29,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.walkmate.ui.main.MainActivity;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
@@ -107,7 +107,6 @@ public class EditProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ((MainActivity) requireActivity()).setBottomNavVisibility(false);
         applyWindowInsets(view);
 
         bindViews(view);
@@ -122,7 +121,6 @@ public class EditProfileFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ((MainActivity) requireActivity()).setBottomNavVisibility(true);
     }
 
     private void applyWindowInsets(View root) {
@@ -171,7 +169,7 @@ public class EditProfileFragment extends Fragment {
 
     private void setupClickListeners() {
         btnBack.setOnClickListener(v ->
-                requireActivity().getOnBackPressedDispatcher().onBackPressed());
+                NavHostFragment.findNavController(this).popBackStack());
 
         imgAvatar.setOnClickListener(v -> launchImagePicker());
 
@@ -215,7 +213,7 @@ public class EditProfileFragment extends Fragment {
 
         if (state.saveSuccess) {
             Toast.makeText(requireContext(), "Profile saved", Toast.LENGTH_SHORT).show();
-            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+            NavHostFragment.findNavController(this).popBackStack();
             return;
         }
 
