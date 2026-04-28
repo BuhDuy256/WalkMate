@@ -3,6 +3,7 @@ package com.walkmate.infrastructure.notification;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.walkmate.application.notification.PushNotificationProvider;
 import com.walkmate.domain.notification.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +71,7 @@ public class FcmNotificationProvider implements PushNotificationProvider {
     }
 
     @Override
-    public void sendPush(String fcmToken, NotificationType type, Map<String, Object> payload) {
+    public boolean sendPush(String fcmToken, NotificationType type, Map<String, Object> payload) {
         Message.Builder builder = Message.builder()
                 .setToken(fcmToken)
                 .putData("type", type.name());
@@ -82,14 +83,19 @@ public class FcmNotificationProvider implements PushNotificationProvider {
         try {
             String messageId = firebaseMessaging.send(builder.build());
             log.debug("FCM push dispatched: type={} messageId={}", type, messageId);
+            return true;
         } catch (FirebaseMessagingException ex) {
-            // Failures are always swallowed — a push failure must never roll back
-            // the business transaction or block notification DB persistence.
+            MessagingErrorCode code = ex.getMessagingErrorCode();
             log.error("FCM push delivery failed: type={} token=[{}…] code={} message={}",
                     type,
                     fcmToken.substring(0, Math.min(12, fcmToken.length())),
-                    ex.getMessagingErrorCode(),
+                    code,
                     ex.getMessage());
+            // Return false only for permanent token rejections so the caller can clear
+            // the stale token. Transient errors (INTERNAL, QUOTA_EXCEEDED, UNAVAILABLE)
+            // return true — the token is likely still valid and should be preserved.
+            return code != MessagingErrorCode.UNREGISTERED
+                    && code != MessagingErrorCode.INVALID_ARGUMENT;
         }
     }
 }

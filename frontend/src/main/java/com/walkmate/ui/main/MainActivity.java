@@ -153,6 +153,10 @@ public class MainActivity extends AppCompatActivity {
         WalkMateApplication app = (WalkMateApplication) getApplication();
         if (app.getSessionManager().hasUsableAccessToken()) {
             askNotificationPermission();
+            // Blind Spot 1 fix: re-sync FCM token on every app launch for users who are
+            // already authenticated. Covers the case where FCM rotated the token while
+            // the app was killed and onNewToken() could not reach the backend.
+            app.getUserRepository().syncFcmToken();
         }
 
         if (savedInstanceState == null) {

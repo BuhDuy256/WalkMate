@@ -2,12 +2,12 @@
 -- Table order and constraints may not be valid for execution.
 
 CREATE TABLE public.badge (
-  badge_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  name character varying NOT NULL UNIQUE,
+  name character varying NOT NULL,
+  display_name character varying NOT NULL,
   description text,
-  icon_url text,
-  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT badge_pkey PRIMARY KEY (badge_id)
+  icon_url character varying,
+  is_active boolean NOT NULL DEFAULT true,
+  CONSTRAINT badge_pkey PRIMARY KEY (name)
 );
 CREATE TABLE public.block_relation (
   block_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -199,7 +199,8 @@ CREATE TABLE public.user_badge (
   badge_name character varying NOT NULL,
   awarded_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT user_badge_pkey PRIMARY KEY (user_id, badge_name),
-  CONSTRAINT user_badge_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
+  CONSTRAINT user_badge_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT user_badge_badge_name_fkey FOREIGN KEY (badge_name) REFERENCES public.badge(name)
 );
 CREATE TABLE public.user_embedding (
   user_id uuid NOT NULL,

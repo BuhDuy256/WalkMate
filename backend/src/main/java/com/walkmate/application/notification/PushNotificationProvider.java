@@ -47,9 +47,19 @@ public interface PushNotificationProvider {
      * for all lifecycle events. The existing {@code sendMatchFound()} remains for
      * backwards compatibility but new notification types route through here.</p>
      *
+     * <p>Return value contract:</p>
+     * <ul>
+     *   <li>{@code true} — message delivered, or failure was transient (network, quota,
+     *       internal error). The token may still be valid; do NOT clear it.</li>
+     *   <li>{@code false} — FCM permanently rejected the token ({@code UNREGISTERED} or
+     *       {@code INVALID_ARGUMENT}). The caller MUST clear the token from the DB to
+     *       prevent accumulating stale-token errors.</li>
+     * </ul>
+     *
      * @param fcmToken FCM registration token of the target device
      * @param type     the notification type — mapped to the {@code "type"} data field
      * @param payload  arbitrary key/value data included in the FCM data payload
+     * @return {@code false} if the token is definitively dead and must be cleared
      */
-    void sendPush(String fcmToken, NotificationType type, Map<String, Object> payload);
+    boolean sendPush(String fcmToken, NotificationType type, Map<String, Object> payload);
 }

@@ -42,4 +42,11 @@ public interface UserRepository {
 
     /** Registers or refreshes the FCM device token on the backend. No-ops if not authenticated. */
     void updateFcmToken(String token, DomainCallback<Void> callback);
+
+    /**
+     * Fetches the current FCM token from the local Firebase SDK and sends it to the backend.
+     * No-ops silently if the user is not authenticated or if Firebase returns no token.
+     * Safe to call on any thread and on every app launch.
+     */
+    void syncFcmToken();
 }

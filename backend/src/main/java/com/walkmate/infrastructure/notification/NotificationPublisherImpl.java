@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Dual-channel implementation of {@link NotificationPublisher}.
  *
@@ -52,11 +54,19 @@ public class NotificationPublisherImpl implements NotificationPublisher {
             userRepository.findById(notification.getUserId()).ifPresent(user -> {
                 String token = user.getFcmToken();
                 if (token != null && !token.isBlank()) {
-                    pushNotificationProvider.sendPush(
+                    boolean tokenStillValid = pushNotificationProvider.sendPush(
                             token,
                             notification.getType(),
                             notification.getPayload()
                     );
+                    if (!tokenStillValid) {
+                        // FCM permanently rejected the token (UNREGISTERED / INVALID_ARGUMENT).
+                        // Clear it so subsequent publishes skip the FCM dispatch instead of
+                        // accumulating dead-token errors that degrade Firebase project reputation.
+                        userRepository.updateFcmToken(
+                                UUID.fromString(notification.getUserId()), null);
+                        log.info("Cleared stale FCM token for userId={}", notification.getUserId());
+                    }
                 }
             });
         } catch (Exception ex) {

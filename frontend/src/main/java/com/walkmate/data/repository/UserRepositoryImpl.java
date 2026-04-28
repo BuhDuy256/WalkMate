@@ -8,6 +8,7 @@ import com.walkmate.WalkMateApplication;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.walkmate.data.datasource.remote.api.ApiClient;
 import com.walkmate.data.datasource.remote.api.AuthApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
@@ -65,6 +66,7 @@ public class UserRepositoryImpl implements UserRepository {
                     LoginResponseDto data = resp.body().getData();
                     sessionManager.saveAccessToken(data.getAccessToken());
                     sessionManager.saveRefreshToken(data.getRefreshToken());
+                    syncFcmToken();
                     Log.d(TAG, "login succeeded");
                     callback.onSuccess(data.getAccessToken());
                 } else {
@@ -96,6 +98,7 @@ public class UserRepositoryImpl implements UserRepository {
                     LoginResponseDto data = resp.body().getData();
                     sessionManager.saveAccessToken(data.getAccessToken());
                     sessionManager.saveRefreshToken(data.getRefreshToken());
+                    syncFcmToken();
                     Log.d(TAG, "register succeeded — auto-login");
                     callback.onSuccess(data.getAccessToken());
                 } else {
@@ -135,6 +138,7 @@ public class UserRepositoryImpl implements UserRepository {
                                             LoginResponseDto data = resp.body().getData();
                                             sessionManager.saveAccessToken(data.getAccessToken());
                                             sessionManager.saveRefreshToken(data.getRefreshToken());
+                                            syncFcmToken();
                                             Log.d(TAG, "Google login succeeded");
                                             callback.onSuccess(data.getAccessToken());
                                         } else {
@@ -275,6 +279,23 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     // ── FCM ───────────────────────────────────────────────────────────────────
+
+    @Override
+    public void syncFcmToken() {
+        if (!sessionManager.hasUsableAccessToken()) return;
+        FirebaseMessaging.getInstance().getToken()
+                .addOnSuccessListener(token -> {
+                    if (token == null || token.isBlank()) return;
+                    updateFcmToken(token, new DomainCallback<Void>() {
+                        @Override public void onSuccess(Void result) {}
+                        @Override public void onError(Exception error) {
+                            Log.w(TAG, "syncFcmToken failed: " + error.getMessage());
+                        }
+                    });
+                })
+                .addOnFailureListener(e ->
+                        Log.w(TAG, "syncFcmToken: failed to retrieve token: " + e.getMessage()));
+    }
 
     @Override
     public void updateFcmToken(String token, DomainCallback<Void> callback) {
