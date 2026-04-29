@@ -18,7 +18,7 @@
         android:textAllCaps="false"
         android:textColor="@color/text_dark"
         android:textSize="14sp"
-        app:cornerRadius="999dp"
+        app:cornerRadius="16dp"
         app:icon="@drawable/ic_google"
         app:iconGravity="textStart"
         app:iconTint="@android:color/transparent"

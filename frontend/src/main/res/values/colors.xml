@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand / Primary Gradient -->
-    <color name="orange_start">#FFFF9E67</color>
-    <color name="orange_end">#FFFF7B3A</color>
-    <color name="orange_primary">#FFFF9E67</color>
+    <color name="orange_start">#FFF97316</color>
+    <color name="orange_end">#FFFB923C</color>
+    <color name="orange_primary">#FFF97316</color>
 
     <!-- Backgrounds -->
-    <color name="bg_cream">#FFFFF9F1</color>
+    <color name="bg_cream">#FFFEF9F5</color>
     <color name="bg_white">#FFFFFFFF</color>
     <color name="bg_warm_light">#FFFFF3EB</color>
     <color name="bg_tag_inactive">#FFF5EDE4</color>
@@ -17,9 +17,9 @@
     <color name="bg_map_block">#FFF0E8DC</color>
 
     <!-- Text -->
-    <color name="text_dark">#FF332218</color>
-    <color name="text_muted">#FF9E8D7F</color>
-    <color name="text_label">#FF7A6657</color>
+    <color name="text_dark">#FF1C1917</color>
+    <color name="text_muted">#FFA8A29E</color>
+    <color name="text_label">#FF78716C</color>
 
     <!-- Semantic -->
     <color name="color_danger">#FFE53935</color>
@@ -35,8 +35,8 @@
     <color name="slider_track_inactive">#FFF5EDE4</color>
     <color name="overlay_dim">#40000000</color>
     <color name="transparent">#00000000</color>
-    <color name="shadow_orange">#59FF7B3A</color>
-    <color name="color_orange_halo">#40FF9E67</color>
+    <color name="shadow_orange">#59F97316</color>
+    <color name="color_orange_halo">#40F97316</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
 </resources>

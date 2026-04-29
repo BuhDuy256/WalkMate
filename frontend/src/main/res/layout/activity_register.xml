@@ -27,24 +27,23 @@
             android:orientation="vertical"
         >
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                app:cardBackgroundColor="@color/orange_primary"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="6dp"
-                app:strokeWidth="0dp"
+            <FrameLayout
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_logo_card"
+                android:elevation="8dp"
+                android:outlineProvider="background"
             >
 
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="18dp"
+                    android:padding="16dp"
                     android:src="@drawable/logo"
                     app:tint="@color/white"
                 />
 
-            </com.google.android.material.card.MaterialCardView>
+            </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -53,7 +52,8 @@
                 android:fontFamily="sans-serif-black"
                 android:text="WalkMate"
                 android:textColor="@color/text_dark"
-                android:textSize="30sp"
+                android:textSize="28sp"
+                android:letterSpacing="-0.02"
             />
 
             <TextView
@@ -119,7 +119,7 @@
             android:layout_height="54dp"
             android:layout_marginTop="32dp"
             app:wm_buttonStyle="filled"
-            app:wm_text="Create Account"
+            app:wm_text="Create Account  →"
         />
 
         <!-- ── DIVIDER ────────────────────────────────────────────────────────── -->
