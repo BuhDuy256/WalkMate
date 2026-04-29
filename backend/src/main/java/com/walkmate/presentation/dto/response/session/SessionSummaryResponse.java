@@ -31,6 +31,12 @@ public record SessionSummaryResponse(
         @JsonProperty("is_reviewed")
         boolean isReviewed,
 
+        @JsonProperty("meeting_point_lat")
+        double meetingPointLat,
+
+        @JsonProperty("meeting_point_lng")
+        double meetingPointLng,
+
         @JsonProperty("participants")
         List<ParticipantSummaryResponse> participants
 ) {}

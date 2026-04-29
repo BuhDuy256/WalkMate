@@ -10,17 +10,22 @@ public class SessionSummary {
     private final String scheduledStart;
     private final boolean isReviewed;
     private final long terminalAtMs;
+    private final double meetingPointLat;
+    private final double meetingPointLng;
     private final List<ParticipantSummary> participants;
 
     public SessionSummary(String sessionId, WalkSession.Status status,
                           String scheduledStart, boolean isReviewed,
-                          long terminalAtMs, List<ParticipantSummary> participants) {
-        this.sessionId    = sessionId;
-        this.status       = status;
+                          long terminalAtMs, double meetingPointLat, double meetingPointLng,
+                          List<ParticipantSummary> participants) {
+        this.sessionId      = sessionId;
+        this.status         = status;
         this.scheduledStart = scheduledStart;
-        this.isReviewed   = isReviewed;
-        this.terminalAtMs = terminalAtMs;
-        this.participants = participants != null ? participants : Collections.emptyList();
+        this.isReviewed     = isReviewed;
+        this.terminalAtMs   = terminalAtMs;
+        this.meetingPointLat = meetingPointLat;
+        this.meetingPointLng = meetingPointLng;
+        this.participants   = participants != null ? participants : Collections.emptyList();
     }
 
     public String getSessionId()                    { return sessionId; }
@@ -28,6 +33,8 @@ public class SessionSummary {
     public String getScheduledStart()               { return scheduledStart; }
     public boolean isReviewed()                     { return isReviewed; }
     public long getTerminalAtMs()                   { return terminalAtMs; }
+    public double getMeetingPointLat()              { return meetingPointLat; }
+    public double getMeetingPointLng()              { return meetingPointLng; }
     public List<ParticipantSummary> getParticipants() { return participants; }
 
     /**

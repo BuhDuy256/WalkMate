@@ -4,59 +4,53 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.core.widget.NestedScrollView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
-import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.core.util.LocationHelper;
 
-/**
- * Thin view for the Home Dashboard tab.
- *
- * Responsibilities:
- *   1. Inflate fragment_home.xml.
- *   2. Wire click listeners — navigation uses NavController; all other
- *      actions delegate to the ViewModel.
- *   3. Observe LiveData<HomeDashboardUiState> and call renderState().
- *   4. renderState() is the single place that writes to Views.
- *
- * Zero business logic lives here; no direct access to repositories or databases.
- */
+import java.util.Calendar;
+import java.util.List;
+
 public class HomeFragment extends Fragment {
 
     public static final String TAG = "home";
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private TextView txtGreeting;
-    private TextView txtLocation;
-    private View btnNotification;
-    private View viewNotificationBadge;
-    private MaterialButton btnFindWalkMate;
-    private WalkMateStatColumn statDistance;
-    private WalkMateStatColumn statSessions;
-    private ProgressBar loadingIndicator;
+    private TextView     txtTimeGreeting;
+    private TextView     txtGreeting;
+    private TextView     txtLocation;
+    private View         btnNotification;
+    private View         viewNotificationBadge;
+    private View         cardHero;
+    private TextView     txtDistanceValue;
+    private TextView     txtSessionsValue;
+    private View         cardLeaderboard;
+    private View         sectionRecentMates;
+    private RecyclerView rvRecentMates;
+    private TextView     btnSeeAllMates;
+    private ProgressBar  loadingIndicator;
     private NestedScrollView contentContainer;
-    private MaterialButton btnViewLeaderboard;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
-    private HomeViewModel viewModel;
+    private HomeViewModel          viewModel;
+    private RecentMatesHomeAdapter recentMatesAdapter;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -73,6 +67,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         bindViews(view);
+        setupRecyclerView();
         setupViewModel();
         setupClickListeners(view);
 
@@ -83,12 +78,8 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (viewModel.getUiState().getValue() == null) {
-            // First entry — load everything.
             viewModel.loadDashboard();
         } else {
-            // Returning from another screen (e.g. NotificationFragment).
-            // Re-check unread count so the badge clears immediately after the user
-            // reads all notifications without forcing a full dashboard reload.
             viewModel.refreshNotificationBadge();
         }
         resolveLocationName();
@@ -97,16 +88,27 @@ public class HomeFragment extends Fragment {
     // ── Setup helpers ─────────────────────────────────────────────────────────
 
     private void bindViews(View root) {
+        txtTimeGreeting       = root.findViewById(R.id.txtTimeGreeting);
         txtGreeting           = root.findViewById(R.id.txtGreeting);
         txtLocation           = root.findViewById(R.id.txtLocation);
         btnNotification       = root.findViewById(R.id.btnNotification);
         viewNotificationBadge = root.findViewById(R.id.viewNotificationBadge);
-        btnFindWalkMate       = root.findViewById(R.id.btnFindWalkMate);
-        statDistance          = root.findViewById(R.id.statDistance);
-        statSessions          = root.findViewById(R.id.statSessions);
+        cardHero              = root.findViewById(R.id.cardHero);
+        txtDistanceValue      = root.findViewById(R.id.txtDistanceValue);
+        txtSessionsValue      = root.findViewById(R.id.txtSessionsValue);
+        cardLeaderboard       = root.findViewById(R.id.cardLeaderboard);
+        sectionRecentMates    = root.findViewById(R.id.sectionRecentMates);
+        rvRecentMates         = root.findViewById(R.id.rvRecentMates);
+        btnSeeAllMates        = root.findViewById(R.id.btnSeeAllMates);
         loadingIndicator      = root.findViewById(R.id.loadingIndicator);
         contentContainer      = root.findViewById(R.id.contentContainer);
-        btnViewLeaderboard    = root.findViewById(R.id.btnViewLeaderboard);
+    }
+
+    private void setupRecyclerView() {
+        recentMatesAdapter = new RecentMatesHomeAdapter();
+        rvRecentMates.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvRecentMates.setAdapter(recentMatesAdapter);
+        rvRecentMates.setNestedScrollingEnabled(false);
     }
 
     private void setupViewModel() {
@@ -117,19 +119,21 @@ public class HomeFragment extends Fragment {
                 app.getUserProfileRepository(),
                 app.getNotificationRepository(),
                 app.getGamificationRepository());
-        // Scope to Activity so the VM survives tab switches — fixes reload-on-every-navigate.
         viewModel = new ViewModelProvider(requireActivity(), factory).get(HomeViewModel.class);
     }
 
     private void setupClickListeners(View root) {
-        btnFindWalkMate.setOnClickListener(v ->
+        cardHero.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_explore));
 
         btnNotification.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_notifications));
 
-        btnViewLeaderboard.setOnClickListener(v ->
+        cardLeaderboard.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_leaderboardFragment));
+
+        btnSeeAllMates.setOnClickListener(v ->
+                Navigation.findNavController(root).navigate(R.id.action_home_to_sessionHistoryFragment));
     }
 
     // ── Location resolution ───────────────────────────────────────────────────
@@ -159,7 +163,8 @@ public class HomeFragment extends Fragment {
             Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
         }
 
-        // ── Greeting / Location ──
+        // ── Greeting ──
+        txtTimeGreeting.setText(getTimeGreeting());
         if (state.getGreetingName() != null) {
             txtGreeting.setText(getString(R.string.home_greeting_format, state.getGreetingName()));
         }
@@ -172,7 +177,39 @@ public class HomeFragment extends Fragment {
                 state.hasUnreadNotification() ? View.VISIBLE : View.GONE);
 
         // ── Stats ──
-        statDistance.setValue(String.format("%.1f", state.getTotalDistanceKm()));
-        statSessions.setValue(String.valueOf(state.getCompletedSessions()));
+        txtDistanceValue.setText(String.format("%.1f", state.getTotalDistanceKm()));
+        txtSessionsValue.setText(String.valueOf(state.getCompletedSessions()));
+
+        // ── Recent Mates ──
+        List<HomeDashboardUiState.RecentMateSnapshot> mates = state.getRecentMates();
+        if (mates != null && !mates.isEmpty()) {
+            sectionRecentMates.setVisibility(View.VISIBLE);
+            recentMatesAdapter.submitList(mates);
+            triggerGeocoding(mates);
+        } else {
+            sectionRecentMates.setVisibility(View.GONE);
+        }
+    }
+
+    private void triggerGeocoding(List<HomeDashboardUiState.RecentMateSnapshot> mates) {
+        for (int i = 0; i < mates.size(); i++) {
+            final int position = i;
+            HomeDashboardUiState.RecentMateSnapshot mate = mates.get(i);
+            if (mate.meetingLat == 0.0 && mate.meetingLng == 0.0) continue;
+            LocationHelper.resolveLocationName(
+                    requireContext().getApplicationContext(),
+                    mate.meetingLat,
+                    mate.meetingLng,
+                    locationName -> recentMatesAdapter.updateLocationAtPosition(position, locationName));
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private String getTimeGreeting() {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        if (hour < 12) return "Good morning 👋";
+        if (hour < 18) return "Good afternoon 👋";
+        return "Good evening 👋";
     }
 }

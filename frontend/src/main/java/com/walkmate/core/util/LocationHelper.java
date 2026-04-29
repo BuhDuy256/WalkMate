@@ -31,10 +31,6 @@ public final class LocationHelper {
     /**
      * Resolves the nearest city name for the given {@link Location}.
      * Calls back on the main thread. Falls back to {@code "Your area"} on failure.
-     *
-     * @param context   Application context (used to construct {@link Geocoder})
-     * @param location  The GPS fix to reverse-geocode
-     * @param callback  Receives the city name on the main thread
      */
     public static void resolveCity(Context context, Location location,
                                    LocationNameCallback callback) {
@@ -52,6 +48,39 @@ public final class LocationHelper {
                 }
             } catch (IOException ignored) {}
             final String result = city;
+            mainHandler.post(() -> callback.onResolved(result));
+        });
+    }
+
+    /**
+     * Resolves a human-readable place name (park, sub-district, or city) for
+     * a raw lat/lng pair. Used for the Recent Mates walk location on the Home screen.
+     *
+     * Priority: feature name (park/building) → sub-locality → locality → null.
+     * Delivers null on failure so callers can hide the location row gracefully.
+     */
+    public static void resolveLocationName(Context context, double lat, double lng,
+                                           LocationNameCallback callback) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        executor.execute(() -> {
+            String name = null;
+            try {
+                Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    Address addr = addresses.get(0);
+                    String feature = addr.getFeatureName();
+                    if (feature != null && !feature.isEmpty() && !feature.matches("\\d+.*")) {
+                        name = feature;
+                    } else if (addr.getSubLocality() != null) {
+                        name = addr.getSubLocality();
+                    } else if (addr.getLocality() != null) {
+                        name = addr.getLocality();
+                    }
+                }
+            } catch (IOException ignored) {}
+            final String result = name;
             mainHandler.post(() -> callback.onResolved(result));
         });
     }

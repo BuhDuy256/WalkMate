@@ -139,6 +139,10 @@
     <string name="home_stat_sessions_cd">Sessions</string>
     <string name="home_avatar_cd">Partner avatar</string>
     <string name="home_add_badge_cd">Invite</string>
+    <string name="home_stat_walks_week">Walks this week</string>
+    <string name="home_stat_matches_week">Matches this week</string>
+    <string name="home_leaderboard_subtitle">See top walkers this week</string>
+    <string name="home_recent_mates">Recent Mates</string>
 
     <!-- PROFILE -->
     <string name="profile_screen_title">Profile</string>

@@ -15,192 +15,460 @@
         android:indeterminateTint="@color/orange_primary"
         android:visibility="gone" />
 
-<androidx.core.widget.NestedScrollView
-    android:id="@+id/contentContainer"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/bg_cream"
-    android:fillViewport="true"
-    android:overScrollMode="never">
-
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/contentContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="88dp">
+        android:layout_height="match_parent"
+        android:background="@color/bg_cream"
+        android:fillViewport="true"
+        android:overScrollMode="never">
 
-        <!-- ── TOP APP BAR ──────────────────────────────────────────────────── -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:paddingTop="52dp"
-            android:paddingBottom="12dp">
-
-            <TextView
-                android:id="@+id/txtGreeting"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_dark"
-                tools:text="Hi, Alex! 👋"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/btnNotification"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/txtLocation"
-                app:layout_constraintVertical_chainStyle="packed" />
-
-            <TextView
-                android:id="@+id/txtLocation"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textSize="13sp"
-                android:textColor="@color/text_muted"
-                tools:text="Ho Chi Minh City"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/btnNotification"
-                app:layout_constraintTop_toBottomOf="@id/txtGreeting"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <FrameLayout
-                android:id="@+id/btnNotification"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:clickable="true"
-                android:focusable="true"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_bell"
-                    android:contentDescription="@string/home_notification_cd" />
-
-                <View
-                    android:id="@+id/viewNotificationBadge"
-                    android:layout_width="9dp"
-                    android:layout_height="9dp"
-                    android:layout_gravity="top|end"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:background="@drawable/bg_dot_orange"
-                    android:visibility="gone" />
-
-            </FrameLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- ── HERO ACTION CARD ──────────────────────────────────────────────── -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardHero"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="@color/bg_white">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnFindWalkMate"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:text="@string/home_find_walkmate_cta"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_gradient_orange_pill"
-                    app:backgroundTint="@null"
-                    app:cornerRadius="999dp" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- ── QUICK STATS ROW ───────────────────────────────────────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="20dp"
-            android:weightSum="2">
+            android:orientation="vertical"
+            android:paddingBottom="88dp">
 
-            <!-- Distance Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+            <!-- ── TOP APP BAR ──────────────────────────────────────────────── -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/bg_white">
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="52dp"
+                android:paddingBottom="16dp">
 
-                <com.walkmate.core.designsystem.view.WalkMateStatColumn
-                    android:id="@+id/statDistance"
+                <TextView
+                    android:id="@+id/txtTimeGreeting"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_muted"
+                    tools:text="Good morning 👋"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnNotification"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/txtGreeting"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="24sp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="@color/text_dark"
+                    android:letterSpacing="-0.012"
+                    tools:text="Hi, Luân Trần!"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnNotification"
+                    app:layout_constraintTop_toBottomOf="@id/txtTimeGreeting" />
+
+                <LinearLayout
+                    android:id="@+id/layoutLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="6dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnNotification"
+                    app:layout_constraintTop_toBottomOf="@id/txtGreeting"
+                    app:layout_constraintBottom_toBottomOf="parent">
+
+                    <ImageView
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:src="@drawable/ic_hotspot_pin"
+                        app:tint="@color/orange_primary" />
+
+                    <TextView
+                        android:id="@+id/txtLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_label"
+                        tools:text="Thành phố Hồ Chí Minh" />
+                </LinearLayout>
+
+                <!-- Notification bell -->
+                <FrameLayout
+                    android:id="@+id/btnNotification"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_notification_btn"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_bell"
+                        app:tint="@color/text_dark"
+                        android:contentDescription="@string/home_notification_cd" />
+
+                    <View
+                        android:id="@+id/viewNotificationBadge"
+                        android:layout_width="9dp"
+                        android:layout_height="9dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_dot_orange"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- ── HERO CTA ──────────────────────────────────────────────────── -->
+            <FrameLayout
+                android:id="@+id/cardHero"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_hero_cta"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="6dp">
+
+                <!-- Decorative circles -->
+                <View
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="-20dp"
+                    android:layout_marginEnd="-10dp"
+                    android:background="@drawable/bg_white_circle"
+                    android:alpha="0.08" />
+
+                <View
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="30dp"
+                    android:layout_marginBottom="-30dp"
+                    android:background="@drawable/bg_white_circle"
+                    android:alpha="0.06" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    app:wm_statIcon="@drawable/ic_distance"
-                    app:wm_statValue="—"
-                    app:wm_statLabel="@string/home_stat_this_week" />
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingBottom="20dp">
 
-            </com.google.android.material.card.MaterialCardView>
+                    <LinearLayout
+                        android:id="@+id/ctaTextBlock"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/ctaIconBtn"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
 
-            <!-- Sessions Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LET\'S GO"
+                            android:textSize="10sp"
+                            android:textColor="#BFFFFFFF"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/home_find_walkmate_cta"
+                            android:textSize="18sp"
+                            android:fontFamily="sans-serif-black"
+                            android:textColor="@color/white"
+                            android:letterSpacing="-0.012" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/ctaIconBtn"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_cta_icon_btn"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_distance"
+                            app:tint="@color/white" />
+                    </FrameLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </FrameLayout>
+
+            <!-- ── STATS ROW ─────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
+                android:orientation="horizontal"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="16dp"
+                android:weightSum="2">
+
+                <!-- Walks / Distance card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#F3F2F0"
+                    app:strokeWidth="1.5dp"
+                    app:cardBackgroundColor="@color/bg_white">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_container_orange">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_distance"
+                                app:tint="@color/orange_primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/txtDistanceValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/text_dark"
+                                tools:text="0" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="3dp"
+                                android:text=" km"
+                                android:textSize="13sp"
+                                android:textColor="@color/text_muted"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/home_stat_walks_week"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Matches / Sessions card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#F3F2F0"
+                    app:strokeWidth="1.5dp"
+                    app:cardBackgroundColor="@color/bg_white">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_container_orange">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_session"
+                                app:tint="@color/orange_primary" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/txtSessionsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_dark"
+                            tools:text="2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/home_stat_matches_week"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <!-- ── LEADERBOARD CARD ───────────────────────────────────────────── -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardLeaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#F3F2F0"
+                app:strokeWidth="1.5dp"
                 app:cardBackgroundColor="@color/bg_white">
 
-                <com.walkmate.core.designsystem.view.WalkMateStatColumn
-                    android:id="@+id/statSessions"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    app:wm_statIcon="@drawable/ic_session"
-                    app:wm_statValue="—"
-                    app:wm_statLabel="@string/home_stat_this_week" />
+                    android:padding="14dp">
 
+                    <FrameLayout
+                        android:id="@+id/leaderboardIconWrap"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_container_orange"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_badge_streak"
+                            app:tint="@color/orange_primary" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:id="@+id/leaderboardTextBlock"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp"
+                        app:layout_constraintStart_toEndOf="@id/leaderboardIconWrap"
+                        app:layout_constraintEnd_toStartOf="@id/leaderboardChevron"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="View Leaderboard"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_dark" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_leaderboard_subtitle"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/leaderboardChevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/text_muted"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── RECENT MATES ───────────────────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/sectionRecentMates"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="20dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/home_recent_mates"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllMates"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_see_all"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/orange_primary"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvRecentMates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    tools:listitem="@layout/item_recent_mate_home" />
+
+            </LinearLayout>
 
         </LinearLayout>
-
-        <!-- ── VIEW LEADERBOARD BUTTON ──────────────────────────────────────── -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnViewLeaderboard"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"
-            android:text="View Leaderboard"
-            android:textColor="@color/orange_end"
-            app:strokeColor="@color/orange_end"
-            app:cornerRadius="999dp" />
-
-    </LinearLayout>
-
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </FrameLayout>

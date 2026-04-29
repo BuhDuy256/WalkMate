@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#F3F2F0"
+    app:strokeWidth="1.5dp"
+    app:cardBackgroundColor="@color/bg_white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Initials avatar -->
+        <FrameLayout
+            android:id="@+id/avatarMate"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/txtInitials"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                tools:text="NM" />
+        </FrameLayout>
+
+        <!-- Name + location -->
+        <LinearLayout
+            android:id="@+id/mateInfoBlock"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="10dp"
+            app:layout_constraintStart_toEndOf="@id/avatarMate"
+            app:layout_constraintEnd_toStartOf="@id/txtMateTime"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/txtMateName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_dark"
+                tools:text="Nguyen Minh" />
+
+            <LinearLayout
+                android:id="@+id/rowMateLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="2dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:src="@drawable/ic_hotspot_pin"
+                    app:tint="@color/text_muted" />
+
+                <TextView
+                    android:id="@+id/txtMateLocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_muted"
+                    tools:text="Le Van Tam Park" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Relative time -->
+        <TextView
+            android:id="@+id/txtMateTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="@color/text_muted"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:text="2 days ago" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

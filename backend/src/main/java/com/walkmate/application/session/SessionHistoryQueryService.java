@@ -83,6 +83,8 @@ public class SessionHistoryQueryService {
                 s.getScheduledStart().toString(),
                 endedAt,
                 isReviewed,
+                s.getMeetingPointLat(),
+                s.getMeetingPointLng(),
                 List.of(participantA, participantB)
         );
     }

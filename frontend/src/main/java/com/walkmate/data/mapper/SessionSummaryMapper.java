@@ -40,6 +40,8 @@ public class SessionSummaryMapper {
                 response.getScheduledStart(),
                 response.isReviewed(),
                 terminalAtMs,
+                response.getMeetingPointLat(),
+                response.getMeetingPointLng(),
                 participants
         );
     }
