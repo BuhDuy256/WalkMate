@@ -77,7 +77,8 @@ public class ReportIncidentFragment extends Fragment {
         rgReason            = view.findViewById(R.id.rgReportReason);
         etEvidenceUrl       = view.findViewById(R.id.etEvidenceUrl);
         btnSubmitReport     = view.findViewById(R.id.btnSubmitReport);
-        btnBack             = view.findViewById(R.id.btnBackReport);
+        btnBack             = view.findViewById(R.id.btnSubPageBack);
+        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Report Incident");
         txtWindowClosedBanner = view.findViewById(R.id.txtWindowClosedBanner);
 
         btnBack.setOnClickListener(v ->

@@ -1,143 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:overScrollMode="never"
-    android:fillViewport="true">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <include layout="@layout/layout_sub_page_header" />
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:overScrollMode="never"
+        android:fillViewport="true">
 
-        <!-- ── Top bar ──────────────────────────────────────────────────────── -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginBottom="16dp">
-
-            <ImageButton
-                android:id="@+id/btnBackReview"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_back"
-                android:contentDescription="Back"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Leave a Review"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- ── Rating ───────────────────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Rating"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <RatingBar
-            android:id="@+id/ratingBarReview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:numStars="5"
-            android:stepSize="1"
-            android:rating="0"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Trust-score transparency notice (always visible) -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/review_trust_score_notice"
-            android:textSize="12sp"
-            android:textColor="@color/text_muted"
-            android:lineSpacingMultiplier="1.3"
-            android:layout_marginBottom="20dp" />
-
-        <!-- ── Structured feedback chips (hidden until user picks a rating) ── -->
-        <!--
-            Visibility is GONE by default. SubmitReviewFragment shows this container
-            and populates the chips as soon as the user sets a star rating > 0.
-            POSITIVE_* tags are shown for 4–5 stars; NEGATIVE_* for 1–3 stars.
-        -->
         <LinearLayout
-            android:id="@+id/layoutTagSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp">
+            android:padding="20dp">
 
+            <!-- ── Rating ───────────────────────────────────────────────────────── -->
             <TextView
-                android:id="@+id/txtTagSectionLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="13sp"
+                android:text="Rating"
+                android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_dark"
-                android:layout_marginBottom="10dp" />
+                android:layout_marginBottom="8dp" />
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupReviewTags"
+            <RatingBar
+                android:id="@+id/ratingBarReview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:singleSelection="false"
-                app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="6dp" />
+                android:numStars="5"
+                android:stepSize="1"
+                android:rating="0"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Trust-score transparency notice (always visible) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/review_trust_score_notice"
+                android:textSize="12sp"
+                android:textColor="@color/text_muted"
+                android:lineSpacingMultiplier="1.3"
+                android:layout_marginBottom="20dp" />
+
+            <!-- ── Structured feedback chips (hidden until user picks a rating) ── -->
+            <LinearLayout
+                android:id="@+id/layoutTagSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/txtTagSectionLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupReviewTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="false"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="6dp" />
+
+            </LinearLayout>
+
+            <!-- ── Comment (optional) ───────────────────────────────────────────── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comment (optional)"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/etReviewComment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:maxLines="6"
+                android:gravity="top"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Already-reviewed notice -->
+            <TextView
+                android:id="@+id/txtAlreadyReviewed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You have already reviewed this session."
+                android:textSize="13sp"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnSubmitReview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Submit Review" />
 
         </LinearLayout>
 
-        <!-- ── Comment (optional) ───────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Comment (optional)"
-            android:textSize="13sp"
-            android:layout_marginBottom="4dp" />
+    </androidx.core.widget.NestedScrollView>
 
-        <EditText
-            android:id="@+id/etReviewComment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textMultiLine"
-            android:minLines="3"
-            android:maxLines="6"
-            android:gravity="top"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Already-reviewed notice -->
-        <TextView
-            android:id="@+id/txtAlreadyReviewed"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="You have already reviewed this session."
-            android:textSize="13sp"
-            android:visibility="gone"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btnSubmitReview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Submit Review" />
-
-    </LinearLayout>
-
-</androidx.core.widget.NestedScrollView>
+</LinearLayout>

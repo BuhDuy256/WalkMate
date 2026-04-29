@@ -84,7 +84,8 @@ public class SubmitReviewFragment extends Fragment {
         etComment          = view.findViewById(R.id.etReviewComment);
         btnSubmit          = view.findViewById(R.id.btnSubmitReview);
         txtAlreadyReviewed = view.findViewById(R.id.txtAlreadyReviewed);
-        btnBack            = view.findViewById(R.id.btnBackReview);
+        btnBack            = view.findViewById(R.id.btnSubPageBack);
+        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Leave a Review");
 
         btnBack.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());

@@ -60,7 +60,8 @@ public class SessionHistoryFragment extends Fragment {
         recyclerView = view.findViewById(R.id.rvSessionHistory);
         txtEmpty     = view.findViewById(R.id.txtHistoryEmpty);
         txtError     = view.findViewById(R.id.txtHistoryError);
-        View btnBack = view.findViewById(R.id.btnBackHistory);
+        View btnBack = view.findViewById(R.id.btnSubPageBack);
+        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Walk History");
 
         btnBack.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());

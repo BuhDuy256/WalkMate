@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Notification feed row — Phase 11
+    Notification feed row
     IDs required by NotificationAdapter.java:
-      view_unread_dot, txt_notification_title, txt_notification_body
+      view_accent_bar, img_notif_icon,
+      txt_notification_title, txt_notification_time,
+      view_unread_dot, txt_notification_body
 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -12,75 +14,106 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
     app:cardBackgroundColor="@color/bg_white"
-    app:cardCornerRadius="20dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/handle_bar"
-    app:strokeWidth="1dp">
+    app:strokeColor="@color/notif_border_read"
+    app:strokeWidth="1.5dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp">
+        android:layout_height="wrap_content">
 
-        <!-- ── Unread indicator dot ──────────────────────────────────────── -->
-        <!--
-            Visibility is toggled in NotificationAdapter:
-              VISIBLE = unread (PENDING / SENT)
-              GONE    = already read
-        -->
+        <!-- Unread left accent bar (hidden when read) -->
         <View
-            android:id="@+id/view_unread_dot"
-            android:layout_width="9dp"
-            android:layout_height="9dp"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/bg_dot_orange"
+            android:id="@+id/view_accent_bar"
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start|fill_vertical"
+            android:background="@color/orange_primary"
+            android:visibility="gone"
             tools:visibility="visible" />
 
-        <!-- ── Text content ─────────────────────────────────────────────── -->
+        <!-- Main content row -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:padding="14dp">
 
-            <!-- Notification type label, e.g. "New Walk Proposal" -->
-            <TextView
-                android:id="@+id/txt_notification_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text_dark"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end"
-                tools:text="Walk Confirmed!" />
+            <!-- Icon container: bg set programmatically, padding gives 18dp icon area inside 40dp -->
+            <ImageView
+                android:id="@+id/img_notif_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="10dp"
+                android:padding="11dp"
+                android:scaleType="fitCenter"
+                tools:background="#FFECFDF5"
+                tools:src="@drawable/ic_distance" />
 
-            <!-- Human-readable description -->
-            <TextView
-                android:id="@+id/txt_notification_body"
-                android:layout_width="match_parent"
+            <!-- Text content -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="@color/text_muted"
-                android:textSize="13sp"
-                android:maxLines="2"
-                android:ellipsize="end"
-                android:lineSpacingMultiplier="1.3"
-                tools:text="Both of you accepted — your walk session is confirmed." />
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Title + time + unread dot -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/txt_notification_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/text_dark"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        tools:text="Walk Confirmed!" />
+
+                    <TextView
+                        android:id="@+id/txt_notification_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        tools:text="2m ago" />
+
+                    <View
+                        android:id="@+id/view_unread_dot"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginStart="4dp"
+                        android:background="@drawable/bg_dot_orange"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                </LinearLayout>
+
+                <!-- Body text -->
+                <TextView
+                    android:id="@+id/txt_notification_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/text_label"
+                    android:textSize="13sp"
+                    android:lineSpacingMultiplier="1.5"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    tools:text="Both of you accepted — your walk session is confirmed." />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <!-- ── Chevron hint (read state affordance) ─────────────────────── -->
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginStart="10dp"
-            android:src="@drawable/ic_chevron_right"
-            android:tint="@color/handle_bar"
-            android:importantForAccessibility="no" />
-
-    </LinearLayout>
+    </FrameLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -38,5 +38,8 @@ public record SessionSummaryResponse(
         double meetingPointLng,
 
         @JsonProperty("participants")
-        List<ParticipantSummaryResponse> participants
+        List<ParticipantSummaryResponse> participants,
+
+        @JsonProperty("caller_avatar_url")
+        String callerAvatarUrl
 ) {}

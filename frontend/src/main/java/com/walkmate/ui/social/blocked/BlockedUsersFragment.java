@@ -52,7 +52,8 @@ public class BlockedUsersFragment extends Fragment {
         progressBar  = view.findViewById(R.id.progressBlockedUsers);
         recyclerView = view.findViewById(R.id.recyclerViewBlocked);
         txtEmpty     = view.findViewById(R.id.txtEmptyBlocked);
-        btnBack      = view.findViewById(R.id.btnBackBlocked);
+        btnBack      = view.findViewById(R.id.btnSubPageBack);
+        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Blocked Users");
 
         // ── Adapter ───────────────────────────────────────────────────────────
         adapter = new BlockedUsersAdapter();

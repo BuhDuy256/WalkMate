@@ -34,6 +34,9 @@ public class SessionSummaryResponse {
     @SerializedName("participants")
     private List<ParticipantResponse> participants;
 
+    @SerializedName("caller_avatar_url")
+    private String callerAvatarUrl;
+
     public String getSessionId()                         { return sessionId; }
     public String getStatus()                            { return status; }
     public String getScheduledStart()                    { return scheduledStart; }
@@ -42,6 +45,7 @@ public class SessionSummaryResponse {
     public double getMeetingPointLat()                   { return meetingPointLat; }
     public double getMeetingPointLng()                   { return meetingPointLng; }
     public List<ParticipantResponse> getParticipants()   { return participants; }
+    public String getCallerAvatarUrl()                   { return callerAvatarUrl; }
 
     public static class ParticipantResponse {
 

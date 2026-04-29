@@ -1,9 +1,13 @@
 package com.walkmate.ui.history;
 
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -17,7 +21,6 @@ import com.walkmate.domain.walksession.ParticipantSummary;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSession;
 
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -107,6 +110,7 @@ public class SessionHistoryAdapter
 
         holder.btnReview.setVisibility(View.GONE);
         holder.btnReport.setVisibility(View.GONE);
+        holder.dividerAction.setVisibility(View.GONE);
 
         if (global == WalkSession.Status.COMPLETED) {
             ParticipantSummary caller  = summary.getCallerParticipant(currentUserId);
@@ -117,6 +121,7 @@ public class SessionHistoryAdapter
 
             if (callerStatus == WalkSession.Status.COMPLETED) {
                 if (partnerStatus == WalkSession.Status.COMPLETED) {
+                    holder.dividerAction.setVisibility(View.VISIBLE);
                     holder.btnReview.setVisibility(View.VISIBLE);
                     holder.btnReview.setOnClickListener(v -> {
                         if (reviewClickListener != null) {
@@ -124,6 +129,7 @@ public class SessionHistoryAdapter
                         }
                     });
                 } else if (partnerStatus == WalkSession.Status.NO_SHOW) {
+                    holder.dividerAction.setVisibility(View.VISIBLE);
                     holder.btnReport.setVisibility(View.VISIBLE);
                     holder.btnReport.setOnClickListener(v -> {
                         if (reportClickListener != null) {
@@ -144,81 +150,100 @@ public class SessionHistoryAdapter
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        final TextView     txtDate;
-        final TextView     txtStatus;
-        final TextView     txtParticipant1Name;
-        final TextView     txtParticipant1Status;
-        final TextView     txtParticipant1Distance;
-        final TextView     txtParticipant1Duration;
-        final TextView        txtParticipant2Name;
-        final TextView        txtParticipant2Status;
-        final TextView        txtParticipant2Distance;
-        final TextView        txtParticipant2Duration;
+        final TextView          txtDate;
+        final TextView          txtStatus;
+        // Participant 2 row = partner (shown at top)
+        final TextView          txtParticipant2Name;
+        final TextView          txtParticipant2Status;
+        final TextView          txtParticipant2Distance;
+        final TextView          txtParticipant2Duration;
         final AvatarInitialView avatarPartner;
-        final MaterialButton  btnReview;
-        final MaterialButton  btnReport;
+        // Participant 1 row = you (shown at bottom)
+        final TextView          txtParticipant1Name;
+        final TextView          txtParticipant1Status;
+        final TextView          txtParticipant1Distance;
+        final TextView          txtParticipant1Duration;
+        final AvatarInitialView avatarSelf;
+        // Actions
+        final View              dividerAction;
+        final MaterialButton    btnReview;
+        final MaterialButton    btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
             txtDate                 = itemView.findViewById(R.id.txtSessionDate);
             txtStatus               = itemView.findViewById(R.id.txtSessionStatus);
-            txtParticipant1Name     = itemView.findViewById(R.id.txtParticipant1Name);
-            txtParticipant1Status   = itemView.findViewById(R.id.txtParticipant1Status);
-            txtParticipant1Distance = itemView.findViewById(R.id.txtParticipant1Distance);
-            txtParticipant1Duration = itemView.findViewById(R.id.txtParticipant1Duration);
             txtParticipant2Name     = itemView.findViewById(R.id.txtParticipant2Name);
             txtParticipant2Status   = itemView.findViewById(R.id.txtParticipant2Status);
             txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
             txtParticipant2Duration = itemView.findViewById(R.id.txtParticipant2Duration);
             avatarPartner           = itemView.findViewById(R.id.avatarPartner);
+            txtParticipant1Name     = itemView.findViewById(R.id.txtParticipant1Name);
+            txtParticipant1Status   = itemView.findViewById(R.id.txtParticipant1Status);
+            txtParticipant1Distance = itemView.findViewById(R.id.txtParticipant1Distance);
+            txtParticipant1Duration = itemView.findViewById(R.id.txtParticipant1Duration);
+            avatarSelf              = itemView.findViewById(R.id.avatarSelf);
+            dividerAction           = itemView.findViewById(R.id.dividerAction);
             btnReview               = itemView.findViewById(R.id.btnReview);
             btnReport               = itemView.findViewById(R.id.btnReport);
         }
 
         void bind(SessionSummary summary, String currentUserId) {
             txtDate.setText(formatDate(summary.getScheduledStart()));
-            txtStatus.setText(formatStatus(summary.getStatus()));
+            applyStatusBadge(txtStatus, summary.getStatus());
 
-            List<ParticipantSummary> participants = summary.getParticipants();
-            if (participants != null && participants.size() >= 2) {
-                bindParticipantRow(participants.get(0), currentUserId,
-                        txtParticipant1Name, txtParticipant1Status,
-                        txtParticipant1Distance, txtParticipant1Duration);
-                bindParticipantRow(participants.get(1), currentUserId,
-                        txtParticipant2Name, txtParticipant2Status,
-                        txtParticipant2Distance, txtParticipant2Duration);
-            } else if (participants != null && participants.size() == 1) {
-                bindParticipantRow(participants.get(0), currentUserId,
-                        txtParticipant1Name, txtParticipant1Status,
-                        txtParticipant1Distance, txtParticipant1Duration);
-                txtParticipant2Name.setText("—");
-                txtParticipant2Status.setText("");
-                txtParticipant2Distance.setText("");
-                txtParticipant2Duration.setText("");
+            // Partner is always shown in the top row (participant2 views)
+            ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
+            if (partner != null) {
+                String partnerName = partner.getFullName() != null && !partner.getFullName().isEmpty()
+                        ? partner.getFullName() : "Unknown";
+                txtParticipant2Name.setText(partnerName);
+                txtParticipant2Status.setText(formatUserStatus(partner.getUserStatus()));
+                txtParticipant2Distance.setText(formatDistance(partner.getDistanceKm()));
+                txtParticipant2Duration.setText(formatDuration(partner.getDurationMinutes()));
+                avatarPartner.bind(partnerName, partner.getAvatarUrl());
             }
 
-            // Bind partner avatar
-            if (avatarPartner != null) {
-                ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
-                if (partner != null) {
-                    String name = partner.getFullName() != null ? partner.getFullName() : "?";
-                    avatarPartner.bind(name, partner.getAvatarUrl());
+            // Caller ("You") is always shown in the bottom row (participant1 views)
+            ParticipantSummary caller = summary.getCallerParticipant(currentUserId);
+            if (caller != null) {
+                txtParticipant1Name.setText("You");
+                txtParticipant1Status.setText(formatUserStatus(caller.getUserStatus()));
+                txtParticipant1Distance.setText(formatDistance(caller.getDistanceKm()));
+                txtParticipant1Duration.setText(formatDuration(caller.getDurationMinutes()));
+                if (avatarSelf != null) {
+                    String callerName = caller.getFullName() != null && !caller.getFullName().isEmpty()
+                            ? caller.getFullName() : "Y";
+                    avatarSelf.setBackground(
+                            ContextCompat.getDrawable(avatarSelf.getContext(), R.drawable.bg_circle_orange));
+                    avatarSelf.setInitialTextColor(Color.WHITE);
+                    avatarSelf.bind(callerName, caller.getAvatarUrl());
                 }
             }
         }
 
-        private void bindParticipantRow(ParticipantSummary p, String currentUserId,
-                                         TextView nameView, TextView statusView,
-                                         TextView distView, TextView durView) {
-            String displayName = p.getParticipantId().equals(currentUserId)
-                    ? "You"
-                    : (p.getFullName() != null && !p.getFullName().isEmpty()
-                            ? p.getFullName()
-                            : "Unknown");
-            nameView.setText(displayName);
-            statusView.setText(formatUserStatus(p.getUserStatus()));
-            distView.setText(String.format(Locale.getDefault(), "%.2f km", p.getDistanceKm()));
-            durView.setText(formatDuration(p.getDurationMinutes()));
+        private static void applyStatusBadge(TextView badge, WalkSession.Status status) {
+            String label;
+            int bgColor;
+            int textColor;
+            switch (status != null ? status : WalkSession.Status.PENDING) {
+                case ACTIVE:
+                    label = "ACTIVE"; bgColor = 0xFFFFF7ED; textColor = 0xFFF97316; break;
+                case COMPLETED:
+                    label = "COMPLETED"; bgColor = 0xFFF0FDF4; textColor = 0xFF16A34A; break;
+                case CANCELLED:
+                    label = "CANCELLED"; bgColor = 0xFFFEF2F2; textColor = 0xFFEF4444; break;
+                default:
+                    label = status != null ? status.name() : "PENDING";
+                    bgColor = 0xFFF3F2F0; textColor = 0xFF78716C;
+            }
+            badge.setText(label);
+            badge.setTextColor(textColor);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.RECTANGLE);
+            bg.setCornerRadius(100f);
+            bg.setColor(bgColor);
+            badge.setBackground(bg);
         }
 
         private static String formatDate(String iso) {
@@ -237,16 +262,8 @@ public class SessionHistoryAdapter
             }
         }
 
-        private static String formatStatus(WalkSession.Status status) {
-            if (status == null) return "Unknown";
-            switch (status) {
-                case COMPLETED: return "Completed";
-                case CANCELLED: return "Cancelled";
-                case NO_SHOW:   return "No Show";
-                case ACTIVE:    return "Active";
-                case PENDING:   return "Pending";
-                default:        return status.name();
-            }
+        private static String formatDistance(double km) {
+            return String.format(Locale.getDefault(), "%.2f km", km);
         }
 
         private static String formatDuration(int minutes) {

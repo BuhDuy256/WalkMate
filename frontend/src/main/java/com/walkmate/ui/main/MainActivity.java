@@ -122,13 +122,12 @@ public class MainActivity extends AppCompatActivity {
         // (e.g., the user switches to Matches while the explore flow was active).
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             int destId = destination.getId();
-            // Hide bottom nav for full-screen sub-pages (Explore form, Notifications).
+            // Show bottom nav only on top-level tabs; hide for every sub-page.
             // Explore manages its own visibility via ExploreFragment.renderState().
-            if (destId == R.id.notificationFragment || destId == R.id.editProfileFragment) {
-                setBottomNavVisibility(false);
-            } else if (destId != R.id.exploreFragment) {
-                // Ensure nav bar is always visible on non-explore, non-notification destinations.
+            if (isTopLevelTab(destId)) {
                 setBottomNavVisibility(true);
+            } else if (destId != R.id.exploreFragment) {
+                setBottomNavVisibility(false);
             }
             // Fix BottomNav desync: NavigationUI's listener only syncs the indicator
             // when destId matches a menu item. For child destinations (e.g. sessionHistoryFragment)

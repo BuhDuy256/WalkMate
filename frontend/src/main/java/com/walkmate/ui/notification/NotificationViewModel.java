@@ -11,16 +11,10 @@ import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.shared.DomainCallback;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * ViewModel for the Notification Center screen.
- *
- * <p>Polls {@code GET /api/v1/notifications} every {@link #POLL_INTERVAL_MS} ms
- * while the screen is in the foreground. Polling starts when the Fragment calls
- * {@link #startPolling()} (in {@code onResume}) and stops when it calls
- * {@link #stopPolling()} (in {@code onPause}).</p>
- */
 public class NotificationViewModel extends ViewModel {
 
     private static final long POLL_INTERVAL_MS = 30_000L;
@@ -35,7 +29,7 @@ public class NotificationViewModel extends ViewModel {
         @Override
         public void run() {
             if (!polling) return;
-            loadNotifications(false /* silent refresh — don't flash the loader */);
+            loadNotifications(false);
             mainHandler.postDelayed(this, POLL_INTERVAL_MS);
         }
     };
@@ -46,60 +40,62 @@ public class NotificationViewModel extends ViewModel {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public LiveData<NotificationUiState> getUiState() {
-        return uiState;
-    }
+    public LiveData<NotificationUiState> getUiState() { return uiState; }
 
-    /** Called from Fragment.onResume — triggers an immediate load and starts polling. */
     public void startPolling() {
         polling = true;
-        loadNotifications(true /* show loader on first fetch */);
+        loadNotifications(true);
         mainHandler.postDelayed(pollRunnable, POLL_INTERVAL_MS);
     }
 
-    /** Called from Fragment.onPause — cancels pending poll callbacks. */
     public void stopPolling() {
         polling = false;
         mainHandler.removeCallbacks(pollRunnable);
     }
 
-    /**
-     * Marks a notification as read and refreshes the list silently.
-     */
     public void markRead(String notificationId) {
         notificationRepository.markRead(notificationId, new DomainCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                loadNotifications(false);
-            }
-
-            @Override
-            public void onError(Exception error) {
-                // Non-critical — badge count may be stale until next poll
-            }
+            @Override public void onSuccess(Void result) { loadNotifications(false); }
+            @Override public void onError(Exception error) { /* non-critical */ }
         });
     }
 
-    @Override
-    protected void onCleared() {
-        stopPolling();
+    public void markAllRead() {
+        NotificationUiState current = uiState.getValue();
+        if (current == null || current.kind != NotificationUiState.Kind.READY) return;
+
+        List<Notification> unread = new ArrayList<>();
+        for (Notification n : current.notifications) {
+            if (!n.isRead()) unread.add(n);
+        }
+        if (unread.isEmpty()) return;
+
+        AtomicInteger remaining = new AtomicInteger(unread.size());
+        for (Notification n : unread) {
+            notificationRepository.markRead(n.getNotificationId(), new DomainCallback<Void>() {
+                @Override public void onSuccess(Void r) {
+                    if (remaining.decrementAndGet() == 0) loadNotifications(false);
+                }
+                @Override public void onError(Exception e) {
+                    if (remaining.decrementAndGet() == 0) loadNotifications(false);
+                }
+            });
+        }
     }
+
+    @Override
+    protected void onCleared() { stopPolling(); }
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void loadNotifications(boolean showLoader) {
-        if (showLoader) {
-            uiState.postValue(NotificationUiState.loading());
-        }
+        if (showLoader) uiState.postValue(NotificationUiState.loading());
 
         notificationRepository.getNotifications(new DomainCallback<List<Notification>>() {
-            @Override
-            public void onSuccess(List<Notification> result) {
+            @Override public void onSuccess(List<Notification> result) {
                 uiState.postValue(NotificationUiState.ready(result));
             }
-
-            @Override
-            public void onError(Exception error) {
+            @Override public void onError(Exception error) {
                 uiState.postValue(NotificationUiState.error(error.getMessage()));
             }
         });

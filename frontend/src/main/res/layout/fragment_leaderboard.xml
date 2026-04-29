@@ -6,36 +6,7 @@
     android:orientation="vertical"
     android:background="@color/bg_tag_inactive">
 
-    <!-- Toolbar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="8dp"
-        android:paddingEnd="16dp"
-        android:background="@color/bg_white"
-        android:elevation="4dp">
-
-        <ImageView
-            android:id="@+id/btnBack"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:padding="12dp"
-            android:src="@drawable/ic_back"
-            android:contentDescription="Back"
-            android:background="?attr/selectableItemBackgroundBorderless" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Leaderboard"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_dark" />
-
-    </LinearLayout>
+    <include layout="@layout/layout_sub_page_header" />
 
     <!-- Stale-data banner (hidden by default) -->
     <TextView

@@ -56,7 +56,8 @@ public class FriendsFragment extends Fragment {
 
         tabLayout = view.findViewById(R.id.tabLayoutFriends);
         viewPager = view.findViewById(R.id.viewPagerFriends);
-        btnBack   = view.findViewById(R.id.btnBackFriends);
+        btnBack   = view.findViewById(R.id.btnSubPageBack);
+        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Friends");
 
         // ── ViewModel (scoped to this fragment) ───────────────────────────────
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();

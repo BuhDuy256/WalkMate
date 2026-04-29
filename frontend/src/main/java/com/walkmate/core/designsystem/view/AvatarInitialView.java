@@ -159,6 +159,15 @@ public class AvatarInitialView extends FrameLayout {
         tvInitial.setTextSize(sp);
     }
 
+    /**
+     * Overrides the initial-letter text color.
+     * Use when the avatar background is changed from the default warm circle
+     * (e.g., solid orange background requires white text for contrast).
+     */
+    public void setInitialTextColor(int color) {
+        tvInitial.setTextColor(color);
+    }
+
     // ─── Private helpers ─────────────────────────────────────────────────────
 
     /**

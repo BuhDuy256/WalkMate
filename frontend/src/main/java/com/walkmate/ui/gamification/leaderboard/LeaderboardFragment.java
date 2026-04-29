@@ -81,8 +81,9 @@ public class LeaderboardFragment extends Fragment {
         recyclerView = root.findViewById(R.id.recyclerView);
         txtEmpty     = root.findViewById(R.id.txtEmpty);
         txtBanner    = root.findViewById(R.id.txtBanner);
-        root.findViewById(R.id.btnBack).setOnClickListener(v ->
+        root.findViewById(R.id.btnSubPageBack).setOnClickListener(v ->
                 Navigation.findNavController(requireView()).navigateUp());
+        ((TextView) root.findViewById(R.id.txtSubPageTitle)).setText("Leaderboard");
     }
 
     private void setupRecyclerView() {

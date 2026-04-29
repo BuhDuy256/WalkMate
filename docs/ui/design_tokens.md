@@ -170,3 +170,192 @@ app:cardBackgroundColor="@color/bg_white"
 | Leaderboard           | `R.id.action_home_to_leaderboardFragment`  |
 | Session History       | `R.id.action_home_to_sessionHistoryFragment` |
 | Public Profile        | `R.id.action_home_to_publicProfileFragment`  |
+
+---
+
+## Bottom Nav Visibility Rule
+
+**Decision:** Bottom nav is shown **only** for the three top-level tab destinations. It is hidden automatically for every other destination.
+
+```java
+// MainActivity.java — OnDestinationChangedListener
+if (isTopLevelTab(destId)) {
+    setBottomNavVisibility(true);
+} else if (destId != R.id.exploreFragment) {   // explore self-manages
+    setBottomNavVisibility(false);
+}
+
+private boolean isTopLevelTab(int destId) {
+    return destId == R.id.homeFragment
+        || destId == R.id.matchesFragment
+        || destId == R.id.profileFragment;
+}
+```
+
+New sub-page destinations are hidden automatically — no per-screen code needed.
+
+---
+
+## Sub-page Header Component (`layout_sub_page_header.xml`)
+
+**Decision:** All sub-pages (reached by navigating away from a top-level tab) share one reusable header include.
+
+```xml
+<include layout="@layout/layout_sub_page_header" />
+```
+
+**Spec:**
+
+| Property       | Value                                    |
+|----------------|------------------------------------------|
+| Height         | `56dp`                                   |
+| Background     | `@color/bg_white`                        |
+| Elevation      | `4dp` (shadow below header)              |
+| Padding H      | `8dp` start / end                        |
+| Back button ID | `@+id/btnSubPageBack`                    |
+| Title ID       | `@+id/txtSubPageTitle`                   |
+
+**Back button spec (`btnSubPageBack`):**
+- Type: `ImageButton`
+- Size: `40 × 40dp`
+- Background: `@drawable/bg_btn_back` (`#F5F5F4` fill, `12dp` corners)
+- Icon: `@drawable/ic_back`, padding `8dp`
+
+**Title is always set programmatically in the host fragment:**
+```java
+((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Walk History");
+```
+
+**Pages currently using this include:**
+`fragment_session_history`, `fragment_friends`, `fragment_blocked_users`,
+`fragment_leaderboard`, `fragment_submit_review`, `fragment_report_incident`
+
+**Pages with custom headers (back button updated to `bg_btn_back` only):**
+`fragment_public_profile` (has overflow menu button),
+`fragment_notifications` (has unread count + mark-all-read action)
+
+---
+
+## Back Button Drawable (`bg_btn_back`)
+
+**Decision:** Replace `?attr/selectableItemBackgroundBorderless` on sub-page back buttons with a visible rounded-square background matching the Figma spec.
+
+```xml
+<!-- res/drawable/bg_btn_back.xml -->
+<shape android:shape="rectangle">
+    <solid android:color="#F5F5F4" />
+    <corners android:radius="12dp" />
+</shape>
+```
+
+| Property     | Value       |
+|--------------|-------------|
+| Fill         | `#F5F5F4`   |
+| Corner radius | `12dp`     |
+| Button size  | `40 × 40dp` |
+| Icon padding | `8dp`       |
+
+---
+
+## Session History Card (`item_session_history.xml`)
+
+### Card container
+
+```xml
+app:cardCornerRadius="20dp"
+app:cardElevation="4dp"
+app:cardBackgroundColor="@color/bg_white"
+app:strokeColor="#F3F2F0"
+app:strokeWidth="1dp"
+```
+
+### Row order
+Partner row is always rendered **first** (top), "You" row **second** (bottom).
+The adapter uses `summary.getPartnerParticipant(currentUserId)` /
+`summary.getCallerParticipant(currentUserId)` — never positional index.
+
+### Status badge
+Status text + pill background are applied **programmatically** via `GradientDrawable`
+(no separate drawable file needed):
+
+| Status      | Background  | Text color  |
+|-------------|-------------|-------------|
+| `ACTIVE`    | `#FFF7ED`   | `#F97316`   |
+| `COMPLETED` | `#F0FDF4`   | `#16A34A`   |
+| `CANCELLED` | `#FEF2F2`   | `#EF4444`   |
+| Other       | `#F3F2F0`   | `#78716C`   |
+
+```java
+GradientDrawable bg = new GradientDrawable();
+bg.setShape(GradientDrawable.RECTANGLE);
+bg.setCornerRadius(100f);   // pill
+bg.setColor(bgColor);
+badge.setBackground(bg);
+```
+
+### Stat cell pattern (distance / duration)
+Each stat is a horizontal `LinearLayout`: `14dp ImageView` + `TextView`.
+
+```xml
+<LinearLayout android:orientation="horizontal" android:gravity="center_vertical">
+    <ImageView android:layout_width="14dp" android:layout_height="14dp"
+               android:src="@drawable/ic_pin_small" android:layout_marginEnd="3dp" />
+    <TextView android:id="@+id/txtParticipant1Distance"
+              android:textSize="12sp" android:textStyle="bold"
+              android:textColor="@color/text_label" />
+</LinearLayout>
+```
+
+New icons: `ic_pin_small` (map pin, 14dp, `#A8A29E`), `ic_clock_small` (clock, 14dp, `#A8A29E`).
+
+### Action row (Leave a Review / Report)
+- Uses `MaterialButton` with `style="@style/Widget.Material3.Button.TextButton"`
+- Width: `match_parent` (centered text); mutually exclusive — only one shown at a time
+- "Leave a Review": `@color/orange_primary`; "Report": `@color/text_muted`
+- A `View` divider (`id="dividerAction"`, `1dp`, `#F3F2F0`) is shown/hidden alongside the button
+
+---
+
+## "You" Avatar in History Card
+
+**Decision:** The caller's avatar uses `AvatarInitialView` with an orange background override
+(instead of the default cream `bg_warm_circle`) so it is visually distinct from the partner avatar.
+
+```java
+avatarSelf.setBackground(
+    ContextCompat.getDrawable(context, R.drawable.bg_circle_orange));
+avatarSelf.setInitialTextColor(Color.WHITE);   // new API added to AvatarInitialView
+avatarSelf.bind(callerName, caller.getAvatarUrl());
+```
+
+New drawable: `bg_circle_orange` — solid orange (`@color/orange_primary`) oval.
+New `AvatarInitialView` method: `setInitialTextColor(int color)` — overrides the default orange initial text for use on dark/colored backgrounds.
+
+---
+
+## New Drawables Added
+
+| Drawable          | Description                                                   |
+|-------------------|---------------------------------------------------------------|
+| `bg_btn_back`     | `#F5F5F4` fill, `12dp` corners — sub-page back button bg     |
+| `bg_circle_orange`| Orange oval — "You" avatar background in history card        |
+| `ic_pin_small`    | 14dp map-pin vector, `#A8A29E` — distance stat icon          |
+| `ic_clock_small`  | 14dp clock vector, `#A8A29E` — duration stat icon            |
+
+---
+
+## History API — `caller_avatar_url`
+
+**Decision:** `SessionSummaryResponse` exposes `caller_avatar_url` as an explicit top-level field (in addition to the per-participant `avatar_url` already inside `participants[]`). This lets clients show the current user's photo in the "You" row without iterating the participants list.
+
+```json
+{
+  "session_id": "...",
+  "status": "COMPLETED",
+  "participants": [...],
+  "caller_avatar_url": "https://..."
+}
+```
+
+The frontend DTO (`SessionSummaryResponse.java`) deserialises it via `@SerializedName("caller_avatar_url")`.
+The adapter uses `caller.getAvatarUrl()` (from `getCallerParticipant()`) which is equivalent.

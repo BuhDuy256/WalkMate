@@ -9,24 +9,27 @@
     android:layout_marginVertical="6dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp"
-    app:strokeColor="?attr/colorOutline"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/bg_white"
+    app:strokeColor="#F3F2F0"
     app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="14dp">
+        android:orientation="vertical">
 
-        <!-- Header row: Date (left) + Status badge (right) -->
+        <!-- Header row: Date + Status badge -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="10dp">
 
             <TextView
                 android:id="@+id/txtSessionDate"
@@ -35,85 +38,48 @@
                 android:layout_weight="1"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="2024-08-15" />
+                android:textColor="@color/text_dark"
+                tools:text="2026-04-29" />
 
             <TextView
                 android:id="@+id/txtSessionStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="11sp"
-                android:textAllCaps="true"
-                android:textColor="@color/text_muted"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
                 tools:text="COMPLETED" />
 
         </LinearLayout>
 
-        <!-- Participant 1 row (caller — labelled "You") -->
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="#F3F2F0" />
+
+        <!-- Partner row (top) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="6dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/txtParticipant1Name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurface"
-                    tools:text="You" />
-
-                <TextView
-                    android:id="@+id/txtParticipant1Status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="11sp"
-                    android:textColor="@color/text_muted"
-                    tools:text="Completed" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/txtParticipant1Distance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"
-                android:layout_marginEnd="10dp"
-                tools:text="3.50 km" />
-
-            <TextView
-                android:id="@+id/txtParticipant1Duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"
-                tools:text="45 min" />
-
-        </LinearLayout>
-
-        <!-- Participant 2 row (partner) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp">
 
             <com.walkmate.core.designsystem.view.AvatarInitialView
                 android:id="@+id/avatarPartner"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
-                android:layout_gravity="center_vertical" />
+                android:layout_marginEnd="10dp" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -125,71 +91,222 @@
                     android:id="@+id/txtParticipant2Name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:textColor="?attr/colorOnSurface"
-                    tools:text="Nguyen Van A" />
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    tools:text="Bảo Duy Nguyễn" />
 
                 <TextView
                     android:id="@+id/txtParticipant2Status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    tools:text="No Show" />
+                    tools:text="Completed" />
 
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/txtParticipant2Distance"
+            <!-- Partner stats -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"
-                android:layout_marginEnd="10dp"
-                tools:text="3.20 km" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/txtParticipant2Duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"
-                tools:text="43 min" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginEnd="12dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_pin_small"
+                        android:layout_marginEnd="3dp"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:id="@+id/txtParticipant2Distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_label"
+                        tools:text="0.01 km" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_clock_small"
+                        android:layout_marginEnd="3dp"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:id="@+id/txtParticipant2Duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_label"
+                        tools:text="1 min" />
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Action row: Review (left) and Report (right) — visibility driven by UiState -->
+        <!-- You row (bottom) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="12dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnReview"
-                style="@style/Widget.Material3.Button.TextButton"
+            <!-- Orange avatar for "You" — background and text color set in adapter -->
+            <com.walkmate.core.designsystem.view.AvatarInitialView
+                android:id="@+id/avatarSelf"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="10dp" />
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Leave a Review"
-                android:textSize="12sp"
-                android:visibility="gone"
-                tools:visibility="visible" />
+                android:orientation="vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnReport"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="0dp"
+                <TextView
+                    android:id="@+id/txtParticipant1Name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    tools:text="You" />
+
+                <TextView
+                    android:id="@+id/txtParticipant1Status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_muted"
+                    tools:text="Completed" />
+
+            </LinearLayout>
+
+            <!-- Your stats -->
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_gravity="end"
-                android:text="Report"
-                android:textColor="@color/text_muted"
-                android:textSize="12sp"
-                android:visibility="gone"
-                tools:visibility="visible" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginEnd="12dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_pin_small"
+                        android:layout_marginEnd="3dp"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:id="@+id/txtParticipant1Distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_label"
+                        tools:text="0.01 km" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_clock_small"
+                        android:layout_marginEnd="3dp"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:id="@+id/txtParticipant1Duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_label"
+                        tools:text="0 min" />
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
+
+        <!-- Action divider (only shown when a button is visible) -->
+        <View
+            android:id="@+id/dividerAction"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="#F3F2F0"
+            android:visibility="gone" />
+
+        <!-- Action row: Review or Report — mutually exclusive -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReview"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp"
+            android:text="Leave a Review"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/orange_primary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReport"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp"
+            android:text="Report"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_muted"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
     </LinearLayout>
 

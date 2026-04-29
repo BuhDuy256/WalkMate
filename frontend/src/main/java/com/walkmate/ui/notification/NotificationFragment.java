@@ -23,15 +23,6 @@ import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
 import com.walkmate.ui.social.friends.FriendsPagerAdapter;
 
-/**
- * Notification Center screen.
- *
- * <p>Displays the user's notification feed in a RecyclerView and polls the backend
- * every 30 seconds while in the foreground (delegated to the ViewModel).</p>
- *
- * <p>Attach to the main navigation and launch it from the bell icon in the
- * Home toolbar. Badge count is driven by {@link NotificationUiState#unreadCount}.</p>
- */
 public class NotificationFragment extends Fragment {
 
     public static final String TAG = "notifications";
@@ -43,6 +34,8 @@ public class NotificationFragment extends Fragment {
     private RecyclerView recyclerView;
     private TextView    txtEmpty;
     private TextView    txtError;
+    private TextView    txtUnreadCount;
+    private View        btnMarkAllRead;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -58,19 +51,19 @@ public class NotificationFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        progressBar   = view.findViewById(R.id.progress_notifications);
-        recyclerView  = view.findViewById(R.id.rv_notifications);
-        txtEmpty      = view.findViewById(R.id.txt_notifications_empty);
-        txtError      = view.findViewById(R.id.txt_notifications_error);
-        View btnBack  = view.findViewById(R.id.btnBack);
+        progressBar    = view.findViewById(R.id.progress_notifications);
+        recyclerView   = view.findViewById(R.id.rv_notifications);
+        txtEmpty       = view.findViewById(R.id.txt_notifications_empty);
+        txtError       = view.findViewById(R.id.txt_notifications_error);
+        txtUnreadCount = view.findViewById(R.id.txtUnreadCount);
+        btnMarkAllRead = view.findViewById(R.id.btnMarkAllRead);
+        View btnBack   = view.findViewById(R.id.btnBack);
 
-        btnBack.setOnClickListener(v -> {
-            requireActivity().getOnBackPressedDispatcher().onBackPressed();
-        });
+        btnBack.setOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
         adapter = new NotificationAdapter();
         adapter.setOnReadListener(notification -> {
-            // Only call markRead for unread notifications to avoid redundant API calls.
             if (!notification.isRead()) {
                 viewModel.markRead(notification.getNotificationId());
             }
@@ -86,6 +79,8 @@ public class NotificationFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this, new NotificationViewModelFactory(repo))
                 .get(NotificationViewModel.class);
+
+        btnMarkAllRead.setOnClickListener(v -> viewModel.markAllRead());
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
     }
@@ -104,11 +99,6 @@ public class NotificationFragment extends Fragment {
 
     // ── Notification tap navigation ───────────────────────────────────────────
 
-    /**
-     * Navigates to the appropriate destination after the user taps a notification.
-     * Pops {@code notificationFragment} off the back stack so pressing Back from the
-     * destination returns to the screen the user was on before opening Notifications.
-     */
     private void navigateForNotification(Notification notification) {
         NavOptions popSelf = new NavOptions.Builder()
                 .setPopUpTo(R.id.notificationFragment, true)
@@ -151,7 +141,6 @@ public class NotificationFragment extends Fragment {
                 break;
 
             default:
-                // REVIEW_REQUESTED and unknown types: no navigation — just mark read.
                 break;
         }
     }
@@ -170,6 +159,16 @@ public class NotificationFragment extends Fragment {
             case READY:
                 progressBar.setVisibility(View.GONE);
                 txtError.setVisibility(View.GONE);
+
+                if (state.unreadCount > 0) {
+                    txtUnreadCount.setText(state.unreadCount + " unread");
+                    txtUnreadCount.setVisibility(View.VISIBLE);
+                    btnMarkAllRead.setVisibility(View.VISIBLE);
+                } else {
+                    txtUnreadCount.setVisibility(View.GONE);
+                    btnMarkAllRead.setVisibility(View.GONE);
+                }
+
                 if (state.notifications.isEmpty()) {
                     recyclerView.setVisibility(View.GONE);
                     txtEmpty.setVisibility(View.VISIBLE);

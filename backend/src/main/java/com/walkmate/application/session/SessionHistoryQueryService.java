@@ -77,6 +77,9 @@ public class SessionHistoryQueryService {
 
         String endedAt = s.getEndedAt() != null ? s.getEndedAt().toString() : null;
 
+        UserProfileSnapshot callerSnap = callerId.equals(s.getUserIdA()) ? snapA : snapB;
+        String callerAvatarUrl = callerSnap.avatarUrl();
+
         return new SessionSummaryResponse(
                 s.getSessionId(),
                 s.getStatus().name(),
@@ -85,7 +88,8 @@ public class SessionHistoryQueryService {
                 isReviewed,
                 s.getMeetingPointLat(),
                 s.getMeetingPointLng(),
-                List.of(participantA, participantB)
+                List.of(participantA, participantB),
+                callerAvatarUrl
         );
     }
 }

@@ -39,4 +39,9 @@
     <color name="color_orange_halo">#40F97316</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
+
+    <!-- Notification item states -->
+    <color name="notif_bg_unread">#FFFFFBF7</color>
+    <color name="notif_border_unread">#FFFDDCB5</color>
+    <color name="notif_border_read">#FFF3F2F0</color>
 </resources>

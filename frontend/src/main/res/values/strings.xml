@@ -171,6 +171,7 @@
     <string name="notification_empty">No notifications yet.</string>
     <string name="notification_error">Could not load notifications.\nPlease try again.</string>
     <string name="notification_back_cd">Go back</string>
+    <string name="notification_mark_all_read">Mark all read</string>
 
 
     <!-- Required by GoogleSignInOptions.requestIdToken(); replace with real Web client ID from Firebase config. -->
