@@ -13,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.walkmate.R;
@@ -59,18 +58,40 @@ public class MatchesFragment extends Fragment {
         subTabPager.setAdapter(pagerAdapter);
 
         new TabLayoutMediator(subTabLayout, subTabPager, (tab, position) -> {
+            View customView = LayoutInflater.from(requireContext()).inflate(R.layout.item_match_tab, null);
+            android.widget.TextView txtTitle = customView.findViewById(R.id.txtTabTitle);
             switch (position) {
                 case MatchesPagerAdapter.TAB_FINDING:
-                    tab.setText(R.string.tab_finding);
+                    txtTitle.setText(R.string.tab_finding);
                     break;
                 case MatchesPagerAdapter.TAB_PROPOSAL:
-                    tab.setText(R.string.tab_proposal);
+                    txtTitle.setText(R.string.tab_proposal);
                     break;
                 case MatchesPagerAdapter.TAB_SESSION:
-                    tab.setText(R.string.tab_session);
+                    txtTitle.setText(R.string.tab_session);
                     break;
             }
+            tab.setCustomView(customView);
+            updateTabState(tab, false);
         }).attach();
+
+        subTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                updateTabState(tab, true);
+            }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                updateTabState(tab, false);
+            }
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+
+        if (subTabLayout.getTabCount() > 0) {
+            updateTabState(subTabLayout.getTabAt(subTabLayout.getSelectedTabPosition()), true);
+        }
 
         matchesViewModel = new ViewModelProvider(
                 requireActivity(), new MatchesViewModelFactory(requireActivity().getApplication()))
@@ -130,18 +151,36 @@ public class MatchesFragment extends Fragment {
     private void updateTabBadge(int position, int count) {
         if (subTabLayout == null) return;
         TabLayout.Tab tab = subTabLayout.getTabAt(position);
-        if (tab == null) return;
+        if (tab == null || tab.getCustomView() == null) return;
+
+        android.widget.TextView txtBadge = tab.getCustomView().findViewById(R.id.txtTabBadge);
         if (count > 0) {
-            BadgeDrawable badge = tab.getOrCreateBadge();
-            badge.setNumber(count);
-            badge.setBackgroundColor(
-                    ContextCompat.getColor(requireContext(), R.color.orange_primary));
-            badge.setBadgeTextColor(
-                    ContextCompat.getColor(requireContext(), R.color.white));
-            badge.setVisible(true);
+            txtBadge.setText(String.valueOf(count));
+            txtBadge.setVisibility(View.VISIBLE);
         } else {
-            tab.removeBadge();
+            txtBadge.setVisibility(View.GONE);
         }
+    }
+
+    private void updateTabState(TabLayout.Tab tab, boolean isSelected) {
+        if (tab == null || tab.getCustomView() == null) return;
+        View view = tab.getCustomView();
+        android.widget.TextView txtTitle = view.findViewById(R.id.txtTabTitle);
+        android.widget.TextView txtBadge = view.findViewById(R.id.txtTabBadge);
+
+        int activeColor = ContextCompat.getColor(requireContext(), R.color.orange_primary);
+        int inactiveColor = android.graphics.Color.parseColor("#A8A29E");
+
+        txtTitle.setTextColor(isSelected ? activeColor : inactiveColor);
+        txtTitle.setTypeface(null, isSelected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(getResources().getDisplayMetrics().density * 9);
+        bg.setColor(isSelected ? activeColor : android.graphics.Color.parseColor("#E7E5E4"));
+        txtBadge.setBackground(bg);
+
+        txtBadge.setTextColor(isSelected ? android.graphics.Color.WHITE : android.graphics.Color.parseColor("#78716C"));
     }
 
     private static int safeSize(java.util.List<?> list) {

@@ -113,8 +113,8 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
             String gender = intent.getGenderPreference();
             String genderLabel = (gender == null || gender.isEmpty() || "ANY".equalsIgnoreCase(gender))
                     ? "Any" : capitalise(gender);
-            txtAgeRange.setText(genderLabel + " · "
-                    + intent.getAgeMin() + "–" + intent.getAgeMax());
+            txtAgeRange.setText(genderLabel + " : "
+                    + intent.getAgeMin() + " – " + intent.getAgeMax());
 
             // Expiry check
             boolean isExpired = false;
