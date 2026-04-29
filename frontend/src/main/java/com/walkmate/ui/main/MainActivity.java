@@ -118,15 +118,14 @@ public class MainActivity extends AppCompatActivity {
             return NavigationUI.onNavDestinationSelected(item, navController);
         });
 
-        // Restore bottom-nav visibility when navigating away from ExploreFragment
-        // (e.g., the user switches to Matches while the explore flow was active).
+        // Hide bottom nav for every sub-page, restore it only on the three top-level tabs.
+        // ExploreFragment is treated as a regular sub-page — it no longer self-manages
+        // bottom-nav visibility (its own renderState() calls were removed accordingly).
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             int destId = destination.getId();
-            // Show bottom nav only on top-level tabs; hide for every sub-page.
-            // Explore manages its own visibility via ExploreFragment.renderState().
             if (isTopLevelTab(destId)) {
                 setBottomNavVisibility(true);
-            } else if (destId != R.id.exploreFragment) {
+            } else {
                 setBottomNavVisibility(false);
             }
             // Fix BottomNav desync: NavigationUI's listener only syncs the indicator

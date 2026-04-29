@@ -1,10 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Single-chip template inflated dynamically for each hotspot
-    in the Welcome bottom sheet. Reuses the project's chip style.
--->
-<com.google.android.material.chip.Chip
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Widget.WalkMate.Chip"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="10dp"
+    android:background="@drawable/bg_hotspot_chip"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="10dp"
+    android:paddingTop="9dp"
+    android:paddingBottom="9dp">
+
+    <!-- Dot indicator -->
+    <View
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="@drawable/bg_dot_orange" />
+
+    <!-- Hotspot name -->
+    <TextView
+        android:id="@+id/chipLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:maxLines="1"
+        android:textColor="@color/text_dark"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- Chevron -->
+    <ImageView
+        android:layout_width="13dp"
+        android:layout_height="13dp"
+        android:layout_marginStart="6dp"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="@color/text_muted" />
+
+</LinearLayout>

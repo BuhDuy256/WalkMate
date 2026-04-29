@@ -56,9 +56,9 @@
 
         <FrameLayout
             android:id="@+id/btnBackToHome"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_white_circle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_map_overlay_btn"
             android:elevation="4dp"
             android:clickable="true"
             android:focusable="true">
@@ -71,28 +71,6 @@
                 android:tint="@color/text_dark" />
         </FrameLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-        />
-
-        <FrameLayout
-            android:id="@+id/btnProfile"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_white_circle"
-            android:elevation="4dp"
-        >
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="👤"
-                android:textSize="16sp"
-            />
-        </FrameLayout>
     </LinearLayout>
 
     <!-- ================================================================ -->
@@ -185,9 +163,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
-                    android:paddingTop="8dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="4dp"
                     android:visibility="visible"
                 >
 
@@ -195,40 +173,59 @@
                         android:id="@+id/txtWelcomeGreeting"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/welcome_greeting"
+                        android:text="Ready to walk? 🚶"
                         android:textColor="@color/text_dark"
                         android:textSize="22sp"
-                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="-0.012"
                     />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/welcome_subtitle"
+                        android:layout_marginTop="3dp"
+                        android:text="Pick a hotspot to get started"
                         android:textColor="@color/text_muted"
                         android:textSize="14sp"
                     />
 
                     <!-- Search bar -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/searchInputLayout"
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:hint="@string/search_place_hint"
-                    >
+                        android:layout_marginBottom="4dp"
+                        android:background="@drawable/bg_search_bar"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="10dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="17dp"
+                            android:layout_height="17dp"
+                            android:layout_marginEnd="10dp"
+                            android:src="@drawable/ic_search" />
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/searchInputEdit"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:hint="@string/search_place_hint"
+                            android:imeOptions="actionSearch"
                             android:inputType="text"
                             android:maxLines="1"
-                            android:imeOptions="actionSearch"
-                        />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:paddingBottom="0dp"
+                            android:paddingTop="0dp"
+                            android:textColor="@color/text_dark"
+                            android:textColorHint="@color/text_muted"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
 
                     <!-- Search results — shown only when query is non-empty -->
                     <LinearLayout
@@ -246,32 +243,22 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
+                        android:paddingBottom="8dp"
                     >
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="@string/popular_spots"
-                            android:textColor="@color/text_label"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                        />
-
                         <!-- Hotspot chips — populated dynamically from ViewModel state -->
                         <HorizontalScrollView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="12dp"
                             android:scrollbars="none"
                         >
-
-                            <com.google.android.material.chip.ChipGroup
+                            <LinearLayout
                                 android:id="@+id/chipGroupHotspots"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                app:chipSpacingHorizontal="8dp"
-                                app:singleLine="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingEnd="8dp"
                             />
                         </HorizontalScrollView>
                     </LinearLayout>
@@ -305,18 +292,17 @@
                     >
 
                         <FrameLayout
-                            android:layout_width="@dimen/hotspot_icon_size"
-                            android:layout_height="@dimen/hotspot_icon_size"
-                            android:background="@drawable/bg_warm_circle"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_icon_container_orange"
                         >
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
                                 android:layout_gravity="center"
-                                android:text="📍"
-                                android:textSize="18sp"
-                            />
+                                android:src="@drawable/ic_hotspot_pin"
+                                app:tint="@color/orange_primary" />
                         </FrameLayout>
 
                         <LinearLayout
@@ -334,14 +320,16 @@
                                 android:textColor="@color/text_dark"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
+                                android:letterSpacing="-0.012"
                             />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/set_preferences_title"
-                                android:textColor="@color/text_muted"
+                                android:textColor="@color/orange_primary"
                                 android:textSize="12sp"
+                                android:textStyle="bold"
                             />
                         </LinearLayout>
                     </LinearLayout>
@@ -351,10 +339,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Date"
-                        android:textColor="@color/text_label"
-                        android:textSize="13sp"
+                        android:text="DATE"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
                         android:textStyle="bold"
+                        android:letterSpacing="0.05"
                     />
 
                     <!-- Date picker row: shows current date, tap to open DatePickerDialog -->
@@ -362,78 +351,107 @@
                         android:id="@+id/rowDatePicker"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_field_outlined"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_date_picker_orange"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:paddingTop="10dp"
-                        android:paddingBottom="10dp">
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="📅"
-                            android:textSize="16sp" />
+                        <FrameLayout
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_gradient_button">
+
+                            <ImageView
+                                android:layout_width="15dp"
+                                android:layout_height="15dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_history"
+                                app:tint="@color/white" />
+                        </FrameLayout>
 
                         <TextView
                             android:id="@+id/txtSelectedDate"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:text="2026-04-01"
                             android:textColor="@color/orange_primary"
-                            android:textSize="15sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Change"
-                            android:textColor="@color/orange_start"
-                            android:textSize="12sp" />
+                            android:textColor="@color/orange_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- SECTION: Time -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/section_gap"
-                        android:text="@string/label_when_time"
-                        android:textColor="@color/text_label"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                    />
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="@dimen/section_gap"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal"
                     >
-
                         <TextView
-                            android:id="@+id/txtTimeStart"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="16:00"
+                            android:text="TIME WINDOW"
                             android:textColor="@color/text_muted"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05"
                         />
-
-                        <TextView
-                            android:id="@+id/txtTimeEnd"
+                        <!-- Live time-range badge (values updated by slider listener) -->
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="22:00"
-                            android:textColor="@color/text_muted"
-                            android:textSize="12sp"
-                        />
+                            android:background="@drawable/bg_icon_container_orange"
+                            android:gravity="center_vertical"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/txtTimeStart"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="16:00"
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                            />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text=" – "
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                            />
+                            <TextView
+                                android:id="@+id/txtTimeEnd"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="22:00"
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                            />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <com.google.android.material.slider.RangeSlider
@@ -463,43 +481,62 @@
                         android:orientation="vertical">
 
                     <!-- SECTION: Age -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/section_gap"
-                        android:text="@string/label_who_age"
-                        android:textColor="@color/text_label"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                    />
-
-
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="@dimen/section_gap"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal"
                     >
-
                         <TextView
-                            android:id="@+id/txtAgeMin"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="18"
+                            android:text="AGE RANGE"
                             android:textColor="@color/text_muted"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05"
                         />
-
-                        <TextView
-                            android:id="@+id/txtAgeMax"
+                        <!-- Live age-range badge (values updated by slider listener) -->
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="40"
-                            android:textColor="@color/text_muted"
-                            android:textSize="12sp"
-                        />
+                            android:background="@drawable/bg_icon_container_orange"
+                            android:gravity="center_vertical"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/txtAgeMin"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="18"
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                            />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text=" – "
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                            />
+                            <TextView
+                                android:id="@+id/txtAgeMax"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="40"
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                            />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <com.google.android.material.slider.RangeSlider
@@ -524,10 +561,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/section_gap"
-                        android:text="@string/label_who_gender"
-                        android:textColor="@color/text_label"
-                        android:textSize="13sp"
+                        android:text="PREFERRED GENDER"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
                         android:textStyle="bold"
+                        android:letterSpacing="0.05"
                     />
 
                     <com.google.android.material.chip.ChipGroup
@@ -593,9 +631,23 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_container_orange">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_lock"
+                                app:tint="@color/orange_primary" />
+                        </FrameLayout>
+
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -604,7 +656,8 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/private_walk"
                                 android:textColor="@color/text_dark"
-                                android:textSize="14sp" />
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -612,7 +665,7 @@
                                 android:layout_marginTop="2dp"
                                 android:text="Invite a friend directly"
                                 android:textColor="@color/text_muted"
-                                android:textSize="12sp" />
+                                android:textSize="13sp" />
                         </LinearLayout>
 
                         <androidx.appcompat.widget.SwitchCompat
@@ -722,18 +775,17 @@
                     >
 
                         <FrameLayout
-                            android:layout_width="@dimen/hotspot_icon_size"
-                            android:layout_height="@dimen/hotspot_icon_size"
-                            android:background="@drawable/bg_warm_circle"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_icon_container_orange"
                         >
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
                                 android:layout_gravity="center"
-                                android:text="📍"
-                                android:textSize="18sp"
-                            />
+                                android:src="@drawable/ic_hotspot_pin"
+                                app:tint="@color/orange_primary" />
                         </FrameLayout>
 
                         <TextView
@@ -745,6 +797,7 @@
                             android:textColor="@color/text_dark"
                             android:textSize="16sp"
                             android:textStyle="bold"
+                            android:letterSpacing="-0.012"
                         />
                     </LinearLayout>
 

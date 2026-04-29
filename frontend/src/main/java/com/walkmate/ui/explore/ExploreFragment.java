@@ -35,7 +35,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.slider.RangeSlider;
 import com.google.android.material.textfield.TextInputEditText;
@@ -47,7 +46,6 @@ import com.walkmate.ui.explore.createintent.CreateIntentViewModel;
 import com.walkmate.ui.explore.createintent.CreateIntentViewModelFactory;
 import com.walkmate.ui.explore.createintent.FriendPickerBottomSheet;
 import com.walkmate.ui.auth.AuthActivity;
-import com.walkmate.ui.main.MainActivity;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -91,7 +89,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private TextInputEditText searchInputEdit;
     private LinearLayout searchResultsContainer;
     private LinearLayout popularSpotsSection;
-    private ChipGroup chipGroupHotspots;
+    private LinearLayout chipGroupHotspots;
 
     // Setup (Create Intent) form ──────────────────────────────────────────
     private TextView txtSetupHotspotName;
@@ -396,12 +394,12 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         int count = Math.min(hotspots.size(), MAX_HOTSPOT_CHIPS);
         for (int i = 0; i < count; i++) {
             Hotspot h = hotspots.get(i);
-            Chip chip = (Chip) LayoutInflater.from(requireContext()).inflate(
+            View chip = LayoutInflater.from(requireContext()).inflate(
                 R.layout.item_hotspot_chip,
                 chipGroupHotspots,
                 false
             );
-            chip.setText(h.getName());
+            ((TextView) chip.findViewById(R.id.chipLabel)).setText(h.getName());
             chip.setOnClickListener(v -> viewModel.selectHotspot(h.getId()));
             chipGroupHotspots.addView(chip);
         }
@@ -409,47 +407,40 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
 
     /**
      * Populates the search results dropdown with matching hotspots.
-     * Each row is a tappable item that selects the hotspot (→ SETUP state).
+     * Each row uses the same item_hotspot_chip layout as the popular-spots row,
+     * stretched to full width so results read as a vertical list.
      */
     private void populateSearchResults(List<Hotspot> results) {
         searchResultsContainer.removeAllViews();
-        float density = getResources().getDisplayMetrics().density;
-        int paddingV = (int) (12 * density);
-        int paddingH = (int) (4 * density);
 
         if (results.isEmpty()) {
             TextView empty = new TextView(requireContext());
             empty.setText("No results found");
-            empty.setTextColor(Color.parseColor("#888888"));
-            empty.setPadding(paddingH, paddingV, paddingH, paddingV);
+            empty.setTextColor(Color.parseColor("#A8A29E"));
+            empty.setTextSize(14f);
+            int pad = (int) (12 * getResources().getDisplayMetrics().density);
+            empty.setPadding(0, pad, 0, pad);
             searchResultsContainer.addView(empty);
             return;
         }
 
-        android.util.TypedValue ripple = new android.util.TypedValue();
-        requireContext().getTheme().resolveAttribute(
-                android.R.attr.selectableItemBackground, ripple, true);
+        float density = getResources().getDisplayMetrics().density;
+        int gapPx = (int) (8 * density);
 
-        for (int i = 0; i < results.size(); i++) {
-            Hotspot h = results.get(i);
+        for (Hotspot h : results) {
+            View row = LayoutInflater.from(requireContext()).inflate(
+                    R.layout.item_hotspot_chip, searchResultsContainer, false);
 
-            TextView row = new TextView(requireContext());
-            row.setText("📍  " + h.getName());
-            row.setTextColor(Color.parseColor("#332218"));
-            row.setTextSize(15f);
-            row.setPadding(paddingH, paddingV, paddingH, paddingV);
-            row.setBackgroundResource(ripple.resourceId);
+            // Stretch each chip to full container width for a vertical list feel.
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = gapPx;
+            row.setLayoutParams(lp);
+
+            ((TextView) row.findViewById(R.id.chipLabel)).setText(h.getName());
             row.setOnClickListener(v -> viewModel.selectHotspot(h.getId()));
             searchResultsContainer.addView(row);
-
-            // Thin divider between items (skip after last).
-            if (i < results.size() - 1) {
-                View divider = new View(requireContext());
-                divider.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                divider.setBackgroundColor(Color.parseColor("#F0ECE7"));
-                searchResultsContainer.addView(divider);
-            }
         }
     }
 
@@ -502,6 +493,14 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         });
 
         txtSelectedFriend.setOnClickListener(v -> showFriendPicker());
+    }
+
+    private void showIncompleteProfileSheet() {
+        IncompleteProfileBottomSheet sheet = IncompleteProfileBottomSheet.newInstance();
+        sheet.setOnCompleteProfileListener(() ->
+                Navigation.findNavController(requireView())
+                        .navigate(R.id.action_explore_to_editProfile));
+        sheet.show(getChildFragmentManager(), IncompleteProfileBottomSheet.TAG);
     }
 
     private void showFriendPicker() {
@@ -617,7 +616,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             updateMarkerSelection(sel != null ? sel.getId() : null);
         }
 
-        MainActivity activity = (MainActivity) requireActivity();
         boolean stateChanged = (state.getAppState() != lastRenderedAppState);
         lastRenderedAppState = state.getAppState();
 
@@ -625,9 +623,9 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             case WELCOME:
                 stopPulseAnimation();
 
-                // Nav bar — slide back in.
-                activity.setBottomNavVisibility(true);
-                // Single back button is visible in WELCOME.
+                // Bottom nav is always hidden while ExploreFragment is on screen;
+                // MainActivity hides it automatically on navigation. Back button
+                // is shown in WELCOME so the user can return to Home.
                 btnBackToHome.setVisibility(View.VISIBLE);
 
                 welcomeContent.setVisibility(View.VISIBLE);
@@ -663,8 +661,6 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             case SETUP:
                 stopPulseAnimation();
 
-                // Nav bar — slide out so the sheet can expand full-height.
-                activity.setBottomNavVisibility(false);
                 // Single back button remains visible in SETUP; action switches to close setup.
                 btnBackToHome.setVisibility(View.VISIBLE);
 
@@ -696,9 +692,7 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 }
                 break;
             case SCANNING:
-                // Nav bar stays hidden during an active scan.
-                activity.setBottomNavVisibility(false);
-                // Hide Home back button while scanning because back navigation is blocked.
+                // Hide back button while scanning — only btnStopSearching can exit.
                 btnBackToHome.setVisibility(View.GONE);
 
                 welcomeContent.setVisibility(View.GONE);
@@ -831,14 +825,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             pickerSheet.setFriends(state.getFriendList(), state.isFriendListLoading());
         }
 
-        // Onboarding gate: backend rejected the intent because gender or tags are missing.
-        // Redirect the user to Edit Profile to complete their profile.
+        // Onboarding gate: backend rejected the intent because age or walk tags are missing.
+        // Show a bottom sheet prompt instead of navigating away immediately.
         if (state.isOnboardingRequired()) {
             createIntentViewModel.consumeOnboardingRequired();
-            Toast.makeText(requireContext(),
-                    "Please complete your profile (Gender & Tags) to start matching.",
-                    Toast.LENGTH_LONG).show();
-            Navigation.findNavController(requireView()).navigate(R.id.action_explore_to_editProfile);
+            showIncompleteProfileSheet();
             return;
         }
 
