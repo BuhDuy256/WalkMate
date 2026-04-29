@@ -20,6 +20,7 @@ public class WalkProposalMapper {
                 response.getCallersIntentId(),
                 response.getMatchedUserId(),
                 response.getMatchedUserName(),
+                response.getMatchedUserAvatarUrl(),
                 response.getMatchedUserAge(),
                 response.getMatchedUserTrustScore(),
                 tags,
@@ -27,8 +28,8 @@ public class WalkProposalMapper {
                 toHourFloat(response.getProposedTimeEnd()),
                 toStatus(response.getStatus()),
                 response.getExpiresAt(),
-                response.getProposedLat(),
-                response.getProposedLng(),
+                response.getHotspotId(),
+                response.getHotspotName(),
                 response.getMyAcceptanceStatus(),
                 response.getSessionId(),
                 response.isPrivateInvite()

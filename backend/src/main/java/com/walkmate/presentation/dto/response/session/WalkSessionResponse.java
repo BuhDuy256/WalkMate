@@ -2,16 +2,6 @@ package com.walkmate.presentation.dto.response.session;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Response DTO returned for all session-related endpoints.
- *
- * Timestamps are serialised as ISO-8601 strings. Nullable fields are omitted
- * from JSON when null by the global Jackson config.
- *
- * Per-participant fields (user_a_status / user_b_status and the individual
- * metrics) allow the frontend to render the correct controls for the local
- * user without depending on the global status alone.
- */
 public record WalkSessionResponse(
 
         @JsonProperty("session_id")
@@ -26,6 +16,13 @@ public record WalkSessionResponse(
         @JsonProperty("user_id_b")
         String userIdB,
 
+        @JsonProperty("hotspot_id")
+        String hotspotId,
+
+        @JsonProperty("hotspot_name")
+        String hotspotName,
+
+        // Derived from hotspot lat/lng via JOIN — retained for TrackingScreenActivity
         @JsonProperty("meeting_point_lat")
         double meetingPointLat,
 
@@ -33,45 +30,41 @@ public record WalkSessionResponse(
         double meetingPointLng,
 
         @JsonProperty("scheduled_start")
-        String scheduledStart,          // ISO-8601
+        String scheduledStart,
 
         @JsonProperty("scheduled_end")
-        String scheduledEnd,            // ISO-8601
+        String scheduledEnd,
 
-        // ── Global session status ─────────────────────────────────────────────
         @JsonProperty("status")
         String status,
 
         @JsonProperty("created_at")
-        String createdAt,               // ISO-8601
+        String createdAt,
 
         @JsonProperty("started_at")
-        String startedAt,               // ISO-8601, set on first participant activation
+        String startedAt,
 
         @JsonProperty("ended_at")
-        String endedAt,                 // ISO-8601, set when last participant terminates
+        String endedAt,
 
-        // ── Per-participant arrival timestamps ────────────────────────────────
         @JsonProperty("user_a_activated_at")
-        String userAActivatedAt,        // ISO-8601, null until user A arrives
+        String userAActivatedAt,
 
         @JsonProperty("user_b_activated_at")
-        String userBActivatedAt,        // ISO-8601, null until user B arrives
+        String userBActivatedAt,
 
-        // ── Per-participant independent lifecycle ─────────────────────────────
         @JsonProperty("user_a_status")
-        String userAStatus,             // PENDING | ACTIVE | COMPLETED | …
+        String userAStatus,
 
         @JsonProperty("user_b_status")
-        String userBStatus,             // PENDING | ACTIVE | COMPLETED | …
+        String userBStatus,
 
         @JsonProperty("user_a_ended_at")
-        String userAEndedAt,            // ISO-8601, null until user A finishes
+        String userAEndedAt,
 
         @JsonProperty("user_b_ended_at")
-        String userBEndedAt,            // ISO-8601, null until user B finishes
+        String userBEndedAt,
 
-        // ── Per-participant walk metrics ──────────────────────────────────────
         @JsonProperty("user_a_distance_km")
         double userADistanceKm,
 
@@ -89,6 +82,9 @@ public record WalkSessionResponse(
 
         @JsonProperty("partner_name")
         String partnerName,
+
+        @JsonProperty("partner_avatar_url")
+        String partnerAvatarUrl,
 
         @JsonProperty("is_reviewed")
         boolean isReviewed

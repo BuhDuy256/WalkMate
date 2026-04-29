@@ -15,14 +15,17 @@ import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkproposal.WalkProposal;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHolder> {
+public class ProposalAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    // -------------------------------------------------------------------------
-    // Listener interface
-    // -------------------------------------------------------------------------
+    private static final int VIEW_TYPE_HEADER = 0;
+    private static final int VIEW_TYPE_CARD   = 1;
+
+    // ── Listener ────────────────────────────────────────────────────────────────
 
     public interface ProposalActionListener {
         void onPass(String proposalId, boolean isPrivateInvite);
@@ -32,47 +35,101 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         void onViewProfile(String userId);
     }
 
-    // -------------------------------------------------------------------------
+    // ── Data ─────────────────────────────────────────────────────────────────────
 
-    private final List<WalkProposal> items = new ArrayList<>();
+    /** Flat list mixing GroupHeader and WalkProposal in display order. */
+    private final List<Object> displayItems = new ArrayList<>();
     private ProposalActionListener actionListener;
 
     public void setProposalActionListener(ProposalActionListener listener) {
         this.actionListener = listener;
     }
 
-    public void setItems(List<WalkProposal> newItems) {
-        items.clear();
-        if (newItems != null) items.addAll(newItems);
+    public void setItems(List<WalkProposal> proposals) {
+        displayItems.clear();
+        if (proposals != null && !proposals.isEmpty()) {
+            // Group by hotspot name (preserving order of first occurrence)
+            Map<String, List<WalkProposal>> groups = new LinkedHashMap<>();
+            for (WalkProposal p : proposals) {
+                String key = p.getHotspotName() != null ? p.getHotspotName() : "—";
+                groups.computeIfAbsent(key, k -> new ArrayList<>()).add(p);
+            }
+            for (Map.Entry<String, List<WalkProposal>> entry : groups.entrySet()) {
+                displayItems.add(new GroupHeader(entry.getKey(), entry.getValue().size()));
+                displayItems.addAll(entry.getValue());
+            }
+        }
         notifyDataSetChanged();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return displayItems.get(position) instanceof GroupHeader
+                ? VIEW_TYPE_HEADER : VIEW_TYPE_CARD;
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_proposal_card, parent, false);
-        return new ViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        if (viewType == VIEW_TYPE_HEADER) {
+            View view = inflater.inflate(R.layout.item_proposal_header, parent, false);
+            return new HeaderViewHolder(view);
+        }
+        View view = inflater.inflate(R.layout.item_proposal_card, parent, false);
+        return new CardViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(items.get(position));
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof HeaderViewHolder) {
+            ((HeaderViewHolder) holder).bind((GroupHeader) displayItems.get(position));
+        } else {
+            ((CardViewHolder) holder).bind((WalkProposal) displayItems.get(position));
+        }
     }
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return displayItems.size();
     }
 
-    // -------------------------------------------------------------------------
+    // ── GroupHeader model ─────────────────────────────────────────────────────────
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    static class GroupHeader {
+        final String hotspotName;
+        final int count;
+        GroupHeader(String hotspotName, int count) {
+            this.hotspotName = hotspotName;
+            this.count = count;
+        }
+    }
+
+    // ── Header ViewHolder ─────────────────────────────────────────────────────────
+
+    static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        private final TextView txtGroupHotspot;
+        private final TextView txtGroupCount;
+
+        HeaderViewHolder(@NonNull View itemView) {
+            super(itemView);
+            txtGroupHotspot = itemView.findViewById(R.id.txtGroupHotspot);
+            txtGroupCount   = itemView.findViewById(R.id.txtGroupCount);
+        }
+
+        void bind(GroupHeader header) {
+            txtGroupHotspot.setText(header.hotspotName);
+            txtGroupCount.setText("⚡ " + header.count + " new");
+        }
+    }
+
+    // ── Card ViewHolder ───────────────────────────────────────────────────────────
+
+    class CardViewHolder extends RecyclerView.ViewHolder {
 
         private final AvatarInitialView avatarPartner;
         private final TextView txtName;
         private final TextView txtAge;
-        private final TextView txtCompatibilityValue;
         private final TagChipGroup chipGroupTags;
         private final TextView txtTimeWindow;
         private final TextView txtMeetingLocation;
@@ -81,27 +138,25 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
         private final MaterialButton btnAccept;
         private final MaterialButton btnCancelProposal;
 
-        ViewHolder(@NonNull View itemView) {
+        CardViewHolder(@NonNull View itemView) {
             super(itemView);
-            avatarPartner        = itemView.findViewById(R.id.avatarPartner);
-            txtName              = itemView.findViewById(R.id.txtName);
-            txtAge               = itemView.findViewById(R.id.txtAge);
-            txtCompatibilityValue= itemView.findViewById(R.id.txtCompatibilityValue);
-            chipGroupTags        = itemView.findViewById(R.id.chipGroupTags);
-            txtTimeWindow        = itemView.findViewById(R.id.txtTimeWindow);
-            txtMeetingLocation   = itemView.findViewById(R.id.txtMeetingLocation);
-            txtWaitingOverlay    = itemView.findViewById(R.id.txtWaitingOverlay);
-            btnPass              = itemView.findViewById(R.id.btnPass);
-            btnAccept            = itemView.findViewById(R.id.btnAccept);
-            btnCancelProposal    = itemView.findViewById(R.id.btnCancelProposal);
+            avatarPartner      = itemView.findViewById(R.id.avatarPartner);
+            txtName            = itemView.findViewById(R.id.txtName);
+            txtAge             = itemView.findViewById(R.id.txtAge);
+            chipGroupTags      = itemView.findViewById(R.id.chipGroupTags);
+            txtTimeWindow      = itemView.findViewById(R.id.txtTimeWindow);
+            txtMeetingLocation = itemView.findViewById(R.id.txtMeetingLocation);
+            txtWaitingOverlay  = itemView.findViewById(R.id.txtWaitingOverlay);
+            btnPass            = itemView.findViewById(R.id.btnPass);
+            btnAccept          = itemView.findViewById(R.id.btnAccept);
+            btnCancelProposal  = itemView.findViewById(R.id.btnCancelProposal);
         }
 
         void bind(WalkProposal proposal) {
             String displayName = proposal.getMatchedUserName() != null
                     ? proposal.getMatchedUserName() : proposal.getMatchedUserId();
 
-            // Partner identity
-            avatarPartner.bind(displayName, null);
+            avatarPartner.bind(displayName, proposal.getMatchedUserAvatarUrl());
             txtName.setText(displayName);
 
             View.OnClickListener profileClick = v -> {
@@ -114,23 +169,16 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
 
             txtAge.setText(proposal.getMatchedUserAge() + " yrs");
 
-            // Compatibility badge (trust score as percentage)
-            txtCompatibilityValue.setText(proposal.getTrustScore() + "%");
-
-            // Common interests
             chipGroupTags.setTags(proposal.getOverlappingTags());
 
-            // Time window
             txtTimeWindow.setText(
                     formatTime(proposal.getOverlappingTimeStart())
                     + " – "
                     + formatTime(proposal.getOverlappingTimeEnd()));
 
-            // Meeting location (coordinates)
-            txtMeetingLocation.setText(
-                    formatCoords(proposal.getMeetingLat(), proposal.getMeetingLng()));
+            String hotspot = proposal.getHotspotName();
+            txtMeetingLocation.setText(hotspot != null ? hotspot : "—");
 
-            // Waiting state (I accepted, partner has not)
             boolean waiting = proposal.isCurrentUserAccepted()
                     && proposal.getStatus() == WalkProposal.Status.PENDING;
 
@@ -161,11 +209,6 @@ public class ProposalAdapter extends RecyclerView.Adapter<ProposalAdapter.ViewHo
             int minute = Math.round((hourFloat - hour) * 60f);
             if (minute >= 60) { hour++; minute = 0; }
             return String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
-        }
-
-        private String formatCoords(double lat, double lng) {
-            if (lat == 0 && lng == 0) return "—";
-            return String.format(Locale.getDefault(), "%.2f°N, %.2f°E", lat, lng);
         }
     }
 }

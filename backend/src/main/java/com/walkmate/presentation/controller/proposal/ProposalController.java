@@ -54,6 +54,7 @@ public class ProposalController {
                     return proposalMapper.toResponse(
                             p, principal.userId(), null,
                             resolveDisplayName(partnerId),
+                            resolveAvatarUrl(partnerId),
                             resolveMatchedUserAge(partnerId),
                             resolveMatchedUserTrustScore(partnerId),
                             resolveOverlappingTags(principal.userId(), partnerId),
@@ -93,6 +94,7 @@ public class ProposalController {
                 proposalMapper.toResponse(
                         proposal, principal.userId(), sessionId,
                         resolveDisplayName(partnerId),
+                        resolveAvatarUrl(partnerId),
                         resolveMatchedUserAge(partnerId),
                         resolveMatchedUserTrustScore(partnerId),
                         resolveOverlappingTags(principal.userId(), partnerId),
@@ -162,6 +164,14 @@ public class ProposalController {
             return intersection;
         } catch (Exception e) {
             return Collections.emptyList();
+        }
+    }
+
+    private String resolveAvatarUrl(String userId) {
+        try {
+            return userQueryService.getProfile(UUID.fromString(userId)).getAvatarUrl();
+        } catch (Exception e) {
+            return null;
         }
     }
 

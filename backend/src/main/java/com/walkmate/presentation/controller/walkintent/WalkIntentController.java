@@ -116,6 +116,7 @@ public class WalkIntentController {
             String partnerId = callerIsA ? p.getUserIdB() : p.getUserIdA();
             proposalResp = proposalMapper.toResponse(p, principal.userId(), null,
                     resolveDisplayName(partnerId),
+                    resolveAvatarUrl(partnerId),
                     resolveMatchedUserAge(partnerId),
                     resolveMatchedUserTrustScore(partnerId),
                     resolveOverlappingTags(principal.userId(), partnerId),
@@ -166,6 +167,7 @@ public class WalkIntentController {
         return ResponseEntity.ok(ApiResponse.success(
                 proposalMapper.toResponse(proposal, principal.userId(), null,
                         resolveDisplayName(partnerId),
+                        resolveAvatarUrl(partnerId),
                         resolveMatchedUserAge(partnerId),
                         resolveMatchedUserTrustScore(partnerId),
                         resolveOverlappingTags(principal.userId(), partnerId),
@@ -189,6 +191,14 @@ public class WalkIntentController {
     private String resolveDisplayName(String userId) {
         try {
             return userQueryService.getDisplayName(UUID.fromString(userId));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String resolveAvatarUrl(String userId) {
+        try {
+            return userQueryService.getProfile(UUID.fromString(userId)).getAvatarUrl();
         } catch (Exception e) {
             return null;
         }

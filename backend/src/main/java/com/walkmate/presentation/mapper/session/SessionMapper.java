@@ -9,12 +9,15 @@ import java.time.Instant;
 @Component
 public class SessionMapper {
 
-    public WalkSessionResponse toResponse(WalkSession session, boolean isReviewed, String partnerName) {
+    public WalkSessionResponse toResponse(WalkSession session, boolean isReviewed,
+                                          String partnerName, String partnerAvatarUrl) {
         return new WalkSessionResponse(
                 session.getSessionId(),
                 session.getProposalId(),
                 session.getUserIdA(),
                 session.getUserIdB(),
+                session.getHotspotId(),
+                session.getHotspotName(),
                 session.getMeetingPointLat(),
                 session.getMeetingPointLng(),
                 fmt(session.getScheduledStart()),
@@ -35,6 +38,7 @@ public class SessionMapper {
                 session.getUserBDurationSeconds(),
                 session.getCancellationReason(),
                 partnerName,
+                partnerAvatarUrl,
                 isReviewed
         );
     }

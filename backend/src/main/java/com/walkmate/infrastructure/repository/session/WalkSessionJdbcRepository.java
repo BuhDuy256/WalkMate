@@ -28,7 +28,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
         final String sql = """
                 INSERT INTO walk_session (
                     session_id, proposal_id, user_id_a, user_id_b,
-                    meeting_point_lat, meeting_point_lng,
+                    hotspot_id,
                     scheduled_start, scheduled_end,
                     status, created_at, started_at, ended_at,
                     user_a_activated_at, user_b_activated_at,
@@ -41,7 +41,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 )
                 VALUES (
                     :sessionId, :proposalId, :userIdA, :userIdB,
-                    :meetingPointLat, :meetingPointLng,
+                    :hotspotId,
                     :scheduledStart, :scheduledEnd,
                     CAST(:status AS walk_session_status), :createdAt, :startedAt, :endedAt,
                     :userAActivatedAt, :userBActivatedAt,
@@ -77,8 +77,7 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 .param("proposalId",            UUID.fromString(session.getProposalId()))
                 .param("userIdA",               UUID.fromString(session.getUserIdA()))
                 .param("userIdB",               UUID.fromString(session.getUserIdB()))
-                .param("meetingPointLat",       session.getMeetingPointLat())
-                .param("meetingPointLng",       session.getMeetingPointLng())
+                .param("hotspotId",             UUID.fromString(session.getHotspotId()))
                 .param("scheduledStart",        Timestamp.from(session.getScheduledStart()))
                 .param("scheduledEnd",          Timestamp.from(session.getScheduledEnd()))
                 .param("status",                session.getStatus().name())
@@ -230,19 +229,23 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
 
     private String selectAll() {
         return """
-                SELECT session_id::text, proposal_id::text,
-                       user_id_a::text, user_id_b::text,
-                       meeting_point_lat, meeting_point_lng,
-                       scheduled_start, scheduled_end,
-                       status, created_at, started_at, ended_at,
-                       user_a_activated_at, user_b_activated_at,
-                       cancellation_reason, cancelled_by::text,
-                       version,
-                       user_a_status, user_b_status,
-                       user_a_ended_at, user_b_ended_at,
-                       user_a_distance_km, user_a_duration_seconds,
-                       user_b_distance_km, user_b_duration_seconds
-                FROM walk_session
+                SELECT ws.session_id::text, ws.proposal_id::text,
+                       ws.user_id_a::text, ws.user_id_b::text,
+                       ws.hotspot_id::text,
+                       h.name  AS hotspot_name,
+                       h.lat   AS meeting_point_lat,
+                       h.lng   AS meeting_point_lng,
+                       ws.scheduled_start, ws.scheduled_end,
+                       ws.status, ws.created_at, ws.started_at, ws.ended_at,
+                       ws.user_a_activated_at, ws.user_b_activated_at,
+                       ws.cancellation_reason, ws.cancelled_by::text,
+                       ws.version,
+                       ws.user_a_status, ws.user_b_status,
+                       ws.user_a_ended_at, ws.user_b_ended_at,
+                       ws.user_a_distance_km, ws.user_a_duration_seconds,
+                       ws.user_b_distance_km, ws.user_b_duration_seconds
+                FROM walk_session ws
+                JOIN hotspot h ON h.id = ws.hotspot_id
                 """;
     }
 
@@ -252,6 +255,8 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 rs.getString("proposal_id"),
                 rs.getString("user_id_a"),
                 rs.getString("user_id_b"),
+                rs.getString("hotspot_id"),
+                rs.getString("hotspot_name"),
                 rs.getDouble("meeting_point_lat"),
                 rs.getDouble("meeting_point_lng"),
                 rs.getTimestamp("scheduled_start").toInstant(),

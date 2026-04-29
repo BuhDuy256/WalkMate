@@ -16,6 +16,12 @@ public class WalkSessionResponse {
     @SerializedName("user_id_b")
     private String userIdB;
 
+    @SerializedName("hotspot_id")
+    private String hotspotId;
+
+    @SerializedName("hotspot_name")
+    private String hotspotName;
+
     @SerializedName("meeting_point_lat")
     private double meetingPointLat;
 
@@ -81,6 +87,9 @@ public class WalkSessionResponse {
     @SerializedName("partner_name")
     private String partnerName;
 
+    @SerializedName("partner_avatar_url")
+    private String partnerAvatarUrl;
+
     @SerializedName("is_reviewed")
     private boolean isReviewed;
 
@@ -88,6 +97,8 @@ public class WalkSessionResponse {
     public String getProposalId()           { return proposalId; }
     public String getUserIdA()              { return userIdA; }
     public String getUserIdB()              { return userIdB; }
+    public String getHotspotId()            { return hotspotId; }
+    public String getHotspotName()          { return hotspotName; }
     public double getMeetingPointLat()      { return meetingPointLat; }
     public double getMeetingPointLng()      { return meetingPointLng; }
     public String getScheduledStart()       { return scheduledStart; }
@@ -108,5 +119,6 @@ public class WalkSessionResponse {
     public long   getUserBDurationSeconds() { return userBDurationSeconds; }
     public String getCancellationReason()   { return cancellationReason; }
     public String getPartnerName()          { return partnerName; }
+    public String getPartnerAvatarUrl()     { return partnerAvatarUrl; }
     public boolean isReviewed()             { return isReviewed; }
 }

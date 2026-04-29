@@ -22,6 +22,9 @@ public class WalkProposalResponse {
     @SerializedName("matched_user_name")
     private String matchedUserName;
 
+    @SerializedName("matched_user_avatar_url")
+    private String matchedUserAvatarUrl;
+
     @SerializedName("matched_user_age")
     private int matchedUserAge;
 
@@ -32,16 +35,16 @@ public class WalkProposalResponse {
     private java.util.List<String> overlappingTags;
 
     @SerializedName("proposed_time_start")
-    private String proposedTimeStart;   // ISO-8601
+    private String proposedTimeStart;
 
     @SerializedName("proposed_time_end")
-    private String proposedTimeEnd;     // ISO-8601
+    private String proposedTimeEnd;
 
-    @SerializedName("proposed_lat")
-    private double proposedLat;
+    @SerializedName("hotspot_id")
+    private String hotspotId;
 
-    @SerializedName("proposed_lng")
-    private double proposedLng;
+    @SerializedName("hotspot_name")
+    private String hotspotName;
 
     @SerializedName("status")
     private String status;
@@ -50,16 +53,11 @@ public class WalkProposalResponse {
     private String expiresAt;
 
     @SerializedName("session_id")
-    private String sessionId;           // null until CONFIRMED
+    private String sessionId;
 
-    // Populated on every response to /accept: "ACCEPTED" if this user has
-    // already tapped Accept, null/absent otherwise.  Distinguishes Case A
-    // (partial acceptance, partner still pending) from a fresh PENDING view.
     @SerializedName("my_acceptance_status")
     private String myAcceptanceStatus;
 
-    // True when this proposal was created via a private walk invite (UC-15).
-    // The backend auto-accepts the sender's side for private invites.
     @SerializedName("is_private")
     private boolean privateInvite;
 
@@ -67,18 +65,19 @@ public class WalkProposalResponse {
     public String getCallersIntentId()  { return callersIntentId; }
     public String getMatchedIntentId()  { return matchedIntentId; }
     public String getCallersUserId()    { return callersUserId; }
-    public String getMatchedUserId()          { return matchedUserId; }
-    public String getMatchedUserName()        { return matchedUserName; }
-    public int getMatchedUserAge()            { return matchedUserAge; }
-    public int getMatchedUserTrustScore()     { return matchedUserTrustScore; }
+    public String getMatchedUserId()    { return matchedUserId; }
+    public String getMatchedUserName()      { return matchedUserName; }
+    public String getMatchedUserAvatarUrl() { return matchedUserAvatarUrl; }
+    public int    getMatchedUserAge()       { return matchedUserAge; }
+    public int    getMatchedUserTrustScore() { return matchedUserTrustScore; }
     public java.util.List<String> getOverlappingTags() { return overlappingTags; }
-    public String getProposedTimeStart()      { return proposedTimeStart; }
-    public String getProposedTimeEnd()  { return proposedTimeEnd; }
-    public double getProposedLat()      { return proposedLat; }
-    public double getProposedLng()      { return proposedLng; }
-    public String getStatus()             { return status; }
-    public String getExpiresAt()          { return expiresAt; }
-    public String getSessionId()          { return sessionId; }
-    public String getMyAcceptanceStatus() { return myAcceptanceStatus; }
-    public boolean isPrivateInvite()       { return privateInvite; }
+    public String getProposedTimeStart() { return proposedTimeStart; }
+    public String getProposedTimeEnd()   { return proposedTimeEnd; }
+    public String getHotspotId()         { return hotspotId; }
+    public String getHotspotName()       { return hotspotName; }
+    public String getStatus()            { return status; }
+    public String getExpiresAt()         { return expiresAt; }
+    public String getSessionId()         { return sessionId; }
+    public String getMyAcceptanceStatus(){ return myAcceptanceStatus; }
+    public boolean isPrivateInvite()     { return privateInvite; }
 }

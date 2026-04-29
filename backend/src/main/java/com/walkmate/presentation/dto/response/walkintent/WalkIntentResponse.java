@@ -8,6 +8,9 @@ public record WalkIntentResponse(
         @JsonProperty("hotspot_id")
         String hotspotId,
 
+        @JsonProperty("hotspot_name")
+        String hotspotName,
+
         @JsonProperty("user_id")
         String userId,
 
@@ -22,6 +25,9 @@ public record WalkIntentResponse(
 
         @JsonProperty("age_max")
         int ageMax,
+
+        @JsonProperty("preferred_gender")
+        String preferredGender,
 
         String status,
 

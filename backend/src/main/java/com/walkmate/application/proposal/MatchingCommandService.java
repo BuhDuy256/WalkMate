@@ -85,9 +85,9 @@ public class MatchingCommandService {
             return Optional.empty(); // still searching — caller returns 204
         }
 
-        // 4. Resolve the hotspot coordinates for the proposed meeting point
+        // 4. Verify the hotspot exists (meeting point = the shared hotspot)
         WalkIntent matched = result.get().matched();
-        Hotspot hotspot = hotspotRepository.findById(intent.getHotspotId())
+        hotspotRepository.findById(intent.getHotspotId())
                 .orElseThrow(() -> new DomainException(HotspotErrorCode.HOTSPOT_NOT_FOUND));
 
         // 5. Create and persist the proposal
@@ -98,8 +98,7 @@ public class MatchingCommandService {
                 matched.getId(),
                 intent.getUserId(),
                 matched.getUserId(),
-                hotspot.getLat(),
-                hotspot.getLng(),
+                intent.getHotspotId(),
                 result.get().overlapStart(),
                 result.get().overlapEnd(),
                 Instant.now().plus(PROPOSAL_TTL_MINUTES, ChronoUnit.MINUTES)
@@ -218,8 +217,7 @@ public class MatchingCommandService {
                 proposal.getProposalId(),
                 proposal.getUserIdA(),
                 proposal.getUserIdB(),
-                proposal.getProposedLocationLat(),
-                proposal.getProposedLocationLng(),
+                proposal.getHotspotId(),
                 proposal.getProposedStartTime(),
                 proposal.getProposedEndTime()
         );

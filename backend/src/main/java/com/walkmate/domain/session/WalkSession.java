@@ -19,7 +19,12 @@ public class WalkSession {
     private String        proposalId;
     private String        userIdA;
     private String        userIdB;
+    private String        hotspotId;
+    /** Transient — populated by repository JOIN with hotspot table. */
+    private String        hotspotName;
+    /** Transient — derived from hotspot.lat via JOIN, not stored in walk_session. */
     private double        meetingPointLat;
+    /** Transient — derived from hotspot.lng via JOIN, not stored in walk_session. */
     private double        meetingPointLng;
     private Instant       scheduledStart;
     private Instant       scheduledEnd;
@@ -59,6 +64,7 @@ public class WalkSession {
 
     public WalkSession(String sessionId, String proposalId,
                        String userIdA, String userIdB,
+                       String hotspotId, String hotspotName,
                        double meetingPointLat, double meetingPointLng,
                        Instant scheduledStart, Instant scheduledEnd,
                        SessionStatus status,
@@ -74,6 +80,8 @@ public class WalkSession {
         this.proposalId            = proposalId;
         this.userIdA               = userIdA;
         this.userIdB               = userIdB;
+        this.hotspotId             = hotspotId;
+        this.hotspotName           = hotspotName;
         this.meetingPointLat       = meetingPointLat;
         this.meetingPointLng       = meetingPointLng;
         this.scheduledStart        = scheduledStart;
@@ -100,14 +108,13 @@ public class WalkSession {
     // ── Creation factory ──────────────────────────────────────────────────────
 
     private WalkSession(String proposalId, String userIdA, String userIdB,
-                        double meetingPointLat, double meetingPointLng,
+                        String hotspotId,
                         Instant scheduledStart, Instant scheduledEnd) {
-        this.sessionId       = UUID.randomUUID().toString();
-        this.proposalId      = proposalId;
-        this.userIdA         = userIdA;
-        this.userIdB         = userIdB;
-        this.meetingPointLat = meetingPointLat;
-        this.meetingPointLng = meetingPointLng;
+        this.sessionId   = UUID.randomUUID().toString();
+        this.proposalId  = proposalId;
+        this.userIdA     = userIdA;
+        this.userIdB     = userIdB;
+        this.hotspotId   = hotspotId;
         this.scheduledStart  = scheduledStart;
         this.scheduledEnd    = scheduledEnd;
         this.status          = SessionStatus.PENDING;
@@ -118,10 +125,10 @@ public class WalkSession {
     }
 
     public static WalkSession create(String proposalId, String userIdA, String userIdB,
-                                     double meetingPointLat, double meetingPointLng,
+                                     String hotspotId,
                                      Instant scheduledStart, Instant scheduledEnd) {
         return new WalkSession(proposalId, userIdA, userIdB,
-                meetingPointLat, meetingPointLng, scheduledStart, scheduledEnd);
+                hotspotId, scheduledStart, scheduledEnd);
     }
 
     // ── Domain behaviour ──────────────────────────────────────────────────────

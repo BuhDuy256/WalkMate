@@ -15,8 +15,9 @@ public class MatchProposal {
     /** Derived via JOIN — not stored in match_proposal, loaded from walk_intent. */
     private String userIdA;
     private String userIdB;
-    private double proposedLocationLat;
-    private double proposedLocationLng;
+    private String hotspotId;
+    /** Transient — populated by repository JOIN with hotspot table. */
+    private String hotspotName;
     private Instant proposedStartTime;
     private Instant proposedEndTime;
     private boolean acceptedByA;
@@ -33,7 +34,7 @@ public class MatchProposal {
     /** Rehydration constructor — called by the repository when loading from DB. */
     public MatchProposal(String proposalId, String intentIdA, String intentIdB,
                          String userIdA, String userIdB,
-                         double proposedLocationLat, double proposedLocationLng,
+                         String hotspotId, String hotspotName,
                          Instant proposedStartTime, Instant proposedEndTime,
                          boolean acceptedByA, boolean acceptedByB,
                          ProposalStatus status,
@@ -44,8 +45,8 @@ public class MatchProposal {
         this.intentIdB = intentIdB;
         this.userIdA = userIdA;
         this.userIdB = userIdB;
-        this.proposedLocationLat = proposedLocationLat;
-        this.proposedLocationLng = proposedLocationLng;
+        this.hotspotId = hotspotId;
+        this.hotspotName = hotspotName;
         this.proposedStartTime = proposedStartTime;
         this.proposedEndTime = proposedEndTime;
         this.acceptedByA = acceptedByA;
@@ -59,7 +60,7 @@ public class MatchProposal {
 
     private MatchProposal(String intentIdA, String intentIdB,
                           String userIdA, String userIdB,
-                          double proposedLocationLat, double proposedLocationLng,
+                          String hotspotId,
                           Instant proposedStartTime, Instant proposedEndTime,
                           Instant expiresAt) {
         this.proposalId = UUID.randomUUID().toString();
@@ -67,8 +68,7 @@ public class MatchProposal {
         this.intentIdB = intentIdB;
         this.userIdA = userIdA;
         this.userIdB = userIdB;
-        this.proposedLocationLat = proposedLocationLat;
-        this.proposedLocationLng = proposedLocationLng;
+        this.hotspotId = hotspotId;
         this.proposedStartTime = proposedStartTime;
         this.proposedEndTime = proposedEndTime;
         this.acceptedByA = false;
@@ -82,12 +82,11 @@ public class MatchProposal {
 
     public static MatchProposal create(String intentIdA, String intentIdB,
                                        String userIdA, String userIdB,
-                                       double proposedLocationLat, double proposedLocationLng,
+                                       String hotspotId,
                                        Instant proposedStartTime, Instant proposedEndTime,
                                        Instant expiresAt) {
         return new MatchProposal(intentIdA, intentIdB, userIdA, userIdB,
-                proposedLocationLat, proposedLocationLng,
-                proposedStartTime, proposedEndTime, expiresAt);
+                hotspotId, proposedStartTime, proposedEndTime, expiresAt);
     }
 
     // ── Rich behaviour ────────────────────────────────────────────────────────

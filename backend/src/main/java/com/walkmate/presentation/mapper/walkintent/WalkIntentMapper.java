@@ -11,11 +11,13 @@ public class WalkIntentMapper {
         return new WalkIntentResponse(
                 intent.getId(),
                 intent.getHotspotId(),
+                intent.getHotspotName(),
                 intent.getUserId(),
                 intent.getTimeWindowStart().toString(),
                 intent.getTimeWindowEnd().toString(),
                 intent.getMatchingConstraints().ageMin(),
                 intent.getMatchingConstraints().ageMax(),
+                intent.getMatchingConstraints().preferredGender(),
                 intent.getStatus().name(),
                 intent.getCreatedAt().toString(),
                 intent.getExpiresAt().toString(),

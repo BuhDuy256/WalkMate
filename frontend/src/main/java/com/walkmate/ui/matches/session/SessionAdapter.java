@@ -129,10 +129,12 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             String partnerName = session.getPartnerName();
             String displayName = (partnerName != null && !partnerName.isEmpty())
                     ? partnerName : session.getPartnerId();
-            avatarPartner.bind(displayName, null);
+            avatarPartner.bind(displayName, session.getPartnerAvatar());
             txtPartnerName.setText(displayName);
-            txtMeetingPoint.setText(formatCoords(
-                    session.getMeetingPointLat(), session.getMeetingPointLng()));
+            String hotspotDisplay = session.getHotspotName();
+            txtMeetingPoint.setText(hotspotDisplay != null && !hotspotDisplay.isEmpty()
+                    ? hotspotDisplay
+                    : formatCoords(session.getMeetingPointLat(), session.getMeetingPointLng()));
 
             // Status badge text
             if (callerStatus == WalkSession.Status.ACTIVE) {
@@ -142,8 +144,10 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             }
 
             // Location + time strip
-            txtSessionLocation.setText(formatCoords(
-                    session.getMeetingPointLat(), session.getMeetingPointLng()));
+            String hotspot = session.getHotspotName();
+            txtSessionLocation.setText(hotspot != null && !hotspot.isEmpty()
+                    ? hotspot
+                    : formatCoords(session.getMeetingPointLat(), session.getMeetingPointLng()));
             String start = formatIsoTime(session.getScheduledTime());
             String end   = formatIsoTime(session.getScheduledEnd());
             txtMeetingTime.setText(end.isEmpty() ? start : start + " – " + end);

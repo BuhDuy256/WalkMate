@@ -76,38 +76,6 @@
 
             </LinearLayout>
 
-            <!-- Compatibility badge -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_gradient_button"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:paddingStart="9dp"
-                android:paddingEnd="9dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp">
-
-                <TextView
-                    android:id="@+id/txtCompatibilityValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Match"
-                    android:textColor="#CCFFFFFF"
-                    android:textSize="9sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.08"
-                    android:textAllCaps="true" />
-
-            </LinearLayout>
 
         </LinearLayout>
 
@@ -215,17 +183,20 @@
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <!-- Cancel proposal (destructive) -->
+        <!-- Cancel proposal — outlined, same style as Decline -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelProposal"
-            style="@style/Widget.Material3.Button.TextButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="44dp"
             android:layout_marginTop="6dp"
             android:text="@string/btn_cancel_proposal"
             android:textColor="@color/color_danger"
             android:textSize="13sp"
-            app:cornerRadius="999dp" />
+            android:textStyle="bold"
+            app:strokeColor="@color/color_danger"
+            app:strokeWidth="1.5dp"
+            app:cornerRadius="13dp" />
 
     </LinearLayout>
 

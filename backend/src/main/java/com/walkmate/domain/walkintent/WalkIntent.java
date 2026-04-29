@@ -17,6 +17,8 @@ public class WalkIntent {
 
     private String id;
     private String hotspotId;
+    /** Transient — populated by repository JOIN with hotspot table. */
+    private String hotspotName;
     private String userId;
     private Instant timeWindowStart;
     private Instant timeWindowEnd;
@@ -34,7 +36,7 @@ public class WalkIntent {
     }
 
     /** Rehydration constructor — called by the repository when loading from DB. */
-    public WalkIntent(String id, String hotspotId, String userId,
+    public WalkIntent(String id, String hotspotId, String hotspotName, String userId,
                       Instant timeWindowStart, Instant timeWindowEnd,
                       MatchingConstraints matchingConstraints,
                       IntentStatus status,
@@ -44,6 +46,7 @@ public class WalkIntent {
                       List<UUID> excludedUserIds) {
         this.id = id;
         this.hotspotId = hotspotId;
+        this.hotspotName = hotspotName;
         this.userId = userId;
         this.timeWindowStart = timeWindowStart;
         this.timeWindowEnd = timeWindowEnd;

@@ -42,7 +42,8 @@ public class SessionController {
                 .map(s -> {
                     boolean callerIsA = principal.userId().equals(s.getUserIdA());
                     String partnerId = callerIsA ? s.getUserIdB() : s.getUserIdA();
-                    return sessionMapper.toResponse(s, false, resolveDisplayName(partnerId));
+                    return sessionMapper.toResponse(s, false,
+                            resolveDisplayName(partnerId), resolveAvatarUrl(partnerId));
                 })
                 .toList();
 
@@ -63,7 +64,8 @@ public class SessionController {
         boolean callerIsA = principal.userId().equals(session.getUserIdA());
         String partnerId = callerIsA ? session.getUserIdB() : session.getUserIdA();
         return ResponseEntity.ok(ApiResponse.success(
-                sessionMapper.toResponse(session, false, resolveDisplayName(partnerId))));
+                sessionMapper.toResponse(session, false,
+                        resolveDisplayName(partnerId), resolveAvatarUrl(partnerId))));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -71,6 +73,14 @@ public class SessionController {
     private String resolveDisplayName(String userId) {
         try {
             return userQueryService.getDisplayName(UUID.fromString(userId));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String resolveAvatarUrl(String userId) {
+        try {
+            return userQueryService.getProfile(UUID.fromString(userId)).getAvatarUrl();
         } catch (Exception e) {
             return null;
         }
@@ -102,6 +112,7 @@ public class SessionController {
         boolean callerIsA = principal.userId().equals(session.getUserIdA());
         String partnerId = callerIsA ? session.getUserIdB() : session.getUserIdA();
         return ResponseEntity.ok(ApiResponse.success(
-                sessionMapper.toResponse(session, false, resolveDisplayName(partnerId))));
+                sessionMapper.toResponse(session, false,
+                        resolveDisplayName(partnerId), resolveAvatarUrl(partnerId))));
     }
 }

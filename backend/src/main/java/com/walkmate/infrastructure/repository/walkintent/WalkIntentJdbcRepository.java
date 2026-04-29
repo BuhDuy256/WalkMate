@@ -157,27 +157,29 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
     public List<WalkIntent> findOpenByUserId(String userId) {
         final String sql = """
                 SELECT
-                    intent_id::text,
-                    hotspot_id::text,
-                    user_id::text,
-                    time_window_start,
-                    time_window_end,
-                    (matching_constraints->>'age_min')::int       AS age_min,
-                    (matching_constraints->>'age_max')::int       AS age_max,
-                    matching_constraints->>'preferred_gender'     AS preferred_gender,
-                    status,
-                    created_at,
-                    expires_at,
-                    version,
-                    is_private,
-                    invited_friend_id::text,
-                    description,
-                    excluded_user_ids
-                FROM walk_intent
-                WHERE user_id = :userId
-                  AND status IN ('OPEN', 'MATCHING')
-                  AND is_private = false
-                ORDER BY created_at DESC
+                    wi.intent_id::text,
+                    wi.hotspot_id::text,
+                    h.name                                        AS hotspot_name,
+                    wi.user_id::text,
+                    wi.time_window_start,
+                    wi.time_window_end,
+                    (wi.matching_constraints->>'age_min')::int    AS age_min,
+                    (wi.matching_constraints->>'age_max')::int    AS age_max,
+                    wi.matching_constraints->>'preferred_gender'  AS preferred_gender,
+                    wi.status,
+                    wi.created_at,
+                    wi.expires_at,
+                    wi.version,
+                    wi.is_private,
+                    wi.invited_friend_id::text,
+                    wi.description,
+                    wi.excluded_user_ids
+                FROM walk_intent wi
+                JOIN hotspot h ON h.id = wi.hotspot_id
+                WHERE wi.user_id = :userId
+                  AND wi.status IN ('OPEN', 'MATCHING')
+                  AND wi.is_private = false
+                ORDER BY wi.created_at DESC
                 """;
 
         return jdbcClient.sql(sql)
@@ -363,9 +365,12 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
     private WalkIntent mapRow(java.sql.ResultSet rs) throws java.sql.SQLException {
         String pg = rs.getString("preferred_gender");
         if (pg == null || pg.isBlank()) pg = "ANY";
+        String hotspotName;
+        try { hotspotName = rs.getString("hotspot_name"); } catch (Exception e) { hotspotName = null; }
         return new WalkIntent(
                 rs.getString("intent_id"),
                 rs.getString("hotspot_id"),
+                hotspotName,
                 rs.getString("user_id"),
                 rs.getTimestamp("time_window_start").toInstant(),
                 rs.getTimestamp("time_window_end").toInstant(),

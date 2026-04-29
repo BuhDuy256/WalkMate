@@ -15,6 +15,9 @@ public class WalkIntentResponse {
     @SerializedName("hotspot_name")
     private String hotspotName;
 
+    @SerializedName("preferred_gender")
+    private String preferredGender;
+
     @SerializedName("user_id")
     private String userId;
 
@@ -46,6 +49,7 @@ public class WalkIntentResponse {
     public String getId() { return id; }
     public String getHotspotId() { return hotspotId; }
     public String getHotspotName() { return hotspotName; }
+    public String getPreferredGender() { return preferredGender; }
     public String getUserId() { return userId; }
     public String getTimeWindowStart() { return timeWindowStart; }
     public String getTimeWindowEnd() { return timeWindowEnd; }

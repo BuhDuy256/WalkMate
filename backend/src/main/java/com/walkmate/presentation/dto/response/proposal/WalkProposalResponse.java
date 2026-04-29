@@ -24,6 +24,9 @@ public record WalkProposalResponse(
         @JsonProperty("matched_user_name")
         String matchedUserName,
 
+        @JsonProperty("matched_user_avatar_url")
+        String matchedUserAvatarUrl,
+
         @JsonProperty("matched_user_age")
         int matchedUserAge,
 
@@ -34,16 +37,16 @@ public record WalkProposalResponse(
         List<String> overlappingTags,
 
         @JsonProperty("proposed_time_start")
-        String proposedTimeStart,   // ISO-8601
+        String proposedTimeStart,
 
         @JsonProperty("proposed_time_end")
-        String proposedTimeEnd,     // ISO-8601
+        String proposedTimeEnd,
 
-        @JsonProperty("proposed_lat")
-        double proposedLat,
+        @JsonProperty("hotspot_id")
+        String hotspotId,
 
-        @JsonProperty("proposed_lng")
-        double proposedLng,
+        @JsonProperty("hotspot_name")
+        String hotspotName,
 
         String status,
 
@@ -51,10 +54,10 @@ public record WalkProposalResponse(
         String expiresAt,
 
         @JsonProperty("session_id")
-        String sessionId,           // null until CONFIRMED
+        String sessionId,
 
         @JsonProperty("my_acceptance_status")
-        String myAcceptanceStatus,  // "PENDING" | "ACCEPTED"
+        String myAcceptanceStatus,
 
         @JsonProperty("is_private")
         boolean isPrivate

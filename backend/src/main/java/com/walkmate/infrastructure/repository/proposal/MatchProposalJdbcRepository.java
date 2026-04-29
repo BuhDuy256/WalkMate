@@ -30,33 +30,32 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                     INSERT INTO match_proposal (
                         proposal_id, intent_id_a, intent_id_b,
                         proposed_start_time, proposed_end_time,
-                        proposed_location_lat, proposed_location_lng,
+                        hotspot_id,
                         accepted_by_a, accepted_by_b,
                         status, created_at, expires_at, confirmed_at, version
                     )
                     VALUES (
                         :proposalId, :intentIdA, :intentIdB,
                         :proposedStartTime, :proposedEndTime,
-                        :proposedLocationLat, :proposedLocationLng,
+                        :hotspotId,
                         :acceptedByA, :acceptedByB,
                         CAST(:status AS proposal_status), :createdAt, :expiresAt, :confirmedAt, 0
                     )
                     """;
 
             jdbcClient.sql(insertSql)
-                    .param("proposalId",          UUID.fromString(proposal.getProposalId()))
-                    .param("intentIdA",           UUID.fromString(proposal.getIntentIdA()))
-                    .param("intentIdB",           UUID.fromString(proposal.getIntentIdB()))
-                    .param("proposedStartTime",   Timestamp.from(proposal.getProposedStartTime()))
-                    .param("proposedEndTime",     Timestamp.from(proposal.getProposedEndTime()))
-                    .param("proposedLocationLat", proposal.getProposedLocationLat())
-                    .param("proposedLocationLng", proposal.getProposedLocationLng())
-                    .param("acceptedByA",         proposal.isAcceptedByA())
-                    .param("acceptedByB",         proposal.isAcceptedByB())
-                    .param("status",              proposal.getStatus().name())
-                    .param("createdAt",           Timestamp.from(proposal.getCreatedAt()))
-                    .param("expiresAt",           Timestamp.from(proposal.getExpiresAt()))
-                    .param("confirmedAt",         proposal.getConfirmedAt() != null
+                    .param("proposalId",        UUID.fromString(proposal.getProposalId()))
+                    .param("intentIdA",         UUID.fromString(proposal.getIntentIdA()))
+                    .param("intentIdB",         UUID.fromString(proposal.getIntentIdB()))
+                    .param("proposedStartTime", Timestamp.from(proposal.getProposedStartTime()))
+                    .param("proposedEndTime",   Timestamp.from(proposal.getProposedEndTime()))
+                    .param("hotspotId",         UUID.fromString(proposal.getHotspotId()))
+                    .param("acceptedByA",       proposal.isAcceptedByA())
+                    .param("acceptedByB",       proposal.isAcceptedByB())
+                    .param("status",            proposal.getStatus().name())
+                    .param("createdAt",         Timestamp.from(proposal.getCreatedAt()))
+                    .param("expiresAt",         Timestamp.from(proposal.getExpiresAt()))
+                    .param("confirmedAt",       proposal.getConfirmedAt() != null
                             ? Timestamp.from(proposal.getConfirmedAt()) : null)
                     .update();
         } else {
@@ -152,8 +151,8 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                     mp.intent_id_b::text,
                     wi_a.user_id::text AS user_id_a,
                     wi_b.user_id::text AS user_id_b,
-                    mp.proposed_location_lat,
-                    mp.proposed_location_lng,
+                    mp.hotspot_id::text,
+                    h.name             AS hotspot_name,
                     mp.proposed_start_time,
                     mp.proposed_end_time,
                     mp.accepted_by_a,
@@ -166,6 +165,7 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                 FROM match_proposal mp
                 JOIN walk_intent wi_a ON mp.intent_id_a = wi_a.intent_id
                 JOIN walk_intent wi_b ON mp.intent_id_b = wi_b.intent_id
+                JOIN hotspot h        ON h.id = mp.hotspot_id
                 """;
     }
 
@@ -176,8 +176,8 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                 rs.getString("intent_id_b"),
                 rs.getString("user_id_a"),
                 rs.getString("user_id_b"),
-                rs.getDouble("proposed_location_lat"),
-                rs.getDouble("proposed_location_lng"),
+                rs.getString("hotspot_id"),
+                rs.getString("hotspot_name"),
                 rs.getTimestamp("proposed_start_time").toInstant(),
                 rs.getTimestamp("proposed_end_time").toInstant(),
                 rs.getBoolean("accepted_by_a"),

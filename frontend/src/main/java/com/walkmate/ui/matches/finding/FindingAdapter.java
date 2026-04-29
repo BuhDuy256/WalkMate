@@ -15,9 +15,6 @@ import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
 
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -104,16 +101,20 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
                 txtHotspotName.setText(id.length() > 12 ? id.substring(0, 8) + "…" : id);
             }
 
-            // Created at (relative time)
-            txtCreatedAt.setText(formatRelativeTime(intent.getCreatedAt()));
+            // Walk date (e.g. "2026-05-03")
+            String walkDate = intent.getWalkDate();
+            txtCreatedAt.setText(walkDate != null ? walkDate : "");
 
             // Time window
             txtTimeWindow.setText(
                     formatTime(intent.getTimeStart()) + " – " + formatTime(intent.getTimeEnd()));
 
-            // Age range
-            txtAgeRange.setText(itemView.getContext().getString(
-                    R.string.age_range_format, intent.getAgeMin(), intent.getAgeMax()));
+            // Gender · age range (e.g. "Female · 22–35" or "Any · 18–40")
+            String gender = intent.getGenderPreference();
+            String genderLabel = (gender == null || gender.isEmpty() || "ANY".equalsIgnoreCase(gender))
+                    ? "Any" : capitalise(gender);
+            txtAgeRange.setText(genderLabel + " · "
+                    + intent.getAgeMin() + "–" + intent.getAgeMax());
 
             // Expiry check
             boolean isExpired = false;
@@ -154,22 +155,10 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
             return String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
         }
 
-        private String formatRelativeTime(String isoTime) {
-            if (isoTime == null || isoTime.isEmpty()) return "";
-            try {
-                Instant created = Instant.parse(isoTime);
-                Instant now = Instant.now();
-                long hours = ChronoUnit.HOURS.between(created, now);
-                if (hours < 1) {
-                    long minutes = ChronoUnit.MINUTES.between(created, now);
-                    return minutes <= 1 ? "Just now" : minutes + "m ago";
-                }
-                if (hours < 24) return hours + "h ago";
-                long days = ChronoUnit.DAYS.between(created, now);
-                return days + "d ago";
-            } catch (Exception e) {
-                return "";
-            }
+        private String capitalise(String s) {
+            if (s == null || s.isEmpty()) return s;
+            return s.substring(0, 1).toUpperCase(Locale.getDefault())
+                    + s.substring(1).toLowerCase(Locale.getDefault());
         }
     }
 }

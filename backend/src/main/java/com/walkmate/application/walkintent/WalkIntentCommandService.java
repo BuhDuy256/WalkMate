@@ -178,7 +178,7 @@ public class WalkIntentCommandService {
         MatchProposal proposal = MatchProposal.create(
                 savedSender.getId(), savedReceiver.getId(),
                 senderId, receiverId,
-                hotspot.getLat(), hotspot.getLng(),
+                command.hotspotId(),
                 command.timeWindowStart(), command.timeWindowEnd(),
                 Instant.now().plus(PROPOSAL_TTL_MINUTES, ChronoUnit.MINUTES)
         );

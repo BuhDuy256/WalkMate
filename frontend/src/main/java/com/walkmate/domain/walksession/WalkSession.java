@@ -17,6 +17,7 @@ public class WalkSession {
     private final String partnerId;
     private final String partnerName;
     private final String partnerAvatar;
+    private final String hotspotName;
     private final double meetingPointLat;
     private final double meetingPointLng;
     private final String scheduledTime;
@@ -44,6 +45,7 @@ public class WalkSession {
             String partnerId,
             String partnerName,
             String partnerAvatar,
+            String hotspotName,
             double meetingPointLat,
             double meetingPointLng,
             String scheduledTime,
@@ -64,6 +66,7 @@ public class WalkSession {
         this.partnerId        = partnerId;
         this.partnerName      = partnerName;
         this.partnerAvatar    = partnerAvatar;
+        this.hotspotName      = hotspotName;
         this.meetingPointLat  = meetingPointLat;
         this.meetingPointLng  = meetingPointLng;
         this.scheduledTime    = scheduledTime;
@@ -88,6 +91,7 @@ public class WalkSession {
     public String  getPartnerId()         { return partnerId; }
     public String  getPartnerName()       { return partnerName; }
     public String  getPartnerAvatar()     { return partnerAvatar; }
+    public String  getHotspotName()       { return hotspotName; }
     public double  getMeetingPointLat()   { return meetingPointLat; }
     public double  getMeetingPointLng()   { return meetingPointLng; }
     public String  getScheduledTime()     { return scheduledTime; }

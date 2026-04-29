@@ -11,6 +11,7 @@ public class ProposalMapper {
 
     public WalkProposalResponse toResponse(MatchProposal proposal, String callerId,
                                            String sessionId, String matchedUserName,
+                                           String matchedUserAvatarUrl,
                                            int matchedUserAge, int matchedUserTrustScore,
                                            List<String> overlappingTags, boolean isPrivate) {
         boolean callerIsA = callerId.equals(proposal.getUserIdA());
@@ -29,13 +30,14 @@ public class ProposalMapper {
                 callersUserId,
                 matchedUserId,
                 matchedUserName,
+                matchedUserAvatarUrl,
                 matchedUserAge,
                 matchedUserTrustScore,
                 overlappingTags,
                 proposal.getProposedStartTime().toString(),
                 proposal.getProposedEndTime().toString(),
-                proposal.getProposedLocationLat(),
-                proposal.getProposedLocationLng(),
+                proposal.getHotspotId(),
+                proposal.getHotspotName(),
                 proposal.getStatus().name(),
                 proposal.getExpiresAt().toString(),
                 sessionId,
