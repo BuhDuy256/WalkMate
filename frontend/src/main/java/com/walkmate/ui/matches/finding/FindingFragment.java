@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,7 +22,7 @@ public class FindingFragment extends Fragment {
 
     private SwipeRefreshLayout swipeRefresh;
     private RecyclerView recyclerView;
-    private TextView txtEmpty;
+    private View txtEmpty;
     private FindingAdapter adapter;
 
     private MatchesViewModel matchesViewModel;
@@ -86,7 +85,6 @@ public class FindingFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (adapter != null) adapter.cancelAllTimers();
         recyclerView.setAdapter(null);
         swipeRefresh  = null;
         recyclerView  = null;

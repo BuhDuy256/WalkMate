@@ -7,12 +7,86 @@
     android:orientation="vertical"
     android:background="@color/bg_cream">
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/subTabLayout"
+    <!-- Sticky header -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabMode="fixed"
-        app:tabGravity="fill" />
+        android:orientation="vertical"
+        android:background="@color/bg_white"
+        android:elevation="2dp">
+
+        <!-- Title row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Matches"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Your walks, proposals &amp; sessions"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_muted" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNewIntent"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_gradient_button"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="+ New"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="12dp"
+                app:elevation="0dp" />
+
+        </LinearLayout>
+
+        <!-- Tab bar separator -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F3F2F0" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/subTabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="@color/orange_primary"
+            app:tabIndicatorHeight="2.5dp"
+            app:tabIndicatorFullWidth="false"
+            app:tabSelectedTextColor="@color/orange_primary"
+            app:tabTextColor="@color/text_muted"
+            app:tabBackground="@android:color/transparent" />
+
+    </LinearLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/subTabPager"

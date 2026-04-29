@@ -3,20 +3,21 @@ package com.walkmate.ui.matches.finding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
 import com.walkmate.R;
-import com.walkmate.core.designsystem.view.MatchCardHeaderView;
-import com.walkmate.core.designsystem.view.TagChipGroup;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -60,25 +61,8 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (!boundHolders.contains(holder)) boundHolders.add(holder);
         holder.bind(items.get(position));
     }
-
-    @Override
-    public void onViewRecycled(@NonNull ViewHolder holder) {
-        super.onViewRecycled(holder);
-        holder.cardHeader.cancelCountdown();
-        boundHolders.remove(holder);
-    }
-
-    public void cancelAllTimers() {
-        for (ViewHolder holder : new ArrayList<>(boundHolders)) {
-            holder.cardHeader.cancelCountdown();
-        }
-        boundHolders.clear();
-    }
-
-    private final List<ViewHolder> boundHolders = new ArrayList<>();
 
     @Override
     public int getItemCount() {
@@ -89,29 +73,29 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        final MatchCardHeaderView cardHeader;
-        private final TextView txtHotspotName;
-        private final TextView txtTimeWindow;
-        private final Chip chipDuration;
-        private final Chip chipAgeRange;
-        private final TagChipGroup chipGroupTags;
+        private final TextView     txtHotspotName;
+        private final TextView     txtCreatedAt;
+        private final LinearLayout layoutStatusBadge;
+        private final TextView     txtStatusBadge;
+        private final TextView     txtTimeWindow;
+        private final TextView     txtAgeRange;
         private final MaterialButton btnFindMatch;
         private final MaterialButton btnCancelIntent;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            cardHeader      = itemView.findViewById(R.id.cardHeader);
-            txtHotspotName  = itemView.findViewById(R.id.txtHotspotName);
-            txtTimeWindow   = itemView.findViewById(R.id.txtTimeWindow);
-            chipDuration    = itemView.findViewById(R.id.chipDuration);
-            chipAgeRange    = itemView.findViewById(R.id.chipAgeRange);
-            chipGroupTags   = itemView.findViewById(R.id.chipGroupTags);
-            btnFindMatch    = itemView.findViewById(R.id.btnFindMatch);
-            btnCancelIntent = itemView.findViewById(R.id.btnCancelIntent);
+            txtHotspotName    = itemView.findViewById(R.id.txtHotspotName);
+            txtCreatedAt      = itemView.findViewById(R.id.txtCreatedAt);
+            layoutStatusBadge = itemView.findViewById(R.id.layoutStatusBadge);
+            txtStatusBadge    = itemView.findViewById(R.id.txtStatusBadge);
+            txtTimeWindow     = itemView.findViewById(R.id.txtTimeWindow);
+            txtAgeRange       = itemView.findViewById(R.id.txtAgeRange);
+            btnFindMatch      = itemView.findViewById(R.id.btnFindMatch);
+            btnCancelIntent   = itemView.findViewById(R.id.btnCancelIntent);
         }
 
         void bind(WalkIntent intent) {
-            // Zone 2: hotspot display name — prefer name, fall back to abbreviated ID
+            // Location name
             String hotspotName = intent.getHotspotName();
             if (hotspotName != null && !hotspotName.isEmpty()) {
                 txtHotspotName.setText(hotspotName);
@@ -120,44 +104,34 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
                 txtHotspotName.setText(id.length() > 12 ? id.substring(0, 8) + "…" : id);
             }
 
-            txtTimeWindow.setText(formatTime(intent.getTimeStart()) + "  –  " + formatTime(intent.getTimeEnd()));
+            // Created at (relative time)
+            txtCreatedAt.setText(formatRelativeTime(intent.getCreatedAt()));
 
-            int durationMinutes = Math.round((intent.getTimeEnd() - intent.getTimeStart()) * 60f);
-            chipDuration.setText(durationMinutes + " min");
+            // Time window
+            txtTimeWindow.setText(
+                    formatTime(intent.getTimeStart()) + " – " + formatTime(intent.getTimeEnd()));
 
-            chipAgeRange.setText(itemView.getContext().getString(
+            // Age range
+            txtAgeRange.setText(itemView.getContext().getString(
                     R.string.age_range_format, intent.getAgeMin(), intent.getAgeMax()));
 
-            chipGroupTags.setTags(intent.getTags());
-
-            // Determine expiry state upfront
-            long millisUntilExpiry = Long.MAX_VALUE;
+            // Expiry check
+            boolean isExpired = false;
             if (intent.getExpiresAt() != null) {
-                millisUntilExpiry = Instant.parse(intent.getExpiresAt()).toEpochMilli()
-                        - System.currentTimeMillis();
+                isExpired = Instant.parse(intent.getExpiresAt()).toEpochMilli()
+                        <= System.currentTimeMillis();
             }
-            boolean isExpired = millisUntilExpiry <= 0;
 
-            // Zone 1: header — status badge + countdown
+            // Status badge
             if (intent.isMatching()) {
-                cardHeader.setStatus("Matched 🔒", MatchCardHeaderView.STYLE_MATCHING);
+                txtStatusBadge.setText("Matched 🔒");
             } else {
-                cardHeader.setStatus("Searching…", MatchCardHeaderView.STYLE_OPEN);
+                txtStatusBadge.setText("Finding…");
             }
 
-            if (intent.getExpiresAt() != null && !isExpired) {
-                cardHeader.startCountdown(intent.getExpiresAt());
-                cardHeader.setOnExpiredListener(() -> {
-                    if (actionListener != null) actionListener.onIntentExpired();
-                });
-            } else {
-                cardHeader.hideCountdown();
-            }
-
-            // Zone 5: actions vary by MATCHING vs OPEN
+            // Actions
             if (intent.isMatching()) {
                 btnFindMatch.setVisibility(View.VISIBLE);
-                btnFindMatch.setText(R.string.btn_view_proposal);
                 btnFindMatch.setOnClickListener(v -> {
                     if (actionListener != null) actionListener.onViewProposalClicked(intent.getId());
                 });
@@ -178,6 +152,24 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
             int minute = Math.round((hourFloat - hour) * 60f);
             if (minute >= 60) { hour++; minute = 0; }
             return String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
+        }
+
+        private String formatRelativeTime(String isoTime) {
+            if (isoTime == null || isoTime.isEmpty()) return "";
+            try {
+                Instant created = Instant.parse(isoTime);
+                Instant now = Instant.now();
+                long hours = ChronoUnit.HOURS.between(created, now);
+                if (hours < 1) {
+                    long minutes = ChronoUnit.MINUTES.between(created, now);
+                    return minutes <= 1 ? "Just now" : minutes + "m ago";
+                }
+                if (hours < 24) return hours + "h ago";
+                long days = ChronoUnit.DAYS.between(created, now);
+                return days + "d ago";
+            } catch (Exception e) {
+                return "";
+            }
         }
     }
 }

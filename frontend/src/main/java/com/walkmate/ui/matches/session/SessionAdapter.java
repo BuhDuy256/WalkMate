@@ -3,11 +3,11 @@ package com.walkmate.ui.matches.session;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.walkmate.core.designsystem.view.ActivationWindowButtonView;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
-import com.walkmate.core.designsystem.view.MatchCardHeaderView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -84,7 +84,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
         holder.activationBtn.release();
-        holder.cardHeader.cancelCountdown();
     }
 
     @Override
@@ -96,11 +95,12 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        final MatchCardHeaderView cardHeader;
         final ActivationWindowButtonView activationBtn;
         private final AvatarInitialView avatarPartner;
         private final TextView txtPartnerName;
         private final TextView txtMeetingPoint;
+        private final TextView txtStatusBadge;
+        private final TextView txtSessionLocation;
         private final TextView txtMeetingTime;
         private final MaterialButton btnChat;
         private final MaterialButton btnCancelSession;
@@ -109,11 +109,12 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            cardHeader       = itemView.findViewById(R.id.cardHeader);
             activationBtn    = itemView.findViewById(R.id.activationBtn);
             avatarPartner    = itemView.findViewById(R.id.avatarPartner);
             txtPartnerName   = itemView.findViewById(R.id.txtPartnerName);
             txtMeetingPoint  = itemView.findViewById(R.id.txtMeetingPoint);
+            txtStatusBadge   = itemView.findViewById(R.id.txtStatusBadge);
+            txtSessionLocation = itemView.findViewById(R.id.txtSessionLocation);
             txtMeetingTime   = itemView.findViewById(R.id.txtMeetingTime);
             btnChat          = itemView.findViewById(R.id.btnChat);
             btnCancelSession = itemView.findViewById(R.id.btnCancelSession);
@@ -124,27 +125,28 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         void bind(WalkSession session, SessionActionListener listener) {
             WalkSession.Status callerStatus = session.getCallerStatus();
 
-            // Zone 1: header badge reflects this user's own walk state
-            if (callerStatus == WalkSession.Status.ACTIVE) {
-                cardHeader.setStatus("Walk Active", MatchCardHeaderView.STYLE_SESSION_ACTIVE);
-            } else {
-                cardHeader.setStatus("Ready to Walk", MatchCardHeaderView.STYLE_SESSION_PENDING);
-            }
-            cardHeader.hideCountdown();
-
-            // Zone 2: partner identity
+            // Partner identity
             String partnerName = session.getPartnerName();
             String displayName = (partnerName != null && !partnerName.isEmpty())
                     ? partnerName : session.getPartnerId();
             avatarPartner.bind(displayName, null);
             txtPartnerName.setText(displayName);
-            txtMeetingPoint.setText(formatMeetingPoint(
+            txtMeetingPoint.setText(formatCoords(
                     session.getMeetingPointLat(), session.getMeetingPointLng()));
 
-            // Zone 3: time window (scheduled start – end)
+            // Status badge text
+            if (callerStatus == WalkSession.Status.ACTIVE) {
+                txtStatusBadge.setText("Walk Active");
+            } else {
+                txtStatusBadge.setText("Matched ✓");
+            }
+
+            // Location + time strip
+            txtSessionLocation.setText(formatCoords(
+                    session.getMeetingPointLat(), session.getMeetingPointLng()));
             String start = formatIsoTime(session.getScheduledTime());
             String end   = formatIsoTime(session.getScheduledEnd());
-            txtMeetingTime.setText(end.isEmpty() ? start : start + "  –  " + end);
+            txtMeetingTime.setText(end.isEmpty() ? start : start + " – " + end);
 
             btnChat.setOnClickListener(v -> {
                 if (chatListener != null) chatListener.onChatClick(session);
@@ -153,7 +155,7 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 if (cancelListener != null) cancelListener.onCancelClick(session);
             });
 
-            // Zone 5: actions driven by the caller's individual status (S-2 independent lifecycle)
+            // Primary actions driven by caller status
             if (callerStatus == WalkSession.Status.PENDING) {
                 activationBtn.setVisibility(View.VISIBLE);
                 activationBtn.bind(session.getScheduledTime(),
@@ -180,8 +182,9 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             }
         }
 
-        private String formatMeetingPoint(double lat, double lng) {
-            return String.format(Locale.getDefault(), "📍 %.2f°N, %.2f°E", lat, lng);
+        private String formatCoords(double lat, double lng) {
+            if (lat == 0 && lng == 0) return "—";
+            return String.format(Locale.getDefault(), "%.2f°N, %.2f°E", lat, lng);
         }
 
         private String formatIsoTime(String isoTime) {

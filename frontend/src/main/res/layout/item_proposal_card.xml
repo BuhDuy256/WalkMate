@@ -8,8 +8,8 @@
     app:cardBackgroundColor="@color/bg_white"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/handle_bar"
-    app:strokeWidth="1dp">
+    app:strokeColor="#F3F2F0"
+    app:strokeWidth="1.5dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,25 +17,20 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Zone 1: Shared header — status badge + countdown -->
-        <com.walkmate.core.designsystem.view.MatchCardHeaderView
-            android:id="@+id/cardHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <!-- Zone 2: Partner identity -->
+        <!-- Partner identity row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="top">
 
+            <!-- Avatar (rounded square via AvatarInitialView) -->
             <com.walkmate.core.designsystem.view.AvatarInitialView
                 android:id="@+id/avatarPartner"
-                android:layout_width="52dp"
-                android:layout_height="52dp" />
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
 
+            <!-- Name + age + tags -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -51,8 +46,9 @@
 
                     <TextView
                         android:id="@+id/txtName"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/text_dark"
@@ -69,72 +65,110 @@
 
                 </LinearLayout>
 
+                <!-- Common interests chips -->
+                <com.walkmate.core.designsystem.view.TagChipGroup
+                    android:id="@+id/chipGroupTags"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    app:chipSpacingHorizontal="6dp"
+                    app:chipSpacingVertical="2dp" />
+
+            </LinearLayout>
+
+            <!-- Compatibility badge -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_gradient_button"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
+
                 <TextView
-                    android:id="@+id/txtTrustScore"
+                    android:id="@+id/txtCompatibilityValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="@color/text_muted"
-                    android:textSize="13sp" />
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Match"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"
+                    android:textAllCaps="true" />
 
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Zone 2 → 3 divider -->
-        <View
+        <!-- Time / location strip -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="12dp"
-            android:background="@color/handle_bar" />
-
-        <!-- Zone 3: Common time window -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/proposal_common_time"
-            android:textColor="@color/text_label"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04" />
-
-        <TextView
-            android:id="@+id/txtTimeWindow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_time_window"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:textColor="@color/text_dark"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <!-- Zone 4: Common interests -->
-        <TextView
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/proposal_common_interests"
-            android:textColor="@color/text_label"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04" />
+            android:background="@drawable/bg_info_strip"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp">
 
-        <com.walkmate.core.designsystem.view.TagChipGroup
-            android:id="@+id/chipGroupTags"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            app:chipSpacingHorizontal="6dp"
-            app:chipSpacingVertical="4dp" />
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_clock_small"
+                app:tint="@color/text_muted" />
 
-        <!-- Zone 5: Accept / Pass buttons -->
+            <TextView
+                android:id="@+id/txtTimeWindow"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/text_label"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="12dp"
+                android:background="#E7E5E4"
+                android:layout_marginHorizontal="8dp" />
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_hotspot_pin"
+                app:tint="@color/text_muted" />
+
+            <TextView
+                android:id="@+id/txtMeetingLocation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_label"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Action buttons: Decline + Accept Walk -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="14dp">
+            android:layout_marginTop="12dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPass"
@@ -142,49 +176,52 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="@string/btn_pass"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp"
-                app:strokeColor="@color/handle_bar"
+                android:text="Decline"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:strokeColor="#E7E5E4"
                 app:strokeWidth="1.5dp"
-                app:cornerRadius="999dp" />
+                app:cornerRadius="13dp"
+ />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAccept"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="2"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_gradient_orange_pill"
-                android:text="@string/btn_accept"
+                android:layout_marginStart="9dp"
+                android:background="@drawable/bg_gradient_button"
+                android:text="Accept Walk"
                 android:textColor="@color/white"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
                 app:backgroundTint="@null"
-                app:cornerRadius="999dp"
-                app:elevation="0dp" />
+                app:cornerRadius="13dp"
+                app:elevation="0dp"
+ />
 
         </LinearLayout>
 
-        <!-- Waiting overlay: shown when I accepted but partner has not (Case A) -->
+        <!-- Waiting overlay: shown when I accepted but partner has not -->
         <TextView
             android:id="@+id/txtWaitingOverlay"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="12dp"
             android:gravity="center"
             android:text="@string/proposal_waiting_partner"
             android:textColor="@color/text_muted"
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <!-- Zone 5 Tier 3: Destructive action -->
+        <!-- Cancel proposal (destructive) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelProposal"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="6dp"
             android:text="@string/btn_cancel_proposal"
             android:textColor="@color/color_danger"
             android:textSize="13sp"

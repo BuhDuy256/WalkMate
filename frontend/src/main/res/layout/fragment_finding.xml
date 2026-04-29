@@ -16,23 +16,56 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingTop="12dp"
+            android:paddingTop="16dp"
             android:paddingBottom="24dp"
             android:paddingHorizontal="16dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-        <!-- Empty state — shown when list is empty and not loading -->
-        <TextView
+        <!-- Rich empty state -->
+        <LinearLayout
             android:id="@+id/txtEmpty"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:orientation="vertical"
             android:gravity="center"
-            android:text="@string/finding_empty"
-            android:textColor="@color/text_muted"
-            android:textSize="15sp"
-            android:lineSpacingMultiplier="1.4"
-            android:visibility="gone" />
+            android:paddingHorizontal="32dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@drawable/bg_icon_container_orange"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/orange_primary" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="No active searches"
+                android:textColor="@color/text_dark"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.5"
+                android:text="Create a walk intent to start finding compatible walk partners nearby."
+                android:textColor="@color/text_muted"
+                android:textSize="14sp" />
+
+        </LinearLayout>
 
     </FrameLayout>
 
