@@ -11,11 +11,9 @@ import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.BadgeCatalogResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.BadgeResponse;
-import com.walkmate.data.datasource.remote.dto.response.gamification.LeaderboardEntryResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.UserStatsResponse;
 import com.walkmate.domain.gamification.BadgeCatalogItem;
 import com.walkmate.domain.gamification.GamificationRepository;
-import com.walkmate.domain.gamification.LeaderboardEntry;
 import com.walkmate.domain.gamification.UserBadge;
 import com.walkmate.domain.gamification.UserStats;
 import com.walkmate.domain.shared.DomainCallback;
@@ -118,31 +116,6 @@ public class GamificationRepositoryImpl implements GamificationRepository {
         });
     }
 
-    @Override
-    public void getLeaderboard(DomainCallback<List<LeaderboardEntry>> callback) {
-        executor.execute(() -> {
-            try {
-                Response<ApiResponse<List<LeaderboardEntryResponse>>> resp =
-                        apiService.getLeaderboard().execute();
-
-                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
-                    List<LeaderboardEntryResponse> data = resp.body().getData();
-                    callback.onSuccess(toLeaderboardDomainList(data != null ? data : Collections.emptyList()));
-                } else {
-                    ApiError apiError = ErrorParser.extractApiError(resp, "LEADERBOARD_FETCH_FAILED");
-                    if ("VALIDATION_ERROR".equals(apiError.getCode())) {
-                        callback.onError(new Exception("VALIDATION_ERROR|" + apiError.getMessage()));
-                    } else {
-                        callback.onError(new Exception(apiError.getCode()));
-                    }
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "getLeaderboard network error", e);
-                callback.onError(e);
-            }
-        });
-    }
-
     // ── Mappers ───────────────────────────────────────────────────────────────
 
     private static List<UserBadge> toBadgeDomainList(List<BadgeResponse> responses) {
@@ -168,12 +141,4 @@ public class GamificationRepositoryImpl implements GamificationRepository {
                 r.completedSessions, r.trustScore);
     }
 
-    private static List<LeaderboardEntry> toLeaderboardDomainList(List<LeaderboardEntryResponse> responses) {
-        List<LeaderboardEntry> result = new ArrayList<>(responses.size());
-        for (LeaderboardEntryResponse r : responses) {
-            result.add(new LeaderboardEntry(r.rank, r.userId, r.fullName, r.totalPoints,
-                    r.totalDistanceKm, r.completedSessions, r.trustScore));
-        }
-        return result;
-    }
 }

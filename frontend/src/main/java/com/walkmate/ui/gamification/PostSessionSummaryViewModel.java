@@ -5,7 +5,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.gamification.GamificationRepository;
-import com.walkmate.domain.gamification.LeaderboardEntry;
 import com.walkmate.domain.gamification.UserBadge;
 import com.walkmate.domain.gamification.UserStats;
 import com.walkmate.domain.walksession.SessionSummary;
@@ -16,12 +15,10 @@ import java.util.List;
 /**
  * ViewModel that backs the post-session summary screen.
  *
- * <p>Loads the current user's stats and newly earned badges after a session
- * completes, and also exposes the global leaderboard. All network calls are
- * dispatched onto a background thread by the repository; results arrive on
- * whatever thread the executor chooses, so the UI must observe via
- * {@link androidx.lifecycle.LiveData} and post to the main thread via
- * {@link MutableLiveData#postValue}.</p>
+ * Loads the current user's stats and newly earned badges after a session
+ * completes. All network calls are dispatched onto a background thread by the
+ * repository; results arrive on whatever thread the executor chooses, so the
+ * UI observes via LiveData and receives updates on the main thread via postValue.
  */
 public class PostSessionSummaryViewModel extends ViewModel {
 
@@ -30,12 +27,11 @@ public class PostSessionSummaryViewModel extends ViewModel {
     private final GamificationRepository gamificationRepo;
     private final WalkSessionRepository  sessionRepo;
 
-    private final MutableLiveData<LoadState>              statsState       = new MutableLiveData<>(LoadState.IDLE);
-    private final MutableLiveData<UserStats>              userStats        = new MutableLiveData<>();
-    private final MutableLiveData<List<UserBadge>>       badges           = new MutableLiveData<>();
-    private final MutableLiveData<List<LeaderboardEntry>> leaderboard     = new MutableLiveData<>();
-    private final MutableLiveData<String>                 error            = new MutableLiveData<>();
-    private final MutableLiveData<SessionSummary>         sessionSummary   = new MutableLiveData<>();
+    private final MutableLiveData<LoadState>        statsState     = new MutableLiveData<>(LoadState.IDLE);
+    private final MutableLiveData<UserStats>        userStats      = new MutableLiveData<>();
+    private final MutableLiveData<List<UserBadge>>  badges         = new MutableLiveData<>();
+    private final MutableLiveData<String>            error          = new MutableLiveData<>();
+    private final MutableLiveData<SessionSummary>    sessionSummary = new MutableLiveData<>();
 
     public PostSessionSummaryViewModel(GamificationRepository gamificationRepo,
                                        WalkSessionRepository sessionRepo) {
@@ -45,12 +41,11 @@ public class PostSessionSummaryViewModel extends ViewModel {
 
     // ── Accessors ─────────────────────────────────────────────────────────────
 
-    public LiveData<LoadState>              getStatsState()     { return statsState; }
-    public LiveData<UserStats>              getUserStats()       { return userStats; }
-    public LiveData<List<UserBadge>>        getBadges()          { return badges; }
-    public LiveData<List<LeaderboardEntry>> getLeaderboard()     { return leaderboard; }
-    public LiveData<String>                 getError()           { return error; }
-    public LiveData<SessionSummary>         getSessionSummary()  { return sessionSummary; }
+    public LiveData<LoadState>         getStatsState()    { return statsState; }
+    public LiveData<UserStats>         getUserStats()      { return userStats; }
+    public LiveData<List<UserBadge>>   getBadges()         { return badges; }
+    public LiveData<String>            getError()          { return error; }
+    public LiveData<SessionSummary>    getSessionSummary() { return sessionSummary; }
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -89,24 +84,10 @@ public class PostSessionSummaryViewModel extends ViewModel {
         });
     }
 
-    public void loadLeaderboard() {
-        gamificationRepo.getLeaderboard(new com.walkmate.domain.shared.DomainCallback<List<LeaderboardEntry>>() {
-            @Override
-            public void onSuccess(List<LeaderboardEntry> result) {
-                leaderboard.postValue(result);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                error.postValue(e.getMessage());
-            }
-        });
-    }
-
     /**
-     * Fetches session history and finds the matching {@link SessionSummary}
-     * for {@code sessionId}. Posts the result to {@link #getSessionSummary()}.
-     * Non-fatal: a null value is posted if the session cannot be found.
+     * Fetches session history and finds the matching SessionSummary for sessionId.
+     * Posts the result to getSessionSummary(). Non-fatal: a null value is posted
+     * if the session cannot be found.
      */
     public void loadSummary(String sessionId) {
         sessionRepo.getSessionHistory(new com.walkmate.domain.shared.DomainCallback<List<SessionSummary>>() {

@@ -30,6 +30,12 @@
     <color name="color_success">#FF2E7D32</color>
     <color name="bg_success_light">#FFE8F5E9</color>
 
+    <!-- Profile tag pill -->
+    <color name="tag_pill_bg">#FFFFF7ED</color>
+    <color name="tag_pill_border">#FFFED7AA</color>
+    <!-- Card / layout borders -->
+    <color name="card_border">#FFF3F2F0</color>
+
     <!-- Misc -->
     <color name="handle_bar">#FFD4CBBF</color>
     <color name="slider_track_inactive">#FFF5EDE4</color>

@@ -201,34 +201,6 @@ public class ProfileViewModel extends ViewModel {
         navigateToFriendsEvent.postValue(true);
     }
 
-    private final MutableLiveData<Boolean> navigateToBlockedUsersEvent = new MutableLiveData<>();
-
-    public LiveData<Boolean> getNavigateToBlockedUsersEvent() {
-        return navigateToBlockedUsersEvent;
-    }
-
-    public void consumeNavigateToBlockedUsers() {
-        navigateToBlockedUsersEvent.setValue(false);
-    }
-
-    public void onBlockedUsersClicked() {
-        navigateToBlockedUsersEvent.postValue(true);
-    }
-
-    private final MutableLiveData<Boolean> navigateToLeaderboardEvent = new MutableLiveData<>();
-
-    public LiveData<Boolean> getNavigateToLeaderboardEvent() {
-        return navigateToLeaderboardEvent;
-    }
-
-    public void consumeNavigateToLeaderboard() {
-        navigateToLeaderboardEvent.setValue(false);
-    }
-
-    public void onLeaderboardClicked() {
-        navigateToLeaderboardEvent.postValue(true);
-    }
-
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**

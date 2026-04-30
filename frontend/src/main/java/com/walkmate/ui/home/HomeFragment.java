@@ -129,9 +129,6 @@ public class HomeFragment extends Fragment {
         btnNotification.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_notifications));
 
-        cardLeaderboard.setOnClickListener(v ->
-                Navigation.findNavController(root).navigate(R.id.action_home_to_leaderboardFragment));
-
         btnSeeAllMates.setOnClickListener(v ->
                 Navigation.findNavController(root).navigate(R.id.action_home_to_sessionHistoryFragment));
     }

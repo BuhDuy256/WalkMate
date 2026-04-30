@@ -59,21 +59,14 @@ public class ProfileFragment extends Fragment {
     private TextView txtStatKmValue;
     private TextView txtStatSessionsValue;
 
-    // Badges (text-only slots in the profile card, up to 3)
-    private TextView lblBadge1;
-    private TextView lblBadge2;
-    private TextView lblBadge3;
-
     // Edit profile entry point
     private View btnEditProfile;
 
     // Menu rows
     private View menuWalkHistory;
     private View menuMyBadges;
-    private View menuLeaderboard;
-    private View menuSettings;
+
     private View menuFriends;
-    private View menuBlockedUsers;
 
     // Content root (receives dynamic bottom padding from window insets)
     private View profileContentRoot;
@@ -126,20 +119,6 @@ public class ProfileFragment extends Fragment {
                     .navigate(R.id.action_profile_to_friendsFragment);
         });
 
-        viewModel.getNavigateToBlockedUsersEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
-            if (!Boolean.TRUE.equals(shouldNavigate)) return;
-            viewModel.consumeNavigateToBlockedUsers();
-            NavHostFragment.findNavController(this)
-                    .navigate(R.id.action_profile_to_blockedUsersFragment);
-        });
-
-        viewModel.getNavigateToLeaderboardEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
-            if (!Boolean.TRUE.equals(shouldNavigate)) return;
-            viewModel.consumeNavigateToLeaderboard();
-            NavHostFragment.findNavController(this)
-                    .navigate(R.id.action_profile_to_leaderboardFragment);
-        });
-
         viewModel.getNavigateToBadgesEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
             if (!Boolean.TRUE.equals(shouldNavigate)) return;
             viewModel.consumeNavigateToBadges();
@@ -154,7 +133,6 @@ public class ProfileFragment extends Fragment {
         profileContentRoot = root.findViewById(R.id.profileContentRoot);
         View bottomSpacer = root.findViewById(R.id.bottomSpacer);
 
-        // Set spacer to 1/4 screen height once the view is laid out
         int screenHeight = root.getResources().getDisplayMetrics().heightPixels;
         android.view.ViewGroup.LayoutParams lp = bottomSpacer.getLayoutParams();
         lp.height = screenHeight / 4;
@@ -188,18 +166,12 @@ public class ProfileFragment extends Fragment {
         txtStatKmValue       = root.findViewById(R.id.txtStatKmValue);
         txtStatSessionsValue = root.findViewById(R.id.txtStatSessionsValue);
 
-        lblBadge1 = root.findViewById(R.id.lblBadge1);
-        lblBadge2 = root.findViewById(R.id.lblBadge2);
-        lblBadge3 = root.findViewById(R.id.lblBadge3);
-
         btnEditProfile  = root.findViewById(R.id.btnEditProfile);
 
         menuWalkHistory  = root.findViewById(R.id.menuWalkHistory);
         menuMyBadges     = root.findViewById(R.id.menuMyBadges);
-        menuLeaderboard  = root.findViewById(R.id.menuLeaderboard);
-        menuSettings     = root.findViewById(R.id.menuSettings);
+
         menuFriends      = root.findViewById(R.id.menuFriends);
-        menuBlockedUsers = root.findViewById(R.id.menuBlockedUsers);
         btnLogoutAll     = root.findViewById(R.id.btnLogoutAll);
     }
 
@@ -219,24 +191,14 @@ public class ProfileFragment extends Fragment {
         }
         menuWalkHistory.setOnClickListener(v -> viewModel.onWalkHistoryClicked());
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
-        menuLeaderboard.setOnClickListener(v -> viewModel.onLeaderboardClicked());
-        menuSettings.setOnClickListener(v -> viewModel.onSettingsClicked());
+
         menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());
-        menuBlockedUsers.setOnClickListener(v -> viewModel.onBlockedUsersClicked());
 
         btnLogoutAll.setOnClickListener(v -> showLogoutAllConfirmation());
     }
 
     // ── State rendering ───────────────────────────────────────────────────────
 
-    /**
-     * Single source of truth for all View mutations.
-     * Called every time the LiveData emits a new ProfileUiState.
-     *
-     * On loading: shows the ProgressBar and hides the scroll content.
-     * After the cache delivers data (< 50 ms on warm launches), loading is immediately
-     * false and the ProgressBar is never visible to the user.
-     */
     private void renderState(ProfileUiState state) {
         if (state.isLoading()) {
             progressBar.setVisibility(View.VISIBLE);
@@ -260,7 +222,7 @@ public class ProfileFragment extends Fragment {
             txtProfileName.setText(state.getName());
         }
 
-        // ── Trust score chip + tier badge ──
+        // ── Trust score chip + tier label ──
         int scoreInt = (int) state.getTrustScore();
         chipTrustScore.setText(String.format(Locale.getDefault(), "⭐ %d pts", scoreInt));
 
@@ -268,38 +230,19 @@ public class ProfileFragment extends Fragment {
         txtTrustTier.setText(tier.label);
         txtTrustTier.setTextColor(ContextCompat.getColor(requireContext(), tier.colorRes));
 
-        // ── Personality tag chips (up to 3 slots in the layout) ──
+        // ── Personality tag chips ──
         renderTagChips(state.getPersonalityTags());
 
         // ── Milestone stats ──
         txtStatKmValue.setText(String.valueOf((int) state.getTotalDistanceKm()));
         txtStatSessionsValue.setText(String.valueOf(state.getTotalSessions()));
-
-        // ── Badges (up to 3 slots in the layout) ──
-        renderBadges(state.getBadges());
     }
 
-    /**
-     * Populates up to 3 static chip slots with personality tags.
-     * Hides any slot that has no corresponding tag.
-     */
     private void renderTagChips(List<String> tags) {
         Chip[] slots = {chipTag1, chipTag2, chipTag3};
         for (int i = 0; i < slots.length; i++) {
             if (tags != null && i < tags.size()) {
                 slots[i].setText(tags.get(i));
-                slots[i].setVisibility(View.VISIBLE);
-            } else {
-                slots[i].setVisibility(View.GONE);
-            }
-        }
-    }
-
-    private void renderBadges(List<ProfileUiState.Badge> badges) {
-        TextView[] slots = {lblBadge1, lblBadge2, lblBadge3};
-        for (int i = 0; i < slots.length; i++) {
-            if (badges != null && i < badges.size()) {
-                slots[i].setText(badges.get(i).label);
                 slots[i].setVisibility(View.VISIBLE);
             } else {
                 slots[i].setVisibility(View.GONE);

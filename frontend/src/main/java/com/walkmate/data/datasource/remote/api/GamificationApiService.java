@@ -3,7 +3,6 @@ package com.walkmate.data.datasource.remote.api;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.BadgeCatalogResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.BadgeResponse;
-import com.walkmate.data.datasource.remote.dto.response.gamification.LeaderboardEntryResponse;
 import com.walkmate.data.datasource.remote.dto.response.gamification.UserStatsResponse;
 
 import java.util.List;
@@ -23,6 +22,4 @@ public interface GamificationApiService {
     @GET("api/v1/users/{userId}/stats")
     Call<ApiResponse<UserStatsResponse>> getStats(@Path("userId") String userId);
 
-    @GET("api/v1/leaderboard")
-    Call<ApiResponse<List<LeaderboardEntryResponse>>> getLeaderboard();
 }

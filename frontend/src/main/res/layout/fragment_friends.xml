@@ -41,7 +41,8 @@
             app:tabTextColor="@color/text_muted"
             app:tabIndicatorColor="@color/orange_primary"
             app:tabIndicatorHeight="2.5dp"
-            app:tabTextAppearance="@style/FriendsTabTextAppearance" />
+            app:tabIndicatorFullWidth="false"
+            app:tabBackground="@android:color/transparent" />
 
     </LinearLayout>
 

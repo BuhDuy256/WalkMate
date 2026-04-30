@@ -4,40 +4,55 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_cream">
+    android:background="@color/bg_cream"
+    android:fillViewport="true">
 
     <LinearLayout
         android:id="@+id/editProfileContentRoot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="32dp">
 
-        <!-- Top bar -->
+        <!-- ── Header ─────────────────────────────────────────────────── -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="8dp">
 
             <ImageButton
                 android:id="@+id/btnBackEditProfile"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:src="@drawable/ic_back"
+                android:padding="8dp"
                 android:contentDescription="Back"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/bg_btn_back"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="Edit Profile"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
+                android:textColor="@color/text_dark"
+                android:gravity="center"
+                android:letterSpacing="-0.012"
+                app:layout_constraintStart_toEndOf="@id/btnBackEditProfile"
+                app:layout_constraintEnd_toStartOf="@id/headerSpacer"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <View
+                android:id="@+id/headerSpacer"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -50,86 +65,358 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:visibility="gone"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="4dp" />
 
-        <!-- Avatar -->
-        <ImageView
-            android:id="@+id/imgEditAvatar"
+        <!-- ── Avatar ─────────────────────────────────────────────────── -->
+        <FrameLayout
             android:layout_width="88dp"
             android:layout_height="88dp"
             android:layout_gravity="center_horizontal"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_user"
-            android:contentDescription="Avatar"
-            android:clickable="true"
-            android:focusable="true"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginBottom="28dp">
 
+            <ImageView
+                android:id="@+id/imgEditAvatar"
+                android:layout_width="88dp"
+                android:layout_height="88dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_user"
+                android:contentDescription="Avatar" />
+
+            <ImageButton
+                android:id="@+id/btnEditAvatarBadge"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="bottom|end"
+                android:src="@drawable/ic_camera_small"
+                android:padding="6dp"
+                android:contentDescription="Change photo"
+                android:background="@drawable/bg_camera_badge"
+                android:elevation="2dp" />
+
+        </FrameLayout>
+
+        <!-- ── Full Name ──────────────────────────────────────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Full Name"
             android:textSize="13sp"
-            android:layout_marginBottom="4dp" />
+            android:textColor="@color/text_label"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
         <EditText
             android:id="@+id/etFullName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPersonName"
-            android:layout_marginBottom="12dp" />
+            android:textSize="16sp"
+            android:textColor="@color/text_dark"
+            android:textColorHint="@color/text_muted"
+            android:background="@null"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:layout_marginBottom="4dp" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1.5dp"
+            android:background="#FFD6D3D1"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ── Gender ─────────────────────────────────────────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Gender"
             android:textSize="13sp"
-            android:layout_marginBottom="4dp" />
-
-        <AutoCompleteTextView
-            android:id="@+id/spinnerGender"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="none"
-            android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Date of Birth"
-            android:textSize="13sp"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/etDateOfBirth"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="none"
-            android:focusable="false"
-            android:clickable="true"
-            android:cursorVisible="false"
-            android:hint="Tap to select"
+            android:textColor="@color/text_label"
+            android:textStyle="bold"
             android:layout_marginBottom="12dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
+            android:layout_marginBottom="20dp">
+
+            <!-- Male card -->
+            <LinearLayout
+                android:id="@+id/cardGenderMale"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/bg_gender_card_inactive"
+                android:clickable="true"
+                android:focusable="true">
+
+                <View
+                    android:id="@+id/dotGenderMale"
+                    android:layout_width="9dp"
+                    android:layout_height="9dp"
+                    android:background="@drawable/bg_chip_inactive"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/txtGenderMale"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Male"
+                    android:textSize="15sp"
+                    android:textColor="#FF44403C"
+                    android:fontFamily="sans-serif-medium" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <!-- Female card -->
+            <LinearLayout
+                android:id="@+id/cardGenderFemale"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/bg_gender_card_inactive"
+                android:clickable="true"
+                android:focusable="true">
+
+                <View
+                    android:id="@+id/dotGenderFemale"
+                    android:layout_width="9dp"
+                    android:layout_height="9dp"
+                    android:background="@drawable/bg_chip_inactive"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/txtGenderFemale"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Female"
+                    android:textSize="15sp"
+                    android:textColor="#FF44403C"
+                    android:fontFamily="sans-serif-medium" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ── Date of Birth ──────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date of Birth"
+            android:textSize="13sp"
+            android:textColor="@color/text_label"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <!-- DOB bar: 3 segments -->
+        <LinearLayout
+            android:id="@+id/dobBar"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_dob_bar_default"
+            android:layout_marginBottom="20dp">
+
+            <!-- Day segment -->
+            <LinearLayout
+                android:id="@+id/segDay"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DAY"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_muted"
+                    android:letterSpacing="0.06"
+                    android:layout_marginBottom="3dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/txtDobDay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"
+                        android:letterSpacing="-0.012" />
+
+                    <ImageView
+                        android:id="@+id/icChevronDay"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:src="@drawable/ic_chevron_down"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginTop="1dp"
+                        android:contentDescription="@null" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@color/card_border" />
+
+            <!-- Month segment -->
+            <LinearLayout
+                android:id="@+id/segMonth"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MONTH"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_muted"
+                    android:letterSpacing="0.06"
+                    android:layout_marginBottom="3dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/txtDobMonth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"
+                        android:letterSpacing="-0.012" />
+
+                    <ImageView
+                        android:id="@+id/icChevronMonth"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:src="@drawable/ic_chevron_down"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginTop="1dp"
+                        android:contentDescription="@null" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@color/card_border" />
+
+            <!-- Year segment -->
+            <LinearLayout
+                android:id="@+id/segYear"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="YEAR"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_muted"
+                    android:letterSpacing="0.06"
+                    android:layout_marginBottom="3dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/txtDobYear"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="----"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"
+                        android:letterSpacing="-0.012" />
+
+                    <ImageView
+                        android:id="@+id/icChevronYear"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:src="@drawable/ic_chevron_down"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginTop="1dp"
+                        android:contentDescription="@null" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ── Bio ───────────────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Bio"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:textColor="@color/text_label"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/txtBioCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0/500"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:textColor="@color/text_muted" />
 
         </LinearLayout>
 
@@ -141,34 +428,63 @@
             android:minLines="3"
             android:maxLines="6"
             android:gravity="top"
-            android:layout_marginBottom="12dp" />
+            android:textSize="15sp"
+            android:textColor="@color/text_dark"
+            android:textColorHint="@color/text_muted"
+            android:hint="Tell others about yourself..."
+            android:background="@null"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:layout_marginBottom="4dp" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1.5dp"
+            android:background="#FFD6D3D1"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ── Personality Tags ───────────────────────────────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Personality Tags"
             android:textSize="13sp"
-            android:layout_marginBottom="8dp" />
+            android:textColor="@color/text_label"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupTags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="8dp"
             android:layout_marginBottom="8dp" />
 
+        <!-- ── Error ─────────────────────────────────────────────────── -->
         <TextView
             android:id="@+id/txtEditProfileError"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="13sp"
+            android:textColor="@color/color_danger"
             android:visibility="gone"
             android:layout_marginBottom="8dp" />
 
+        <!-- ── Save ──────────────────────────────────────────────────── -->
         <Button
             android:id="@+id/btnSaveProfile"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save" />
+            android:layout_height="54dp"
+            android:text="Save"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:letterSpacing="-0.012"
+            android:background="@drawable/bg_edit_profile_btn"
+            android:enabled="false"
+            android:stateListAnimator="@null"
+            android:layout_marginTop="8dp" />
 
     </LinearLayout>
 
