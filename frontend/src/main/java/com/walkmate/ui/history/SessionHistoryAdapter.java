@@ -152,6 +152,7 @@ public class SessionHistoryAdapter
 
         final TextView          txtDate;
         final TextView          txtStatus;
+        final TextView          txtHotspotName;
         // Participant 2 row = partner (shown at top)
         final TextView          txtParticipant2Name;
         final TextView          txtParticipant2Status;
@@ -173,6 +174,7 @@ public class SessionHistoryAdapter
             super(itemView);
             txtDate                 = itemView.findViewById(R.id.txtSessionDate);
             txtStatus               = itemView.findViewById(R.id.txtSessionStatus);
+            txtHotspotName          = itemView.findViewById(R.id.txtHotspotName);
             txtParticipant2Name     = itemView.findViewById(R.id.txtParticipant2Name);
             txtParticipant2Status   = itemView.findViewById(R.id.txtParticipant2Status);
             txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
@@ -191,6 +193,9 @@ public class SessionHistoryAdapter
         void bind(SessionSummary summary, String currentUserId) {
             txtDate.setText(formatDate(summary.getScheduledStart()));
             applyStatusBadge(txtStatus, summary.getStatus());
+
+            String hotspot = summary.getHotspotName();
+            txtHotspotName.setText(hotspot != null && !hotspot.isEmpty() ? hotspot : "—");
 
             // Partner is always shown in the top row (participant2 views)
             ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);

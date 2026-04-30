@@ -64,6 +64,38 @@
             android:layout_marginEnd="16dp"
             android:background="#F3F2F0" />
 
+        <!-- Hotspot location row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="2dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_hotspot_pin"
+                app:tint="@color/text_muted"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/txtHotspotName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_label"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="Central Park Hotspot" />
+
+        </LinearLayout>
+
         <!-- Partner row (top) -->
         <LinearLayout
             android:layout_width="match_parent"

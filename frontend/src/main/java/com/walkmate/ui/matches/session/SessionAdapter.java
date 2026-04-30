@@ -43,7 +43,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     public interface SessionActionListener {
         void onArriveClicked(String sessionId);
         void onCompleteClicked(WalkSession session);
-        void onReportClicked(String sessionId, String partnerId);
     }
 
     // -------------------------------------------------------------------------
@@ -114,7 +113,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         private final MaterialButton btnChat;
         private final MaterialButton btnCancelSession;
         final MaterialButton btnComplete;
-        private final MaterialButton btnReportIssue;
         private final View           lblStartYourWalk;
         private final LinearLayout   bannerVerifyPartner;
 
@@ -130,7 +128,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
             btnChat             = itemView.findViewById(R.id.btnChat);
             btnCancelSession    = itemView.findViewById(R.id.btnCancelSession);
             btnComplete         = itemView.findViewById(R.id.btnComplete);
-            btnReportIssue      = itemView.findViewById(R.id.btnReportIssue);
             lblStartYourWalk    = itemView.findViewById(R.id.lblStartYourWalk);
             bannerVerifyPartner = itemView.findViewById(R.id.bannerVerifyPartner);
         }
@@ -183,7 +180,6 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 activationBtn.bind(session.getScheduledTime(),
                         v -> { if (listener != null) listener.onArriveClicked(session.getSessionId()); });
                 btnComplete.setVisibility(View.GONE);
-                btnReportIssue.setVisibility(View.GONE);
             } else if (callerStatus == WalkSession.Status.ACTIVE) {
                 txtPartnerName.setText("Walking with " + displayName);
                 txtStatusBadge.setText("● LIVE");
@@ -200,17 +196,11 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                 btnComplete.setOnClickListener(v -> {
                     if (listener != null) listener.onCompleteClicked(session);
                 });
-                btnReportIssue.setVisibility(View.VISIBLE);
-                btnReportIssue.setOnClickListener(v -> {
-                    if (listener != null)
-                        listener.onReportClicked(session.getSessionId(), session.getPartnerId());
-                });
             } else {
                 lblStartYourWalk.setVisibility(View.GONE);
                 bannerVerifyPartner.setVisibility(View.GONE);
                 activationBtn.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.GONE);
-                btnReportIssue.setVisibility(View.GONE);
             }
         }
 

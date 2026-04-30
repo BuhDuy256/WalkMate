@@ -41,5 +41,8 @@ public record SessionSummaryResponse(
         List<ParticipantSummaryResponse> participants,
 
         @JsonProperty("caller_avatar_url")
-        String callerAvatarUrl
+        String callerAvatarUrl,
+
+        @JsonProperty("hotspot_name")
+        String hotspotName
 ) {}

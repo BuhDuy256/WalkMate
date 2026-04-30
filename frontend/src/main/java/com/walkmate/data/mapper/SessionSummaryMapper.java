@@ -42,6 +42,7 @@ public class SessionSummaryMapper {
                 terminalAtMs,
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),
+                response.getHotspotName(),
                 participants
         );
     }

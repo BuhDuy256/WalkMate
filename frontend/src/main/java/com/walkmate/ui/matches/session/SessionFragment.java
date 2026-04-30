@@ -24,7 +24,6 @@ import com.walkmate.domain.walksession.WalkSession;
 import com.walkmate.ui.chat.ChatFragment;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
-import com.walkmate.ui.report.ReportIncidentFragment;
 import com.walkmate.ui.qr.QrVerifyActivity;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
 
@@ -121,16 +120,6 @@ public class SessionFragment extends Fragment {
                         .putExtra(TrackingScreenActivity.EXTRA_HOTSPOT_NAME, session.getHotspotName())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  session.getMeetingPointLat())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  session.getMeetingPointLng()));
-            }
-
-            @Override
-            public void onReportClicked(String sessionId, String partnerId) {
-                Bundle args = new Bundle();
-                args.putString(ReportIncidentFragment.ARG_SESSION_ID,           sessionId);
-                args.putString(ReportIncidentFragment.ARG_REPORTED_UID,         partnerId);
-                args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS, 0L);
-                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-                        .navigate(R.id.reportIncidentFragment, args);
             }
         });
         recyclerView.setAdapter(adapter);

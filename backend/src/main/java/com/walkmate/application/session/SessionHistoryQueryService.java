@@ -89,7 +89,8 @@ public class SessionHistoryQueryService {
                 s.getMeetingPointLat(),
                 s.getMeetingPointLng(),
                 List.of(participantA, participantB),
-                callerAvatarUrl
+                callerAvatarUrl,
+                s.getHotspotName()
         );
     }
 }

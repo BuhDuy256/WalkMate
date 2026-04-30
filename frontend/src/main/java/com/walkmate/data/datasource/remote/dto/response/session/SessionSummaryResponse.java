@@ -34,6 +34,9 @@ public class SessionSummaryResponse {
     @SerializedName("participants")
     private List<ParticipantResponse> participants;
 
+    @SerializedName("hotspot_name")
+    private String hotspotName;
+
     @SerializedName("caller_avatar_url")
     private String callerAvatarUrl;
 
@@ -45,6 +48,7 @@ public class SessionSummaryResponse {
     public double getMeetingPointLat()                   { return meetingPointLat; }
     public double getMeetingPointLng()                   { return meetingPointLng; }
     public List<ParticipantResponse> getParticipants()   { return participants; }
+    public String getHotspotName()                       { return hotspotName; }
     public String getCallerAvatarUrl()                   { return callerAvatarUrl; }
 
     public static class ParticipantResponse {
