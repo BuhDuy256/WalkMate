@@ -109,6 +109,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private MaterialButton        btnComplete;
     private FloatingActionButton  fabRecenter;
     private LinearLayout          bottomPanel;
+    private LinearLayout          badgeLive;
 
     // ── Flags ─────────────────────────────────────────────────────────────────
 
@@ -370,6 +371,10 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
      */
     private void updateControls(TrackingUiState state) {
         WalkState walkState = state.getWalkState();
+
+        // LIVE badge is only visible while actively walking.
+        badgeLive.setVisibility(walkState == WalkState.ACTIVE ? View.VISIBLE : View.GONE);
+
         switch (walkState) {
             case READY:
                 btnStart.setVisibility(View.VISIBLE);
@@ -398,7 +403,6 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_resume);
-                // Complete eligibility is driven only by countdown (same as ACTIVE).
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(state.getCompleteTooEarlySeconds() == 0);
                 if (state.getCompleteTooEarlySeconds() > 0) {
@@ -633,6 +637,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         btnComplete         = findViewById(R.id.btnComplete);
         fabRecenter         = findViewById(R.id.fabRecenter);
         bottomPanel         = findViewById(R.id.bottomPanel);
+        badgeLive           = findViewById(R.id.badgeLive);
     }
 
     /**

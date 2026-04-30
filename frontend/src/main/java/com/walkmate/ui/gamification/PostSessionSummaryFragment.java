@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -14,26 +13,26 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.material.button.MaterialButton;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.designsystem.view.AvatarInitialView;
+import com.walkmate.domain.walksession.ParticipantSummary;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.ui.main.MainActivity;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
- * Post-Session Summary screen.
+ * Post-Session Completed Screen.
  *
- * Shows distance, duration, partner name, and newly earned badges.
- * Review and Report actions are no longer available here — they are driven
- * by the resolved per-user statuses on the Session History card.
+ * Full-page opaque screen shown after a walk finishes. Displays distance,
+ * duration, and pace for the current user. Review is handled separately
+ * from the Session History card — not here.
  *
- * Entry point:
- *   TrackingScreenActivity observes WalkState.FINISHED → adds this Fragment
- *   over android.R.id.content, passing:
- *     - ARG_SESSION_ID   — String
- *     - ARG_PARTNER_NAME — String
- *     - ARG_PARTNER_ID   — String (optional)
+ * Entry: TrackingScreenActivity observes WalkState.FINISHED → adds this
+ *        Fragment over android.R.id.content.
  */
 public class PostSessionSummaryFragment extends Fragment {
 
@@ -66,16 +65,20 @@ public class PostSessionSummaryFragment extends Fragment {
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private TextView txtSummaryPartner;
-    private TextView txtSummaryDistance;
-    private TextView txtSummaryDuration;
-    private TextView txtSummaryBadges;
-    private Button   btnDone;
+    private TextView          txtSummarySubtitle;
+    private TextView          txtSummaryPartner;
+    private TextView          txtSummaryDistance;
+    private TextView          txtSummaryDuration;
+    private TextView          txtSummaryPace;
+    private TextView          txtSummaryBadges;
+    private AvatarInitialView avatarSummaryPartner;
+    private MaterialButton    btnDone;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
     private PostSessionSummaryViewModel viewModel;
     private String currentUserId;
+    private String partnerName;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -91,17 +94,21 @@ public class PostSessionSummaryFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        txtSummaryPartner   = view.findViewById(R.id.txtSummaryPartner);
-        txtSummaryDistance  = view.findViewById(R.id.txtSummaryDistance);
-        txtSummaryDuration  = view.findViewById(R.id.txtSummaryDuration);
-        txtSummaryBadges    = view.findViewById(R.id.txtSummaryBadges);
-        btnDone             = view.findViewById(R.id.btnDoneSummary);
+        txtSummarySubtitle    = view.findViewById(R.id.txtSummarySubtitle);
+        txtSummaryPartner     = view.findViewById(R.id.txtSummaryPartner);
+        txtSummaryDistance    = view.findViewById(R.id.txtSummaryDistance);
+        txtSummaryDuration    = view.findViewById(R.id.txtSummaryDuration);
+        txtSummaryPace        = view.findViewById(R.id.txtSummaryPace);
+        txtSummaryBadges      = view.findViewById(R.id.txtSummaryBadges);
+        avatarSummaryPartner  = view.findViewById(R.id.avatarSummaryPartner);
+        btnDone               = view.findViewById(R.id.btnDoneSummary);
 
         Bundle args      = getArguments();
         String sessionId   = args != null ? args.getString(ARG_SESSION_ID)   : null;
-        String partnerName = args != null ? args.getString(ARG_PARTNER_NAME)  : null;
+        partnerName        = args != null ? args.getString(ARG_PARTNER_NAME)  : null;
         String partnerId   = args != null ? args.getString(ARG_PARTNER_ID)    : null;
 
+        // Back press finishes the host Activity (returns to the caller, e.g. Matches).
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
                 new OnBackPressedCallback(true) {
@@ -111,8 +118,15 @@ public class PostSessionSummaryFragment extends Fragment {
                     }
                 });
 
-        if (partnerName != null) txtSummaryPartner.setText("Walk with " + partnerName);
+        // Populate partner info immediately (available from bundle args).
+        if (partnerName != null) {
+            txtSummaryPartner.setText(partnerName);
+            txtSummarySubtitle.setText(
+                    getString(R.string.post_session_subtitle_format, partnerName));
+            avatarSummaryPartner.bind(partnerName, null);
+        }
 
+        // Partner name taps navigate to their public profile.
         final String resolvedPartnerId = partnerId;
         if (resolvedPartnerId != null) {
             txtSummaryPartner.setOnClickListener(v -> {
@@ -132,21 +146,9 @@ public class PostSessionSummaryFragment extends Fragment {
                 .get(PostSessionSummaryViewModel.class);
 
         viewModel.getSessionSummary().observe(getViewLifecycleOwner(), this::renderSummary);
-        viewModel.getBadges().observe(getViewLifecycleOwner(), badges -> {
-            if (badges != null && !badges.isEmpty()) {
-                StringBuilder sb = new StringBuilder("New badges: ");
-                for (int i = 0; i < badges.size(); i++) {
-                    if (i > 0) sb.append(", ");
-                    sb.append(badges.get(i).getBadgeName());
-                }
-                txtSummaryBadges.setText(sb.toString());
-                txtSummaryBadges.setVisibility(View.VISIBLE);
-            }
-        });
+        viewModel.getBadges().observe(getViewLifecycleOwner(), this::renderBadges);
 
-        if (btnDone != null) {
-            btnDone.setOnClickListener(v -> requireActivity().finish());
-        }
+        btnDone.setOnClickListener(v -> requireActivity().finish());
 
         if (sessionId != null) {
             viewModel.loadSummary(sessionId);
@@ -158,12 +160,45 @@ public class PostSessionSummaryFragment extends Fragment {
     private void renderSummary(SessionSummary summary) {
         if (summary == null) return;
 
-        com.walkmate.domain.walksession.ParticipantSummary caller =
-                summary.getCallerParticipant(currentUserId);
-        if (caller != null) {
-            txtSummaryDistance.setText(String.format(Locale.getDefault(),
-                    "%.2f km", caller.getDistanceKm()));
-            txtSummaryDuration.setText(caller.getDurationMinutes() + " min");
+        ParticipantSummary caller = summary.getCallerParticipant(currentUserId);
+        if (caller == null) return;
+
+        double distanceKm    = caller.getDistanceKm();
+        int    durationMins  = caller.getDurationMinutes();
+
+        txtSummaryDistance.setText(
+                String.format(Locale.getDefault(), "%.2f km", distanceKm));
+
+        txtSummaryDuration.setText(durationMins + " min");
+
+        txtSummaryPace.setText(formatPace(distanceKm, durationMins));
+    }
+
+    private void renderBadges(List<com.walkmate.domain.gamification.UserBadge> badges) {
+        if (badges == null || badges.isEmpty()) return;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < badges.size(); i++) {
+            if (i > 0) sb.append(" · ");
+            sb.append(badges.get(i).getBadgeName());
         }
+        txtSummaryBadges.setText(sb.toString());
+        txtSummaryBadges.setVisibility(View.VISIBLE);
+    }
+
+    // ── Pace formatter ────────────────────────────────────────────────────────
+
+    /**
+     * Computes and formats pace as "X'YY\"" (min/km).
+     * Returns placeholder when distance is too small to be meaningful.
+     */
+    private static String formatPace(double distanceKm, int durationMins) {
+        if (distanceKm * 1000.0 < 50.0 || durationMins <= 0) {
+            return "--'--\"";
+        }
+        double paceMinPerKm = durationMins / distanceKm;
+        int min = (int) paceMinPerKm;
+        int sec = (int) Math.round((paceMinPerKm - min) * 60.0);
+        if (sec >= 60) { min++; sec = 0; }
+        return String.format(Locale.getDefault(), "%d'%02d\"", min, sec);
     }
 }

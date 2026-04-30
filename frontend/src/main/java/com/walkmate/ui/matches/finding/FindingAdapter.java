@@ -125,7 +125,7 @@ public class FindingAdapter extends RecyclerView.Adapter<FindingAdapter.ViewHold
 
             // Status badge
             if (intent.isMatching()) {
-                txtStatusBadge.setText("Matched 🔒");
+                txtStatusBadge.setText("Matched!");
             } else {
                 txtStatusBadge.setText("Finding…");
             }

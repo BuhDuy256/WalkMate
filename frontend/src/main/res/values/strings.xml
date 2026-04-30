@@ -119,6 +119,14 @@
     <string name="btn_done">Done</string>
     <string name="cd_back">Go back</string>
     <string name="cd_recenter_map">Re-center map on my location</string>
+    <string name="badge_live">LIVE</string>
+    <string name="post_session_title">Walk Complete!</string>
+    <string name="post_session_subtitle_format">Great walk with %s!</string>
+    <string name="post_session_label_duration">Duration</string>
+    <string name="post_session_label_distance">Distance</string>
+    <string name="post_session_label_pace">Pace</string>
+    <string name="post_session_pace_placeholder">--\'--\"</string>
+    <string name="post_session_done">Back to Home</string>
 
     <!-- HOME DASHBOARD -->
     <string name="home_greeting_format">Hi, %1$s! </string>
