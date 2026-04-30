@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
+
+        <!-- Loading indicator -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="40dp"
+            android:visibility="gone" />
+
+        <!-- Instruction -->
+        <TextView
+            android:id="@+id/txtInstruction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/qr_show_instruction"
+            android:textColor="@color/text_label"
+            android:textSize="13sp"
+            android:textAlignment="center"
+            android:lineSpacingMultiplier="1.5"
+            android:visibility="gone" />
+
+        <!-- QR Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardQr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/bg_white"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/tag_pill_border"
+            app:strokeWidth="2dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:padding="24dp">
+
+                <!-- QR image with orange corner brackets via FrameLayout -->
+                <FrameLayout
+                    android:layout_width="208dp"
+                    android:layout_height="208dp">
+
+                    <ImageView
+                        android:id="@+id/imgQrCode"
+                        android:layout_width="180dp"
+                        android:layout_height="180dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="QR Code" />
+
+                    <!-- Corner brackets drawn as Views -->
+                    <View android:layout_width="24dp" android:layout_height="24dp"
+                        android:layout_gravity="top|start"
+                        android:background="@drawable/bg_qr_corner_tl" />
+                    <View android:layout_width="24dp" android:layout_height="24dp"
+                        android:layout_gravity="top|end"
+                        android:background="@drawable/bg_qr_corner_tr" />
+                    <View android:layout_width="24dp" android:layout_height="24dp"
+                        android:layout_gravity="bottom|start"
+                        android:background="@drawable/bg_qr_corner_bl" />
+                    <View android:layout_width="24dp" android:layout_height="24dp"
+                        android:layout_gravity="bottom|end"
+                        android:background="@drawable/bg_qr_corner_br" />
+                </FrameLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@color/card_border" />
+
+                <!-- Partner info row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="18dp">
+
+                    <com.walkmate.core.designsystem.view.AvatarInitialView
+                        android:id="@+id/avatarSelf"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtSelfName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_dark"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtSessionLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Security tip card -->
+        <LinearLayout
+            android:id="@+id/layoutTip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_tip_green"
+            android:orientation="horizontal"
+            android:gravity="top"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_trust_shield"
+                android:layout_marginTop="1dp"
+                app:tint="#FF16A34A"
+                android:contentDescription="Security" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:text="@string/qr_security_tip"
+                android:textColor="#FF15803D"
+                android:textSize="12sp"
+                android:lineSpacingMultiplier="1.5" />
+        </LinearLayout>
+
+        <!-- Error state -->
+        <TextView
+            android:id="@+id/txtError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:text="@string/qr_error_load"
+            android:textColor="@color/color_danger"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</ScrollView>

@@ -38,6 +38,7 @@ public class SessionCommandService {
     private static final Duration MAX_ACTIVE_LIFESPAN = Duration.ofHours(4);
 
     private final WalkSessionRepository     sessionRepository;
+    private final SessionQrTokenProvider    qrTokenProvider;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationPublisher     notificationPublisher;
     private final ChatRoomRepository        chatRoomRepository;
@@ -267,6 +268,44 @@ public class SessionCommandService {
 
             log.info("Scheduler: session {} auto-completed", session.getSessionId());
         }
+    }
+
+    // ── QR verification ───────────────────────────────────────────────────────
+
+    /**
+     * Generates a short-lived QR token for the caller in an ACTIVE session.
+     * The token embeds the caller's userId and the sessionId, signed with HS256.
+     */
+    @Transactional(readOnly = true)
+    public String generateSessionQrToken(String sessionId, String callerId) {
+        WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
+        if (session.getStatus() != SessionStatus.ACTIVE) {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
+        }
+        return qrTokenProvider.generateQrToken(callerId, sessionId);
+    }
+
+    /**
+     * Verifies the partner's QR token submitted by the caller.
+     *
+     * <ol>
+     *   <li>Validates JWT (signature, expiry, session match, purpose claim).</li>
+     *   <li>Rejects self-verification.</li>
+     *   <li>Runs domain guards in {@link WalkSession#recordQrVerification} (ACTIVE + not
+     *       already verified).</li>
+     *   <li>Persists via a targeted atomic UPDATE (IS NULL guard).</li>
+     * </ol>
+     */
+    @Transactional
+    public WalkSession verifyPartnerQr(String sessionId, String callerId, String partnerQrToken) {
+        String tokenOwnerId = qrTokenProvider.validateQrToken(partnerQrToken, sessionId);
+        if (tokenOwnerId.equals(callerId)) {
+            throw new DomainException(SessionErrorCode.SESSION_QR_SELF_VERIFICATION);
+        }
+        WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
+        session.recordQrVerification(callerId);
+        sessionRepository.recordQrVerification(sessionId, callerId, Instant.now());
+        return session;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

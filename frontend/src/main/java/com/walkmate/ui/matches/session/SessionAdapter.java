@@ -36,6 +36,10 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         void onCancelClick(WalkSession session);
     }
 
+    public interface OnVerifyQrClickListener {
+        void onVerifyQrClick(WalkSession session);
+    }
+
     public interface SessionActionListener {
         void onArriveClicked(String sessionId);
         void onCompleteClicked(WalkSession session);
@@ -45,9 +49,10 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     // -------------------------------------------------------------------------
 
     private final List<WalkSession> items = new ArrayList<>();
-    private OnChatClickListener chatListener;
-    private OnCancelClickListener cancelListener;
-    private SessionActionListener sessionActionListener;
+    private OnChatClickListener     chatListener;
+    private OnCancelClickListener   cancelListener;
+    private SessionActionListener   sessionActionListener;
+    private OnVerifyQrClickListener verifyQrListener;
 
     public void setOnChatClickListener(OnChatClickListener listener) {
         this.chatListener = listener;
@@ -59,6 +64,10 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
     public void setSessionActionListener(SessionActionListener listener) {
         this.sessionActionListener = listener;
+    }
+
+    public void setOnVerifyQrClickListener(OnVerifyQrClickListener listener) {
+        this.verifyQrListener = listener;
     }
 
     public void setItems(List<WalkSession> newItems) {
@@ -106,20 +115,24 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
         private final MaterialButton btnCancelSession;
         final MaterialButton btnComplete;
         private final MaterialButton btnReportIssue;
+        private final View           lblStartYourWalk;
+        private final LinearLayout   bannerVerifyPartner;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            activationBtn    = itemView.findViewById(R.id.activationBtn);
-            avatarPartner    = itemView.findViewById(R.id.avatarPartner);
-            txtPartnerName   = itemView.findViewById(R.id.txtPartnerName);
-            txtMeetingPoint  = itemView.findViewById(R.id.txtMeetingPoint);
-            txtStatusBadge   = itemView.findViewById(R.id.txtStatusBadge);
-            txtSessionLocation = itemView.findViewById(R.id.txtSessionLocation);
-            txtMeetingTime   = itemView.findViewById(R.id.txtMeetingTime);
-            btnChat          = itemView.findViewById(R.id.btnChat);
-            btnCancelSession = itemView.findViewById(R.id.btnCancelSession);
-            btnComplete      = itemView.findViewById(R.id.btnComplete);
-            btnReportIssue   = itemView.findViewById(R.id.btnReportIssue);
+            activationBtn       = itemView.findViewById(R.id.activationBtn);
+            avatarPartner       = itemView.findViewById(R.id.avatarPartner);
+            txtPartnerName      = itemView.findViewById(R.id.txtPartnerName);
+            txtMeetingPoint     = itemView.findViewById(R.id.txtMeetingPoint);
+            txtStatusBadge      = itemView.findViewById(R.id.txtStatusBadge);
+            txtSessionLocation  = itemView.findViewById(R.id.txtSessionLocation);
+            txtMeetingTime      = itemView.findViewById(R.id.txtMeetingTime);
+            btnChat             = itemView.findViewById(R.id.btnChat);
+            btnCancelSession    = itemView.findViewById(R.id.btnCancelSession);
+            btnComplete         = itemView.findViewById(R.id.btnComplete);
+            btnReportIssue      = itemView.findViewById(R.id.btnReportIssue);
+            lblStartYourWalk    = itemView.findViewById(R.id.lblStartYourWalk);
+            bannerVerifyPartner = itemView.findViewById(R.id.bannerVerifyPartner);
         }
 
         void bind(WalkSession session, SessionActionListener listener) {
@@ -161,12 +174,25 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
 
             // Primary actions driven by caller status
             if (callerStatus == WalkSession.Status.PENDING) {
+                lblStartYourWalk.setVisibility(View.VISIBLE);
+                bannerVerifyPartner.setVisibility(View.VISIBLE);
+                bannerVerifyPartner.setOnClickListener(v -> {
+                    if (verifyQrListener != null) verifyQrListener.onVerifyQrClick(session);
+                });
                 activationBtn.setVisibility(View.VISIBLE);
                 activationBtn.bind(session.getScheduledTime(),
                         v -> { if (listener != null) listener.onArriveClicked(session.getSessionId()); });
                 btnComplete.setVisibility(View.GONE);
                 btnReportIssue.setVisibility(View.GONE);
             } else if (callerStatus == WalkSession.Status.ACTIVE) {
+                txtPartnerName.setText("Walking with " + displayName);
+                txtStatusBadge.setText("● LIVE");
+
+                lblStartYourWalk.setVisibility(View.GONE);
+                bannerVerifyPartner.setVisibility(View.VISIBLE);
+                bannerVerifyPartner.setOnClickListener(v -> {
+                    if (verifyQrListener != null) verifyQrListener.onVerifyQrClick(session);
+                });
                 activationBtn.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(true);
@@ -180,6 +206,8 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
                         listener.onReportClicked(session.getSessionId(), session.getPartnerId());
                 });
             } else {
+                lblStartYourWalk.setVisibility(View.GONE);
+                bannerVerifyPartner.setVisibility(View.GONE);
                 activationBtn.setVisibility(View.GONE);
                 btnComplete.setVisibility(View.GONE);
                 btnReportIssue.setVisibility(View.GONE);

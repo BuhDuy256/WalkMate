@@ -243,4 +243,28 @@
     <string name="review_submitted_btn">&#10003;  Review Submitted!</string>
     <string name="review_already_reviewed">You have already reviewed this session.</string>
 
+    <!-- QR Verification -->
+    <string name="qr_verify_title">Verify Partner</string>
+    <string name="qr_tab_my_code">My QR Code</string>
+    <string name="qr_tab_scan">Scan Partner</string>
+    <string name="qr_show_instruction">Show this QR code to your partner so they can verify your presence.</string>
+    <string name="qr_security_tip">This code is unique to your current session and expires when the walk ends.</string>
+    <string name="qr_scan_instruction_idle">Point at your partner\'s QR code to confirm they\'re with you.</string>
+    <string name="qr_scan_detecting">Detecting QR code…</string>
+    <string name="qr_btn_start_scan">Start Scanning</string>
+    <string name="qr_btn_retry">Retry</string>
+    <string name="qr_btn_scan_again">Scan Again</string>
+    <string name="qr_btn_continue">Continue Walk →</string>
+    <string name="qr_verified_title">Partner Verified!</string>
+    <string name="qr_verified_subtitle">Identity confirmed at %1$s</string>
+    <string name="qr_scan_verified_location">Verified</string>
+    <string name="qr_btn_verify_partner">Verify Partner</string>
+    <string name="tracking_btn_verify">Verify</string>
+    <string name="qr_verify_card_title">Verify Your Partner</string>
+    <string name="qr_verify_card_subtitle">Scan their QR to confirm they\'re here</string>
+    <string name="lbl_start_your_walk">START YOUR WALK</string>
+    <string name="qr_partner_label">Walking partner</string>
+    <string name="qr_loading">Loading QR code…</string>
+    <string name="qr_error_load">Could not load QR code. Tap to retry.</string>
+
 </resources>

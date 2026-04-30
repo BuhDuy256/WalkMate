@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="20dp">
+
+        <!-- ══ IDLE + SCANNING states ══════════════════════════════════════ -->
+        <LinearLayout
+            android:id="@+id/layoutScanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Instruction text -->
+            <TextView
+                android:id="@+id/txtScanInstruction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/qr_scan_instruction_idle"
+                android:textColor="@color/text_label"
+                android:textSize="13sp"
+                android:textAlignment="center"
+                android:lineSpacingMultiplier="1.5"
+                android:paddingTop="8dp"
+                android:paddingBottom="20dp" />
+
+            <!-- Viewfinder: PreviewView + corner bracket overlay -->
+            <FrameLayout
+                android:layout_width="260dp"
+                android:layout_height="260dp"
+                android:background="@drawable/bg_viewfinder">
+
+                <!-- Camera preview — hidden until scanning starts -->
+                <androidx.camera.view.PreviewView
+                    android:id="@+id/previewView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="invisible" />
+
+                <!-- Idle placeholder icon -->
+                <LinearLayout
+                    android:id="@+id/layoutIdlePlaceholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_qr_code"
+                        android:alpha="0.25"
+                        app:tint="@android:color/white"
+                        android:contentDescription="QR placeholder" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Tap below to start"
+                        android:textColor="#66FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Scanning line (shown only while SCANNING) -->
+                <View
+                    android:id="@+id/scanLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="2.5dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@drawable/bg_scan_line"
+                    android:visibility="gone" />
+
+                <!-- Orange corner brackets -->
+                <View android:layout_width="32dp" android:layout_height="32dp"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_qr_corner_tl" />
+                <View android:layout_width="32dp" android:layout_height="32dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_qr_corner_tr" />
+                <View android:layout_width="32dp" android:layout_height="32dp"
+                    android:layout_gravity="bottom|start"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_qr_corner_bl" />
+                <View android:layout_width="32dp" android:layout_height="32dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_qr_corner_br" />
+            </FrameLayout>
+
+            <!-- Partner chip -->
+            <LinearLayout
+                android:id="@+id/layoutPartnerChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_partner_chip"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp">
+
+                <com.walkmate.core.designsystem.view.AvatarInitialView
+                    android:id="@+id/avatarPartnerChip"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtPartnerChipName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/text_dark"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Scan their QR to verify"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Start Scan / Scanning CTA button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStartScan"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_gradient_button"
+                android:text="@string/qr_btn_start_scan"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="18dp"
+                app:elevation="0dp"
+                app:icon="@drawable/ic_camera_small"
+                app:iconTint="@android:color/white"
+                app:iconGravity="textStart" />
+        </LinearLayout>
+
+        <!-- ══ VERIFIED state ══════════════════════════════════════════════ -->
+        <LinearLayout
+            android:id="@+id/layoutVerified"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="8dp"
+            android:visibility="gone">
+
+            <!-- Green success circle -->
+            <FrameLayout
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:background="@drawable/bg_verified_circle">
+
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_checkmark_white"
+                    android:contentDescription="Verified" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/qr_verified_title"
+                android:textColor="@color/text_dark"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtVerifiedAt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp" />
+
+            <!-- Partner confirmed card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:cardBackgroundColor="@color/bg_white"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/border_green_light"
+                app:strokeWidth="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="18dp">
+
+                    <com.walkmate.core.designsystem.view.AvatarInitialView
+                        android:id="@+id/avatarVerifiedPartner"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtVerifiedPartnerName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_dark"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="3dp">
+
+                            <View
+                                android:layout_width="7dp"
+                                android:layout_height="7dp"
+                                android:background="@drawable/bg_green_dot" />
+
+                            <TextView
+                                android:id="@+id/txtVerifiedLocation"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:textColor="#FF16A34A"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_trust_shield"
+                        app:tint="#FF22C55E"
+                        android:contentDescription="Verified" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Continue Walk button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnContinueWalk"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_gradient_button"
+                android:text="@string/qr_btn_continue"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="18dp"
+                app:elevation="0dp" />
+        </LinearLayout>
+
+        <!-- ══ ERROR state ════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:id="@+id/layoutError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="40dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/txtErrorMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/color_danger"
+                android:textSize="14sp"
+                android:textAlignment="center"
+                android:lineSpacingMultiplier="1.4"
+                android:paddingBottom="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRetry"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_gradient_button"
+                android:text="@string/qr_btn_retry"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="18dp"
+                app:elevation="0dp" />
+
+            <Button
+                android:id="@+id/btnScanAgain"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/qr_btn_scan_again"
+                android:textColor="@color/text_muted"
+                android:textSize="13sp"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

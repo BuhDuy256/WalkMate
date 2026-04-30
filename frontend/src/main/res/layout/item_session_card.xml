@@ -4,30 +4,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="14dp"
     app:cardBackgroundColor="@color/bg_white"
-    app:cardCornerRadius="20dp"
+    app:cardCornerRadius="22dp"
     app:cardElevation="0dp"
     app:strokeColor="#BBF7D0"
-    app:strokeWidth="1.5dp">
+    app:strokeWidth="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="18dp">
+        android:orientation="vertical">
 
-        <!-- Partner identity row -->
+        <!-- ── Partner identity row ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="16dp">
 
             <com.walkmate.core.designsystem.view.AvatarInitialView
                 android:id="@+id/avatarPartner"
-                android:layout_width="52dp"
-                android:layout_height="52dp" />
+                android:layout_width="50dp"
+                android:layout_height="50dp" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -46,37 +48,52 @@
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/txtMeetingPoint"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="@color/text_muted"
-                    android:textSize="12sp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_hotspot_pin"
+                        app:tint="@color/text_muted" />
+
+                    <TextView
+                        android:id="@+id/txtMeetingPoint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Match status badge -->
+            <!-- Matched / LIVE badge -->
             <LinearLayout
                 android:id="@+id/layoutMatchBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_badge_green_pill"
-                android:gravity="center"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingStart="11dp"
                 android:paddingEnd="11dp"
-                android:paddingTop="7dp"
-                android:paddingBottom="7dp"
-                android:orientation="vertical">
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
 
                 <TextView
                     android:id="@+id/txtStatusBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Matched ✓"
+                    android:text="✓ Matched"
                     android:textColor="#16A34A"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -85,19 +102,24 @@
 
         </LinearLayout>
 
-        <!-- Time / location strip -->
+        <!-- ── Time / location strip ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_info_strip"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="11dp">
+            android:paddingStart="13dp"
+            android:paddingEnd="13dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
 
             <ImageView
-                android:layout_width="13dp"
-                android:layout_height="13dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
                 android:src="@drawable/ic_hotspot_pin"
                 app:tint="@color/text_muted" />
 
@@ -110,84 +132,200 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/text_label"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="14dp"
+                android:layout_height="12dp"
                 android:background="#E7E5E4"
                 android:layout_marginHorizontal="8dp" />
 
             <ImageView
-                android:layout_width="13dp"
-                android:layout_height="13dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
                 android:src="@drawable/ic_clock_small"
                 app:tint="@color/text_muted" />
 
             <TextView
                 android:id="@+id/txtMeetingTime"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 android:textColor="@color/text_label"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
 
-        <!-- Secondary actions: Chat + Cancel -->
+        <!-- ── Secondary actions: Chat + Cancel ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="13dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="10dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnChat"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="44dp"
                 android:layout_weight="1"
                 android:text="@string/btn_chat"
                 android:textColor="@color/text_label"
-                android:textSize="14sp"
+                android:textSize="13sp"
+                android:textStyle="bold"
                 app:strokeColor="#E7E5E4"
                 app:strokeWidth="1.5dp"
-                app:cornerRadius="999dp"
- />
+                app:cornerRadius="13dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancelSession"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="2"
+                android:layout_height="44dp"
+                android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:text="@string/btn_cancel_session"
                 android:textColor="@color/text_muted"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 app:strokeColor="#E7E5E4"
                 app:strokeWidth="1.5dp"
-                app:cornerRadius="999dp"
- />
+                app:cornerRadius="13dp" />
 
         </LinearLayout>
 
-        <!-- Activation button (PENDING sessions only) -->
+        <!-- ── "START YOUR WALK" divider with lines — PENDING only ── -->
+        <LinearLayout
+            android:id="@+id/lblStartYourWalk"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#F3F2F0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:text="@string/lbl_start_your_walk"
+                android:textColor="#C9C5C1"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#F3F2F0" />
+
+        </LinearLayout>
+
+        <!-- ── Verify Your Partner banner — PENDING + ACTIVE ── -->
+        <LinearLayout
+            android:id="@+id/bannerVerifyPartner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_verify_partner_banner_dashed"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="13dp"
+            android:paddingBottom="13dp"
+            android:visibility="gone">
+
+            <!-- Gradient orange icon box -->
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_orange_icon_box">
+
+                <ImageView
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_qr_code"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
+
+            <!-- Title + subtitle -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="13dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/qr_verify_card_title"
+                    android:textColor="@color/banner_title_orange"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/qr_verify_card_subtitle"
+                    android:textColor="@color/orange_end"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Transparent orange chevron box -->
+            <FrameLayout
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/bg_chevron_orange_box">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/orange_primary" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- ── Activation button (PENDING only) ── -->
         <com.walkmate.core.designsystem.view.ActivationWindowButtonView
             android:id="@+id/activationBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:layout_marginTop="10dp"
+            android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
-        <!-- Resume Walk (ACTIVE sessions only) -->
+        <!-- ── Resume Walk (ACTIVE only) ── -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnComplete"
             android:layout_width="match_parent"
             android:layout_height="52dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/bg_gradient_button"
             android:text="@string/btn_resume_walk"
@@ -196,23 +334,22 @@
             android:textStyle="bold"
             android:visibility="gone"
             app:backgroundTint="@null"
-            app:cornerRadius="999dp"
-            app:elevation="0dp"
- />
+            app:cornerRadius="16dp"
+            app:elevation="0dp" />
 
-        <!-- Report (ACTIVE sessions only) -->
+        <!-- ── Report Issue (ACTIVE only) ── -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnReportIssue"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="8dp"
             android:text="Report an Issue"
             android:textColor="@color/color_danger"
             android:textSize="13sp"
             android:visibility="gone"
-            app:cornerRadius="999dp"
- />
+            app:cornerRadius="13dp" />
 
     </LinearLayout>
 

@@ -68,6 +68,12 @@
     <color name="badge_epic_color">#FF8B5CF6</color>
     <color name="badge_epic_bg">#FFF5F3FF</color>
 
+    <!-- QR verification -->
+    <color name="bg_green_tint">#FFDCFCE7</color>
+    <color name="border_green_light">#FFBBF7D0</color>
+    <!-- Verify banner text: matches React #C2410C / #FB923C -->
+    <color name="banner_title_orange">#FFC2410C</color>
+
     <!-- Badge locked state -->
     <color name="badge_locked_accent">#FFE7E5E4</color>
     <color name="badge_locked_name">#FFA8A29E</color>

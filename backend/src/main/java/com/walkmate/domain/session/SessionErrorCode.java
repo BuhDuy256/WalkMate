@@ -13,7 +13,13 @@ public enum SessionErrorCode implements ErrorCode {
     SESSION_CANCEL_NOT_PENDING("SESSION_CANCEL_NOT_PENDING", "Only PENDING sessions can be cancelled"),
     SESSION_COMPLETE_TOO_EARLY("SESSION_COMPLETE_TOO_EARLY", "Session cannot be completed yet — minimum walk duration has not been met"),
     SESSION_OVERLAPPING("SESSION_OVERLAPPING", "User already has an overlapping active session"),
-    SESSION_NOT_FINISHED("SESSION_NOT_FINISHED", "Route data is only available for finished sessions");
+    SESSION_NOT_FINISHED("SESSION_NOT_FINISHED", "Route data is only available for finished sessions"),
+
+    // ── QR verification ───────────────────────────────────────────────────────
+    SESSION_QR_TOKEN_INVALID("SESSION_QR_TOKEN_INVALID", "QR token is invalid or does not belong to this session"),
+    SESSION_QR_TOKEN_EXPIRED("SESSION_QR_TOKEN_EXPIRED", "QR token has expired — ask your partner to refresh their code"),
+    SESSION_QR_SELF_VERIFICATION("SESSION_QR_SELF_VERIFICATION", "You cannot verify your own QR code"),
+    SESSION_QR_ALREADY_VERIFIED("SESSION_QR_ALREADY_VERIFIED", "Partner has already been verified for this session");
 
     private final String code;
     private final String message;

@@ -35,6 +35,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
+import com.walkmate.ui.qr.QrVerifyActivity;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
 import com.walkmate.domain.tracking.WalkState;
 import com.walkmate.service.WalkTrackerService;
@@ -67,6 +68,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     public static final String EXTRA_PARTNER_NAME = WalkTrackerService.EXTRA_PARTNER_NAME;
     public static final String EXTRA_MEETING_LAT  = WalkTrackerService.EXTRA_MEETING_LAT;
     public static final String EXTRA_MEETING_LNG  = WalkTrackerService.EXTRA_MEETING_LNG;
+    public static final String EXTRA_HOTSPOT_NAME = "HOTSPOT_NAME";
 
     private static final String TAG = "TrackingScreenActivity";
     private static final int    REQUEST_LOCATION_PERMISSION = 100;
@@ -78,6 +80,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private String sessionId;
     private String partnerId;
     private String partnerName;
+    private String hotspotName;
     private double meetingLat;
     private double meetingLng;
 
@@ -106,6 +109,8 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private MaterialButton         btnStart;
     private LinearLayout          btnRowPauseStop;
     private MaterialButton        btnPause;
+    private LinearLayout          btnRowVerifyComplete;
+    private MaterialButton        btnVerifyPartner;
     private MaterialButton        btnComplete;
     private FloatingActionButton  fabRecenter;
     private LinearLayout          bottomPanel;
@@ -271,6 +276,16 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             }
         });
 
+        // Verify Partner — opens QR screen.
+        btnVerifyPartner.setOnClickListener(v -> {
+            Intent qrIntent = new Intent(this, QrVerifyActivity.class);
+            qrIntent.putExtra(QrVerifyActivity.EXTRA_SESSION_ID,     sessionId);
+            qrIntent.putExtra(QrVerifyActivity.EXTRA_PARTNER_NAME,   partnerName);
+            qrIntent.putExtra(QrVerifyActivity.EXTRA_PARTNER_AVATAR, partnerId);
+            qrIntent.putExtra(QrVerifyActivity.EXTRA_HOTSPOT_NAME,   hotspotName != null ? hotspotName : "");
+            startActivity(qrIntent);
+        });
+
         // Complete Walk — confirmation dialog then API-backed completion.
         btnComplete.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
@@ -379,14 +394,14 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             case READY:
                 btnStart.setVisibility(View.VISIBLE);
                 btnRowPauseStop.setVisibility(View.GONE);
-                btnComplete.setVisibility(View.GONE);
+                btnRowVerifyComplete.setVisibility(View.GONE);
                 break;
 
             case ACTIVE:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_pause);
-                btnComplete.setVisibility(View.VISIBLE);
+                btnRowVerifyComplete.setVisibility(View.VISIBLE);
                 long tooEarly = state.getCompleteTooEarlySeconds();
                 if (tooEarly > 0) {
                     btnComplete.setEnabled(false);
@@ -403,7 +418,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.VISIBLE);
                 btnPause.setText(R.string.btn_resume);
-                btnComplete.setVisibility(View.VISIBLE);
+                btnRowVerifyComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(state.getCompleteTooEarlySeconds() == 0);
                 if (state.getCompleteTooEarlySeconds() > 0) {
                     btnComplete.setAlpha(0.6f);
@@ -418,7 +433,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             case FINISHING:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.GONE);
-                btnComplete.setVisibility(View.VISIBLE);
+                btnRowVerifyComplete.setVisibility(View.VISIBLE);
                 btnComplete.setEnabled(false);
                 btnComplete.setAlpha(0.6f);
                 btnComplete.setText(R.string.btn_complete_walk);
@@ -427,7 +442,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             case FINISHED:
                 btnStart.setVisibility(View.GONE);
                 btnRowPauseStop.setVisibility(View.GONE);
-                btnComplete.setVisibility(View.GONE);
+                btnRowVerifyComplete.setVisibility(View.GONE);
                 break;
         }
     }
@@ -634,8 +649,10 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         btnStart            = findViewById(R.id.btnStart);
         btnRowPauseStop     = findViewById(R.id.btnRowPauseStop);
         btnPause            = findViewById(R.id.btnPause);
-        btnComplete         = findViewById(R.id.btnComplete);
-        fabRecenter         = findViewById(R.id.fabRecenter);
+        btnRowVerifyComplete = findViewById(R.id.btnRowVerifyComplete);
+        btnVerifyPartner     = findViewById(R.id.btnVerifyPartner);
+        btnComplete          = findViewById(R.id.btnComplete);
+        fabRecenter          = findViewById(R.id.fabRecenter);
         bottomPanel         = findViewById(R.id.bottomPanel);
         badgeLive           = findViewById(R.id.badgeLive);
     }
@@ -650,6 +667,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         sessionId   = intent.getStringExtra(EXTRA_SESSION_ID);
         partnerId   = intent.getStringExtra(EXTRA_PARTNER_ID);
         partnerName = intent.getStringExtra(EXTRA_PARTNER_NAME);
+        hotspotName = intent.getStringExtra(EXTRA_HOTSPOT_NAME);
         meetingLat  = intent.getDoubleExtra(EXTRA_MEETING_LAT, 0.0);
         meetingLng  = intent.getDoubleExtra(EXTRA_MEETING_LNG, 0.0);
 

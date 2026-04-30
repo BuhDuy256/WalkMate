@@ -14,4 +14,8 @@ public interface WalkSessionRepository {
     void reportSession(String sessionId, String reportedUserId,
                        String reason, String evidenceUrl,
                        DomainCallback<Void> callback);
+
+    void fetchQrToken(String sessionId, DomainCallback<String> callback);
+
+    void verifyPartnerQr(String sessionId, String partnerQrToken, DomainCallback<Void> callback);
 }

@@ -235,21 +235,54 @@
 
             </LinearLayout>
 
-            <!-- Complete Walk — red gradient (prominent destructive CTA matching Figma) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnComplete"
-                style="@style/Widget.Material3.Button.UnelevatedButton"
+            <!-- Verify + Complete Walk row — ACTIVE and PAUSED states -->
+            <!-- Layout: Verify (flex 1, orange outlined) | Complete Walk (flex 2, red gradient) -->
+            <LinearLayout
+                android:id="@+id/btnRowVerifyComplete"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/bg_gradient_red_pill"
-                android:text="@string/btn_complete_walk"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:backgroundTint="@null"
-                app:cornerRadius="16dp" />
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <!-- Verify — orange pill, flex 1 -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnVerifyPartner"
+                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_verify_partner_banner"
+                    android:text="@string/tracking_btn_verify"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="18dp"
+                    app:icon="@drawable/ic_qr_code"
+                    app:iconTint="@color/orange_primary"
+                    app:iconSize="16dp"
+                    app:iconGravity="textStart" />
+
+                <!-- Complete Walk — red gradient, flex 2 -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnComplete"
+                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="2"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_gradient_red_pill"
+                    android:text="@string/btn_complete_walk"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="18dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

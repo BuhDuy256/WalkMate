@@ -43,4 +43,12 @@ public interface WalkSessionRepository {
 
     /** Returns history sessions (ACTIVE, COMPLETED, NO_SHOW) for a user, newest first. */
     List<WalkSession> findHistoryByUserId(String userId);
+
+    /**
+     * Atomically marks the partner's QR-verified timestamp for the caller.
+     * Uses a targeted {@code UPDATE ... WHERE ... IS NULL} so concurrent calls
+     * from both participants never conflict, and duplicate calls are silently
+     * ignored at the DB level (domain already rejected them earlier).
+     */
+    void recordQrVerification(String sessionId, String callerUserId, Instant verifiedAt);
 }

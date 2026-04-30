@@ -8,6 +8,8 @@ import com.walkmate.data.datasource.remote.api.SessionApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
+import com.walkmate.data.datasource.remote.dto.request.walksession.VerifyPartnerQrRequest;
+import com.walkmate.data.datasource.remote.dto.response.session.QrTokenResponse;
 import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
@@ -222,6 +224,48 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "reportSession network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void fetchQrToken(String sessionId, DomainCallback<String> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<QrTokenResponse>> resp =
+                        apiService.getQrToken(sessionId).execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    QrTokenResponse data = resp.body().getData();
+                    callback.onSuccess(data != null ? data.getQrToken() : null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "QR_TOKEN_FETCH_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "fetchQrToken network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void verifyPartnerQr(String sessionId, String partnerQrToken, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<WalkSessionResponse>> resp =
+                        apiService.verifyPartner(sessionId,
+                                new VerifyPartnerQrRequest(partnerQrToken)).execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "QR_VERIFY_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "verifyPartnerQr network error", e);
                 callback.onError(e);
             }
         });

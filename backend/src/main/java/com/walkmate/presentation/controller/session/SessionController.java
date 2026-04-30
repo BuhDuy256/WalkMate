@@ -5,7 +5,9 @@ import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.application.user.UserQueryService;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.presentation.dto.request.session.CancelWalkSessionRequest;
+import com.walkmate.presentation.dto.request.session.VerifyPartnerQrRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.session.QrTokenResponse;
 import com.walkmate.presentation.dto.response.session.WalkSessionResponse;
 import com.walkmate.presentation.mapper.session.SessionMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -109,6 +111,40 @@ public class SessionController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String sessionId) {
         WalkSession session = sessionCommandService.completeSession(sessionId, principal.userId());
+        boolean callerIsA = principal.userId().equals(session.getUserIdA());
+        String partnerId = callerIsA ? session.getUserIdB() : session.getUserIdA();
+        return ResponseEntity.ok(ApiResponse.success(
+                sessionMapper.toResponse(session, false,
+                        resolveDisplayName(partnerId), resolveAvatarUrl(partnerId))));
+    }
+
+    /**
+     * GET /api/v1/sessions/{sessionId}/qr-token
+     * Returns a short-lived signed QR token for the authenticated user.
+     * The token encodes userId + sessionId and expires in 5 minutes.
+     * Session must be ACTIVE.
+     */
+    @GetMapping("/{sessionId}/qr-token")
+    public ResponseEntity<ApiResponse<QrTokenResponse>> getQrToken(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String sessionId) {
+        String token = sessionCommandService.generateSessionQrToken(sessionId, principal.userId());
+        return ResponseEntity.ok(ApiResponse.success(new QrTokenResponse(token, 300L)));
+    }
+
+    /**
+     * POST /api/v1/sessions/{sessionId}/verify-partner
+     * The caller submits their partner's QR token string.
+     * Backend validates the JWT, records the verification timestamp, and returns the
+     * updated session. Replay-safe: the IS NULL atomic UPDATE rejects duplicate calls.
+     */
+    @PostMapping("/{sessionId}/verify-partner")
+    public ResponseEntity<ApiResponse<WalkSessionResponse>> verifyPartner(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String sessionId,
+            @Valid @RequestBody VerifyPartnerQrRequest request) {
+        WalkSession session = sessionCommandService.verifyPartnerQr(
+                sessionId, principal.userId(), request.partnerQrToken());
         boolean callerIsA = principal.userId().equals(session.getUserIdA());
         String partnerId = callerIsA ? session.getUserIdB() : session.getUserIdA();
         return ResponseEntity.ok(ApiResponse.success(

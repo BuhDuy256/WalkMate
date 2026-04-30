@@ -2,7 +2,9 @@ package com.walkmate.data.datasource.remote.api;
 
 import com.walkmate.data.datasource.remote.dto.request.walksession.CancelWalkSessionRequest;
 import com.walkmate.data.datasource.remote.dto.request.walksession.ReportSessionRequest;
+import com.walkmate.data.datasource.remote.dto.request.walksession.VerifyPartnerQrRequest;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.session.QrTokenResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.SessionRouteResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.SessionSummaryResponse;
 import com.walkmate.data.datasource.remote.dto.response.session.WalkSessionResponse;
@@ -46,4 +48,14 @@ public interface SessionApiService {
     Call<ApiResponse<Void>> reportSession(
             @Path("sessionId") String sessionId,
             @Body ReportSessionRequest body);
+
+    // QR — fetch a short-lived signed token to display as a QR code
+    @GET("api/v1/sessions/{sessionId}/qr-token")
+    Call<ApiResponse<QrTokenResponse>> getQrToken(@Path("sessionId") String sessionId);
+
+    // QR — submit the partner's scanned token string for verification
+    @POST("api/v1/sessions/{sessionId}/verify-partner")
+    Call<ApiResponse<WalkSessionResponse>> verifyPartner(
+            @Path("sessionId") String sessionId,
+            @Body VerifyPartnerQrRequest body);
 }

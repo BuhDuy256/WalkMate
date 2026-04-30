@@ -58,6 +58,12 @@ public class WalkSession {
     private String      cancelledBy;    // UUID string; null when system-initiated
     private long        version;
 
+    // ── QR partner verification timestamps ───────────────────────────────────
+    /** Set when User B scans User A's QR — confirms A is physically present. */
+    private Instant userAQrVerifiedAt;
+    /** Set when User A scans User B's QR — confirms B is physically present. */
+    private Instant userBQrVerifiedAt;
+
     protected WalkSession() {}
 
     // ── Rehydration constructor (repository → domain) ─────────────────────────
@@ -75,7 +81,8 @@ public class WalkSession {
                        SessionStatus userAStatus, SessionStatus userBStatus,
                        Instant userAEndedAt, Instant userBEndedAt,
                        double userADistanceKm, long userADurationSeconds,
-                       double userBDistanceKm, long userBDurationSeconds) {
+                       double userBDistanceKm, long userBDurationSeconds,
+                       Instant userAQrVerifiedAt, Instant userBQrVerifiedAt) {
         this.sessionId             = sessionId;
         this.proposalId            = proposalId;
         this.userIdA               = userIdA;
@@ -103,6 +110,8 @@ public class WalkSession {
         this.userADurationSeconds  = userADurationSeconds;
         this.userBDistanceKm       = userBDistanceKm;
         this.userBDurationSeconds  = userBDurationSeconds;
+        this.userAQrVerifiedAt     = userAQrVerifiedAt;
+        this.userBQrVerifiedAt     = userBQrVerifiedAt;
     }
 
     // ── Creation factory ──────────────────────────────────────────────────────
@@ -283,6 +292,41 @@ public class WalkSession {
             this.userADistanceKm = km;
         } else if (userId.equals(userIdB)) {
             this.userBDistanceKm = km;
+        } else {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_PARTICIPANT);
+        }
+    }
+
+    // ── QR verification ───────────────────────────────────────────────────────
+
+    /**
+     * Records that the caller scanned their partner's QR code, confirming the
+     * partner is physically present at the session.
+     *
+     * <p>Guards (in order):
+     * <ol>
+     *   <li>Session must be ACTIVE — a cancelled/completed session cannot be verified.</li>
+     *   <li>Caller must be a participant of this session.</li>
+     *   <li>The partner's slot must not already be verified (idempotency gate — prevents
+     *       replay: the first successful call wins; every subsequent attempt is rejected).</li>
+     * </ol>
+     */
+    public void recordQrVerification(String callerUserId) {
+        if (this.status != SessionStatus.ACTIVE) {
+            throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
+        }
+        if (callerUserId.equals(userIdA)) {
+            // A scanned B's QR → mark B as verified
+            if (this.userBQrVerifiedAt != null) {
+                throw new DomainException(SessionErrorCode.SESSION_QR_ALREADY_VERIFIED);
+            }
+            this.userBQrVerifiedAt = Instant.now();
+        } else if (callerUserId.equals(userIdB)) {
+            // B scanned A's QR → mark A as verified
+            if (this.userAQrVerifiedAt != null) {
+                throw new DomainException(SessionErrorCode.SESSION_QR_ALREADY_VERIFIED);
+            }
+            this.userAQrVerifiedAt = Instant.now();
         } else {
             throw new DomainException(SessionErrorCode.SESSION_NOT_PARTICIPANT);
         }

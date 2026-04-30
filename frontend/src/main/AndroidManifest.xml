@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <!-- Required for API 33+ to post the persistent tracking notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Required for QR code scanning -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
         android:name=".WalkMateApplication"
         android:allowBackup="true"
@@ -46,6 +49,10 @@
         </activity>
 
         <!-- Registered here; fully wired in Phase 3 (Entry-Point) -->
+        <activity
+            android:name="com.walkmate.ui.qr.QrVerifyActivity"
+            android:theme="@style/Theme.WalkMate" />
+
         <activity
             android:name="com.walkmate.ui.tracking.TrackingScreenActivity"
             android:exported="false"

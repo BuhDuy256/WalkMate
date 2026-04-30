@@ -227,6 +227,40 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    @Override
+    public void recordQrVerification(String sessionId, String callerUserId, Instant verifiedAt) {
+        // Each participant updates a different column, so concurrent calls never conflict.
+        // The IS NULL guard makes this a "first write wins" atomic operation — duplicate
+        // calls (network retries) simply match 0 rows and are silently ignored.
+        final String sqlA = """
+                UPDATE walk_session
+                   SET user_b_qr_verified_at = :verifiedAt
+                 WHERE session_id = :sessionId
+                   AND user_id_a  = :callerUserId
+                   AND user_b_qr_verified_at IS NULL
+                """;
+        final String sqlB = """
+                UPDATE walk_session
+                   SET user_a_qr_verified_at = :verifiedAt
+                 WHERE session_id = :sessionId
+                   AND user_id_b  = :callerUserId
+                   AND user_a_qr_verified_at IS NULL
+                """;
+        // Try A's UPDATE (caller is userIdA → updates userB column); if 0 rows, try B's.
+        int rows = jdbcClient.sql(sqlA)
+                .param("sessionId",    UUID.fromString(sessionId))
+                .param("callerUserId", UUID.fromString(callerUserId))
+                .param("verifiedAt",   Timestamp.from(verifiedAt))
+                .update();
+        if (rows == 0) {
+            jdbcClient.sql(sqlB)
+                    .param("sessionId",    UUID.fromString(sessionId))
+                    .param("callerUserId", UUID.fromString(callerUserId))
+                    .param("verifiedAt",   Timestamp.from(verifiedAt))
+                    .update();
+        }
+    }
+
     private String selectAll() {
         return """
                 SELECT ws.session_id::text, ws.proposal_id::text,
@@ -243,7 +277,8 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                        ws.user_a_status, ws.user_b_status,
                        ws.user_a_ended_at, ws.user_b_ended_at,
                        ws.user_a_distance_km, ws.user_a_duration_seconds,
-                       ws.user_b_distance_km, ws.user_b_duration_seconds
+                       ws.user_b_distance_km, ws.user_b_duration_seconds,
+                       ws.user_a_qr_verified_at, ws.user_b_qr_verified_at
                 FROM walk_session ws
                 JOIN hotspot h ON h.id = ws.hotspot_id
                 """;
@@ -277,7 +312,9 @@ public class WalkSessionJdbcRepository implements WalkSessionRepository {
                 rs.getDouble("user_a_distance_km"),
                 rs.getLong("user_a_duration_seconds"),
                 rs.getDouble("user_b_distance_km"),
-                rs.getLong("user_b_duration_seconds")
+                rs.getLong("user_b_duration_seconds"),
+                toInstant(rs, "user_a_qr_verified_at"),
+                toInstant(rs, "user_b_qr_verified_at")
         );
     }
 

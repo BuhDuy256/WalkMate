@@ -117,4 +117,12 @@ dependencies {
 
     // Google Sign-In (provides GoogleSignIn, GoogleSignInClient, GoogleSignInAccount)
     implementation(libs.playServicesAuth)
+
+    // QR code generation (pure Java, no extras)
+    implementation(libs.zxingCore)
+    // QR code scanning via ML Kit + CameraX
+    implementation(libs.mlkitBarcodeScanning)
+    implementation(libs.cameraCore)
+    implementation(libs.cameraLifecycle)
+    implementation(libs.cameraView)
 }

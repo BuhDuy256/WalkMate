@@ -25,6 +25,7 @@ import com.walkmate.ui.chat.ChatFragment;
 import com.walkmate.ui.matches.MatchesUiState;
 import com.walkmate.ui.matches.MatchesViewModel;
 import com.walkmate.ui.report.ReportIncidentFragment;
+import com.walkmate.ui.qr.QrVerifyActivity;
 import com.walkmate.ui.tracking.TrackingScreenActivity;
 
 import java.util.ArrayList;
@@ -98,6 +99,12 @@ public class SessionFragment extends Fragment {
         });
         adapter.setOnCancelClickListener(session ->
                 showCancelReasonDialog(session.getSessionId()));
+        adapter.setOnVerifyQrClickListener(session ->
+                startActivity(new Intent(requireContext(), QrVerifyActivity.class)
+                        .putExtra(QrVerifyActivity.EXTRA_SESSION_ID,     session.getSessionId())
+                        .putExtra(QrVerifyActivity.EXTRA_PARTNER_NAME,   session.getPartnerName())
+                        .putExtra(QrVerifyActivity.EXTRA_PARTNER_AVATAR, session.getPartnerAvatar())
+                        .putExtra(QrVerifyActivity.EXTRA_HOTSPOT_NAME,   session.getHotspotName())));
         adapter.setSessionActionListener(new SessionAdapter.SessionActionListener() {
             @Override
             public void onArriveClicked(String sessionId) {
@@ -111,6 +118,7 @@ public class SessionFragment extends Fragment {
                         .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   session.getSessionId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   session.getPartnerId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, session.getPartnerName())
+                        .putExtra(TrackingScreenActivity.EXTRA_HOTSPOT_NAME, session.getHotspotName())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  session.getMeetingPointLat())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  session.getMeetingPointLng()));
             }
@@ -147,6 +155,7 @@ public class SessionFragment extends Fragment {
                         .putExtra(TrackingScreenActivity.EXTRA_SESSION_ID,   result.session.getSessionId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_ID,   result.session.getPartnerId())
                         .putExtra(TrackingScreenActivity.EXTRA_PARTNER_NAME, result.session.getPartnerName())
+                        .putExtra(TrackingScreenActivity.EXTRA_HOTSPOT_NAME, result.session.getHotspotName())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
 
