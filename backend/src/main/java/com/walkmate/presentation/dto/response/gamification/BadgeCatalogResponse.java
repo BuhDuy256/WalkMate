@@ -4,5 +4,6 @@ public record BadgeCatalogResponse(
         String name,
         String displayName,
         String description,
-        String iconUrl
+        String rarity,
+        String category
 ) {}

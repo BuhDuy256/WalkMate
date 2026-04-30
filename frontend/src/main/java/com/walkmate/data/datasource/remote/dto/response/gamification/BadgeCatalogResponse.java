@@ -2,19 +2,16 @@ package com.walkmate.data.datasource.remote.dto.response.gamification;
 
 import com.google.gson.annotations.SerializedName;
 
-public class BadgeResponse {
+public class BadgeCatalogResponse {
 
-    @SerializedName("badgeName")
-    public String badgeName;
+    @SerializedName("name")
+    public String name;
 
     @SerializedName("displayName")
     public String displayName;
 
     @SerializedName("description")
     public String description;
-
-    @SerializedName("awardedAt")
-    public String awardedAt;
 
     @SerializedName("rarity")
     public String rarity;

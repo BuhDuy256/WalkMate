@@ -215,7 +215,7 @@ public class PublicProfileViewModel extends ViewModel {
         if (userBadges == null) return Collections.emptyList();
         List<Badge> result = new ArrayList<>(userBadges.size());
         for (UserBadge ub : userBadges) {
-            result.add(new Badge(ub.getDisplayName(), ub.getIconUrl()));
+            result.add(new Badge(ub.getDisplayName(), ub.getRarity()));
         }
         return result;
     }

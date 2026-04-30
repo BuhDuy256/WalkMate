@@ -145,6 +145,14 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_profile_to_badgeFragment"
+            app:destination="@id/badgeFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -283,5 +291,10 @@
         android:id="@+id/editProfileFragment"
         android:name="com.walkmate.ui.profile.edit.EditProfileFragment"
         android:label="Edit Profile" />
+
+    <fragment
+        android:id="@+id/badgeFragment"
+        android:name="com.walkmate.ui.badge.BadgeFragment"
+        android:label="My Badges" />
 
 </navigation>

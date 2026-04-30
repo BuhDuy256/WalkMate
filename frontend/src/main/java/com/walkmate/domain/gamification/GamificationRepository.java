@@ -8,6 +8,8 @@ public interface GamificationRepository {
 
     void getBadges(String userId, DomainCallback<List<UserBadge>> callback);
 
+    void getBadgeCatalog(DomainCallback<List<BadgeCatalogItem>> callback);
+
     void getStats(String userId, DomainCallback<UserStats> callback);
 
     void getLeaderboard(DomainCallback<List<LeaderboardEntry>> callback);

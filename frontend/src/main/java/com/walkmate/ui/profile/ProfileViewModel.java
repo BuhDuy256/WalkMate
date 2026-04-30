@@ -171,7 +171,20 @@ public class ProfileViewModel extends ViewModel {
         navigateToHistoryEvent.postValue(true);
     }
 
-    public void onMyBadgesClicked()    { /* Phase D: emit navigation signal */ }
+    private final MutableLiveData<Boolean> navigateToBadgesEvent = new MutableLiveData<>();
+
+    public LiveData<Boolean> getNavigateToBadgesEvent() {
+        return navigateToBadgesEvent;
+    }
+
+    public void consumeNavigateToBadges() {
+        navigateToBadgesEvent.setValue(false);
+    }
+
+    public void onMyBadgesClicked() {
+        navigateToBadgesEvent.postValue(true);
+    }
+
     public void onSettingsClicked()    { /* Phase D: emit navigation signal */ }
 
     private final MutableLiveData<Boolean> navigateToFriendsEvent = new MutableLiveData<>();
@@ -303,7 +316,7 @@ public class ProfileViewModel extends ViewModel {
         if (userBadges == null || userBadges.isEmpty()) return Collections.emptyList();
         List<ProfileUiState.Badge> result = new ArrayList<>(userBadges.size());
         for (UserBadge b : userBadges) {
-            result.add(new ProfileUiState.Badge(b.getDisplayName(), b.getIconUrl()));
+            result.add(new ProfileUiState.Badge(b.getDisplayName(), b.getRarity()));
         }
         return result;
     }

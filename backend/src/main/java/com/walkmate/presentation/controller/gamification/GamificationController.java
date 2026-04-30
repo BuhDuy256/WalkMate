@@ -37,7 +37,8 @@ public class GamificationController {
         List<BadgeResponse> badges = badgeRepository.findByUserId(userId)
                 .stream()
                 .map(r -> new BadgeResponse(
-                        r.badgeName(), r.displayName(), r.description(), r.iconUrl(), r.awardedAt()))
+                        r.badgeName(), r.displayName(), r.description(),
+                        r.awardedAt(), r.rarity(), r.category()))
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(badges));
@@ -49,7 +50,8 @@ public class GamificationController {
     public ResponseEntity<ApiResponse<List<BadgeCatalogResponse>>> getBadgeCatalog() {
         List<BadgeCatalogResponse> catalog = badgeRepository.findAllActive()
                 .stream()
-                .map(r -> new BadgeCatalogResponse(r.name(), r.displayName(), r.description(), r.iconUrl()))
+                .map(r -> new BadgeCatalogResponse(r.name(), r.displayName(), r.description(),
+                        r.rarity(), r.category()))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(catalog));
     }

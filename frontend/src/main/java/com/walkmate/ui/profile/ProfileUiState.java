@@ -50,14 +50,12 @@ public class ProfileUiState {
     // ── Badge inner class ──────────────────────────────────────────────────────
 
     public static class Badge {
-        /** Display label served directly from the backend badge metadata. */
         public final String label;
-        /** Remote URL for the badge icon image, served from the badge master table. */
-        public final String iconUrl;
+        public final String rarity;
 
-        public Badge(String label, String iconUrl) {
-            this.label   = label;
-            this.iconUrl = iconUrl;
+        public Badge(String label, String rarity) {
+            this.label  = label;
+            this.rarity = rarity;
         }
     }
 

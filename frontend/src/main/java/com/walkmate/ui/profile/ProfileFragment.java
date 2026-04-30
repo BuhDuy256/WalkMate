@@ -12,13 +12,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
-
-import androidx.core.content.ContextCompat;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -60,10 +59,7 @@ public class ProfileFragment extends Fragment {
     private TextView txtStatKmValue;
     private TextView txtStatSessionsValue;
 
-    // Badges
-    private ImageView imgBadge1;
-    private ImageView imgBadge2;
-    private ImageView imgBadge3;
+    // Badges (text-only slots in the profile card, up to 3)
     private TextView lblBadge1;
     private TextView lblBadge2;
     private TextView lblBadge3;
@@ -143,6 +139,13 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_leaderboardFragment);
         });
+
+        viewModel.getNavigateToBadgesEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            viewModel.consumeNavigateToBadges();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_badgeFragment);
+        });
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
@@ -185,9 +188,6 @@ public class ProfileFragment extends Fragment {
         txtStatKmValue       = root.findViewById(R.id.txtStatKmValue);
         txtStatSessionsValue = root.findViewById(R.id.txtStatSessionsValue);
 
-        imgBadge1 = root.findViewById(R.id.imgBadge1);
-        imgBadge2 = root.findViewById(R.id.imgBadge2);
-        imgBadge3 = root.findViewById(R.id.imgBadge3);
         lblBadge1 = root.findViewById(R.id.lblBadge1);
         lblBadge2 = root.findViewById(R.id.lblBadge2);
         lblBadge3 = root.findViewById(R.id.lblBadge3);
@@ -295,23 +295,14 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    /**
-     * Populates up to 3 static badge slots with icon + label.
-     * Hides any slot that has no corresponding badge.
-     */
     private void renderBadges(List<ProfileUiState.Badge> badges) {
-        ImageView[] iconSlots  = {imgBadge1, imgBadge2, imgBadge3};
-        TextView[]  labelSlots = {lblBadge1, lblBadge2, lblBadge3};
-
-        for (int i = 0; i < iconSlots.length; i++) {
-            View parent = (View) iconSlots[i].getParent();
+        TextView[] slots = {lblBadge1, lblBadge2, lblBadge3};
+        for (int i = 0; i < slots.length; i++) {
             if (badges != null && i < badges.size()) {
-                ProfileUiState.Badge badge = badges.get(i);
-                labelSlots[i].setText(badge.label);
-                GlideHelper.loadCircle(iconSlots[i], badge.iconUrl);
-                parent.setVisibility(View.VISIBLE);
+                slots[i].setText(badges.get(i).label);
+                slots[i].setVisibility(View.VISIBLE);
             } else {
-                parent.setVisibility(View.GONE);
+                slots[i].setVisibility(View.GONE);
             }
         }
     }

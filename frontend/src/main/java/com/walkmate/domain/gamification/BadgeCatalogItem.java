@@ -1,28 +1,25 @@
 package com.walkmate.domain.gamification;
 
-public class UserBadge {
+public class BadgeCatalogItem {
 
-    private final String badgeName;
+    private final String name;
     private final String displayName;
     private final String description;
-    private final String awardedAt;
     private final String rarity;
     private final String category;
 
-    public UserBadge(String badgeName, String displayName, String description,
-                     String awardedAt, String rarity, String category) {
-        this.badgeName   = badgeName;
+    public BadgeCatalogItem(String name, String displayName, String description,
+                            String rarity, String category) {
+        this.name        = name;
         this.displayName = displayName;
         this.description = description;
-        this.awardedAt   = awardedAt;
         this.rarity      = rarity;
         this.category    = category;
     }
 
-    public String getBadgeName()   { return badgeName; }
+    public String getName()        { return name; }
     public String getDisplayName() { return displayName; }
     public String getDescription() { return description; }
-    public String getAwardedAt()   { return awardedAt; }
     public String getRarity()      { return rarity; }
     public String getCategory()    { return category; }
 }

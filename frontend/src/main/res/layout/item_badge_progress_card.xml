@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Overall collection progress card.
+  Orange gradient background matching the Figma design.
+-->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@color/orange_primary">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="@drawable/bg_badge_progress_card">
+
+        <TextView
+            android:id="@+id/txtCollectionLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Collection Progress"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#CCffffff"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/txtProgressPct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFFFF"
+            android:letterSpacing="-0.02" />
+
+        <TextView
+            android:id="@+id/txtProgressSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 / 0 badges"
+            android:textSize="12sp"
+            android:textColor="#BFffffff"
+            android:layout_marginBottom="14dp" />
+
+        <ProgressBar
+            android:id="@+id/progressBarOverall"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:progressBackgroundTint="#40FFFFFF"
+            android:progressTint="#FFFFFFFF"
+            android:max="100"
+            android:progress="0" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

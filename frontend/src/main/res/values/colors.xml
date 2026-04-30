@@ -53,4 +53,19 @@
     <!-- Review: submit success green -->
     <color name="color_success_start">#FF22C55E</color>
     <color name="color_success_end">#FF16A34A</color>
+
+    <!-- Badge rarity colours -->
+    <color name="badge_common_color">#FF78716C</color>
+    <color name="badge_common_bg">#FFF5F5F4</color>
+    <color name="badge_rare_color">#FF0EA5E9</color>
+    <color name="badge_rare_bg">#FFF0F9FF</color>
+    <color name="badge_epic_color">#FF8B5CF6</color>
+    <color name="badge_epic_bg">#FFF5F3FF</color>
+
+    <!-- Badge locked state -->
+    <color name="badge_locked_accent">#FFE7E5E4</color>
+    <color name="badge_locked_name">#FFA8A29E</color>
+    <color name="badge_locked_rarity_text">#FFC9C5C1</color>
+    <color name="badge_locked_rarity_bg">#FFF5F5F4</color>
+    <color name="badge_locked_desc">#FFC9C5C1</color>
 </resources>

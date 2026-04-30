@@ -24,12 +24,14 @@ public interface UserBadgeRepository {
             String badgeName,
             String displayName,
             String description,
-            String iconUrl,
-            String awardedAt) {}
+            String awardedAt,
+            String rarity,
+            String category) {}
 
     record BadgeCatalogRecord(
             String name,
             String displayName,
             String description,
-            String iconUrl) {}
+            String rarity,
+            String category) {}
 }

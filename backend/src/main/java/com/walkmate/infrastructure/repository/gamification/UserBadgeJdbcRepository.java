@@ -50,8 +50,9 @@ public class UserBadgeJdbcRepository implements UserBadgeRepository {
                         SELECT ub.badge_name,
                                b.display_name,
                                b.description,
-                               b.icon_url,
-                               ub.awarded_at::text
+                               ub.awarded_at::text,
+                               b.rarity,
+                               b.category
                         FROM user_badge ub
                         JOIN badge b ON b.name = ub.badge_name
                         WHERE ub.user_id = :userId
@@ -62,8 +63,9 @@ public class UserBadgeJdbcRepository implements UserBadgeRepository {
                         rs.getString("badge_name"),
                         rs.getString("display_name"),
                         rs.getString("description"),
-                        rs.getString("icon_url"),
-                        rs.getString("awarded_at")
+                        rs.getString("awarded_at"),
+                        rs.getString("rarity"),
+                        rs.getString("category")
                 ))
                 .list();
     }
@@ -71,16 +73,17 @@ public class UserBadgeJdbcRepository implements UserBadgeRepository {
     @Override
     public List<BadgeCatalogRecord> findAllActive() {
         return jdbcClient.sql("""
-                        SELECT name, display_name, description, icon_url
+                        SELECT name, display_name, description, rarity, category
                         FROM badge
                         WHERE is_active = true
-                        ORDER BY name ASC
+                        ORDER BY category ASC, name ASC
                         """)
                 .query((rs, rowNum) -> new BadgeCatalogRecord(
                         rs.getString("name"),
                         rs.getString("display_name"),
                         rs.getString("description"),
-                        rs.getString("icon_url")
+                        rs.getString("rarity"),
+                        rs.getString("category")
                 ))
                 .list();
     }

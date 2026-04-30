@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Rarity legend row — four chips: Common · Rare · Epic · Legendary.
+  Static, no data binding needed.
+-->
+<HorizontalScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:scrollbars="none"
+    android:fillViewport="false">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingEnd="4dp">
+
+        <!-- Common -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_badge_legend_chip_common"
+            android:paddingStart="11dp"
+            android:paddingEnd="11dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_dot_common"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Common"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/badge_common_color" />
+
+        </LinearLayout>
+
+        <!-- Rare -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_badge_legend_chip_rare"
+            android:paddingStart="11dp"
+            android:paddingEnd="11dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_dot_rare"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rare"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/badge_rare_color" />
+
+        </LinearLayout>
+
+        <!-- Epic -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_badge_legend_chip_epic"
+            android:paddingStart="11dp"
+            android:paddingEnd="11dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_dot_epic"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Epic"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/badge_epic_color" />
+
+        </LinearLayout>
+
+        <!-- Legendary -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_badge_legend_chip_legendary"
+            android:paddingStart="11dp"
+            android:paddingEnd="11dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_dot_legendary"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Legendary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/orange_primary" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</HorizontalScrollView>
