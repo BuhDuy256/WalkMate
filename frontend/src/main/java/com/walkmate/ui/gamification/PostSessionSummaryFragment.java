@@ -172,6 +172,14 @@ public class PostSessionSummaryFragment extends Fragment {
         txtSummaryDuration.setText(durationMins + " min");
 
         txtSummaryPace.setText(formatPace(distanceKm, durationMins));
+
+        // Re-bind partner avatar with the real photo URL from the API response.
+        // The initial bind in onViewCreated used null (shows initials as placeholder);
+        // this replaces it with the actual avatar once the session summary loads.
+        ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
+        if (partner != null) {
+            avatarSummaryPartner.bind(partner.getFullName(), partner.getAvatarUrl());
+        }
     }
 
     private void renderBadges(List<com.walkmate.domain.gamification.UserBadge> badges) {

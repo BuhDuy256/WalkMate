@@ -4,6 +4,8 @@
   IDs exposed to host fragments:
     btnSubPageBack   — back button (ImageButton)
     txtSubPageTitle  — screen title (set programmatically by the host)
+    btnHeaderAction  — optional right-side text action (TextView, gone by default;
+                       set text + VISIBLE in the host fragment when needed)
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -13,7 +15,7 @@
     android:background="@color/bg_white"
     android:elevation="4dp"
     android:paddingStart="8dp"
-    android:paddingEnd="8dp">
+    android:paddingEnd="12dp">
 
     <ImageButton
         android:id="@+id/btnSubPageBack"
@@ -29,12 +31,28 @@
 
     <TextView
         android:id="@+id/txtSubPageTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="@color/text_dark"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="12dp"
+        app:layout_constraintStart_toEndOf="@id/btnSubPageBack"
+        app:layout_constraintEnd_toStartOf="@id/btnHeaderAction"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/btnHeaderAction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/orange_primary"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="4dp"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />

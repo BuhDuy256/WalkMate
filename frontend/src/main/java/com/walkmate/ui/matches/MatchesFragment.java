@@ -51,6 +51,9 @@ public class MatchesFragment extends Fragment {
         subTabLayout = view.findViewById(R.id.subTabLayout);
         subTabPager  = view.findViewById(R.id.subTabPager);
 
+        view.findViewById(R.id.btnMatchesBack).setOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed());
+
         view.findViewById(R.id.btnNewIntent).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_matches_to_explore));
 

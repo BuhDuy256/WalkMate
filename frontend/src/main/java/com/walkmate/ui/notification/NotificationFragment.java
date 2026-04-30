@@ -34,8 +34,7 @@ public class NotificationFragment extends Fragment {
     private RecyclerView recyclerView;
     private TextView    txtEmpty;
     private TextView    txtError;
-    private TextView    txtUnreadCount;
-    private View        btnMarkAllRead;
+    private TextView    btnHeaderAction;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -51,13 +50,15 @@ public class NotificationFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        progressBar    = view.findViewById(R.id.progress_notifications);
-        recyclerView   = view.findViewById(R.id.rv_notifications);
-        txtEmpty       = view.findViewById(R.id.txt_notifications_empty);
-        txtError       = view.findViewById(R.id.txt_notifications_error);
-        txtUnreadCount = view.findViewById(R.id.txtUnreadCount);
-        btnMarkAllRead = view.findViewById(R.id.btnMarkAllRead);
-        View btnBack   = view.findViewById(R.id.btnBack);
+        progressBar     = view.findViewById(R.id.progress_notifications);
+        recyclerView    = view.findViewById(R.id.rv_notifications);
+        txtEmpty        = view.findViewById(R.id.txt_notifications_empty);
+        txtError        = view.findViewById(R.id.txt_notifications_error);
+        btnHeaderAction = view.findViewById(R.id.btnHeaderAction);
+        View btnBack    = view.findViewById(R.id.btnSubPageBack);
+
+        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText(R.string.notification_screen_title);
+        btnHeaderAction.setText(R.string.notification_mark_all_read);
 
         btnBack.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
@@ -80,7 +81,7 @@ public class NotificationFragment extends Fragment {
         viewModel = new ViewModelProvider(this, new NotificationViewModelFactory(repo))
                 .get(NotificationViewModel.class);
 
-        btnMarkAllRead.setOnClickListener(v -> viewModel.markAllRead());
+        btnHeaderAction.setOnClickListener(v -> viewModel.markAllRead());
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
     }
@@ -160,14 +161,7 @@ public class NotificationFragment extends Fragment {
                 progressBar.setVisibility(View.GONE);
                 txtError.setVisibility(View.GONE);
 
-                if (state.unreadCount > 0) {
-                    txtUnreadCount.setText(state.unreadCount + " unread");
-                    txtUnreadCount.setVisibility(View.VISIBLE);
-                    btnMarkAllRead.setVisibility(View.VISIBLE);
-                } else {
-                    txtUnreadCount.setVisibility(View.GONE);
-                    btnMarkAllRead.setVisibility(View.GONE);
-                }
+                btnHeaderAction.setVisibility(state.unreadCount > 0 ? View.VISIBLE : View.GONE);
 
                 if (state.notifications.isEmpty()) {
                     recyclerView.setVisibility(View.GONE);

@@ -110,9 +110,19 @@ public class MatchesViewModel extends ViewModel {
         setLoading();
         sessionRepository.getActiveSessions(new DomainCallback<List<WalkSession>>() {
             @Override public void onSuccess(List<WalkSession> result) {
+                // Only keep sessions the caller can act on — keeps badge count and list in sync.
+                List<WalkSession> visible = new ArrayList<>();
+                if (result != null) {
+                    for (WalkSession s : result) {
+                        WalkSession.Status cs = s.getCallerStatus();
+                        if (cs == WalkSession.Status.PENDING || cs == WalkSession.Status.ACTIVE) {
+                            visible.add(s);
+                        }
+                    }
+                }
                 MatchesUiState c = safeGetState();
                 uiState.postValue(new MatchesUiState(
-                        false, c.getActiveIntents(), c.getProposals(), result, null));
+                        false, c.getActiveIntents(), c.getProposals(), visible, null));
             }
             @Override public void onError(Exception error) {
                 MatchesUiState c = safeGetState();

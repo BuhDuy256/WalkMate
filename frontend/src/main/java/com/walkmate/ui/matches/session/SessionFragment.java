@@ -181,11 +181,12 @@ public class SessionFragment extends Fragment {
     private void renderState(MatchesUiState state) {
         swipeRefresh.setRefreshing(state.isLoading());
 
-        List<WalkSession> visibleSessions = filterVisibleSessions(state.getActiveSessions());
+        List<WalkSession> sessions = state.getActiveSessions();
+        if (sessions == null) sessions = Collections.emptyList();
 
-        adapter.setItems(visibleSessions);
+        adapter.setItems(sessions);
 
-        boolean empty = !state.isLoading() && visibleSessions.isEmpty();
+        boolean empty = !state.isLoading() && sessions.isEmpty();
         txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
 
@@ -196,7 +197,7 @@ public class SessionFragment extends Fragment {
 
         if (pendingWindowClosedSessionId != null && !state.isLoading()) {
             boolean found = false;
-            for (WalkSession s : visibleSessions) {
+            for (WalkSession s : sessions) {
                 if (pendingWindowClosedSessionId.equals(s.getSessionId())) {
                     found = true;
                     break;
@@ -210,18 +211,6 @@ public class SessionFragment extends Fragment {
                 } catch (Exception ignored) { /* already navigated */ }
             }
         }
-    }
-
-    private List<WalkSession> filterVisibleSessions(List<WalkSession> sessions) {
-        if (sessions == null || sessions.isEmpty()) return Collections.emptyList();
-        List<WalkSession> visible = new ArrayList<>(sessions.size());
-        for (WalkSession session : sessions) {
-            WalkSession.Status callerStatus = session.getCallerStatus();
-            if (callerStatus == WalkSession.Status.PENDING || callerStatus == WalkSession.Status.ACTIVE) {
-                visible.add(session);
-            }
-        }
-        return visible;
     }
 
     private void showCancelReasonDialog(String sessionId) {
