@@ -9,58 +9,92 @@
     android:layout_marginEnd="16dp"
     android:layout_marginTop="6dp"
     android:layout_marginBottom="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/bg_white">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/bg_white"
+    app:strokeWidth="1.5dp"
+    app:strokeColor="@color/notif_border_read">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp">
+        android:padding="14dp">
 
         <!-- Avatar -->
         <com.walkmate.core.designsystem.view.AvatarInitialView
             android:id="@+id/avatarRequest"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:layout_marginEnd="12dp" />
 
-        <!-- Name -->
-        <TextView
-            android:id="@+id/txtRequestName"
+        <!-- Name + subtitle -->
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_dark"
-            android:maxLines="1"
-            android:ellipsize="end"
-            tools:text="Nguyễn Văn A" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtRequestName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_dark"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Luân Trần" />
+
+            <!-- Shown for incoming: "X mutual friends" -->
+            <TextView
+                android:id="@+id/txtMutualFriends"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/text_muted"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
+                tools:text="2 mutual friends"
+                tools:visibility="visible" />
+
+            <!-- Shown for outgoing: "Pending · Sent X time ago" -->
+            <TextView
+                android:id="@+id/txtSentSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/text_muted"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
+                tools:text="Pending · Sent 2 days ago"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
         <!-- Action area -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center_horizontal">
+            android:gravity="center_horizontal"
+            android:layout_marginStart="8dp">
 
             <!-- Shown for incoming requests -->
             <com.walkmate.core.designsystem.view.WalkMateButton
                 android:id="@+id/btnRequestAccept"
-                android:layout_width="110dp"
-                android:layout_height="36dp"
+                android:layout_width="100dp"
+                android:layout_height="38dp"
                 android:visibility="gone"
                 app:wm_buttonStyle="filled"
                 app:wm_text="Accept" />
 
             <com.walkmate.core.designsystem.view.WalkMateButton
                 android:id="@+id/btnRequestDecline"
-                android:layout_width="110dp"
-                android:layout_height="36dp"
-                android:layout_marginTop="4dp"
+                android:layout_width="100dp"
+                android:layout_height="38dp"
+                android:layout_marginTop="6dp"
                 android:visibility="gone"
                 app:wm_buttonStyle="outlined"
                 app:wm_text="Decline" />
@@ -68,11 +102,11 @@
             <!-- Shown for outgoing requests -->
             <com.walkmate.core.designsystem.view.WalkMateButton
                 android:id="@+id/btnRequestCancel"
-                android:layout_width="110dp"
-                android:layout_height="36dp"
+                android:layout_width="90dp"
+                android:layout_height="38dp"
                 android:visibility="gone"
-                app:wm_buttonStyle="outlined"
-                app:wm_text="Cancel Request" />
+                app:wm_buttonStyle="ghost"
+                app:wm_text="Cancel" />
 
         </LinearLayout>
 

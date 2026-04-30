@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,13 +18,12 @@ import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 
 /**
  * Sent Requests tab — shows friend requests sent by the current user that are still pending.
- * Displays status label only; no action buttons.
  * ViewModel is scoped to the parent FriendsFragment.
  */
 public class OutgoingRequestsFragment extends Fragment {
 
     private RecyclerView          recyclerView;
-    private TextView              txtEmpty;
+    private View                  emptyState;
     private FriendRequestsAdapter adapter;
     private FriendsViewModel      viewModel;
 
@@ -41,9 +39,9 @@ public class OutgoingRequestsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewOutgoing);
-        txtEmpty     = view.findViewById(R.id.txtEmptyOutgoing);
+        emptyState   = view.findViewById(R.id.txtEmptyOutgoing);
 
-        // showActions = false → shows Cancel Request button only
+        // showActions = false → shows Cancel button + "Pending · Sent X ago" subtitle
         adapter = new FriendRequestsAdapter(false);
         adapter.setActionListener(new FriendRequestsAdapter.ActionListener() {
             @Override public void onAccept(String requestId) {}
@@ -63,7 +61,6 @@ public class OutgoingRequestsFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
-        // Shared ViewModel scoped to parent FriendsFragment.
         viewModel = new ViewModelProvider(requireParentFragment()).get(FriendsViewModel.class);
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             if (state.isLoading() || state.getError() != null) return;
@@ -71,7 +68,7 @@ public class OutgoingRequestsFragment extends Fragment {
             adapter.submitList(state.getOutgoingRequests());
 
             boolean empty = state.getOutgoingRequests().isEmpty();
-            txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+            emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
             recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
         });
     }
@@ -81,7 +78,7 @@ public class OutgoingRequestsFragment extends Fragment {
         super.onDestroyView();
         recyclerView.setAdapter(null);
         recyclerView = null;
-        txtEmpty     = null;
+        emptyState   = null;
         adapter      = null;
     }
 }

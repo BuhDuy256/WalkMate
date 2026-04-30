@@ -60,6 +60,7 @@
         <attr name="wm_buttonStyle" format="enum">
             <enum name="filled" value="0" />
             <enum name="outlined" value="1" />
+            <enum name="ghost" value="2" />
         </attr>
         <!-- Button label text -->
         <attr name="wm_text" format="string" />

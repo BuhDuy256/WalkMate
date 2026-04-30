@@ -9,83 +9,100 @@
     android:layout_marginEnd="16dp"
     android:layout_marginTop="6dp"
     android:layout_marginBottom="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/bg_white">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/bg_white"
+    app:strokeWidth="1.5dp"
+    app:strokeColor="@color/notif_border_read">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
+        android:orientation="vertical"
+        android:padding="14dp">
 
-        <!-- Avatar -->
-        <com.walkmate.core.designsystem.view.AvatarInitialView
-            android:id="@+id/avatarFriend"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="12dp" />
-
-        <!-- Name + Trust Score -->
+        <!-- Avatar + Name + Trust row -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
 
-            <TextView
-                android:id="@+id/txtFriendName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_dark"
-                android:maxLines="1"
-                android:ellipsize="end"
-                tools:text="Nguyễn Văn A" />
+            <com.walkmate.core.designsystem.view.AvatarInitialView
+                android:id="@+id/avatarFriend"
+                android:layout_width="52dp"
+                android:layout_height="52dp" />
 
-            <TextView
-                android:id="@+id/txtFriendTrustScore"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"
-                tools:text="Trust: 95" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <TextView
+                    android:id="@+id/txtFriendName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    tools:text="Luân Trần" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="2dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:src="@drawable/ic_trust_shield"
+                        android:layout_marginEnd="4dp"
+                        android:contentDescription="Trust score" />
+
+                    <TextView
+                        android:id="@+id/txtFriendTrustScore"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_label"
+                        tools:text="Trust: 545" />
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Action buttons stacked vertically -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
+        <!-- Full-width action buttons -->
+        <com.walkmate.core.designsystem.view.WalkMateButton
+            android:id="@+id/btnFriendInviteWalk"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            app:wm_buttonStyle="filled"
+            app:wm_text="Invite Walk" />
 
-            <com.walkmate.core.designsystem.view.WalkMateButton
-                android:id="@+id/btnFriendInviteWalk"
-                android:layout_width="120dp"
-                android:layout_height="36dp"
-                app:wm_buttonStyle="filled"
-                app:wm_text="Invite Walk" />
+        <com.walkmate.core.designsystem.view.WalkMateButton
+            android:id="@+id/btnFriendViewProfile"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="6dp"
+            app:wm_buttonStyle="outlined"
+            app:wm_text="View Profile" />
 
-            <com.walkmate.core.designsystem.view.WalkMateButton
-                android:id="@+id/btnFriendViewProfile"
-                android:layout_width="120dp"
-                android:layout_height="36dp"
-                android:layout_marginTop="4dp"
-                app:wm_buttonStyle="outlined"
-                app:wm_text="View Profile" />
-
-            <com.walkmate.core.designsystem.view.WalkMateButton
-                android:id="@+id/btnFriendRemove"
-                android:layout_width="120dp"
-                android:layout_height="36dp"
-                android:layout_marginTop="4dp"
-                app:wm_buttonStyle="outlined"
-                app:wm_text="Remove" />
-
-        </LinearLayout>
+        <com.walkmate.core.designsystem.view.WalkMateButton
+            android:id="@+id/btnFriendRemove"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="6dp"
+            app:wm_buttonStyle="ghost"
+            app:wm_text="Remove" />
 
     </LinearLayout>
 

@@ -44,4 +44,13 @@
     <color name="notif_bg_unread">#FFFFFBF7</color>
     <color name="notif_border_unread">#FFFDDCB5</color>
     <color name="notif_border_read">#FFF3F2F0</color>
+
+    <!-- Review: purple accent (star fill + chip active) -->
+    <color name="color_purple_primary">#FF6C63FF</color>
+    <color name="bg_purple_light">#FFF8F7FF</color>
+    <color name="border_purple_light">#FFE8E6FF</color>
+
+    <!-- Review: submit success green -->
+    <color name="color_success_start">#FF22C55E</color>
+    <color name="color_success_end">#FF16A34A</color>
 </resources>

@@ -1,6 +1,7 @@
 package com.walkmate.ui.review;
 
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -29,21 +31,29 @@ import java.util.List;
  * Submit Review screen — standalone full-page Fragment.
  *
  * UX flow:
- *   1. User arrives; star bar and transparency notice are immediately visible.
- *   2. As soon as the user taps a star, the structured-feedback chip group slides
- *      into view — POSITIVE tags for 4–5 stars, NEGATIVE for 1–3 stars.
- *   3. User optionally adds a free-text comment.
- *   4. Tapping Submit gathers stars + selected tag IDs + comment and calls the VM.
+ *   1. Screen opens with 5 stars pre-selected and POSITIVE tags visible immediately.
+ *   2. Tags populate automatically as soon as the API responds (non-blocking).
+ *   3. Switching to 1–3 stars swaps the chip set to NEGATIVE tags with label
+ *      "What could be improved?"; 4–5 stars restore POSITIVE tags.
+ *   4. Tapping Submit gathers stars + checked tag IDs + comment and calls the VM.
+ *   5. On success the button transitions to a green "submitted" state for 900 ms,
+ *      then the screen pops back.
  */
 public class SubmitReviewFragment extends Fragment {
 
-    public static final String TAG            = "SubmitReviewFragment";
-    public static final String ARG_SESSION_ID = "SESSION_ID";
+    public static final String TAG              = "SubmitReviewFragment";
+    public static final String ARG_SESSION_ID   = "SESSION_ID";
+    public static final String ARG_PARTNER_NAME = "PARTNER_NAME";
 
     public static SubmitReviewFragment newInstance(String sessionId) {
+        return newInstance(sessionId, null);
+    }
+
+    public static SubmitReviewFragment newInstance(String sessionId, @Nullable String partnerName) {
         SubmitReviewFragment f = new SubmitReviewFragment();
         Bundle args = new Bundle();
         args.putString(ARG_SESSION_ID, sessionId);
+        if (partnerName != null) args.putString(ARG_PARTNER_NAME, partnerName);
         f.setArguments(args);
         return f;
     }
@@ -90,8 +100,12 @@ public class SubmitReviewFragment extends Fragment {
         btnBack.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
-        String sessionId = getArguments() != null
-                ? getArguments().getString(ARG_SESSION_ID) : null;
+        // Set comment placeholder with partner name if provided
+        Bundle args = getArguments();
+        String sessionId    = args != null ? args.getString(ARG_SESSION_ID)   : null;
+        String partnerName  = args != null ? args.getString(ARG_PARTNER_NAME) : null;
+        if (partnerName == null) partnerName = "your walk partner";
+        etComment.setHint("Tell others about walking with " + partnerName + "...");
 
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
         viewModel = new ViewModelProvider(this,
@@ -100,13 +114,12 @@ public class SubmitReviewFragment extends Fragment {
                         app.getWalkSessionRepository()))
                 .get(ReviewViewModel.class);
 
-        // ── Observe review state (already-reviewed / loading / error) ──────────
+        // ── Tags arrive async: populate chips as soon as they're ready ─────────
         viewModel.getReviewUiState().observe(getViewLifecycleOwner(), state -> {
-            // Repopulate chips whenever the tag list updates (may arrive async).
-            int currentRating = (int) ratingBar.getRating();
-            if (!state.availableTags.isEmpty() && currentRating > 0) {
-                populateChips(state.availableTags, currentRating);
-                layoutTagSection.setVisibility(View.VISIBLE);
+            int currentStars = (int) ratingBar.getRating();
+            if (!state.availableTags.isEmpty()) {
+                // Use current rating (default 5 = positive) to decide which chips to show
+                populateChips(state.availableTags, currentStars > 0 ? currentStars : 5);
             }
 
             switch (state.kind) {
@@ -133,7 +146,7 @@ public class SubmitReviewFragment extends Fragment {
             }
         });
 
-        // ── Observe submit lifecycle ───────────────────────────────────────────
+        // ── Submit lifecycle ───────────────────────────────────────────────────
         viewModel.getSubmitState().observe(getViewLifecycleOwner(), submitState -> {
             switch (submitState) {
                 case LOADING:
@@ -141,30 +154,42 @@ public class SubmitReviewFragment extends Fragment {
                     break;
                 case SUCCESS:
                     viewModel.getReviewUiState().removeObservers(getViewLifecycleOwner());
-                    Toast.makeText(requireContext(), "Review submitted!", Toast.LENGTH_SHORT).show();
-                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                    btnSubmit.setBackground(
+                            ContextCompat.getDrawable(requireContext(), R.drawable.bg_btn_submit_success));
+                    btnSubmit.setText(R.string.review_submitted_btn);
+                    btnSubmit.setEnabled(false);
+                    view.postDelayed(() -> {
+                        if (isAdded()) {
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                        }
+                    }, 900);
                     break;
                 case ERROR:
                     btnSubmit.setEnabled(true);
+                    String errMsg = viewModel.getError().getValue();
+                    if (errMsg != null) {
+                        Toast.makeText(requireContext(), errMsg, Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 default:
                     break;
             }
         });
 
-        // ── Rating → chip group: show chips only after the user interacts ──────
+        // ── Rating change: swap chip set based on star polarity ────────────────
         ratingBar.setOnRatingBarChangeListener((bar, rating, fromUser) -> {
             if (!fromUser) return;
             int stars = (int) rating;
-            if (stars == 0) {
-                layoutTagSection.setVisibility(View.GONE);
-                return;
-            }
+            if (stars == 0) return;
             ReviewUiState state = viewModel.getReviewUiState().getValue();
             List<ReviewTag> tags = (state != null) ? state.availableTags : null;
             if (tags != null && !tags.isEmpty()) {
                 populateChips(tags, stars);
-                layoutTagSection.setVisibility(View.VISIBLE);
+            } else {
+                // Tags not loaded yet — just update the section label
+                txtTagSectionLabel.setText(stars >= 4
+                        ? "What went well?"
+                        : "What could be improved?");
             }
         });
 
@@ -187,9 +212,8 @@ public class SubmitReviewFragment extends Fragment {
 
     /**
      * Rebuilds the chip group for the given star rating.
-     * Shows POSITIVE tags for 4–5 stars; NEGATIVE tags for 1–3 stars.
-     * Clears any previous chip selection to avoid stale state when the user
-     * changes the rating before submitting.
+     * Shows POSITIVE tags for 4–5 stars; NEGATIVE for 1–3 stars.
+     * Each chip uses the purple review style and clears prior selection on rebuild.
      */
     private void populateChips(List<ReviewTag> allTags, int stars) {
         chipGroupTags.removeAllViews();
@@ -198,23 +222,20 @@ public class SubmitReviewFragment extends Fragment {
         for (ReviewTag tag : allTags) {
             if (tag.isPositive() != showPositive) continue;
 
-            Chip chip = new Chip(requireContext());
+            Chip chip = new Chip(
+                    new ContextThemeWrapper(requireContext(), R.style.Widget_WalkMate_Chip_Review));
             chip.setText(tag.getTagName());
-            chip.setTag(tag.getTagId());        // store tagId for retrieval on submit
+            chip.setTag(tag.getTagId());
             chip.setCheckable(true);
             chip.setChecked(false);
-            chip.setChipBackgroundColorResource(R.color.bg_warm_light);
-            chip.setTextColor(requireContext().getColor(R.color.text_dark));
             chipGroupTags.addView(chip);
         }
 
-        String label = showPositive
-                ? "What went well?"
-                : "What could be improved?";
-        txtTagSectionLabel.setText(label);
+        txtTagSectionLabel.setText(showPositive ? "What went well?" : "What could be improved?");
+        layoutTagSection.setVisibility(View.VISIBLE);
     }
 
-    /** Returns the tag IDs of all checked chips. Empty list if none are selected. */
+    /** Returns the tag IDs of all checked chips. */
     private List<String> collectSelectedTagIds() {
         List<String> ids = new ArrayList<>();
         for (int i = 0; i < chipGroupTags.getChildCount(); i++) {

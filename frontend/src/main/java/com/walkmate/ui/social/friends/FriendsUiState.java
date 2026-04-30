@@ -45,4 +45,6 @@ public class FriendsUiState {
     public List<FriendRequest> getIncomingRequests()  { return incomingRequests; }
     public List<FriendRequest> getOutgoingRequests()  { return outgoingRequests; }
     public int getIncomingBadgeCount()                { return incomingBadgeCount; }
+    public int getFriendsCount()                      { return friends.size(); }
+    public int getOutgoingCount()                     { return outgoingRequests.size(); }
 }

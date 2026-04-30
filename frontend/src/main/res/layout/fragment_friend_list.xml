@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_cream">
@@ -11,18 +10,46 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:clipToPadding="false"
-        tools:listitem="@layout/item_friend_card" />
+        android:paddingBottom="24dp"
+        android:clipToPadding="false" />
 
-    <TextView
+    <!-- Empty state -->
+    <LinearLayout
         android:id="@+id/txtEmptyFriends"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="You have no friends yet."
-        android:textSize="14sp"
-        android:textColor="@color/text_muted"
-        android:visibility="gone" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_badge_social"
+            android:alpha="0.3"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="No friends" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No friends yet"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_label"
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accept incoming requests to add friends"
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:gravity="center"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
 
 </FrameLayout>

@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,7 +24,7 @@ import com.walkmate.R;
 public class FriendListFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private TextView     txtEmpty;
+    private View         emptyState;
     private FriendsAdapter adapter;
     private FriendsViewModel viewModel;
 
@@ -41,7 +40,7 @@ public class FriendListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewFriends);
-        txtEmpty     = view.findViewById(R.id.txtEmptyFriends);
+        emptyState   = view.findViewById(R.id.txtEmptyFriends);
 
         adapter = new FriendsAdapter();
         adapter.setActionListener(new FriendsAdapter.ActionListener() {
@@ -68,7 +67,6 @@ public class FriendListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
-        // Shared ViewModel scoped to parent FriendsFragment.
         viewModel = new ViewModelProvider(requireParentFragment()).get(FriendsViewModel.class);
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             if (state.isLoading()) return;
@@ -81,7 +79,7 @@ public class FriendListFragment extends Fragment {
             adapter.submitList(state.getFriends());
 
             boolean empty = state.getFriends().isEmpty();
-            txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+            emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
             recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
         });
     }
@@ -91,7 +89,7 @@ public class FriendListFragment extends Fragment {
         super.onDestroyView();
         recyclerView.setAdapter(null);
         recyclerView = null;
-        txtEmpty     = null;
+        emptyState   = null;
         adapter      = null;
     }
 }

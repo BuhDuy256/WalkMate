@@ -1,19 +1,20 @@
 package com.walkmate.ui.social.friends;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.walkmate.R;
@@ -57,7 +58,6 @@ public class FriendsFragment extends Fragment {
         tabLayout = view.findViewById(R.id.tabLayoutFriends);
         viewPager = view.findViewById(R.id.viewPagerFriends);
         btnBack   = view.findViewById(R.id.btnSubPageBack);
-        ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Friends");
 
         // ── ViewModel (scoped to this fragment) ───────────────────────────────
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
@@ -82,18 +82,12 @@ public class FriendsFragment extends Fragment {
             }
         }).attach();
 
-        // ── Incoming badge count on the Incoming tab ──────────────────────────
+        // ── Badge counts on all three tabs ────────────────────────────────────
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             if (!state.isLoading() && state.getError() == null) {
-                TabLayout.Tab incomingTab = tabLayout.getTabAt(FriendsPagerAdapter.TAB_INCOMING);
-                if (incomingTab != null) {
-                    int count = state.getIncomingBadgeCount();
-                    if (count > 0) {
-                        incomingTab.setText("Incoming (" + count + ")");
-                    } else {
-                        incomingTab.setText("Incoming");
-                    }
-                }
+                updateTabBadge(FriendsPagerAdapter.TAB_FRIENDS,  state.getFriendsCount());
+                updateTabBadge(FriendsPagerAdapter.TAB_INCOMING, state.getIncomingBadgeCount());
+                updateTabBadge(FriendsPagerAdapter.TAB_OUTGOING, state.getOutgoingCount());
             }
         });
 
@@ -101,7 +95,6 @@ public class FriendsFragment extends Fragment {
         viewModel.getInviteWalkEvent().observe(getViewLifecycleOwner(), friendId -> {
             if (friendId == null) return;
             viewModel.consumeInviteWalkEvent();
-            // Phase 5: deep-link to ExploreFragment with friendId pre-filled.
             Toast.makeText(requireContext(), "Invite Walk — coming soon!", Toast.LENGTH_SHORT).show();
         });
 
@@ -119,6 +112,21 @@ public class FriendsFragment extends Fragment {
             if (scrollToTab >= 0 && scrollToTab < FriendsPagerAdapter.TAB_COUNT) {
                 viewPager.setCurrentItem(scrollToTab, false);
             }
+        }
+    }
+
+    private void updateTabBadge(int tabIndex, int count) {
+        TabLayout.Tab tab = tabLayout.getTabAt(tabIndex);
+        if (tab == null) return;
+        if (count > 0) {
+            BadgeDrawable badge = tab.getOrCreateBadge();
+            badge.setNumber(count);
+            badge.setVisible(true);
+            badge.setBackgroundColor(
+                    ContextCompat.getColor(requireContext(), R.color.orange_primary));
+            badge.setBadgeTextColor(Color.WHITE);
+        } else {
+            tab.removeBadge();
         }
     }
 

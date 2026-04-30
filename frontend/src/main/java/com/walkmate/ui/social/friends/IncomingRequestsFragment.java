@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,10 +22,10 @@ import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
  */
 public class IncomingRequestsFragment extends Fragment {
 
-    private RecyclerView         recyclerView;
-    private TextView             txtEmpty;
+    private RecyclerView          recyclerView;
+    private View                  emptyState;
     private FriendRequestsAdapter adapter;
-    private FriendsViewModel     viewModel;
+    private FriendsViewModel      viewModel;
 
     @Nullable
     @Override
@@ -40,7 +39,7 @@ public class IncomingRequestsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewIncoming);
-        txtEmpty     = view.findViewById(R.id.txtEmptyIncoming);
+        emptyState   = view.findViewById(R.id.txtEmptyIncoming);
 
         // showActions = true → Accept + Decline buttons visible
         adapter = new FriendRequestsAdapter(true);
@@ -64,7 +63,6 @@ public class IncomingRequestsFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
-        // Shared ViewModel scoped to parent FriendsFragment.
         viewModel = new ViewModelProvider(requireParentFragment()).get(FriendsViewModel.class);
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             if (state.isLoading() || state.getError() != null) return;
@@ -72,7 +70,7 @@ public class IncomingRequestsFragment extends Fragment {
             adapter.submitList(state.getIncomingRequests());
 
             boolean empty = state.getIncomingRequests().isEmpty();
-            txtEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+            emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
             recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
         });
     }
@@ -82,7 +80,7 @@ public class IncomingRequestsFragment extends Fragment {
         super.onDestroyView();
         recyclerView.setAdapter(null);
         recyclerView = null;
-        txtEmpty     = null;
+        emptyState   = null;
         adapter      = null;
     }
 }

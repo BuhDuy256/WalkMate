@@ -237,5 +237,10 @@
 
     <!-- Review transparency notice -->
     <string name="review_trust_score_notice">ⓘ Your 1–5 star rating directly impacts this user\'s Trust Score. Higher ratings reward reliability; lower ratings reflect genuine concerns. Please be fair and objective.</string>
+    <!-- Plain version used in the new split icon+text info card layout -->
+    <string name="review_trust_score_notice_plain">Your 1–5 star rating directly impacts this user\'s Trust Score. Higher ratings reward reliability; lower ratings reflect genuine concerns. Please be fair and objective.</string>
+    <string name="review_submit_btn">Submit Review</string>
+    <string name="review_submitted_btn">&#10003;  Review Submitted!</string>
+    <string name="review_already_reviewed">You have already reviewed this session.</string>
 
 </resources>

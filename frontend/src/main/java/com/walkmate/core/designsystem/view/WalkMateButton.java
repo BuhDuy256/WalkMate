@@ -66,6 +66,7 @@ public class WalkMateButton extends FrameLayout {
     /** Visual style constants matching the {@code wm_buttonStyle} enum attr. */
     public static final int STYLE_FILLED   = 0;
     public static final int STYLE_OUTLINED = 1;
+    public static final int STYLE_GHOST    = 2;
 
     private AppCompatButton btnAction;
     private ProgressBar pbLoading;
@@ -131,14 +132,17 @@ public class WalkMateButton extends FrameLayout {
         if (style == STYLE_OUTLINED) {
             btnAction.setBackgroundResource(R.drawable.bg_button_outline_orange);
             btnAction.setTextColor(ContextCompat.getColor(context, R.color.orange_primary));
-            // Outlined spinner is orange (readable on transparent background)
             pbLoading.setIndeterminateTintList(
                     ColorStateList.valueOf(ContextCompat.getColor(context, R.color.orange_primary)));
+        } else if (style == STYLE_GHOST) {
+            btnAction.setBackgroundResource(R.drawable.bg_button_ghost);
+            btnAction.setTextColor(ContextCompat.getColor(context, R.color.text_label));
+            pbLoading.setIndeterminateTintList(
+                    ColorStateList.valueOf(ContextCompat.getColor(context, R.color.text_label)));
         } else {
             // FILLED (default)
             btnAction.setBackgroundResource(R.drawable.bg_gradient_orange_pill);
             btnAction.setTextColor(ContextCompat.getColor(context, R.color.white));
-            // Filled spinner is white (readable on orange gradient)
             pbLoading.setIndeterminateTintList(
                     ColorStateList.valueOf(ContextCompat.getColor(context, R.color.white)));
         }
