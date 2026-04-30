@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.ui.matches.MatchesPagerAdapter;
@@ -49,6 +50,8 @@ public class NotificationFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         progressBar     = view.findViewById(R.id.progress_notifications);
         recyclerView    = view.findViewById(R.id.rv_notifications);

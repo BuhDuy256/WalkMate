@@ -22,6 +22,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 import com.walkmate.domain.review.ReviewTag;
 
 import java.util.ArrayList;
@@ -86,6 +87,8 @@ public class SubmitReviewFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         ratingBar          = view.findViewById(R.id.ratingBarReview);
         layoutTagSection   = view.findViewById(R.id.layoutTagSection);

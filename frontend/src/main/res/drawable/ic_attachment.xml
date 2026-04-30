@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="18dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- image frame -->
+    <path
+        android:pathData="M3,5 C3,3.895 3.895,3 5,3 L16,3 C17.105,3 18,3.895 18,5 L18,16 C18,17.105 17.105,18 16,18 L5,18 C3.895,18 3,17.105 3,16 Z"
+        android:strokeColor="#A8A29E"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- mountain / landscape hint -->
+    <path
+        android:pathData="M3,14 L7,10 L10,13 L13,9 L18,14"
+        android:strokeColor="#A8A29E"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- sun dot -->
+    <path
+        android:pathData="M8,7.5 A0.75,0.75 0,1,1 6.5,7.5 A0.75,0.75 0,1,1 8,7.5 Z"
+        android:fillColor="#A8A29E" />
+
+    <!-- plus badge (bottom-right) -->
+    <path
+        android:pathData="M21,17 L21,21 M19,19 L23,19"
+        android:strokeColor="#A8A29E"
+        android:strokeWidth="1.75"
+        android:strokeLineCap="round" />
+</vector>

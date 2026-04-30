@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 import com.walkmate.domain.walksession.AbortReason;
 
 /**
@@ -73,6 +74,8 @@ public class ReportIncidentFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         rgReason            = view.findViewById(R.id.rgReportReason);
         etEvidenceUrl       = view.findViewById(R.id.etEvidenceUrl);

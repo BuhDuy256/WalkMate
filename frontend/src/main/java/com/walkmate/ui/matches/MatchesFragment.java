@@ -16,6 +16,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.walkmate.R;
+import com.walkmate.core.util.WindowInsetUtils;
 
 public class MatchesFragment extends Fragment {
 
@@ -47,6 +48,8 @@ public class MatchesFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.matchesHeader));
 
         subTabLayout = view.findViewById(R.id.subTabLayout);
         subTabPager  = view.findViewById(R.id.subTabPager);

@@ -18,6 +18,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 
 /**
  * Multi-tab Friends screen.
@@ -53,6 +54,8 @@ public class FriendsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.friendsHeader));
 
         tabLayout = view.findViewById(R.id.tabLayoutFriends);
         viewPager = view.findViewById(R.id.viewPagerFriends);

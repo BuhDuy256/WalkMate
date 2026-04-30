@@ -58,18 +58,21 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
 
         private final TextView txtContent;
         private final TextView txtTime;
-        private final TextView txtSenderName; // may be null in VIEW_TYPE_MINE layout
+        private final TextView txtSenderName;  // null in VIEW_TYPE_MINE
+        private final TextView txtReadReceipt; // null in VIEW_TYPE_THEIRS
 
         MessageViewHolder(@NonNull View itemView) {
             super(itemView);
             txtContent    = itemView.findViewById(R.id.txtContent);
             txtTime       = itemView.findViewById(R.id.txtTime);
-            txtSenderName = itemView.findViewById(R.id.txtSenderName); // null-safe
+            txtSenderName  = itemView.findViewById(R.id.txtSenderName);  // null-safe
+            txtReadReceipt = itemView.findViewById(R.id.txtReadReceipt); // null-safe
         }
 
         void bind(ChatMessage msg) {
             txtContent.setText(msg.getContent());
             txtTime.setText(formatTime(msg.getTimestampMs()));
+
             if (txtSenderName != null) {
                 String name = msg.getSenderName();
                 if (name != null && !name.isEmpty()) {
@@ -79,6 +82,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
                     txtSenderName.setVisibility(View.GONE);
                 }
             }
+
+            // Read receipt is always visible for "mine" items (shown as delivered ✓✓).
+            // The txtReadReceipt view only exists in item_chat_mine.xml.
         }
 
         private String formatTime(long timestampMs) {

@@ -34,6 +34,9 @@ dependencies {
 	// MongoDB Atlas (Chat layer)
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
+	// WebSocket (raw TextWebSocketHandler — no STOMP/SockJS)
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 	// Logging & Tracing Dependencies
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'

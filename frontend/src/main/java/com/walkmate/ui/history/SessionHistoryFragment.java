@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 import com.walkmate.ui.history.routereplay.RouteReplayActivity;
 import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 import com.walkmate.ui.report.ReportIncidentFragment;
@@ -55,6 +56,8 @@ public class SessionHistoryFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         progressBar  = view.findViewById(R.id.progressHistory);
         recyclerView = view.findViewById(R.id.rvSessionHistory);

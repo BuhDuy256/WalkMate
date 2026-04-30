@@ -2,6 +2,7 @@
 <!--
   Reusable sub-page top bar.
   IDs exposed to host fragments:
+    subPageHeader    — root view; apply WindowInsetUtils.applyStatusBarPadding() to this
     btnSubPageBack   — back button (ImageButton)
     txtSubPageTitle  — screen title (set programmatically by the host)
     btnHeaderAction  — optional right-side text action (TextView, gone by default;
@@ -10,8 +11,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/subPageHeader"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
+    android:layout_height="wrap_content"
+    android:minHeight="56dp"
     android:background="@color/bg_white"
     android:elevation="4dp"
     android:paddingStart="8dp"
@@ -21,6 +24,8 @@
         android:id="@+id/btnSubPageBack"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         android:background="@drawable/bg_btn_back"
         android:src="@drawable/ic_back"
         android:padding="8dp"

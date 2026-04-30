@@ -89,6 +89,9 @@ public class SessionFragment extends Fragment {
                 Bundle args = new Bundle();
                 args.putString(ChatFragment.ARG_SESSION_ID,      session.getSessionId());
                 args.putString(ChatFragment.ARG_CURRENT_USER_ID, currentUserId);
+                args.putString(ChatFragment.ARG_PARTNER_NAME,    session.getPartnerName());
+                args.putString(ChatFragment.ARG_PARTNER_AVATAR,  session.getPartnerAvatar());
+                args.putString(ChatFragment.ARG_HOTSPOT_NAME,    session.getHotspotName());
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
                         .navigate(R.id.chatFragment, args);
             }

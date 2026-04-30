@@ -2,9 +2,20 @@ package com.walkmate.domain.chat;
 
 import androidx.lifecycle.LiveData;
 
+import com.walkmate.domain.shared.DomainCallback;
+
 import java.util.List;
 
 public interface ChatRepository {
+
+    /**
+     * Fetches message history from the REST endpoint and seeds the messages
+     * LiveData before opening the WebSocket. Call this before {@link #connect}.
+     * Non-blocking — result delivered via callback on a background thread.
+     * Failure is soft: callback.onError fires but the caller should still connect.
+     */
+    void loadHistory(String sessionId, String currentUserId,
+                     DomainCallback<List<ChatMessage>> callback);
 
     /**
      * Establish a WebSocket connection for the given session.
