@@ -20,8 +20,8 @@ import java.util.UUID;
  * After all increments the three weights are re-normalised to sum to 1.0.</p>
  *
  * <p>All training runs asynchronously (via {@code @Async}) so it never blocks the HTTP
- * response for the review submission.  Failures are caught and logged rather than
- * propagated — a failed training update is non-critical; the review is already committed.</p>
+ * response.  Failures are caught and logged rather than propagated — a failed training
+ * update is non-critical; the triggering action is already committed.</p>
  */
 @Slf4j
 @Service
@@ -59,6 +59,45 @@ public class AiTrainingService {
                     pref.getWeightBehavior());
         } catch (Exception e) {
             log.warn("AI weight training failed for reviewer={}: {}", reviewerId, e.getMessage());
+        }
+    }
+
+    /**
+     * Adjusts the reporter's AI matching weights after they submit an incident report.
+     *
+     * <p>Filing a report is a strong signal that behavioral trustworthiness matters to this
+     * user.  {@code weightBehavior} is incremented by a base of +0.10, with an additional
+     * +0.05 for high-severity reasons (SAFETY_CONCERN, PARTNER_MISCONDUCT), for a maximum
+     * increment of +0.15 per report.  The two-pass cap in {@code normalize()} ensures
+     * {@code weightBehavior} cannot exceed {@link MatchingPreference#MAX_WEIGHT_CAP}.</p>
+     *
+     * <p>Runs {@code @Async} — failures are logged, not propagated.</p>
+     */
+    @Async
+    public void trainWeightsFromReport(UUID reporterId, String reason) {
+        try {
+            MatchingPreference pref = matchingPreferenceRepository.findByUserId(reporterId)
+                    .orElseGet(() -> MatchingPreference.defaultFor(reporterId));
+
+            // Base increment for any report
+            pref.adjustWeightBehavior(0.10);
+
+            // Severity bonus for high-signal reasons
+            if ("SAFETY_CONCERN".equals(reason) || "PARTNER_MISCONDUCT".equals(reason)) {
+                pref.adjustWeightBehavior(0.05);
+            }
+
+            pref.normalize();
+            pref.updateLastTrainedAt(Instant.now());
+            matchingPreferenceRepository.save(pref);
+
+            log.debug("AI weights updated from report: reporter={} timeOverlap={:.3f} interest={:.3f} behavior={:.3f}",
+                    reporterId,
+                    pref.getWeightTimeOverlap(),
+                    pref.getWeightInterest(),
+                    pref.getWeightBehavior());
+        } catch (Exception e) {
+            log.warn("AI weight training (report) failed for reporter={}: {}", reporterId, e.getMessage());
         }
     }
 }
