@@ -5,7 +5,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSessionRepository;
+
+import java.util.List;
 
 /**
  * ViewModel for the Report Incident screen.
@@ -17,7 +20,7 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
 public class ReportIncidentViewModel extends ViewModel {
 
     private final MutableLiveData<ReportIncidentUiState> uiState =
-            new MutableLiveData<>(ReportIncidentUiState.idle());
+            new MutableLiveData<>(ReportIncidentUiState.loading());
 
     private final WalkSessionRepository sessionRepo;
 
@@ -27,6 +30,38 @@ public class ReportIncidentViewModel extends ViewModel {
 
     public LiveData<ReportIncidentUiState> getUiState() {
         return uiState;
+    }
+
+    /**
+     * Checks whether the session has already been reported by the current user.
+     * Posts {@link ReportIncidentUiState#alreadyReported()} if so, or
+     * {@link ReportIncidentUiState#idle()} if not.
+     */
+    public void loadReportState(String sessionId) {
+        uiState.postValue(ReportIncidentUiState.loading());
+
+        sessionRepo.getSessionHistory(new DomainCallback<List<SessionSummary>>() {
+            @Override
+            public void onSuccess(List<SessionSummary> sessions) {
+                boolean alreadyReported = false;
+                if (sessions != null) {
+                    for (SessionSummary s : sessions) {
+                        if (sessionId.equals(s.getSessionId())) {
+                            alreadyReported = s.isReported();
+                            break;
+                        }
+                    }
+                }
+                uiState.postValue(alreadyReported
+                        ? ReportIncidentUiState.alreadyReported()
+                        : ReportIncidentUiState.idle());
+            }
+
+            @Override
+            public void onError(Exception e) {
+                uiState.postValue(ReportIncidentUiState.idle());
+            }
+        });
     }
 
     /**

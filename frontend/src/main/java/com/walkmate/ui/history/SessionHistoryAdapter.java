@@ -29,9 +29,9 @@ import java.util.Locale;
  * Button visibility per UX invariant:
  *   ACTIVE global          → both buttons hidden (silent wait)
  *   COMPLETED global:
- *     caller=COMPLETED + partner=COMPLETED → "Leave a Review"
- *     caller=COMPLETED + partner=NO_SHOW  → "Report"
- *     caller=NO_SHOW (any partner)        → both hidden
+ *     caller≠NO_SHOW + partner=COMPLETED → "Leave a Review" + "Report"
+ *     caller≠NO_SHOW + partner≠COMPLETED → "Report" only
+ *     caller=NO_SHOW (any partner)       → both hidden
  */
 public class SessionHistoryAdapter
         extends ListAdapter<SessionSummary, SessionHistoryAdapter.ViewHolder> {
@@ -119,27 +119,27 @@ public class SessionHistoryAdapter
             WalkSession.Status callerStatus  = caller  != null ? caller.getUserStatus()  : null;
             WalkSession.Status partnerStatus = partner != null ? partner.getUserStatus() : null;
 
-            if (callerStatus == WalkSession.Status.COMPLETED) {
+            if (callerStatus != WalkSession.Status.NO_SHOW) {
+                holder.dividerAction.setVisibility(View.VISIBLE);
+
                 if (partnerStatus == WalkSession.Status.COMPLETED) {
-                    holder.dividerAction.setVisibility(View.VISIBLE);
                     holder.btnReview.setVisibility(View.VISIBLE);
                     holder.btnReview.setOnClickListener(v -> {
                         if (reviewClickListener != null) {
                             reviewClickListener.onReviewClick(summary.getSessionId());
                         }
                     });
-                } else if (partnerStatus == WalkSession.Status.NO_SHOW) {
-                    holder.dividerAction.setVisibility(View.VISIBLE);
-                    holder.btnReport.setVisibility(View.VISIBLE);
-                    holder.btnReport.setOnClickListener(v -> {
-                        if (reportClickListener != null) {
-                            reportClickListener.onReportClick(
-                                    summary.getSessionId(),
-                                    partnerId,
-                                    summary.getTerminalAtMs());
-                        }
-                    });
                 }
+
+                holder.btnReport.setVisibility(View.VISIBLE);
+                holder.btnReport.setOnClickListener(v -> {
+                    if (reportClickListener != null) {
+                        reportClickListener.onReportClick(
+                                summary.getSessionId(),
+                                partnerId,
+                                summary.getTerminalAtMs());
+                    }
+                });
             }
             // callerStatus == NO_SHOW → both buttons stay GONE
         }

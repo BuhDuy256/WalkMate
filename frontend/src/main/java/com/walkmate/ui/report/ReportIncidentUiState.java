@@ -5,7 +5,7 @@ package com.walkmate.ui.report;
  */
 public class ReportIncidentUiState {
 
-    public enum Kind { IDLE, LOADING, SUBMITTED, ERROR }
+    public enum Kind { IDLE, LOADING, SUBMITTED, ALREADY_REPORTED, ERROR }
 
     public final Kind   kind;
     public final String error; // non-null when ERROR
@@ -15,8 +15,9 @@ public class ReportIncidentUiState {
         this.error = error;
     }
 
-    public static ReportIncidentUiState idle()             { return new ReportIncidentUiState(Kind.IDLE,      null); }
-    public static ReportIncidentUiState loading()           { return new ReportIncidentUiState(Kind.LOADING,   null); }
-    public static ReportIncidentUiState submitted()         { return new ReportIncidentUiState(Kind.SUBMITTED, null); }
-    public static ReportIncidentUiState error(String msg)   { return new ReportIncidentUiState(Kind.ERROR,     msg);  }
+    public static ReportIncidentUiState idle()              { return new ReportIncidentUiState(Kind.IDLE,            null); }
+    public static ReportIncidentUiState loading()           { return new ReportIncidentUiState(Kind.LOADING,         null); }
+    public static ReportIncidentUiState submitted()         { return new ReportIncidentUiState(Kind.SUBMITTED,       null); }
+    public static ReportIncidentUiState alreadyReported()   { return new ReportIncidentUiState(Kind.ALREADY_REPORTED, null); }
+    public static ReportIncidentUiState error(String msg)   { return new ReportIncidentUiState(Kind.ERROR,           msg);  }
 }

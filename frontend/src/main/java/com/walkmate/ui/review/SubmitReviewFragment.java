@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,6 +62,8 @@ public class SubmitReviewFragment extends Fragment {
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
+    private ProgressBar  progressReview;
+    private View         scrollViewReview;
     private RatingBar    ratingBar;
     private LinearLayout layoutTagSection;
     private TextView     txtTagSectionLabel;
@@ -90,6 +93,8 @@ public class SubmitReviewFragment extends Fragment {
 
         WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
+        progressReview     = view.findViewById(R.id.progressReview);
+        scrollViewReview   = view.findViewById(R.id.scrollViewReview);
         ratingBar          = view.findViewById(R.id.ratingBarReview);
         layoutTagSection   = view.findViewById(R.id.layoutTagSection);
         txtTagSectionLabel = view.findViewById(R.id.txtTagSectionLabel);
@@ -119,9 +124,17 @@ public class SubmitReviewFragment extends Fragment {
 
         // ── Tags arrive async: populate chips as soon as they're ready ─────────
         viewModel.getReviewUiState().observe(getViewLifecycleOwner(), state -> {
+            boolean formReady = state.kind == ReviewUiState.Kind.IDLE
+                    || state.kind == ReviewUiState.Kind.ALREADY_REVIEWED
+                    || state.kind == ReviewUiState.Kind.ERROR;
+
+            progressReview.setVisibility(formReady ? View.GONE : View.VISIBLE);
+            scrollViewReview.setVisibility(formReady ? View.VISIBLE : View.GONE);
+
+            if (!formReady) return;
+
             int currentStars = (int) ratingBar.getRating();
             if (!state.availableTags.isEmpty()) {
-                // Use current rating (default 5 = positive) to decide which chips to show
                 populateChips(state.availableTags, currentStars > 0 ? currentStars : 5);
             }
 
@@ -129,9 +142,6 @@ public class SubmitReviewFragment extends Fragment {
                 case IDLE:
                     btnSubmit.setEnabled(true);
                     txtAlreadyReviewed.setVisibility(View.GONE);
-                    break;
-                case LOADING:
-                    btnSubmit.setEnabled(false);
                     break;
                 case ALREADY_REVIEWED:
                     btnSubmit.setEnabled(false);

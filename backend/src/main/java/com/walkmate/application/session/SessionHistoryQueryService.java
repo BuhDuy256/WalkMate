@@ -1,5 +1,6 @@
 package com.walkmate.application.session;
 
+import com.walkmate.domain.report.SessionReportRepository;
 import com.walkmate.domain.review.WalkReviewRepository;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
@@ -23,9 +24,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SessionHistoryQueryService {
 
-    private final WalkSessionRepository sessionRepository;
-    private final WalkReviewRepository  reviewRepository;
-    private final UserProfileRepository profileRepository;
+    private final WalkSessionRepository   sessionRepository;
+    private final WalkReviewRepository    reviewRepository;
+    private final SessionReportRepository reportRepository;
+    private final UserProfileRepository   profileRepository;
 
     /**
      * Returns a summary list of terminal sessions for the caller, newest first.
@@ -50,7 +52,8 @@ public class SessionHistoryQueryService {
 
     private SessionSummaryResponse toSummary(WalkSession s, String callerId,
                                               Map<UUID, UserProfileSnapshot> snapshots) {
-        boolean isReviewed = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
+        boolean isReviewed  = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
+        boolean isReported  = reportRepository.existsBySessionAndReporter(s.getSessionId(), callerId);
 
         UUID userIdA = UUID.fromString(s.getUserIdA());
         UUID userIdB = UUID.fromString(s.getUserIdB());
@@ -86,6 +89,7 @@ public class SessionHistoryQueryService {
                 s.getScheduledStart().toString(),
                 endedAt,
                 isReviewed,
+                isReported,
                 s.getMeetingPointLat(),
                 s.getMeetingPointLng(),
                 List.of(participantA, participantB),

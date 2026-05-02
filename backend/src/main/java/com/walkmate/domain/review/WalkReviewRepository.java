@@ -1,6 +1,7 @@
 package com.walkmate.domain.review;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WalkReviewRepository {
 
@@ -11,4 +12,7 @@ public interface WalkReviewRepository {
 
     /** Returns all reviews written about a specific user (for their profile page). */
     List<WalkReview> findByRevieweeId(String revieweeId);
+
+    /** Returns the review the caller submitted for a specific session, if any. */
+    Optional<WalkReview> findBySessionAndReviewer(String sessionId, String reviewerId);
 }

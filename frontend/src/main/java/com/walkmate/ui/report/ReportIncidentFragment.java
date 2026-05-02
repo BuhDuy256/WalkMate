@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -51,11 +53,14 @@ public class ReportIncidentFragment extends Fragment {
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private RadioGroup rgReason;
-    private EditText   etEvidenceUrl;
-    private Button     btnSubmitReport;
-    private View       btnBack;
-    private TextView   txtWindowClosedBanner;
+    private ProgressBar progressReport;
+    private View        scrollViewReport;
+    private RadioGroup  rgReason;
+    private EditText    etEvidenceUrl;
+    private Button      btnSubmitReport;
+    private TextView    txtAlreadyReported;
+    private View        btnBack;
+    private TextView    txtWindowClosedBanner;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
@@ -77,9 +82,12 @@ public class ReportIncidentFragment extends Fragment {
 
         WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
+        progressReport      = view.findViewById(R.id.progressReport);
+        scrollViewReport    = view.findViewById(R.id.scrollViewReport);
         rgReason            = view.findViewById(R.id.rgReportReason);
         etEvidenceUrl       = view.findViewById(R.id.etEvidenceUrl);
         btnSubmitReport     = view.findViewById(R.id.btnSubmitReport);
+        txtAlreadyReported  = view.findViewById(R.id.txtAlreadyReported);
         btnBack             = view.findViewById(R.id.btnSubPageBack);
         ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Report Incident");
         txtWindowClosedBanner = view.findViewById(R.id.txtWindowClosedBanner);
@@ -96,6 +104,8 @@ public class ReportIncidentFragment extends Fragment {
         if (terminalAtMs > 0) {
             long elapsed = System.currentTimeMillis() - terminalAtMs;
             if (elapsed > 72L * 60L * 60L * 1000L) {
+                progressReport.setVisibility(View.GONE);
+                scrollViewReport.setVisibility(View.VISIBLE);
                 showWindowClosedBanner("The reporting window for this session has closed.");
                 disableForm();
                 return;
@@ -108,17 +118,43 @@ public class ReportIncidentFragment extends Fragment {
                 .get(ReportIncidentViewModel.class);
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            boolean formReady = state.kind == ReportIncidentUiState.Kind.IDLE
+                    || state.kind == ReportIncidentUiState.Kind.ALREADY_REPORTED
+                    || state.kind == ReportIncidentUiState.Kind.SUBMITTED
+                    || state.kind == ReportIncidentUiState.Kind.ERROR;
+
+            progressReport.setVisibility(formReady ? View.GONE : View.VISIBLE);
+            scrollViewReport.setVisibility(formReady ? View.VISIBLE : View.GONE);
+
+            if (!formReady) return;
+
             switch (state.kind) {
                 case IDLE:
                     btnSubmitReport.setEnabled(true);
+                    txtAlreadyReported.setVisibility(View.GONE);
                     break;
-                case LOADING:
+                case ALREADY_REPORTED:
+                    rgReason.setEnabled(false);
+                    for (int i = 0; i < rgReason.getChildCount(); i++) {
+                        rgReason.getChildAt(i).setEnabled(false);
+                    }
+                    etEvidenceUrl.setEnabled(false);
                     btnSubmitReport.setEnabled(false);
+                    btnSubmitReport.setBackground(
+                            ContextCompat.getDrawable(requireContext(), R.drawable.bg_btn_submit_success));
+                    btnSubmitReport.setText("Report Submitted");
+                    txtAlreadyReported.setVisibility(View.VISIBLE);
                     break;
                 case SUBMITTED:
-                    Toast.makeText(requireContext(),
-                            "Report submitted. Thank you.", Toast.LENGTH_LONG).show();
-                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                    btnSubmitReport.setEnabled(false);
+                    btnSubmitReport.setBackground(
+                            ContextCompat.getDrawable(requireContext(), R.drawable.bg_btn_submit_success));
+                    btnSubmitReport.setText("Report Submitted");
+                    btnSubmitReport.postDelayed(() -> {
+                        if (isAdded()) {
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                        }
+                    }, 900);
                     break;
                 case ERROR:
                     btnSubmitReport.setEnabled(true);
@@ -133,6 +169,10 @@ public class ReportIncidentFragment extends Fragment {
             String evidenceUrl = etEvidenceUrl.getText().toString().trim();
             viewModel.submitReport(sessionId, reportedUserId, reason, evidenceUrl);
         });
+
+        if (sessionId != null) {
+            viewModel.loadReportState(sessionId);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

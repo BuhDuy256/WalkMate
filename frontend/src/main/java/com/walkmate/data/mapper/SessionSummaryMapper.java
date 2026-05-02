@@ -39,6 +39,7 @@ public class SessionSummaryMapper {
                 toStatus(response.getStatus()),
                 response.getScheduledStart(),
                 response.isReviewed(),
+                response.isReported(),
                 terminalAtMs,
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),

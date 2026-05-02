@@ -86,6 +86,9 @@ public class BadgeFragment extends Fragment {
         tabEarned    = root.findViewById(R.id.tabEarned);
         tabLocked    = root.findViewById(R.id.tabLocked);
 
+        com.walkmate.core.util.WindowInsetUtils.applyStatusBarPadding(
+                root.findViewById(R.id.subPageHeader));
+
         root.findViewById(R.id.btnSubPageBack).setOnClickListener(v ->
                 Navigation.findNavController(requireView()).navigateUp());
         ((TextView) root.findViewById(R.id.txtSubPageTitle)).setText("My Badges");

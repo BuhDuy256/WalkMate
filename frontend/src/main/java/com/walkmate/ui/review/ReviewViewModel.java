@@ -38,7 +38,7 @@ public class ReviewViewModel extends ViewModel {
     private final MutableLiveData<String>        error       = new MutableLiveData<>();
 
     private final MutableLiveData<ReviewUiState> reviewUiState =
-            new MutableLiveData<>(ReviewUiState.idle());
+            new MutableLiveData<>(ReviewUiState.loading());
 
     // ── Dependencies ──────────────────────────────────────────────────────────
 

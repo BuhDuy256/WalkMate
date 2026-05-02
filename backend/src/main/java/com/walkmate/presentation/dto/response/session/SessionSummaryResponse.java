@@ -31,6 +31,9 @@ public record SessionSummaryResponse(
         @JsonProperty("is_reviewed")
         boolean isReviewed,
 
+        @JsonProperty("is_reported")
+        boolean isReported,
+
         @JsonProperty("meeting_point_lat")
         double meetingPointLat,
 

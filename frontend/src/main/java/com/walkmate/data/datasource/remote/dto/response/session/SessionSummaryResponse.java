@@ -25,6 +25,9 @@ public class SessionSummaryResponse {
     @SerializedName("is_reviewed")
     private boolean isReviewed;
 
+    @SerializedName("is_reported")
+    private boolean isReported;
+
     @SerializedName("meeting_point_lat")
     private double meetingPointLat;
 
@@ -45,6 +48,7 @@ public class SessionSummaryResponse {
     public String getScheduledStart()                    { return scheduledStart; }
     public String getEndedAt()                           { return endedAt; }
     public boolean isReviewed()                          { return isReviewed; }
+    public boolean isReported()                          { return isReported; }
     public double getMeetingPointLat()                   { return meetingPointLat; }
     public double getMeetingPointLng()                   { return meetingPointLng; }
     public List<ParticipantResponse> getParticipants()   { return participants; }

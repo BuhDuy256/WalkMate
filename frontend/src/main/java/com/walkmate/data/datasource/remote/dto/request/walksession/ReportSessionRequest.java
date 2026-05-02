@@ -4,13 +4,13 @@ import com.google.gson.annotations.SerializedName;
 
 public class ReportSessionRequest {
 
-    @SerializedName("reported_user_id")
+    @SerializedName("reportedUserId")
     private String reportedUserId;
 
     @SerializedName("reason")
     private String reason;
 
-    @SerializedName("evidence_url")
+    @SerializedName("evidenceUrl")
     private String evidenceUrl;  // nullable
 
     public ReportSessionRequest(String reportedUserId, String reason, String evidenceUrl) {
