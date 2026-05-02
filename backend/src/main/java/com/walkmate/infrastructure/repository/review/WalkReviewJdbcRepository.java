@@ -61,6 +61,18 @@ public class WalkReviewJdbcRepository implements WalkReviewRepository {
                 .list();
     }
 
+    @Override
+    public Optional<WalkReview> findBySessionAndReviewer(String sessionId, String reviewerId) {
+        return jdbcClient.sql(selectAll() + """
+                        WHERE session_id  = :sessionId
+                          AND reviewer_id = :reviewerId
+                        """)
+                .param("sessionId",  UUID.fromString(sessionId))
+                .param("reviewerId", UUID.fromString(reviewerId))
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private String selectAll() {

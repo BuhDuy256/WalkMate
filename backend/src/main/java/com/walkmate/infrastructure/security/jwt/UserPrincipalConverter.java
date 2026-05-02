@@ -21,14 +21,18 @@ public class UserPrincipalConverter implements Converter<Jwt, UsernamePasswordAu
 
     @Override
     public UsernamePasswordAuthenticationToken convert(Jwt jwt) {
+        String roleClaim = jwt.getClaimAsString("role");
+        String role = roleClaim != null ? roleClaim : "USER";
+        
         UserPrincipal principal = new UserPrincipal(
                 jwt.getSubject(),
-                jwt.getClaimAsString("email")
+                jwt.getClaimAsString("email"),
+                role
         );
         return new UsernamePasswordAuthenticationToken(
                 principal,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                List.of(new SimpleGrantedAuthority("ROLE_" + role))
         );
     }
 }

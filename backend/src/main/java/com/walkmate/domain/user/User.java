@@ -30,6 +30,7 @@ public class User {
     private double         totalDistanceKm;
     private int            completedSessions;
     private String         fcmToken;
+    private String         role;
 
     protected User() {}
 
@@ -39,7 +40,7 @@ public class User {
                 VisibilityMode visibilityMode, String passwordHash, String providerSubject,
                 Instant createdAt, Instant lastLoginAt,
                 int trustScore, int totalPoints, double totalDistanceKm, int completedSessions,
-                String fcmToken) {
+                String fcmToken, String role) {
         this.userId            = userId;
         this.email             = email;
         this.provider          = provider;
@@ -54,6 +55,7 @@ public class User {
         this.totalDistanceKm   = totalDistanceKm;
         this.completedSessions = completedSessions;
         this.fcmToken          = fcmToken;
+        this.role              = role != null ? role : "USER";
     }
 
     // ── Creation factory ──────────────────────────────────────────────────────
@@ -72,6 +74,7 @@ public class User {
         this.totalDistanceKm   = 0.0;
         this.completedSessions = 0;
         this.fcmToken          = null;
+        this.role              = "USER";
     }
 
     public static User register(String email, String passwordHash) {
@@ -98,6 +101,7 @@ public class User {
         u.totalDistanceKm   = 0.0;
         u.completedSessions = 0;
         u.fcmToken          = null;
+        u.role              = "USER";
         return u;
     }
 

@@ -75,6 +75,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/following").permitAll()
                         // Phase 11: notification feed requires a valid JWT
                         .requestMatchers("/api/v1/notifications/**").authenticated()
+                        // Admin endpoints require ADMIN role
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // Everything else requires authentication by default
                         .anyRequest().authenticated()
                 )

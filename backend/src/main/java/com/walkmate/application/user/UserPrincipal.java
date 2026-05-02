@@ -7,6 +7,7 @@ package com.walkmate.application.user;
  */
 public record UserPrincipal(
         String userId,
-        String email
+        String email,
+        String role
 ) {
 }
