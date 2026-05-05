@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 import com.walkmate.domain.report.AdminReport;
 
 import java.util.ArrayList;
@@ -39,18 +40,19 @@ public class AdminReportsListFragment extends Fragment {
     private View        emptyState;
     private RecyclerView recyclerView;
     private EditText    etSearch;
-    private View        btnSearchToggle;
+    private TextView    txtSubPageTitle;
+    private TextView    btnHeaderAction;
+
     private TextView    txtStatTotal;
     private TextView    txtStatPending;
     private TextView    txtStatApproved;
     private TextView    txtStatRejected;
-    private TextView    txtHeaderPendingBadge;
 
     private LinearLayout tabAll;
     private LinearLayout tabPending;
     private LinearLayout tabResolved;
 
-    private View btnBack;
+    private View btnSubPageBack;
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -72,6 +74,7 @@ public class AdminReportsListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         bindViews(view);
         setupRecyclerView();
@@ -100,16 +103,22 @@ public class AdminReportsListFragment extends Fragment {
         emptyState            = root.findViewById(R.id.emptyStateAdminReports);
         recyclerView          = root.findViewById(R.id.recyclerAdminReports);
         etSearch              = root.findViewById(R.id.etAdminSearch);
-        btnSearchToggle       = root.findViewById(R.id.btnAdminSearchToggle);
         txtStatTotal          = root.findViewById(R.id.txtStatTotal);
         txtStatPending        = root.findViewById(R.id.txtStatPending);
         txtStatApproved       = root.findViewById(R.id.txtStatApproved);
         txtStatRejected       = root.findViewById(R.id.txtStatRejected);
-        txtHeaderPendingBadge = root.findViewById(R.id.txtHeaderPendingBadge);
+        
         tabAll                = root.findViewById(R.id.tabAll);
         tabPending            = root.findViewById(R.id.tabPending);
         tabResolved           = root.findViewById(R.id.tabResolved);
-        btnBack               = root.findViewById(R.id.btnAdminBack);
+        
+        btnSubPageBack        = root.findViewById(R.id.btnSubPageBack);
+        txtSubPageTitle       = root.findViewById(R.id.txtSubPageTitle);
+        btnHeaderAction       = root.findViewById(R.id.btnHeaderAction);
+        
+        if (txtSubPageTitle != null) {
+            txtSubPageTitle.setText("Report Management");
+        }
     }
 
     private void setupRecyclerView() {
@@ -126,23 +135,9 @@ public class AdminReportsListFragment extends Fragment {
     }
 
     private void setupClickListeners() {
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v ->
+        if (btnSubPageBack != null) {
+            btnSubPageBack.setOnClickListener(v ->
                     requireActivity().getOnBackPressedDispatcher().onBackPressed());
-        }
-
-        if (btnSearchToggle != null) {
-            btnSearchToggle.setOnClickListener(v -> {
-                if (etSearch.getVisibility() == View.VISIBLE) {
-                    etSearch.setVisibility(View.GONE);
-                    etSearch.setText("");
-                    searchQuery = "";
-                    applyFilter();
-                } else {
-                    etSearch.setVisibility(View.VISIBLE);
-                    etSearch.requestFocus();
-                }
-            });
         }
 
         if (etSearch != null) {
@@ -184,10 +179,16 @@ public class AdminReportsListFragment extends Fragment {
         txtStatApproved.setText(String.valueOf(state.getApprovedCount()));
         txtStatRejected.setText(String.valueOf(state.getRejectedCount()));
 
-        if (txtHeaderPendingBadge != null) {
+        if (btnHeaderAction != null) {
             int pending = state.getPendingCount();
-            txtHeaderPendingBadge.setText(String.valueOf(pending));
-            txtHeaderPendingBadge.setVisibility(pending > 0 ? View.VISIBLE : View.GONE);
+            if (pending > 0) {
+                btnHeaderAction.setText(pending + " pending");
+                btnHeaderAction.setVisibility(View.VISIBLE);
+                btnHeaderAction.setBackgroundResource(R.drawable.bg_edit_profile_btn);
+                btnHeaderAction.setTextColor(requireContext().getColor(R.color.white));
+            } else {
+                btnHeaderAction.setVisibility(View.GONE);
+            }
         }
 
         applyFilter();
@@ -195,7 +196,25 @@ public class AdminReportsListFragment extends Fragment {
 
     private void setFilter(String filter) {
         currentFilter = filter;
+        
+        // Update tab styles
+        updateTabStyles(tabAll, "ALL".equals(filter));
+        updateTabStyles(tabPending, "PENDING".equals(filter));
+        updateTabStyles(tabResolved, "RESOLVED".equals(filter));
+        
         applyFilter();
+    }
+
+    private void updateTabStyles(LinearLayout tab, boolean isActive) {
+        if (tab == null) return;
+        TextView tv = (TextView) tab.getChildAt(0);
+        if (isActive) {
+            tab.setBackgroundResource(R.drawable.bg_edit_profile_btn);
+            tv.setTextColor(requireContext().getColor(R.color.white));
+        } else {
+            tab.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            tv.setTextColor(android.graphics.Color.parseColor("#64748B"));
+        }
     }
 
     private void applyFilter() {

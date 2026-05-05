@@ -28,66 +28,7 @@
             android:orientation="vertical">
 
             <!-- ── HEADER ── -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="52dp"
-                android:paddingBottom="12dp">
-
-                <ImageView
-                    android:id="@+id/btnAdminDetailBack"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_back"
-                    android:contentDescription="Back"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackgroundBorderless"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal"
-                    app:layout_constraintStart_toEndOf="@id/btnAdminDetailBack"
-                    app:layout_constraintEnd_toStartOf="@id/txtDetailHeaderStatus"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent">
-
-                    <TextView
-                        android:id="@+id/txtDetailHeaderReportId"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_dark"
-                        tools:text="#ABC12345 · Review" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/txtDetailHeaderStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="4dp"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/white"
-                    tools:text="PENDING"
-                    tools:background="@drawable/bg_status_badge_pending"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            <include layout="@layout/layout_sub_page_header" />
 
             <!-- ── EVIDENCE CARD ── -->
             <com.google.android.material.card.MaterialCardView
@@ -96,11 +37,11 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="14dp"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="1dp"
-                app:cardBackgroundColor="@color/bg_white"
-                app:strokeColor="@color/card_border"
-                app:strokeWidth="1.5dp">
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E2E8F0"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -283,11 +224,11 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="14dp"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="1dp"
-                app:cardBackgroundColor="@color/bg_white"
-                app:strokeColor="@color/card_border"
-                app:strokeWidth="1.5dp">
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E2E8F0"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"

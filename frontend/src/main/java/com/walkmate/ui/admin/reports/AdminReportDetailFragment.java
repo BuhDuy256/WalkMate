@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.walkmate.R;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.WindowInsetUtils;
 import com.walkmate.domain.report.AdminReport;
 
 public class AdminReportDetailFragment extends Fragment {
@@ -30,11 +31,11 @@ public class AdminReportDetailFragment extends Fragment {
 
     private ProgressBar progressBar;
     private View        contentRoot;
-    private View        btnBack;
+    private View        btnSubPageBack;
 
     // Header
-    private TextView txtHeaderReportId;
-    private TextView txtHeaderStatus;
+    private TextView txtSubPageTitle;
+    private TextView btnHeaderAction;
 
     // Evidence card
     private TextView txtEvidenceReportId;
@@ -77,6 +78,7 @@ public class AdminReportDetailFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         Bundle args = getArguments();
         reportId = args != null ? args.getString(ARG_REPORT_ID) : null;
@@ -84,7 +86,7 @@ public class AdminReportDetailFragment extends Fragment {
         bindViews(view);
         setupViewModel();
 
-        btnBack.setOnClickListener(v ->
+        btnSubPageBack.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
@@ -97,10 +99,10 @@ public class AdminReportDetailFragment extends Fragment {
     private void bindViews(View root) {
         progressBar          = root.findViewById(R.id.progressAdminDetail);
         contentRoot          = root.findViewById(R.id.contentAdminDetail);
-        btnBack              = root.findViewById(R.id.btnAdminDetailBack);
+        btnSubPageBack       = root.findViewById(R.id.btnSubPageBack);
 
-        txtHeaderReportId    = root.findViewById(R.id.txtDetailHeaderReportId);
-        txtHeaderStatus      = root.findViewById(R.id.txtDetailHeaderStatus);
+        txtSubPageTitle      = root.findViewById(R.id.txtSubPageTitle);
+        btnHeaderAction      = root.findViewById(R.id.btnHeaderAction);
 
         txtEvidenceReportId  = root.findViewById(R.id.txtEvidenceReportId);
         txtReportedUser      = root.findViewById(R.id.txtEvidenceReportedUser);
@@ -168,20 +170,24 @@ public class AdminReportDetailFragment extends Fragment {
         String shortId = report.getReportId().length() >= 8
                 ? "#" + report.getReportId().substring(0, 8).toUpperCase()
                 : report.getReportId();
-        txtHeaderReportId.setText(shortId + " · Review");
+        txtSubPageTitle.setText(shortId + " · Review");
 
+        btnHeaderAction.setVisibility(View.VISIBLE);
         switch (report.getStatus()) {
             case PENDING:
-                txtHeaderStatus.setText("PENDING");
-                txtHeaderStatus.setBackgroundResource(R.drawable.bg_status_badge_pending);
+                btnHeaderAction.setText("PENDING");
+                btnHeaderAction.setBackgroundResource(R.drawable.bg_status_badge_pending);
+                btnHeaderAction.setTextColor(requireContext().getColor(R.color.white));
                 break;
             case APPROVED:
-                txtHeaderStatus.setText("APPROVED");
-                txtHeaderStatus.setBackgroundResource(R.drawable.bg_status_badge_approved);
+                btnHeaderAction.setText("APPROVED");
+                btnHeaderAction.setBackgroundResource(R.drawable.bg_status_badge_approved);
+                btnHeaderAction.setTextColor(requireContext().getColor(R.color.white));
                 break;
             case REJECTED:
-                txtHeaderStatus.setText("REJECTED");
-                txtHeaderStatus.setBackgroundResource(R.drawable.bg_status_badge_rejected);
+                btnHeaderAction.setText("REJECTED");
+                btnHeaderAction.setBackgroundResource(R.drawable.bg_status_badge_rejected);
+                btnHeaderAction.setTextColor(requireContext().getColor(R.color.white));
                 break;
         }
 
