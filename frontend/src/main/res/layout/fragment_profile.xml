@@ -105,7 +105,7 @@
 
                 <!-- View as Public Profile -->
                 <!-- Public profile shortcut -->
-                <LinearLayout
+                <!-- <LinearLayout
                     android:id="@+id/btnViewPublicProfile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -122,17 +122,17 @@
                         android:layout_height="13dp"
                         android:src="@drawable/ic_eye_show"
                         android:layout_marginEnd="5dp"
-                        android:contentDescription="@null" />
+                        android:contentDescription="@null" /> -->
 
-                    <TextView
+                    <!-- <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/profile_view_public"
                         android:textSize="13sp"
                         android:textColor="@color/text_label"
-                        android:fontFamily="sans-serif-medium" />
+                        android:fontFamily="sans-serif-medium" /> -->
 
-                </LinearLayout>
+                <!-- </LinearLayout> -->
 
                 <!-- Trust score chip: orange border pill -->
                 <!-- Trust score indicator -->
@@ -510,8 +510,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center"
+                        android:gravity="center_vertical"
                         android:background="@drawable/bg_edit_profile_btn"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="14dp"
                         android:paddingTop="14dp"
                         android:paddingBottom="14dp"
                         android:clickable="true"
