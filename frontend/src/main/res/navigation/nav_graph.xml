@@ -129,6 +129,14 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_profile_to_adminReportsListFragment"
+            app:destination="@id/adminReportsListFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -258,5 +266,28 @@
         android:id="@+id/badgeFragment"
         android:name="com.walkmate.ui.badge.BadgeFragment"
         android:label="My Badges" />
+
+    <fragment
+        android:id="@+id/adminReportsListFragment"
+        android:name="com.walkmate.ui.admin.reports.AdminReportsListFragment"
+        android:label="Reports">
+        <action
+            android:id="@+id/action_adminReportsList_to_adminReportDetail"
+            app:destination="@id/adminReportDetailFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminReportDetailFragment"
+        android:name="com.walkmate.ui.admin.reports.AdminReportDetailFragment"
+        android:label="Report Detail">
+        <argument
+            android:name="REPORT_ID"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
 
 </navigation>

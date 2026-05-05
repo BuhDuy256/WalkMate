@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream">
+
+    <ProgressBar
+        android:id="@+id/progressAdminDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/contentAdminDetail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ── HEADER ── -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="52dp"
+                android:paddingBottom="12dp">
+
+                <ImageView
+                    android:id="@+id/btnAdminDetailBack"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@drawable/ic_back"
+                    android:contentDescription="Back"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    app:layout_constraintStart_toEndOf="@id/btnAdminDetailBack"
+                    app:layout_constraintEnd_toStartOf="@id/txtDetailHeaderStatus"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
+
+                    <TextView
+                        android:id="@+id/txtDetailHeaderReportId"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"
+                        tools:text="#ABC12345 · Review" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtDetailHeaderStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    tools:text="PENDING"
+                    tools:background="@drawable/bg_status_badge_pending"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- ── EVIDENCE CARD ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="14dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="@color/bg_white"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1.5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="14dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Evidence"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_dark" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="READ ONLY"
+                            android:background="@drawable/bg_chip_inactive"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="3dp"
+                            android:paddingBottom="3dp"
+                            android:textSize="10sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_muted" />
+
+                    </LinearLayout>
+
+                    <!-- Report ID row -->
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Report ID"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginEnd="8dp"
+                            android:minWidth="110dp" />
+                        <TextView android:id="@+id/txtEvidenceReportId"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/text_dark"
+                            tools:text="abc12345-..." />
+                    </LinearLayout>
+
+                    <!-- Reported user row -->
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reported User"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginEnd="8dp"
+                            android:minWidth="110dp" />
+                        <TextView android:id="@+id/txtEvidenceReportedUser"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_dark"
+                            tools:text="Nguyen Van An" />
+                    </LinearLayout>
+
+                    <!-- Reporter row -->
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reporter"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginEnd="8dp"
+                            android:minWidth="110dp" />
+                        <TextView android:id="@+id/txtEvidenceReporter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_dark"
+                            tools:text="Tran Thi Bich" />
+                    </LinearLayout>
+
+                    <!-- Reason row -->
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reason"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginEnd="8dp"
+                            android:minWidth="110dp" />
+                        <TextView android:id="@+id/txtEvidenceReason"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_chip_inactive"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="3dp"
+                            android:paddingBottom="3dp"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_dark"
+                            tools:text="Safety Concern" />
+                    </LinearLayout>
+
+                    <!-- Evidence link row -->
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Evidence"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginEnd="8dp"
+                            android:minWidth="110dp" />
+                        <TextView android:id="@+id/txtEvidenceLink"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textSize="12sp"
+                            android:textColor="@color/color_info"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            tools:text="https://example.com/evidence" />
+                    </LinearLayout>
+
+                    <!-- Trust impact row -->
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Trust Impact"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginEnd="8dp"
+                            android:minWidth="110dp" />
+                        <TextView android:id="@+id/txtEvidenceTrustImpact"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/color_danger"
+                            tools:text="-30 pts" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── RESOLUTION CARD ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="14dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="@color/bg_white"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1.5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Resolution"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"
+                        android:layout_marginBottom="14dp" />
+
+                    <!-- PENDING state layout -->
+                    <LinearLayout
+                        android:id="@+id/layoutResolutionPending"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Add a resolution note before approving or rejecting."
+                            android:textSize="13sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginBottom="12dp" />
+
+                        <EditText
+                            android:id="@+id/etResolutionNote"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="80dp"
+                            android:gravity="top"
+                            android:hint="Resolution note (optional, 500 chars max)"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_dark"
+                            android:textColorHint="@color/text_muted"
+                            android:background="@drawable/bg_search_bar"
+                            android:padding="12dp"
+                            android:inputType="textMultiLine"
+                            android:maxLength="500"
+                            android:layout_marginBottom="14dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btnRejectReport"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="8dp"
+                                android:text="Reject"
+                                android:textStyle="bold"
+                                android:textColor="@color/color_danger"
+                                android:backgroundTint="@color/bg_cream"
+                                android:stateListAnimator="@null" />
+
+                            <Button
+                                android:id="@+id/btnApproveReport"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:layout_marginStart="8dp"
+                                android:text="Approve"
+                                android:textStyle="bold"
+                                android:textColor="@color/white"
+                                android:backgroundTint="@color/orange_primary"
+                                android:stateListAnimator="@null" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- RESOLVED state layout -->
+                    <LinearLayout
+                        android:id="@+id/layoutResolutionResolved"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        tools:visibility="gone">
+
+                        <LinearLayout android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="10dp">
+                            <TextView android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Decision"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_muted"
+                                android:minWidth="110dp" />
+                            <TextView android:id="@+id/txtResolutionDecision"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/text_dark"
+                                tools:text="Approved" />
+                        </LinearLayout>
+
+                        <LinearLayout android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="10dp">
+                            <TextView android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Decided On"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_muted"
+                                android:minWidth="110dp" />
+                            <TextView android:id="@+id/txtResolutionDecidedOn"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_dark"
+                                tools:text="2025-05-03" />
+                        </LinearLayout>
+
+                        <LinearLayout android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                            <TextView android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Note"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_muted"
+                                android:minWidth="110dp" />
+                            <TextView android:id="@+id/txtResolutionNote"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_dark"
+                                tools:text="Verified and approved" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── FOOTER ── -->
+            <TextView
+                android:id="@+id/txtFiledDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="40dp"
+                android:textSize="12sp"
+                android:textColor="@color/text_muted"
+                tools:text="Filed 2025-05-02" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</FrameLayout>

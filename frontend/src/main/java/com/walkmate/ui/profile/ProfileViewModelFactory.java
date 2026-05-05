@@ -6,45 +6,34 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.domain.gamification.GamificationRepository;
+import com.walkmate.domain.report.AdminReportRepository;
 import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 
-/**
- * Manual DI factory for ProfileViewModel.
- *
- * Instantiated in ProfileFragment.onViewCreated() using singletons from
- * WalkMateApplication, keeping the ViewModel free of Context dependencies.
- *
- * Usage:
- *   WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
- *   ProfileViewModelFactory factory = new ProfileViewModelFactory(
- *       app.getUserProfileRepository(), requireContext());
- *   ProfileViewModelFactory factory = new ProfileViewModelFactory(
- *       app.getUserProfileRepository(),
- *       app.getGamificationRepository(),
- *       app.getReviewRepository());
- *   viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
- *
- * Note: Phase 14 will migrate this to Hilt.
- */
 public class ProfileViewModelFactory implements ViewModelProvider.Factory {
 
-    private final UserProfileRepository profileRepo;
-    private final UserRepository userRepository;
+    private final UserProfileRepository  profileRepo;
+    private final UserRepository         userRepository;
     private final GamificationRepository gamificationRepo;
     private final ReviewRepository       reviewRepo;
+    private final SessionManager         sessionManager;
+    private final AdminReportRepository  adminReportRepo;
 
     public ProfileViewModelFactory(UserProfileRepository profileRepo,
                                    Context context,
                                    GamificationRepository gamificationRepo,
-                                   ReviewRepository reviewRepo) {
-        this.profileRepo = profileRepo;
-        this.userRepository = new UserRepositoryImpl(context.getApplicationContext());
+                                   ReviewRepository reviewRepo,
+                                   AdminReportRepository adminReportRepo) {
+        this.profileRepo      = profileRepo;
+        this.userRepository   = new UserRepositoryImpl(context.getApplicationContext());
         this.gamificationRepo = gamificationRepo;
-        this.reviewRepo = reviewRepo;
+        this.reviewRepo       = reviewRepo;
+        this.sessionManager   = new SessionManager(context.getApplicationContext());
+        this.adminReportRepo  = adminReportRepo;
     }
 
     @NonNull
@@ -52,7 +41,8 @@ public class ProfileViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(ProfileViewModel.class)) {
-            return (T) new ProfileViewModel(profileRepo, userRepository, gamificationRepo, reviewRepo);
+            return (T) new ProfileViewModel(profileRepo, userRepository, gamificationRepo,
+                    reviewRepo, sessionManager, adminReportRepo);
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
     }

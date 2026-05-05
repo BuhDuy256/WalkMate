@@ -5,6 +5,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.core.event.AuthEventBus;
+import com.walkmate.data.datasource.remote.api.SessionManager;
+import com.walkmate.domain.report.AdminReport;
+import com.walkmate.domain.report.AdminReportRepository;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.gamification.UserBadge;
@@ -41,15 +44,21 @@ public class ProfileViewModel extends ViewModel {
     private final UserRepository userRepository;
     private final GamificationRepository gamificationRepo;
     private final ReviewRepository       reviewRepo;
+    private final SessionManager         sessionManager;
+    private final AdminReportRepository  adminReportRepo;
 
     public ProfileViewModel(UserProfileRepository profileRepo,
                             UserRepository userRepository,
                             GamificationRepository gamificationRepo,
-                            ReviewRepository reviewRepo) {
+                            ReviewRepository reviewRepo,
+                            SessionManager sessionManager,
+                            AdminReportRepository adminReportRepo) {
         this.profileRepo      = profileRepo;
         this.userRepository   = userRepository;
         this.gamificationRepo = gamificationRepo;
         this.reviewRepo       = reviewRepo;
+        this.sessionManager   = sessionManager;
+        this.adminReportRepo  = adminReportRepo;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -187,6 +196,20 @@ public class ProfileViewModel extends ViewModel {
 
     public void onSettingsClicked()    { /* Phase D: emit navigation signal */ }
 
+    private final MutableLiveData<Boolean> navigateToAdminPanelEvent = new MutableLiveData<>();
+
+    public LiveData<Boolean> getNavigateToAdminPanelEvent() {
+        return navigateToAdminPanelEvent;
+    }
+
+    public void consumeNavigateToAdminPanel() {
+        navigateToAdminPanelEvent.setValue(false);
+    }
+
+    public void onOpenAdminPanelClicked() {
+        navigateToAdminPanelEvent.postValue(true);
+    }
+
     private final MutableLiveData<Boolean> navigateToFriendsEvent = new MutableLiveData<>();
 
     public LiveData<Boolean> getNavigateToFriendsEvent() {
@@ -210,23 +233,23 @@ public class ProfileViewModel extends ViewModel {
      */
     private void loadSupplementalData(UserProfile profile) {
         final String userId = profile.getUserId();
+        final boolean isAdmin = sessionManager.isAdmin();
 
-        // Mutable holders populated by whichever callback arrives first.
         final AtomicReference<List<ProfileUiState.Badge>> badgesHolder =
                 new AtomicReference<>(Collections.emptyList());
         final AtomicReference<UserStats> statsHolder = new AtomicReference<>(null);
         final AtomicReference<List<WalkReview>> reviewsHolder =
                 new AtomicReference<>(Collections.emptyList());
+        final AtomicReference<Integer> pendingCountHolder = new AtomicReference<>(0);
 
+        final int totalCalls = isAdmin ? 4 : 3;
         final AtomicInteger doneCount = new AtomicInteger(0);
 
-        // Called by whichever of the 3 parallel calls completes last.
         Runnable publish = () -> {
-            if (doneCount.incrementAndGet() == 3) {
+            if (doneCount.incrementAndGet() == totalCalls) {
                 UserStats stats = statsHolder.get();
-                // Prefer API stats if available; fall back to values on UserProfile.
-                double distanceKm  = stats != null ? stats.getTotalDistanceKm()   : profile.getTotalDistanceKm();
-                int    sessions    = stats != null ? stats.getCompletedSessions()  : profile.getTotalSessions();
+                double distanceKm = stats != null ? stats.getTotalDistanceKm()  : profile.getTotalDistanceKm();
+                int    sessions   = stats != null ? stats.getCompletedSessions(): profile.getTotalSessions();
                 uiState.postValue(new ProfileUiState(
                         false,
                         profile.getFullName(),
@@ -237,51 +260,49 @@ public class ProfileViewModel extends ViewModel {
                         sessions,
                         badgesHolder.get(),
                         reviewsHolder.get(),
-                        null));
+                        null,
+                        isAdmin,
+                        pendingCountHolder.get()));
             }
         };
 
         // ── Badges ────────────────────────────────────────────────────────────
         gamificationRepo.getBadges(userId, new DomainCallback<List<UserBadge>>() {
-            @Override
-            public void onSuccess(List<UserBadge> userBadges) {
+            @Override public void onSuccess(List<UserBadge> userBadges) {
                 badgesHolder.set(toBadgeUiList(userBadges));
                 publish.run();
             }
-            @Override
-            public void onError(Exception e) {
-                // Badges failure is non-fatal — Milestones card shows empty.
-                publish.run();
-            }
+            @Override public void onError(Exception e) { publish.run(); }
         });
 
         // ── Stats ─────────────────────────────────────────────────────────────
         gamificationRepo.getStats(userId, new DomainCallback<UserStats>() {
-            @Override
-            public void onSuccess(UserStats stats) {
+            @Override public void onSuccess(UserStats stats) {
                 statsHolder.set(stats);
                 publish.run();
             }
-            @Override
-            public void onError(Exception e) {
-                // Stats failure is non-fatal — profile values used as fallback.
-                publish.run();
-            }
+            @Override public void onError(Exception e) { publish.run(); }
         });
 
         // ── Reviews ───────────────────────────────────────────────────────────
         reviewRepo.getReviewsForUser(userId, new DomainCallback<List<WalkReview>>() {
-            @Override
-            public void onSuccess(List<WalkReview> reviews) {
+            @Override public void onSuccess(List<WalkReview> reviews) {
                 reviewsHolder.set(reviews != null ? reviews : Collections.emptyList());
                 publish.run();
             }
-            @Override
-            public void onError(Exception e) {
-                // Reviews failure is non-fatal — feed shows empty.
-                publish.run();
-            }
+            @Override public void onError(Exception e) { publish.run(); }
         });
+
+        // ── Admin pending count (admin only) ──────────────────────────────────
+        if (isAdmin) {
+            adminReportRepo.getReportsByStatus("OPEN", new DomainCallback<List<AdminReport>>() {
+                @Override public void onSuccess(List<AdminReport> reports) {
+                    pendingCountHolder.set(reports != null ? reports.size() : 0);
+                    publish.run();
+                }
+                @Override public void onError(Exception e) { publish.run(); }
+            });
+        }
     }
 
     private static List<ProfileUiState.Badge> toBadgeUiList(List<UserBadge> userBadges) {

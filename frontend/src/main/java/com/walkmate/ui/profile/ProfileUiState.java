@@ -71,6 +71,8 @@ public class ProfileUiState {
     private final List<Badge> badges;           // max 3 shown in the Milestones card
     private final List<WalkReview> reviews;     // received reviews for this user
     private final String error;
+    private final boolean isAdmin;
+    private final int adminPendingCount;
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -85,16 +87,35 @@ public class ProfileUiState {
             List<Badge> badges,
             List<WalkReview> reviews,
             String error) {
-        this.isLoading        = isLoading;
-        this.name             = name;
-        this.avatarUrl        = avatarUrl;
-        this.trustScore       = trustScore;
-        this.personalityTags  = personalityTags;
-        this.totalDistanceKm  = totalDistanceKm;
-        this.totalSessions    = totalSessions;
-        this.badges           = badges;
-        this.reviews          = reviews;
-        this.error            = error;
+        this(isLoading, name, avatarUrl, trustScore, personalityTags,
+             totalDistanceKm, totalSessions, badges, reviews, error, false, 0);
+    }
+
+    public ProfileUiState(
+            boolean isLoading,
+            String name,
+            String avatarUrl,
+            float trustScore,
+            List<String> personalityTags,
+            double totalDistanceKm,
+            int totalSessions,
+            List<Badge> badges,
+            List<WalkReview> reviews,
+            String error,
+            boolean isAdmin,
+            int adminPendingCount) {
+        this.isLoading         = isLoading;
+        this.name              = name;
+        this.avatarUrl         = avatarUrl;
+        this.trustScore        = trustScore;
+        this.personalityTags   = personalityTags;
+        this.totalDistanceKm   = totalDistanceKm;
+        this.totalSessions     = totalSessions;
+        this.badges            = badges;
+        this.reviews           = reviews;
+        this.error             = error;
+        this.isAdmin           = isAdmin;
+        this.adminPendingCount = adminPendingCount;
     }
 
     // ── Static factories ──────────────────────────────────────────────────────
@@ -125,4 +146,6 @@ public class ProfileUiState {
     public List<Badge> getBadges()           { return badges; }
     public String getError()                 { return error; }
     public List<WalkReview> getReviews()     { return reviews; }
+    public boolean isAdmin()                 { return isAdmin; }
+    public int getAdminPendingCount()        { return adminPendingCount; }
 }

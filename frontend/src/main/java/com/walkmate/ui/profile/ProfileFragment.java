@@ -74,6 +74,12 @@ public class ProfileFragment extends Fragment {
     // Security section
     private View btnLogoutAll;
 
+    // Admin Dashboard card
+    private View     cardAdminDashboard;
+    private TextView txtAdminPendingBadge;
+    private TextView txtAdminPendingInfo;
+    private View     btnOpenAdminPanel;
+
     // ── MVVM ──────────────────────────────────────────────────────────────────
 
     private ProfileViewModel viewModel;
@@ -125,6 +131,13 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_badgeFragment);
         });
+
+        viewModel.getNavigateToAdminPanelEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            viewModel.consumeNavigateToAdminPanel();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_adminReportsListFragment);
+        });
     }
 
     // ── Setup helpers ─────────────────────────────────────────────────────────
@@ -173,6 +186,11 @@ public class ProfileFragment extends Fragment {
 
         menuFriends      = root.findViewById(R.id.menuFriends);
         btnLogoutAll     = root.findViewById(R.id.btnLogoutAll);
+
+        cardAdminDashboard    = root.findViewById(R.id.cardAdminDashboard);
+        txtAdminPendingBadge  = root.findViewById(R.id.txtAdminPendingBadge);
+        txtAdminPendingInfo   = root.findViewById(R.id.txtAdminPendingInfo);
+        btnOpenAdminPanel     = root.findViewById(R.id.btnOpenAdminPanel);
     }
 
     private void setupViewModel() {
@@ -181,7 +199,8 @@ public class ProfileFragment extends Fragment {
                 new ProfileViewModelFactory(app.getUserProfileRepository(),
                                             requireContext(),
                                             app.getGamificationRepository(),
-                                            app.getReviewRepository());
+                                            app.getReviewRepository(),
+                                            app.getAdminReportRepository());
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
     }
 
@@ -195,6 +214,10 @@ public class ProfileFragment extends Fragment {
         menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());
 
         btnLogoutAll.setOnClickListener(v -> showLogoutAllConfirmation());
+
+        if (btnOpenAdminPanel != null) {
+            btnOpenAdminPanel.setOnClickListener(v -> viewModel.onOpenAdminPanelClicked());
+        }
     }
 
     // ── State rendering ───────────────────────────────────────────────────────
@@ -236,6 +259,18 @@ public class ProfileFragment extends Fragment {
         // ── Milestone stats ──
         txtStatKmValue.setText(String.valueOf((int) state.getTotalDistanceKm()));
         txtStatSessionsValue.setText(String.valueOf(state.getTotalSessions()));
+
+        // ── Admin Dashboard Card ──
+        if (state.isAdmin()) {
+            cardAdminDashboard.setVisibility(View.VISIBLE);
+            int pending = state.getAdminPendingCount();
+            txtAdminPendingBadge.setText(String.valueOf(pending));
+            txtAdminPendingInfo.setText(
+                    pending == 1 ? "1 report awaiting review"
+                                 : pending + " reports awaiting review");
+        } else {
+            cardAdminDashboard.setVisibility(View.GONE);
+        }
     }
 
     private void renderTagChips(List<String> tags) {

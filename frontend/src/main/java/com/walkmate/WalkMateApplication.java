@@ -8,6 +8,7 @@ import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.data.datasource.local.WalkMateDatabase;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.api.AuthInterceptor;
+import com.walkmate.data.repository.AdminReportRepositoryImpl;
 import com.walkmate.data.repository.ChatRepositoryImpl;
 import com.walkmate.data.repository.GamificationRepositoryImpl;
 import com.walkmate.data.repository.HotspotRepositoryImpl;
@@ -22,6 +23,7 @@ import com.walkmate.data.repository.WalkIntentRepositoryImpl;
 import com.walkmate.data.repository.WalkProposalRepositoryImpl;
 import com.walkmate.data.repository.WalkSessionRepositoryImpl;
 import com.walkmate.domain.chat.ChatRepository;
+import com.walkmate.domain.report.AdminReportRepository;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.notification.NotificationRepository;
@@ -68,6 +70,7 @@ public class WalkMateApplication extends Application {
     private SocialRepository socialRepository;
     private NotificationRepository notificationRepository;
     private ReviewRepository reviewRepository;
+    private AdminReportRepository adminReportRepository;
 
     @Override
     public void onCreate() {
@@ -238,5 +241,12 @@ public class WalkMateApplication extends Application {
             reviewRepository = new ReviewRepositoryImpl(this);
         }
         return reviewRepository;
+    }
+
+    public AdminReportRepository getAdminReportRepository() {
+        if (adminReportRepository == null) {
+            adminReportRepository = new AdminReportRepositoryImpl(this);
+        }
+        return adminReportRepository;
     }
 }
