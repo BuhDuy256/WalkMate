@@ -54,43 +54,43 @@ public class EditProfileFragment extends Fragment {
 
     // ── DOB data ─────────────────────────────────────────────────────────────
 
-    private static final String[] DAYS   = buildDays();
-    private static final String[] MONTHS = {"Jan","Feb","Mar","Apr","May","Jun",
-                                             "Jul","Aug","Sep","Oct","Nov","Dec"};
-    private static final String[] YEARS  = buildYears();
+    private static final String[] DAYS = buildDays();
+    private static final String[] MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    private static final String[] YEARS = buildYears();
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private ProgressBar  progressBar;
-    private ImageView    imgAvatar;
-    private EditText     etFullName;
+    private ProgressBar progressBar;
+    private ImageView imgAvatar;
+    private EditText etFullName;
     private LinearLayout cardGenderMale, cardGenderFemale;
-    private View         dotGenderMale, dotGenderFemale;
-    private TextView     txtGenderMale, txtGenderFemale;
+    private View dotGenderMale, dotGenderFemale;
+    private TextView txtGenderMale, txtGenderFemale;
     private LinearLayout dobBar, segDay, segMonth, segYear;
-    private TextView     txtDobDay, txtDobMonth, txtDobYear;
-    private ImageView    icChevronDay, icChevronMonth, icChevronYear;
-    private EditText     etBio;
-    private TextView     txtBioCount;
-    private ChipGroup    chipGroupTags;
-    private Button       btnSave;
-    private View         btnBack;
-    private TextView     txtFieldError;
+    private TextView txtDobDay, txtDobMonth, txtDobYear;
+    private ImageView icChevronDay, icChevronMonth, icChevronYear;
+    private EditText etBio;
+    private TextView txtBioCount;
+    private ChipGroup chipGroupTags;
+    private Button btnSave;
+    private View btnBack;
+    private TextView txtFieldError;
 
     // ── State ─────────────────────────────────────────────────────────────────
 
     private String selectedGender = "";
-    private String selectedDobDay   = "";
+    private String selectedDobDay = "";
     private String selectedDobMonth = "";
-    private String selectedDobYear  = "";
+    private String selectedDobYear = "";
 
     // Originals captured after first profile load — used for dirty checking.
-    private String  origFullName = null;
-    private String  origGender   = null;
-    private String  origDobDay   = null;
-    private String  origDobMonth = null;
-    private String  origDobYear  = null;
-    private String  origBio      = null;
+    private String origFullName = null;
+    private String origGender = null;
+    private String origDobDay = null;
+    private String origDobMonth = null;
+    private String origDobYear = null;
+    private String origBio = null;
     private Set<String> origTagNames = null;
 
     private ListPopupWindow openPopup = null;
@@ -101,27 +101,26 @@ public class EditProfileFragment extends Fragment {
 
     // ── Image picker ─────────────────────────────────────────────────────────
 
-    private final ActivityResultLauncher<Intent> imagePickerLauncher =
-            registerForActivityResult(
-                    new ActivityResultContracts.StartActivityForResult(),
-                    result -> {
-                        if (result.getResultCode() == Activity.RESULT_OK
-                                && result.getData() != null) {
-                            Uri imageUri = result.getData().getData();
-                            if (imageUri != null) {
-                                viewModel.uploadAvatar(imageUri,
-                                        requireContext().getContentResolver());
-                            }
-                        }
-                    });
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK
+                        && result.getData() != null) {
+                    Uri imageUri = result.getData().getData();
+                    if (imageUri != null) {
+                        viewModel.uploadAvatar(imageUri,
+                                requireContext().getContentResolver());
+                    }
+                }
+            });
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_edit_profile, container, false);
     }
 
@@ -145,31 +144,31 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void bindViews(View root) {
-        progressBar    = root.findViewById(R.id.progressEditProfile);
-        imgAvatar      = root.findViewById(R.id.imgEditAvatar);
-        etFullName     = root.findViewById(R.id.etFullName);
-        cardGenderMale   = root.findViewById(R.id.cardGenderMale);
+        progressBar = root.findViewById(R.id.progressEditProfile);
+        imgAvatar = root.findViewById(R.id.imgEditAvatar);
+        etFullName = root.findViewById(R.id.etFullName);
+        cardGenderMale = root.findViewById(R.id.cardGenderMale);
         cardGenderFemale = root.findViewById(R.id.cardGenderFemale);
-        dotGenderMale    = root.findViewById(R.id.dotGenderMale);
-        dotGenderFemale  = root.findViewById(R.id.dotGenderFemale);
-        txtGenderMale    = root.findViewById(R.id.txtGenderMale);
-        txtGenderFemale  = root.findViewById(R.id.txtGenderFemale);
-        dobBar           = root.findViewById(R.id.dobBar);
-        segDay           = root.findViewById(R.id.segDay);
-        segMonth         = root.findViewById(R.id.segMonth);
-        segYear          = root.findViewById(R.id.segYear);
-        txtDobDay        = root.findViewById(R.id.txtDobDay);
-        txtDobMonth      = root.findViewById(R.id.txtDobMonth);
-        txtDobYear       = root.findViewById(R.id.txtDobYear);
-        icChevronDay     = root.findViewById(R.id.icChevronDay);
-        icChevronMonth   = root.findViewById(R.id.icChevronMonth);
-        icChevronYear    = root.findViewById(R.id.icChevronYear);
-        etBio          = root.findViewById(R.id.etBio);
-        txtBioCount    = root.findViewById(R.id.txtBioCount);
-        chipGroupTags  = root.findViewById(R.id.chipGroupTags);
-        btnSave        = root.findViewById(R.id.btnSaveProfile);
-        btnBack        = root.findViewById(R.id.btnSubPageBack);
-        txtFieldError  = root.findViewById(R.id.txtEditProfileError);
+        dotGenderMale = root.findViewById(R.id.dotGenderMale);
+        dotGenderFemale = root.findViewById(R.id.dotGenderFemale);
+        txtGenderMale = root.findViewById(R.id.txtGenderMale);
+        txtGenderFemale = root.findViewById(R.id.txtGenderFemale);
+        dobBar = root.findViewById(R.id.dobBar);
+        segDay = root.findViewById(R.id.segDay);
+        segMonth = root.findViewById(R.id.segMonth);
+        segYear = root.findViewById(R.id.segYear);
+        txtDobDay = root.findViewById(R.id.txtDobDay);
+        txtDobMonth = root.findViewById(R.id.txtDobMonth);
+        txtDobYear = root.findViewById(R.id.txtDobYear);
+        icChevronDay = root.findViewById(R.id.icChevronDay);
+        icChevronMonth = root.findViewById(R.id.icChevronMonth);
+        icChevronYear = root.findViewById(R.id.icChevronYear);
+        etBio = root.findViewById(R.id.etBio);
+        txtBioCount = root.findViewById(R.id.txtBioCount);
+        chipGroupTags = root.findViewById(R.id.chipGroupTags);
+        btnSave = root.findViewById(R.id.btnSaveProfile);
+        btnBack = root.findViewById(R.id.btnSubPageBack);
+        txtFieldError = root.findViewById(R.id.txtEditProfileError);
 
         ((TextView) root.findViewById(R.id.txtSubPageTitle)).setText("Edit Profile");
 
@@ -186,8 +185,7 @@ public class EditProfileFragment extends Fragment {
 
     private void setupViewModel() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
-        EditProfileViewModelFactory factory =
-                new EditProfileViewModelFactory(app.getUserProfileRepository());
+        EditProfileViewModelFactory factory = new EditProfileViewModelFactory(app.getUserProfileRepository());
         viewModel = new ViewModelProvider(this, factory).get(EditProfileViewModel.class);
     }
 
@@ -210,9 +208,9 @@ public class EditProfileFragment extends Fragment {
 
         btnSave.setOnClickListener(v -> {
             String fullName = etFullName.getText().toString().trim();
-            String gender   = selectedGender.isEmpty() ? null : selectedGender;
-            String dob      = buildDobString();
-            String bio      = etBio.getText().toString().trim();
+            String gender = selectedGender.isEmpty() ? null : selectedGender;
+            String dob = buildDobString();
+            String bio = etBio.getText().toString().trim();
             List<String> tagIds = collectSelectedTagIds();
             viewModel.save(fullName, gender, dob, bio, tagIds);
         });
@@ -220,13 +218,17 @@ public class EditProfileFragment extends Fragment {
 
     private void setupBioCounter() {
         etBio.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void afterTextChanged(Editable s) {
+            @Override
+            public void afterTextChanged(Editable s) {
                 txtBioCount.setText(s.length() + "/500");
                 checkDirty();
             }
         });
         etFullName.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void afterTextChanged(Editable s) { checkDirty(); }
+            @Override
+            public void afterTextChanged(Editable s) {
+                checkDirty();
+            }
         });
     }
 
@@ -271,13 +273,16 @@ public class EditProfileFragment extends Fragment {
 
         // Capture originals once, after the first full load (all fields ready).
         if (origFullName == null && state.fullName != null) {
-            origFullName  = state.fullName;
-            origGender    = state.gender != null ? state.gender : "";
-            String[] dob  = parseDobToArray(state.dateOfBirth);
-            origDobDay    = dob[0]; origDobMonth = dob[1]; origDobYear = dob[2];
-            origBio       = state.bio != null ? state.bio : "";
-            origTagNames  = new HashSet<>(state.currentTagNames != null
-                                          ? state.currentTagNames : new ArrayList<>());
+            origFullName = state.fullName;
+            origGender = state.gender != null ? state.gender : "";
+            String[] dob = parseDobToArray(state.dateOfBirth);
+            origDobDay = dob[0];
+            origDobMonth = dob[1];
+            origDobYear = dob[2];
+            origBio = state.bio != null ? state.bio : "";
+            origTagNames = new HashSet<>(state.currentTagNames != null
+                    ? state.currentTagNames
+                    : new ArrayList<>());
             checkDirty();
         }
     }
@@ -300,18 +305,20 @@ public class EditProfileFragment extends Fragment {
         GradientDrawable dotBg = new GradientDrawable();
         dotBg.setShape(GradientDrawable.OVAL);
         dotBg.setColor(dotColor);
-        if (active) dotBg.setStroke(dpToPx(3), Color.parseColor("#FED7AA"));
+        if (active)
+            dotBg.setStroke(dpToPx(3), Color.parseColor("#FED7AA"));
         dot.setBackground(dotBg);
 
         label.setTextColor(active ? Color.parseColor("#F97316") : Color.parseColor("#44403C"));
         label.setTypeface(label.getTypeface(), active
-                ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+                ? android.graphics.Typeface.BOLD
+                : android.graphics.Typeface.NORMAL);
     }
 
     // ── DOB popup ─────────────────────────────────────────────────────────────
 
     private void showDobPopup(View anchor, TextView valueView, ImageView chevron,
-                              String[] items) {
+            String[] items) {
         dismissOpenPopup();
 
         String currentValue = valueView.getText().toString();
@@ -330,9 +337,12 @@ public class EditProfileFragment extends Fragment {
         popup.setOnItemClickListener((parent, view, position, id) -> {
             String chosen = items[position];
             valueView.setText(chosen);
-            if (anchor == segDay)        selectedDobDay   = chosen;
-            else if (anchor == segMonth) selectedDobMonth = chosen;
-            else                         selectedDobYear  = chosen;
+            if (anchor == segDay)
+                selectedDobDay = chosen;
+            else if (anchor == segMonth)
+                selectedDobMonth = chosen;
+            else
+                selectedDobYear = chosen;
             popup.dismiss();
             checkDirty();
         });
@@ -347,19 +357,21 @@ public class EditProfileFragment extends Fragment {
 
         // Scroll to selected item.
         int idx = Arrays.asList(items).indexOf(currentValue);
-        if (idx > 0) popup.getListView().setSelection(Math.max(0, idx - 1));
+        if (idx > 0)
+            popup.getListView().setSelection(Math.max(0, idx - 1));
     }
 
     private void setDobSegmentActive(View segment, TextView valueView,
-                                     ImageView chevron, boolean active) {
+            ImageView chevron, boolean active) {
         int color = active ? Color.parseColor("#F97316") : Color.parseColor("#1C1917");
         valueView.setTextColor(color);
         chevron.setColorFilter(active ? Color.parseColor("#F97316")
-                                      : Color.parseColor("#A8A29E"));
+                : Color.parseColor("#A8A29E"));
     }
 
     private void dismissOpenPopup() {
-        if (openPopup != null && openPopup.isShowing()) openPopup.dismiss();
+        if (openPopup != null && openPopup.isShowing())
+            openPopup.dismiss();
         openPopup = null;
     }
 
@@ -411,7 +423,8 @@ public class EditProfileFragment extends Fragment {
             View child = chipGroupTags.getChildAt(i);
             if (child instanceof Chip && ((Chip) child).isChecked()) {
                 Object tagId = child.getTag();
-                if (tagId instanceof String) result.add((String) tagId);
+                if (tagId instanceof String)
+                    result.add((String) tagId);
             }
         }
         return result;
@@ -431,7 +444,8 @@ public class EditProfileFragment extends Fragment {
     // ── Dirty check ───────────────────────────────────────────────────────────
 
     private void checkDirty() {
-        if (origFullName == null) return; // originals not yet loaded
+        if (origFullName == null)
+            return; // originals not yet loaded
 
         boolean dirty = false;
         dirty |= !etFullName.getText().toString().trim().equals(origFullName);
@@ -440,7 +454,8 @@ public class EditProfileFragment extends Fragment {
         dirty |= !selectedDobMonth.equals(origDobMonth);
         dirty |= !selectedDobYear.equals(origDobYear);
         dirty |= !etBio.getText().toString().trim().equals(origBio);
-        // Skip tag comparison until chips are rendered (avoids false-dirty on first load).
+        // Skip tag comparison until chips are rendered (avoids false-dirty on first
+        // load).
         if (chipGroupTags.getChildCount() > 0) {
             dirty |= !collectSelectedTagNames().equals(origTagNames);
         }
@@ -452,23 +467,26 @@ public class EditProfileFragment extends Fragment {
     // ── DOB helpers ───────────────────────────────────────────────────────────
 
     private void parseDobIntoSegments(String dob) {
-        if (dob == null || dob.isEmpty()) return;
+        if (dob == null || dob.isEmpty())
+            return;
         // Expected format: yyyy-MM-dd
         try {
             String[] parts = dob.split("-");
             if (parts.length == 3) {
-                selectedDobYear  = parts[0];
-                int monthIdx     = Integer.parseInt(parts[1]) - 1;
+                selectedDobYear = parts[0];
+                int monthIdx = Integer.parseInt(parts[1]) - 1;
                 selectedDobMonth = (monthIdx >= 0 && monthIdx < MONTHS.length) ? MONTHS[monthIdx] : parts[1];
-                selectedDobDay   = String.valueOf(Integer.parseInt(parts[2]));
+                selectedDobDay = String.valueOf(Integer.parseInt(parts[2]));
                 // Pad day to match DAYS array format (e.g. "01", "02"...)
-                if (selectedDobDay.length() == 1) selectedDobDay = "0" + selectedDobDay;
+                if (selectedDobDay.length() == 1)
+                    selectedDobDay = "0" + selectedDobDay;
 
                 txtDobDay.setText(selectedDobDay);
                 txtDobMonth.setText(selectedDobMonth);
                 txtDobYear.setText(selectedDobYear);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private String[] parseDobToArray(String dob) {
@@ -477,15 +495,17 @@ public class EditProfileFragment extends Fragment {
             try {
                 String[] parts = dob.split("-");
                 if (parts.length == 3) {
-                    year  = parts[0];
+                    year = parts[0];
                     int m = Integer.parseInt(parts[1]) - 1;
                     month = (m >= 0 && m < MONTHS.length) ? MONTHS[m] : parts[1];
-                    day   = String.valueOf(Integer.parseInt(parts[2]));
-                    if (day.length() == 1) day = "0" + day;
+                    day = String.valueOf(Integer.parseInt(parts[2]));
+                    if (day.length() == 1)
+                        day = "0" + day;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
-        return new String[]{day, month, year};
+        return new String[] { day, month, year };
     }
 
     private String buildDobString() {
@@ -512,21 +532,28 @@ public class EditProfileFragment extends Fragment {
 
     private static String[] buildDays() {
         String[] days = new String[31];
-        for (int i = 0; i < 31; i++) days[i] = String.format("%02d", i + 1);
+        for (int i = 0; i < 31; i++)
+            days[i] = String.format("%02d", i + 1);
         return days;
     }
 
     private static String[] buildYears() {
         String[] years = new String[75];
-        for (int i = 0; i < 75; i++) years[i] = String.valueOf(2024 - i);
+        for (int i = 0; i < 75; i++)
+            years[i] = String.valueOf(2024 - i);
         return years;
     }
 
     // ── Inner: SimpleTextWatcher ──────────────────────────────────────────────
 
     private abstract static class SimpleTextWatcher implements TextWatcher {
-        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
     }
 
     // ── Inner: DobPopupAdapter ────────────────────────────────────────────────
@@ -546,11 +573,11 @@ public class EditProfileFragment extends Fragment {
                 convertView = LayoutInflater.from(getContext())
                         .inflate(R.layout.item_dob_option, parent, false);
             }
-            String item     = getItem(position);
+            String item = getItem(position);
             boolean isSelected = item != null && item.equals(selectedValue);
 
             TextView txt = convertView.findViewById(R.id.txtDobOption);
-            View dot     = convertView.findViewById(R.id.dobDot);
+            View dot = convertView.findViewById(R.id.dobDot);
             txt.setText(item);
 
             if (isSelected) {

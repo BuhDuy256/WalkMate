@@ -42,57 +42,58 @@ import java.util.Locale;
  * friendship action views (isSelf == true).
  *
  * Entry points:
- *   - HomeFragment (quick-invite card tap) via NavController
- *   - ProposalFragment (partner avatar/name tap) via NavController
- *   - SessionHistoryFragment (partner name tap) via NavController
- *   - PostSessionSummaryFragment (partner name tap) via MainActivity Intent → NavController
+ * - HomeFragment (quick-invite card tap) via NavController
+ * - ProposalFragment (partner avatar/name tap) via NavController
+ * - SessionHistoryFragment (partner name tap) via NavController
+ * - PostSessionSummaryFragment (partner name tap) via MainActivity Intent →
+ * NavController
  *
  * Navigation argument:
- *   Bundle key "userId" — String, required.
+ * Bundle key "userId" — String, required.
  */
 public class PublicProfileFragment extends Fragment {
 
-    public static final String TAG                    = "PublicProfileFragment";
-    public static final String ARG_USER_ID            = "userId";
-    public static final String ARG_VIEW_MODE          = "viewMode";
+    public static final String TAG = "PublicProfileFragment";
+    public static final String ARG_USER_ID = "userId";
+    public static final String ARG_VIEW_MODE = "viewMode";
     public static final String ARG_ALLOW_FRIEND_REQUEST = "allowFriendRequest";
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private ProgressBar     progressBar;
-    private TextView        txtError;
-    private View            contentView;
+    private ProgressBar progressBar;
+    private TextView txtError;
+    private View contentView;
 
-    private AvatarInitialView   avatarView;
-    private TextView            txtName;
-    private TextView            txtBio;
-    private TagChipGroup        chipGroupTags;
+    private AvatarInitialView avatarView;
+    private TextView txtName;
+    private TextView txtBio;
+    private TagChipGroup chipGroupTags;
 
-    private WalkMateStatColumn  statDistance;
-    private WalkMateStatColumn  statSessions;
-    private WalkMateStatColumn  statTrustScore;
+    private WalkMateStatColumn statDistance;
+    private WalkMateStatColumn statSessions;
+    private WalkMateStatColumn statTrustScore;
 
-    private ChipGroup           chipGroupBadges;
-    private TextView            txtNoBadges;
+    private ChipGroup chipGroupBadges;
+    private TextView txtNoBadges;
 
-    private RecyclerView        rvReviews;
-    private TextView            txtNoReviews;
-    private ReviewAdapter       reviewAdapter;
+    private RecyclerView rvReviews;
+    private TextView txtNoReviews;
+    private ReviewAdapter reviewAdapter;
 
-    private View                layoutFriendshipActions;
-    private WalkMateButton      btnAddFriend;
-    private WalkMateButton      btnRequestSent;
-    private WalkMateButton      btnAcceptRequest;
-    private WalkMateButton      btnDeclineRequest;
-    private WalkMateButton      btnInviteWalk;
-    private WalkMateButton      btnRemoveFriend;
+    private View layoutFriendshipActions;
+    private WalkMateButton btnAddFriend;
+    private WalkMateButton btnRequestSent;
+    private WalkMateButton btnAcceptRequest;
+    private WalkMateButton btnDeclineRequest;
+    private WalkMateButton btnInviteWalk;
+    private WalkMateButton btnRemoveFriend;
 
-    private View                btnOverflowMenu;
-    private View                btnBack;
+    private View btnOverflowMenu;
+    private View btnBack;
 
     // ── Friend-only extras ────────────────────────────────────────────────────
 
-    private View     layoutLastActiveAt;
+    private View layoutLastActiveAt;
     private TextView txtLastActiveAt;
 
     // ── MVVM ──────────────────────────────────────────────────────────────────
@@ -100,9 +101,9 @@ public class PublicProfileFragment extends Fragment {
     private PublicProfileViewModel viewModel;
 
     // Cached for friendship mutation callbacks
-    private String  currentUserId;
+    private String currentUserId;
     // requestId when PENDING_RECEIVED — populated from the profile state
-    private String  pendingRequestId;
+    private String pendingRequestId;
     // false when the caller does not allow friend requests (e.g. Proposal screen)
     private boolean allowFriendRequest = true;
 
@@ -111,8 +112,8 @@ public class PublicProfileFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_public_profile, container, false);
     }
 
@@ -125,7 +126,7 @@ public class PublicProfileFragment extends Fragment {
         setupViewModel();
 
         Bundle args = getArguments();
-        currentUserId      = args != null ? args.getString(ARG_USER_ID) : null;
+        currentUserId = args != null ? args.getString(ARG_USER_ID) : null;
         allowFriendRequest = args == null || args.getBoolean(ARG_ALLOW_FRIEND_REQUEST, true);
 
         setupClickListeners(view);
@@ -136,7 +137,8 @@ public class PublicProfileFragment extends Fragment {
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getNavigateBackEvent().observe(getViewLifecycleOwner(), shouldGoBack -> {
-            if (!Boolean.TRUE.equals(shouldGoBack)) return;
+            if (!Boolean.TRUE.equals(shouldGoBack))
+                return;
             viewModel.consumeNavigateBackEvent();
             navigateBack();
         });
@@ -145,38 +147,38 @@ public class PublicProfileFragment extends Fragment {
     // ── Setup helpers ─────────────────────────────────────────────────────────
 
     private void bindViews(View root) {
-        progressBar     = root.findViewById(R.id.progressPublicProfile);
-        txtError        = root.findViewById(R.id.txtPublicProfileError);
-        contentView     = root.findViewById(R.id.contentPublicProfile);
+        progressBar = root.findViewById(R.id.progressPublicProfile);
+        txtError = root.findViewById(R.id.txtPublicProfileError);
+        contentView = root.findViewById(R.id.contentPublicProfile);
 
-        avatarView      = root.findViewById(R.id.avatarPublicProfile);
-        txtName         = root.findViewById(R.id.txtPublicProfileName);
-        txtBio          = root.findViewById(R.id.txtPublicProfileBio);
-        chipGroupTags   = root.findViewById(R.id.chipGroupPublicProfileTags);
+        avatarView = root.findViewById(R.id.avatarPublicProfile);
+        txtName = root.findViewById(R.id.txtPublicProfileName);
+        txtBio = root.findViewById(R.id.txtPublicProfileBio);
+        chipGroupTags = root.findViewById(R.id.chipGroupPublicProfileTags);
 
-        statDistance    = root.findViewById(R.id.statPublicDistance);
-        statSessions    = root.findViewById(R.id.statPublicSessions);
-        statTrustScore  = root.findViewById(R.id.statPublicTrustScore);
+        statDistance = root.findViewById(R.id.statPublicDistance);
+        statSessions = root.findViewById(R.id.statPublicSessions);
+        statTrustScore = root.findViewById(R.id.statPublicTrustScore);
 
         chipGroupBadges = root.findViewById(R.id.chipGroupPublicBadges);
-        txtNoBadges     = root.findViewById(R.id.txtNoBadges);
+        txtNoBadges = root.findViewById(R.id.txtNoBadges);
 
-        rvReviews       = root.findViewById(R.id.rvPublicProfileReviews);
-        txtNoReviews    = root.findViewById(R.id.txtNoReviews);
+        rvReviews = root.findViewById(R.id.rvPublicProfileReviews);
+        txtNoReviews = root.findViewById(R.id.txtNoReviews);
 
         layoutLastActiveAt = root.findViewById(R.id.layoutLastActiveAt);
-        txtLastActiveAt    = root.findViewById(R.id.txtLastActiveAt);
+        txtLastActiveAt = root.findViewById(R.id.txtLastActiveAt);
 
         layoutFriendshipActions = root.findViewById(R.id.layoutFriendshipActions);
-        btnAddFriend            = root.findViewById(R.id.btnAddFriend);
-        btnRequestSent          = root.findViewById(R.id.btnRequestSent);
-        btnAcceptRequest        = root.findViewById(R.id.btnAcceptRequest);
-        btnDeclineRequest       = root.findViewById(R.id.btnDeclineRequest);
-        btnInviteWalk           = root.findViewById(R.id.btnInviteWalk);
-        btnRemoveFriend         = root.findViewById(R.id.btnRemoveFriend);
+        btnAddFriend = root.findViewById(R.id.btnAddFriend);
+        btnRequestSent = root.findViewById(R.id.btnRequestSent);
+        btnAcceptRequest = root.findViewById(R.id.btnAcceptRequest);
+        btnDeclineRequest = root.findViewById(R.id.btnDeclineRequest);
+        btnInviteWalk = root.findViewById(R.id.btnInviteWalk);
+        btnRemoveFriend = root.findViewById(R.id.btnRemoveFriend);
 
         btnOverflowMenu = root.findViewById(R.id.btnOverflowMenu);
-        btnBack         = root.findViewById(R.id.btnBackPublicProfile);
+        btnBack = root.findViewById(R.id.btnBackPublicProfile);
     }
 
     private void setupRecyclerView() {
@@ -202,31 +204,36 @@ public class PublicProfileFragment extends Fragment {
         btnOverflowMenu.setOnClickListener(v -> showOverflowMenu(v));
 
         btnAddFriend.setOnClickListener(v -> {
-            if (!requiresAuth()) return;
+            if (!requiresAuth())
+                return;
             viewModel.sendFriendRequest(currentUserId);
         });
 
         btnAcceptRequest.setOnClickListener(v -> {
-            if (!requiresAuth()) return;
+            if (!requiresAuth())
+                return;
             if (pendingRequestId != null) {
                 viewModel.acceptIncomingRequest(pendingRequestId);
             }
         });
 
         btnDeclineRequest.setOnClickListener(v -> {
-            if (!requiresAuth()) return;
+            if (!requiresAuth())
+                return;
             if (pendingRequestId != null) {
                 viewModel.declineIncomingRequest(pendingRequestId);
             }
         });
 
         btnRemoveFriend.setOnClickListener(v -> {
-            if (!requiresAuth()) return;
+            if (!requiresAuth())
+                return;
             viewModel.removeFriend(currentUserId);
         });
 
         btnInviteWalk.setOnClickListener(v -> {
-            if (!requiresAuth()) return;
+            if (!requiresAuth())
+                return;
             // Phase 5 will deep-link to ExploreFragment with friendId pre-filled.
             Toast.makeText(requireContext(), "Invite Walk — coming soon!", Toast.LENGTH_SHORT).show();
         });
@@ -266,7 +273,8 @@ public class PublicProfileFragment extends Fragment {
     }
 
     private void renderIdentity(UserSummary profile) {
-        if (profile == null) return;
+        if (profile == null)
+            return;
 
         avatarView.bind(profile.getFullName(), profile.getAvatarUrl());
         txtName.setText(profile.getFullName());
@@ -285,8 +293,8 @@ public class PublicProfileFragment extends Fragment {
         if (tags != null && !tags.isEmpty()) {
             chipGroupTags.removeAllViews();
             for (String tag : tags) {
-                com.google.android.material.chip.Chip chip =
-                        new com.google.android.material.chip.Chip(requireContext());
+                com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(
+                        requireContext());
                 chip.setText(tag);
                 chip.setClickable(false);
                 chipGroupTags.addView(chip);
@@ -342,7 +350,8 @@ public class PublicProfileFragment extends Fragment {
     }
 
     private void renderFriendExtras(UserSummary profile, boolean isFriend) {
-        if (layoutLastActiveAt == null) return;
+        if (layoutLastActiveAt == null)
+            return;
         if (isFriend && profile != null && profile.getLastActiveAt() != null) {
             txtLastActiveAt.setText(profile.getLastActiveAt());
             layoutLastActiveAt.setVisibility(View.VISIBLE);
@@ -352,10 +361,12 @@ public class PublicProfileFragment extends Fragment {
     }
 
     private void renderFriendshipActions(UserSummary profile, String status, boolean isSelf) {
-        // Hide all friendship views when viewing own profile or when caller disallows it
+        // Hide all friendship views when viewing own profile or when caller disallows
+        // it
         boolean hide = isSelf || !allowFriendRequest;
         layoutFriendshipActions.setVisibility(hide ? View.GONE : View.VISIBLE);
-        if (hide) return;
+        if (hide)
+            return;
 
         // Reset all to gone, then show the relevant subset
         btnAddFriend.setVisibility(View.GONE);
@@ -365,7 +376,8 @@ public class PublicProfileFragment extends Fragment {
         btnInviteWalk.setVisibility(View.GONE);
         btnRemoveFriend.setVisibility(View.GONE);
 
-        if (status == null) status = "NONE";
+        if (status == null)
+            status = "NONE";
         switch (status) {
             case "NONE":
                 btnAddFriend.setVisibility(View.VISIBLE);
@@ -395,7 +407,8 @@ public class PublicProfileFragment extends Fragment {
         popup.getMenu().add(0, MENU_BLOCK_USER, 0, "Block User");
         popup.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == MENU_BLOCK_USER) {
-                if (!requiresAuth()) return true;
+                if (!requiresAuth())
+                    return true;
                 viewModel.blockUser(currentUserId);
                 return true;
             }
@@ -410,7 +423,8 @@ public class PublicProfileFragment extends Fragment {
      */
     private boolean requiresAuth() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
-        if (app.getSessionManager().hasUsableAccessToken()) return true;
+        if (app.getSessionManager().hasUsableAccessToken())
+            return true;
         Toast.makeText(requireContext(),
                 "Log in to manage friendships.", Toast.LENGTH_SHORT).show();
         startActivity(new Intent(requireContext(), AuthActivity.class));
