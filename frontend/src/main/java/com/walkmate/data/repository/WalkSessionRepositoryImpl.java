@@ -179,6 +179,26 @@ public class WalkSessionRepositoryImpl implements WalkSessionRepository {
     }
 
     @Override
+    public void getSessionSummary(String sessionId, DomainCallback<SessionSummary> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<SessionSummaryResponse>> resp =
+                        apiService.getSessionSummary(sessionId).execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(SessionSummaryMapper.toDomain(resp.body().getData()));
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SESSION_SUMMARY_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getSessionSummary network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
     public void getSessionRoute(String sessionId, DomainCallback<SessionRoute> callback) {
         executor.execute(() -> {
             try {

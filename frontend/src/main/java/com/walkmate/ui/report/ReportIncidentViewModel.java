@@ -8,8 +8,6 @@ import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
-import java.util.List;
-
 /**
  * ViewModel for the Report Incident screen.
  *
@@ -33,28 +31,20 @@ public class ReportIncidentViewModel extends ViewModel {
     }
 
     /**
-     * Checks whether the session has already been reported by the current user.
-     * Posts {@link ReportIncidentUiState#alreadyReported()} if so, or
-     * {@link ReportIncidentUiState#idle()} if not.
+     * Checks whether the session has already been reported by fetching the
+     * session summary directly. Posts {@link ReportIncidentUiState.Kind#ALREADY_REPORTED}
+     * with the full snapshot so the Fragment can pre-fill reason and evidence URL.
+     * Falls back to {@link ReportIncidentUiState.Kind#IDLE} on any error so the user
+     * can still attempt to submit.
      */
     public void loadReportState(String sessionId) {
         uiState.postValue(ReportIncidentUiState.loading());
 
-        sessionRepo.getSessionHistory(new DomainCallback<List<SessionSummary>>() {
+        sessionRepo.getSessionSummary(sessionId, new DomainCallback<SessionSummary>() {
             @Override
-            public void onSuccess(List<SessionSummary> sessions) {
-                boolean alreadyReported = false;
-                SessionSummary.ReportSnapshot domainSnap = null;
-                if (sessions != null) {
-                    for (SessionSummary s : sessions) {
-                        if (sessionId.equals(s.getSessionId())) {
-                            alreadyReported = s.isReported();
-                            domainSnap = s.getReportSnapshot();
-                            break;
-                        }
-                    }
-                }
-                if (alreadyReported) {
+            public void onSuccess(SessionSummary session) {
+                if (session.isReported()) {
+                    SessionSummary.ReportSnapshot domainSnap = session.getReportSnapshot();
                     ReportIncidentUiState.ReportSnapshot uiSnap = domainSnap != null
                             ? new ReportIncidentUiState.ReportSnapshot(
                                     domainSnap.getReason(),

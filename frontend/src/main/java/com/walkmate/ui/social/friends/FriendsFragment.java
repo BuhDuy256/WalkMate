@@ -55,11 +55,13 @@ public class FriendsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.friendsHeader));
+        WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
         tabLayout = view.findViewById(R.id.tabLayoutFriends);
         viewPager = view.findViewById(R.id.viewPagerFriends);
         btnBack   = view.findViewById(R.id.btnSubPageBack);
+
+        ((android.widget.TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Friends");
 
         // ── ViewModel (scoped to this fragment) ───────────────────────────────
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();

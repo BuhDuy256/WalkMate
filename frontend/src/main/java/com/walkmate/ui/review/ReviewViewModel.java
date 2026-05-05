@@ -120,33 +120,24 @@ public class ReviewViewModel extends ViewModel {
     }
 
     /**
-     * Checks whether the session has already been reviewed.
-     * Loads session history, finds the matching entry, and posts
-     * {@link ReviewUiState#alreadyReviewed()} if reviewed, or
-     * {@link ReviewUiState#idle()} if not.
+     * Checks whether the session has already been reviewed by fetching the
+     * session summary directly. Posts {@link ReviewUiState.Kind#ALREADY_REVIEWED}
+     * with the full snapshot so the Fragment can pre-fill stars, comment, and tags.
+     * Falls back to {@link ReviewUiState.Kind#IDLE} on any error so the user can
+     * still attempt to submit.
      */
     public void loadReviewState(String sessionId) {
         ReviewUiState snapshot = reviewUiState.getValue();
         ReviewUiState base = snapshot != null ? snapshot : ReviewUiState.idle();
         reviewUiState.postValue(base.withKind(ReviewUiState.Kind.LOADING));
 
-        sessionRepository.getSessionHistory(new DomainCallback<List<SessionSummary>>() {
+        sessionRepository.getSessionSummary(sessionId, new DomainCallback<SessionSummary>() {
             @Override
-            public void onSuccess(List<SessionSummary> sessions) {
-                boolean alreadyReviewed = false;
-                SessionSummary.ReviewSnapshot domainSnap = null;
-                if (sessions != null) {
-                    for (SessionSummary s : sessions) {
-                        if (sessionId.equals(s.getSessionId())) {
-                            alreadyReviewed = s.isReviewed();
-                            domainSnap = s.getReviewSnapshot();
-                            break;
-                        }
-                    }
-                }
+            public void onSuccess(SessionSummary session) {
                 ReviewUiState cur = reviewUiState.getValue();
                 ReviewUiState next = cur != null ? cur : ReviewUiState.idle();
-                if (alreadyReviewed) {
+                if (session.isReviewed()) {
+                    SessionSummary.ReviewSnapshot domainSnap = session.getReviewSnapshot();
                     ReviewUiState.ReviewSnapshot uiSnap = domainSnap != null
                             ? new ReviewUiState.ReviewSnapshot(
                                     domainSnap.getRatingStars(),

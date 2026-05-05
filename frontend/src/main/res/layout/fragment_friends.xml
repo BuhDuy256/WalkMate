@@ -7,35 +7,20 @@
     android:orientation="vertical"
     android:background="@color/bg_cream">
 
-    <!-- ── Header row: back button inline with tabs ──────────────────────── -->
+    <!-- ── Sticky header ──────────────────────────────────────────────────── -->
     <LinearLayout
-        android:id="@+id/friendsHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:orientation="vertical"
         android:background="@color/bg_white"
-        android:elevation="4dp"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="6dp">
+        android:elevation="4dp">
 
-        <ImageButton
-            android:id="@+id/btnSubPageBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_btn_back"
-            android:src="@drawable/ic_back"
-            android:padding="8dp"
-            android:layout_marginEnd="4dp"
-            android:layout_marginBottom="6dp"
-            android:contentDescription="Back" />
+        <include layout="@layout/layout_sub_page_header" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayoutFriends"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             app:tabMode="fixed"
             app:tabGravity="fill"
             app:tabSelectedTextColor="@color/orange_primary"
@@ -44,6 +29,12 @@
             app:tabIndicatorHeight="2.5dp"
             app:tabIndicatorFullWidth="false"
             app:tabBackground="@android:color/transparent" />
+
+        <!-- 1dp bottom border under tabs -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F3F2F0" />
 
     </LinearLayout>
 

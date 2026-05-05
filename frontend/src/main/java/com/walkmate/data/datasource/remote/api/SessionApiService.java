@@ -38,6 +38,11 @@ public interface SessionApiService {
     @GET("api/v1/sessions/history")
     Call<ApiResponse<List<SessionSummaryResponse>>> getSessionHistory();
 
+    // UC-22b — Fetch single session summary (review + report snapshot) by ID
+    @GET("api/v1/sessions/{sessionId}/summary")
+    Call<ApiResponse<SessionSummaryResponse>> getSessionSummary(
+            @Path("sessionId") String sessionId);
+
     // UC-23 — Fetch GPS route for a completed session
     @GET("api/v1/sessions/{sessionId}/route")
     Call<ApiResponse<SessionRouteResponse>> getSessionRoute(

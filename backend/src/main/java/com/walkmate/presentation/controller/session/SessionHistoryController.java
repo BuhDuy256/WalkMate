@@ -39,6 +39,22 @@ public class SessionHistoryController {
     }
 
     /**
+     * GET /api/v1/sessions/{sessionId}/summary
+     * Returns the session summary (including review/report snapshot) for one session.
+     * Used by the post-session Review and Report screens to restore previously
+     * submitted form data without loading the full history list.
+     */
+    @GetMapping("/{sessionId}/summary")
+    public ResponseEntity<ApiResponse<SessionSummaryResponse>> getSessionSummary(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String sessionId) {
+
+        SessionSummaryResponse summary =
+                historyQueryService.getSessionSummary(sessionId, principal.userId());
+        return ResponseEntity.ok(ApiResponse.success(summary));
+    }
+
+    /**
      * GET /api/v1/sessions/{sessionId}/route
      * Returns dual-path GPS polylines and walk stats for a finished session.
      * Caller must be a participant. PENDING and ACTIVE sessions are rejected.

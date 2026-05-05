@@ -5,8 +5,10 @@ import com.walkmate.domain.report.SessionReportRepository;
 import com.walkmate.domain.review.ReviewTagRepository;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.review.WalkReviewRepository;
+import com.walkmate.domain.session.SessionErrorCode;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
+import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserProfileSnapshot;
 import com.walkmate.presentation.dto.response.session.ParticipantSummaryResponse;
@@ -33,6 +35,24 @@ public class SessionHistoryQueryService {
     private final ReviewTagRepository     tagRepository;
     private final SessionReportRepository reportRepository;
     private final UserProfileRepository   profileRepository;
+
+    /**
+     * Returns the summary for a single session (review + report snapshot included).
+     * Used by the post-session Review and Report screens to pre-fill previously
+     * submitted form data without loading the entire history list.
+     */
+    @Transactional(readOnly = true)
+    public SessionSummaryResponse getSessionSummary(String sessionId, String callerId) {
+        WalkSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new DomainException(SessionErrorCode.SESSION_NOT_FOUND));
+
+        UUID userIdA = UUID.fromString(session.getUserIdA());
+        UUID userIdB = UUID.fromString(session.getUserIdB());
+        Map<UUID, UserProfileSnapshot> snapshots =
+                profileRepository.findSnapshotsByUserIds(Set.of(userIdA, userIdB));
+
+        return toSummary(session, callerId, snapshots);
+    }
 
     /**
      * Returns a summary list of terminal sessions for the caller, newest first.

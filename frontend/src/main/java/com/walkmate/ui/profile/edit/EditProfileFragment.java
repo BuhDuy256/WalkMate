@@ -140,17 +140,8 @@ public class EditProfileFragment extends Fragment {
     // ── Setup ─────────────────────────────────────────────────────────────────
 
     private void applyWindowInsets(View root) {
-        View contentRoot = root.findViewById(R.id.editProfileContentRoot);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            int top    = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-            contentRoot.setPadding(
-                    contentRoot.getPaddingLeft(),
-                    top + contentRoot.getPaddingTop(),
-                    contentRoot.getPaddingRight(),
-                    bottom + contentRoot.getPaddingBottom());
-            return insets;
-        });
+        com.walkmate.core.util.WindowInsetUtils.applyStatusBarPadding(root.findViewById(R.id.subPageHeader));
+        com.walkmate.core.util.WindowInsetUtils.applyNavBarPadding(root.findViewById(R.id.editProfileContentRoot));
     }
 
     private void bindViews(View root) {
@@ -177,8 +168,10 @@ public class EditProfileFragment extends Fragment {
         txtBioCount    = root.findViewById(R.id.txtBioCount);
         chipGroupTags  = root.findViewById(R.id.chipGroupTags);
         btnSave        = root.findViewById(R.id.btnSaveProfile);
-        btnBack        = root.findViewById(R.id.btnBackEditProfile);
+        btnBack        = root.findViewById(R.id.btnSubPageBack);
         txtFieldError  = root.findViewById(R.id.txtEditProfileError);
+
+        ((TextView) root.findViewById(R.id.txtSubPageTitle)).setText("Edit Profile");
 
         // Clip avatar ImageView to circle using ViewOutlineProvider.
         imgAvatar.setOutlineProvider(new android.view.ViewOutlineProvider() {

@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -204,36 +203,27 @@ public class ReportIncidentFragment extends Fragment {
     }
 
     private void selectReasonRadio(String apiReason) {
-        for (int i = 0; i < rgReason.getChildCount(); i++) {
-            View child = rgReason.getChildAt(i);
-            if (child instanceof RadioButton) {
-                RadioButton rb = (RadioButton) child;
-                String label = rb.getText().toString();
-                String thisValue;
-                if (label.contains("Safety"))          thisValue = AbortReason.SAFETY_CONCERN.toApiValue();
-                else if (label.contains("Emergency"))  thisValue = AbortReason.EMERGENCY.toApiValue();
-                else if (label.contains("Misconduct")) thisValue = AbortReason.PARTNER_MISCONDUCT.toApiValue();
-                else                                   thisValue = AbortReason.OTHER.toApiValue();
-                if (apiReason.equals(thisValue)) {
-                    rb.setChecked(true);
-                    break;
-                }
-            }
+        int idToCheck;
+        if (AbortReason.SAFETY_CONCERN.toApiValue().equals(apiReason)) {
+            idToCheck = R.id.rbSafetyConcern;
+        } else if (AbortReason.EMERGENCY.toApiValue().equals(apiReason)) {
+            idToCheck = R.id.rbEmergency;
+        } else if (AbortReason.PARTNER_MISCONDUCT.toApiValue().equals(apiReason)) {
+            idToCheck = R.id.rbPartnerMisconduct;
+        } else {
+            idToCheck = R.id.rbOther;
         }
+        rgReason.check(idToCheck);
     }
 
     @Nullable
     private String selectedReason() {
         int selectedId = rgReason.getCheckedRadioButtonId();
         if (selectedId == View.NO_ID) return null;
-
-        RadioButton rb = requireView().findViewById(selectedId);
-        if (rb == null) return null;
-
-        String label = rb.getText().toString();
-        if (label.contains("Safety"))     return AbortReason.SAFETY_CONCERN.toApiValue();
-        if (label.contains("Emergency"))  return AbortReason.EMERGENCY.toApiValue();
-        if (label.contains("Misconduct")) return AbortReason.PARTNER_MISCONDUCT.toApiValue();
-        return AbortReason.OTHER.toApiValue();
+        if (selectedId == R.id.rbSafetyConcern)    return AbortReason.SAFETY_CONCERN.toApiValue();
+        if (selectedId == R.id.rbEmergency)         return AbortReason.EMERGENCY.toApiValue();
+        if (selectedId == R.id.rbPartnerMisconduct) return AbortReason.PARTNER_MISCONDUCT.toApiValue();
+        if (selectedId == R.id.rbOther)             return AbortReason.OTHER.toApiValue();
+        return null;
     }
 }
