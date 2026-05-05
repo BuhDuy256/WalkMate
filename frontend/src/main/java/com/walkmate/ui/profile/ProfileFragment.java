@@ -191,6 +191,11 @@ public class ProfileFragment extends Fragment {
 
         menuFriends = root.findViewById(R.id.menuFriends);
         btnLogoutAll = root.findViewById(R.id.btnLogoutAll);
+
+        cardAdminDashboard   = root.findViewById(R.id.cardAdminDashboard);
+        txtAdminPendingBadge = root.findViewById(R.id.txtAdminPendingBadge);
+        txtAdminPendingInfo  = root.findViewById(R.id.txtAdminPendingInfo);
+        btnOpenAdminPanel    = root.findViewById(R.id.btnOpenAdminPanel);
     }
 
     private void setupViewModel() {
@@ -198,7 +203,8 @@ public class ProfileFragment extends Fragment {
         ProfileViewModelFactory factory = new ProfileViewModelFactory(app.getUserProfileRepository(),
                 requireContext(),
                 app.getGamificationRepository(),
-                app.getReviewRepository());
+                app.getReviewRepository(),
+                app.getAdminReportRepository());
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
     }
 
