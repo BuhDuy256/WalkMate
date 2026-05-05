@@ -55,6 +55,21 @@ public class CreateIntentViewModel extends ViewModel {
         post(current().withFriend(userId, fullName).withPrivateIntentError(null));
     }
 
+    /**
+     * Called when ExploreFragment is opened from FriendsFragment with a friend pre-selected.
+     * Enables private mode and pins the friend only if no friend has been chosen yet,
+     * so a manual selection or a config-change re-entry never overwrites the user's choice.
+     */
+    public void preSelectFriend(String userId, String fullName) {
+        CreateIntentUiState s = current();
+        if (s.getInvitedFriendId() != null) return;
+        CreateIntentUiState updated = s.withPrivate(true).withFriend(userId, fullName).withPrivateIntentError(null);
+        post(updated);
+        if (updated.getFriendList().isEmpty()) {
+            loadFriends();
+        }
+    }
+
     public void loadFriends() {
         post(current().withFriendListLoading(true));
         socialRepository.getFriends(new DomainCallback<List<UserSummary>>() {

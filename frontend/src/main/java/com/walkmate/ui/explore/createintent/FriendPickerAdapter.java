@@ -14,17 +14,18 @@ import com.walkmate.domain.social.UserSummary;
 
 import java.util.List;
 
-/** Simple adapter for the friend-picker bottom sheet. */
+/** Adapter for the friend-picker bottom sheet used in the Create Intent flow. */
 class FriendPickerAdapter extends RecyclerView.Adapter<FriendPickerAdapter.VH> {
 
-    interface OnFriendClickListener {
-        void onClick(String userId, String fullName);
+    interface OnFriendActionListener {
+        void onInvite(String userId, String fullName);
+        void onViewProfile(String userId);
     }
 
     private final List<UserSummary> items;
-    private final OnFriendClickListener listener;
+    private final OnFriendActionListener listener;
 
-    FriendPickerAdapter(List<UserSummary> items, OnFriendClickListener listener) {
+    FriendPickerAdapter(List<UserSummary> items, OnFriendActionListener listener) {
         this.items    = items;
         this.listener = listener;
     }
@@ -42,8 +43,18 @@ class FriendPickerAdapter extends RecyclerView.Adapter<FriendPickerAdapter.VH> {
         UserSummary friend = items.get(position);
         holder.avatar.bind(friend.getFullName(), friend.getAvatarUrl());
         holder.name.setText(friend.getFullName());
+
+        // "Remove" is not applicable in the picker context.
+        holder.btnRemove.setVisibility(View.GONE);
+
+        holder.btnInvite.setOnClickListener(v ->
+                listener.onInvite(friend.getUserId(), friend.getFullName()));
+        holder.btnViewProfile.setOnClickListener(v ->
+                listener.onViewProfile(friend.getUserId()));
+
+        // Tapping anywhere else on the card also invites the friend.
         holder.itemView.setOnClickListener(v ->
-                listener.onClick(friend.getUserId(), friend.getFullName()));
+                listener.onInvite(friend.getUserId(), friend.getFullName()));
     }
 
     @Override
@@ -51,12 +62,18 @@ class FriendPickerAdapter extends RecyclerView.Adapter<FriendPickerAdapter.VH> {
 
     static class VH extends RecyclerView.ViewHolder {
         final AvatarInitialView avatar;
-        final TextView name;
+        final TextView          name;
+        final View              btnInvite;
+        final View              btnViewProfile;
+        final View              btnRemove;
 
         VH(@NonNull View v) {
             super(v);
-            avatar = v.findViewById(R.id.avatarFriend);
-            name   = v.findViewById(R.id.txtFriendName);
+            avatar         = v.findViewById(R.id.avatarFriend);
+            name           = v.findViewById(R.id.txtFriendName);
+            btnInvite      = v.findViewById(R.id.btnFriendInviteWalk);
+            btnViewProfile = v.findViewById(R.id.btnFriendViewProfile);
+            btnRemove      = v.findViewById(R.id.btnFriendRemove);
         }
     }
 }

@@ -22,7 +22,7 @@ import com.walkmate.domain.social.UserSummary;
 public class FriendsAdapter extends ListAdapter<UserSummary, FriendsAdapter.ViewHolder> {
 
     public interface ActionListener {
-        void onInviteWalk(String userId);
+        void onInviteWalk(String userId, String fullName);
         void onViewProfile(String userId);
         void onRemoveFriend(String userId, String displayName);
     }
@@ -78,7 +78,7 @@ public class FriendsAdapter extends ListAdapter<UserSummary, FriendsAdapter.View
                 if (listener != null) listener.onViewProfile(user.getUserId());
             });
             btnInviteWalk.setOnClickListener(v -> {
-                if (listener != null) listener.onInviteWalk(user.getUserId());
+                if (listener != null) listener.onInviteWalk(user.getUserId(), user.getFullName());
             });
             btnViewProfile.setOnClickListener(v -> {
                 if (listener != null) listener.onViewProfile(user.getUserId());

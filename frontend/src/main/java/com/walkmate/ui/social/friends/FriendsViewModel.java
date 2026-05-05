@@ -28,10 +28,11 @@ public class FriendsViewModel extends ViewModel {
             new MutableLiveData<>(FriendsUiState.loading());
 
     /**
-     * One-shot navigation event that carries a friendId to the ExploreFragment.
+     * One-shot navigation event that carries friendId + fullName to ExploreFragment.
      * Observers must call consumeInviteWalkEvent() after handling.
      */
-    private final MutableLiveData<String> inviteWalkEvent = new MutableLiveData<>(null);
+    private final MutableLiveData<android.util.Pair<String, String>> inviteWalkEvent =
+            new MutableLiveData<>(null);
 
     private final SocialRepository socialRepository;
 
@@ -43,7 +44,7 @@ public class FriendsViewModel extends ViewModel {
 
     public LiveData<FriendsUiState> getUiState() { return uiState; }
 
-    public LiveData<String> getInviteWalkEvent() { return inviteWalkEvent; }
+    public LiveData<android.util.Pair<String, String>> getInviteWalkEvent() { return inviteWalkEvent; }
 
     public void consumeInviteWalkEvent() { inviteWalkEvent.postValue(null); }
 
@@ -151,10 +152,10 @@ public class FriendsViewModel extends ViewModel {
 
     /**
      * Posts a navigation event so the container FriendsFragment can deep-link
-     * to ExploreFragment with the friend's id pre-filled.
+     * to ExploreFragment with the friend pre-filled in the Create Intent form.
      */
-    public void navigateToInviteWalk(String friendId) {
-        inviteWalkEvent.postValue(friendId);
+    public void navigateToInviteWalk(String friendId, String friendName) {
+        inviteWalkEvent.postValue(new android.util.Pair<>(friendId, friendName));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

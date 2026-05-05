@@ -5,13 +5,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.tabs.TabLayout;
@@ -118,10 +117,14 @@ public class FriendsFragment extends Fragment {
         });
 
         // ── Invite Walk deep-link event ───────────────────────────────────────
-        viewModel.getInviteWalkEvent().observe(getViewLifecycleOwner(), friendId -> {
-            if (friendId == null) return;
+        viewModel.getInviteWalkEvent().observe(getViewLifecycleOwner(), pair -> {
+            if (pair == null) return;
             viewModel.consumeInviteWalkEvent();
-            Toast.makeText(requireContext(), "Invite Walk — coming soon!", Toast.LENGTH_SHORT).show();
+            Bundle args = new Bundle();
+            args.putString("prefilled_friend_id", pair.first);
+            args.putString("prefilled_friend_name", pair.second);
+            NavHostFragment.findNavController(FriendsFragment.this)
+                    .navigate(R.id.action_friendsFragment_to_exploreFragment, args);
         });
 
         // ── Back navigation ───────────────────────────────────────────────────

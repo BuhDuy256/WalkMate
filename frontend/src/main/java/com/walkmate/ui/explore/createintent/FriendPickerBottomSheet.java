@@ -20,8 +20,9 @@ import java.util.List;
 
 /**
  * Bottom sheet that shows the user's friend list for private-walk invite selection.
- * The caller (ExploreFragment) sets the friend list and listens for selection via
- * the {@link OnFriendSelectedListener} callback.
+ * Callers set the friend list and listen for actions via the two listener callbacks:
+ *   - {@link OnFriendSelectedListener} — fired when "Invite Walk" is tapped.
+ *   - {@link OnViewProfileListener}   — fired when "View Profile" is tapped.
  */
 public class FriendPickerBottomSheet extends BottomSheetDialogFragment {
 
@@ -31,11 +32,18 @@ public class FriendPickerBottomSheet extends BottomSheetDialogFragment {
         void onFriendSelected(String userId, String fullName);
     }
 
-    private OnFriendSelectedListener listener;
-    private List<UserSummary> friends;
+    public interface OnViewProfileListener {
+        void onViewProfile(String userId);
+    }
 
-    private ProgressBar progressBar;
-    private TextView txtEmpty;
+    private OnFriendSelectedListener friendSelectedListener;
+    private OnViewProfileListener    viewProfileListener;
+    private List<UserSummary>        friends;
+    /** Guards against a redundant bindData() call after a selection triggers a LiveData update. */
+    private boolean selectionMade = false;
+
+    private ProgressBar  progressBar;
+    private TextView     txtEmpty;
     private RecyclerView recyclerView;
 
     public static FriendPickerBottomSheet newInstance() {
@@ -43,12 +51,18 @@ public class FriendPickerBottomSheet extends BottomSheetDialogFragment {
     }
 
     public void setOnFriendSelectedListener(OnFriendSelectedListener listener) {
-        this.listener = listener;
+        this.friendSelectedListener = listener;
+    }
+
+    public void setOnViewProfileListener(OnViewProfileListener listener) {
+        this.viewProfileListener = listener;
     }
 
     public void setFriends(List<UserSummary> friends, boolean isLoading) {
         this.friends = friends;
-        if (getView() != null) {
+        // Skip rebind after a selection is made — the sheet is already dismissing
+        // and recreating the adapter at that point causes visible jank.
+        if (!selectionMade && getView() != null) {
             bindData(isLoading);
         }
     }
@@ -90,9 +104,25 @@ public class FriendPickerBottomSheet extends BottomSheetDialogFragment {
 
         txtEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        recyclerView.setAdapter(new FriendPickerAdapter(friends, (userId, name) -> {
-            if (listener != null) listener.onFriendSelected(userId, name);
-            dismiss();
-        }));
+        recyclerView.setAdapter(new FriendPickerAdapter(friends,
+                new FriendPickerAdapter.OnFriendActionListener() {
+                    @Override
+                    public void onInvite(String userId, String fullName) {
+                        selectionMade = true;
+                        if (friendSelectedListener != null) {
+                            friendSelectedListener.onFriendSelected(userId, fullName);
+                        }
+                        dismiss();
+                    }
+
+                    @Override
+                    public void onViewProfile(String userId) {
+                        selectionMade = true;
+                        if (viewProfileListener != null) {
+                            viewProfileListener.onViewProfile(userId);
+                        }
+                        dismiss();
+                    }
+                }));
     }
 }

@@ -44,8 +44,8 @@ public class FriendListFragment extends Fragment {
 
         adapter = new FriendsAdapter();
         adapter.setActionListener(new FriendsAdapter.ActionListener() {
-            @Override public void onInviteWalk(String userId) {
-                viewModel.navigateToInviteWalk(userId);
+            @Override public void onInviteWalk(String userId, String fullName) {
+                viewModel.navigateToInviteWalk(userId, fullName);
             }
             @Override public void onViewProfile(String userId) {
                 Bundle args = new Bundle();

@@ -236,6 +236,16 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         createIntentViewModel
             .getUiState()
             .observe(getViewLifecycleOwner(), this::renderCreateIntentState);
+
+        // Pre-fill friend when navigated here from FriendsFragment ("Invite Walk" button).
+        Bundle fragmentArgs = getArguments();
+        if (fragmentArgs != null) {
+            String preFilledFriendId   = fragmentArgs.getString("prefilled_friend_id", "");
+            String preFilledFriendName = fragmentArgs.getString("prefilled_friend_name", "");
+            if (!preFilledFriendId.isEmpty() && !preFilledFriendName.isEmpty()) {
+                createIntentViewModel.preSelectFriend(preFilledFriendId, preFilledFriendName);
+            }
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -510,6 +520,13 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         FriendPickerBottomSheet sheet = FriendPickerBottomSheet.newInstance();
         sheet.setOnFriendSelectedListener((userId, name) ->
                 createIntentViewModel.selectFriend(userId, name));
+        sheet.setOnViewProfileListener(userId -> {
+            Bundle args = new Bundle();
+            args.putString("userId", userId);
+            args.putString(com.walkmate.ui.profile.publicprofile.PublicProfileFragment.ARG_VIEW_MODE, "FRIEND");
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.action_explore_to_publicProfileFragment, args);
+        });
         sheet.setFriends(s.getFriendList(), s.isFriendListLoading());
         sheet.show(getChildFragmentManager(), FriendPickerBottomSheet.TAG);
     }
