@@ -32,10 +32,11 @@ import java.util.Locale;
  * Thin view for the Profile tab.
  *
  * Responsibilities:
- *   1. Inflate fragment_profile.xml.
- *   2. Wire click listeners — all delegate to the ViewModel; no business logic here.
- *   3. Observe LiveData<ProfileUiState> and call renderState().
- *   4. renderState() is the single place that writes to Views.
+ * 1. Inflate fragment_profile.xml.
+ * 2. Wire click listeners — all delegate to the ViewModel; no business logic
+ * here.
+ * 3. Observe LiveData<ProfileUiState> and call renderState().
+ * 4. renderState() is the single place that writes to Views.
  */
 public class ProfileFragment extends Fragment {
 
@@ -48,7 +49,7 @@ public class ProfileFragment extends Fragment {
 
     private ImageView imgProfileAvatar;
     private TextView txtProfileName;
-    private Chip     chipTrustScore;
+    private Chip chipTrustScore;
     private TextView txtTrustTier;
     private ChipGroup chipGroupTags;
     private Chip chipTag1;
@@ -89,8 +90,8 @@ public class ProfileFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
@@ -106,27 +107,31 @@ public class ProfileFragment extends Fragment {
         viewModel.loadProfile();
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getNavigateToEditEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
-            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            if (!Boolean.TRUE.equals(shouldNavigate))
+                return;
             viewModel.consumeNavigateToEdit();
             NavHostFragment.findNavController(this).navigate(R.id.action_profile_to_editProfile);
         });
 
         viewModel.getNavigateToHistoryEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
-            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            if (!Boolean.TRUE.equals(shouldNavigate))
+                return;
             viewModel.consumeNavigateToHistory();
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_sessionHistoryFragment);
         });
 
         viewModel.getNavigateToFriendsEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
-            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            if (!Boolean.TRUE.equals(shouldNavigate))
+                return;
             viewModel.consumeNavigateToFriends();
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_friendsFragment);
         });
 
         viewModel.getNavigateToBadgesEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
-            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            if (!Boolean.TRUE.equals(shouldNavigate))
+                return;
             viewModel.consumeNavigateToBadges();
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_profile_to_badgeFragment);
@@ -164,43 +169,36 @@ public class ProfileFragment extends Fragment {
     }
 
     private void bindViews(View root) {
-        progressBar       = root.findViewById(R.id.progressProfile);
+        progressBar = root.findViewById(R.id.progressProfile);
         profileScrollView = root.findViewById(R.id.profileScrollView);
 
-        imgProfileAvatar     = root.findViewById(R.id.imgProfileAvatar);
-        txtProfileName       = root.findViewById(R.id.txtProfileName);
-        chipTrustScore       = root.findViewById(R.id.chipTrustScore);
-        txtTrustTier         = root.findViewById(R.id.txtTrustTier);
-        chipGroupTags        = root.findViewById(R.id.chipGroupTags);
-        chipTag1             = root.findViewById(R.id.chipTag1);
-        chipTag2             = root.findViewById(R.id.chipTag2);
-        chipTag3             = root.findViewById(R.id.chipTag3);
+        imgProfileAvatar = root.findViewById(R.id.imgProfileAvatar);
+        txtProfileName = root.findViewById(R.id.txtProfileName);
+        chipTrustScore = root.findViewById(R.id.chipTrustScore);
+        txtTrustTier = root.findViewById(R.id.txtTrustTier);
+        chipGroupTags = root.findViewById(R.id.chipGroupTags);
+        chipTag1 = root.findViewById(R.id.chipTag1);
+        chipTag2 = root.findViewById(R.id.chipTag2);
+        chipTag3 = root.findViewById(R.id.chipTag3);
 
-        txtStatKmValue       = root.findViewById(R.id.txtStatKmValue);
+        txtStatKmValue = root.findViewById(R.id.txtStatKmValue);
         txtStatSessionsValue = root.findViewById(R.id.txtStatSessionsValue);
 
-        btnEditProfile  = root.findViewById(R.id.btnEditProfile);
+        btnEditProfile = root.findViewById(R.id.btnEditProfile);
 
-        menuWalkHistory  = root.findViewById(R.id.menuWalkHistory);
-        menuMyBadges     = root.findViewById(R.id.menuMyBadges);
+        menuWalkHistory = root.findViewById(R.id.menuWalkHistory);
+        menuMyBadges = root.findViewById(R.id.menuMyBadges);
 
-        menuFriends      = root.findViewById(R.id.menuFriends);
-        btnLogoutAll     = root.findViewById(R.id.btnLogoutAll);
-
-        cardAdminDashboard    = root.findViewById(R.id.cardAdminDashboard);
-        txtAdminPendingBadge  = root.findViewById(R.id.txtAdminPendingBadge);
-        txtAdminPendingInfo   = root.findViewById(R.id.txtAdminPendingInfo);
-        btnOpenAdminPanel     = root.findViewById(R.id.btnOpenAdminPanel);
+        menuFriends = root.findViewById(R.id.menuFriends);
+        btnLogoutAll = root.findViewById(R.id.btnLogoutAll);
     }
 
     private void setupViewModel() {
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
-        ProfileViewModelFactory factory =
-                new ProfileViewModelFactory(app.getUserProfileRepository(),
-                                            requireContext(),
-                                            app.getGamificationRepository(),
-                                            app.getReviewRepository(),
-                                            app.getAdminReportRepository());
+        ProfileViewModelFactory factory = new ProfileViewModelFactory(app.getUserProfileRepository(),
+                requireContext(),
+                app.getGamificationRepository(),
+                app.getReviewRepository());
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
     }
 
@@ -274,7 +272,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void renderTagChips(List<String> tags) {
-        Chip[] slots = {chipTag1, chipTag2, chipTag3};
+        Chip[] slots = { chipTag1, chipTag2, chipTag3 };
         for (int i = 0; i < slots.length; i++) {
             if (tags != null && i < tags.size()) {
                 slots[i].setText(tags.get(i));

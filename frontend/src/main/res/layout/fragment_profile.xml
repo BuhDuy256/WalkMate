@@ -8,6 +8,7 @@
     android:background="@color/bg_cream"
     tools:context=".ui.profile.ProfileFragment">
 
+    <!-- Loading state overlay -->
     <ProgressBar
         android:id="@+id/progressProfile"
         android:layout_width="wrap_content"
@@ -16,6 +17,7 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
+    <!-- Scrollable content container -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/profileScrollView"
         android:layout_width="match_parent"
@@ -23,6 +25,7 @@
         android:background="@color/bg_cream"
         android:overScrollMode="never">
 
+        <!-- Root vertical stack for profile content -->
         <LinearLayout
             android:id="@+id/profileContentRoot"
             android:layout_width="match_parent"
@@ -30,6 +33,7 @@
             android:orientation="vertical">
 
             <!-- ── HEADER ──────────────────────────────────────────────────────── -->
+            <!-- Top bar wrapper -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -38,6 +42,7 @@
                 android:paddingTop="52dp"
                 android:paddingBottom="16dp">
 
+                <!-- Left spacer to balance title centering -->
                 <Space
                     android:id="@+id/spaceStart"
                     android:layout_width="40dp"
@@ -46,6 +51,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
 
+                <!-- Screen title -->
                 <TextView
                     android:id="@+id/txtProfileScreenTitle"
                     android:layout_width="wrap_content"
@@ -64,6 +70,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- ── IDENTITY ──────────────────────────────────────────────────────── -->
+            <!-- Identity section: avatar + name + actions -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -97,6 +104,7 @@
                     tools:text="Luân Trần" />
 
                 <!-- View as Public Profile -->
+                <!-- Public profile shortcut -->
                 <LinearLayout
                     android:id="@+id/btnViewPublicProfile"
                     android:layout_width="wrap_content"
@@ -127,6 +135,7 @@
                 </LinearLayout>
 
                 <!-- Trust score chip: orange border pill -->
+                <!-- Trust score indicator -->
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipTrustScore"
                     android:layout_width="wrap_content"
@@ -141,6 +150,7 @@
                     tools:text="⭐ 530 pts" />
 
                 <!-- Trust tier label -->
+                <!-- Trust tier label -->
                 <TextView
                     android:id="@+id/txtTrustTier"
                     android:layout_width="wrap_content"
@@ -152,6 +162,7 @@
                     tools:text="Standard" />
 
                 <!-- Personality tags -->
+                <!-- User tags group -->
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chipGroupTags"
                     android:layout_width="wrap_content"
@@ -160,6 +171,7 @@
                     app:chipSpacingHorizontal="6dp"
                     app:singleLine="false">
 
+                    <!-- Tag 1 -->
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipTag1"
                         android:layout_width="wrap_content"
@@ -175,6 +187,7 @@
                         tools:text="Power Walking"
                         tools:visibility="visible" />
 
+                    <!-- Tag 2 -->
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipTag2"
                         android:layout_width="wrap_content"
@@ -190,6 +203,7 @@
                         tools:text="Dog Friendly"
                         tools:visibility="visible" />
 
+                    <!-- Tag 3 -->
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipTag3"
                         android:layout_width="wrap_content"
@@ -208,6 +222,7 @@
                 </com.google.android.material.chip.ChipGroup>
 
                 <!-- Edit Profile button: orange gradient pill with pencil icon -->
+                <!-- Edit profile CTA -->
                 <LinearLayout
                     android:id="@+id/btnEditProfile"
                     android:layout_width="wrap_content"
@@ -245,6 +260,7 @@
             </LinearLayout>
 
             <!-- ── STATS CARD ────────────────────────────────────────────────────── -->
+            <!-- Milestones stats card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardMilestones"
                 android:layout_width="match_parent"
@@ -258,12 +274,14 @@
                 app:strokeWidth="1.5dp">
 
                 <!-- Two columns: KM | Sessions -->
+                <!-- Two-column stats row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <!-- Column 1: Total KM -->
+                    <!-- Stat column: total KM -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -312,12 +330,14 @@
                     </LinearLayout>
 
                     <!-- Vertical divider -->
+                    <!-- Column divider -->
                     <View
                         android:layout_width="1dp"
                         android:layout_height="match_parent"
                         android:background="@color/card_border" />
 
                     <!-- Column 2: Sessions -->
+                    <!-- Stat column: sessions -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -527,6 +547,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ── MENU CARD (4 rows only) ─────────────────────────────────────── -->
+            <!-- Menu card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardMenu"
                 android:layout_width="match_parent"
@@ -540,6 +561,7 @@
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1.5dp">
 
+                <!-- Menu rows container -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -593,6 +615,7 @@
 
                     </LinearLayout>
 
+                    <!-- Row divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
@@ -646,6 +669,7 @@
 
                     </LinearLayout>
 
+                    <!-- Row divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
@@ -705,6 +729,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ── LOGOUT CARD ─────────────────────────────────────────────────── -->
+            <!-- Security actions card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -717,6 +742,7 @@
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1.5dp">
 
+                <!-- Logout action row -->
                 <LinearLayout
                     android:id="@+id/btnLogoutAll"
                     android:layout_width="match_parent"
@@ -771,3 +797,9 @@
     </androidx.core.widget.NestedScrollView>
 
 </FrameLayout>
+
+
+
+
+
+
