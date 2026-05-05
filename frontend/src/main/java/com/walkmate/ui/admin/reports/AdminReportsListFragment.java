@@ -1,12 +1,9 @@
 package com.walkmate.ui.admin.reports;
 
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -27,7 +24,6 @@ import com.walkmate.domain.report.AdminReport;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class AdminReportsListFragment extends Fragment {
 
@@ -39,7 +35,6 @@ public class AdminReportsListFragment extends Fragment {
     private View        contentRoot;
     private View        emptyState;
     private RecyclerView recyclerView;
-    private EditText    etSearch;
     private TextView    txtSubPageTitle;
     private TextView    btnHeaderAction;
 
@@ -59,7 +54,6 @@ public class AdminReportsListFragment extends Fragment {
     private AdminReportAdapter adapter;
     private AdminReportsListViewModel viewModel;
     private String currentFilter = "ALL";  // ALL | PENDING | RESOLVED
-    private String searchQuery   = "";
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -102,7 +96,6 @@ public class AdminReportsListFragment extends Fragment {
         contentRoot           = root.findViewById(R.id.contentAdminReports);
         emptyState            = root.findViewById(R.id.emptyStateAdminReports);
         recyclerView          = root.findViewById(R.id.recyclerAdminReports);
-        etSearch              = root.findViewById(R.id.etAdminSearch);
         txtStatTotal          = root.findViewById(R.id.txtStatTotal);
         txtStatPending        = root.findViewById(R.id.txtStatPending);
         txtStatApproved       = root.findViewById(R.id.txtStatApproved);
@@ -138,17 +131,6 @@ public class AdminReportsListFragment extends Fragment {
         if (btnSubPageBack != null) {
             btnSubPageBack.setOnClickListener(v ->
                     requireActivity().getOnBackPressedDispatcher().onBackPressed());
-        }
-
-        if (etSearch != null) {
-            etSearch.addTextChangedListener(new TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
-                @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
-                    searchQuery = s.toString().trim().toLowerCase(Locale.getDefault());
-                    applyFilter();
-                }
-                @Override public void afterTextChanged(Editable s) {}
-            });
         }
 
         if (tabAll != null)     tabAll.setOnClickListener(v     -> setFilter("ALL"));
@@ -226,7 +208,6 @@ public class AdminReportsListFragment extends Fragment {
 
         for (AdminReport r : all) {
             if (!matchesFilter(r)) continue;
-            if (!searchQuery.isEmpty() && !matchesSearch(r)) continue;
             filtered.add(r);
         }
 
@@ -246,13 +227,4 @@ public class AdminReportsListFragment extends Fragment {
         }
     }
 
-    private boolean matchesSearch(AdminReport r) {
-        return contains(r.getReportedUserName()) || contains(r.getReporterName())
-                || contains(r.getReportId())
-                || (r.getReason() != null && r.getReason().name().toLowerCase().contains(searchQuery));
-    }
-
-    private boolean contains(String field) {
-        return field != null && field.toLowerCase(Locale.getDefault()).contains(searchQuery);
-    }
 }
