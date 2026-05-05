@@ -61,6 +61,18 @@ public class ReviewTagJdbcRepository implements ReviewTagRepository {
         }
     }
 
+    @Override
+    public List<String> findTagIdsByReviewId(String reviewId) {
+        return jdbcClient.sql("""
+                        SELECT tag_id::text
+                        FROM walk_review_tag_map
+                        WHERE review_id = :reviewId
+                        """)
+                .param("reviewId", UUID.fromString(reviewId))
+                .query(String.class)
+                .list();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private ReviewTag mapRow(ResultSet rs) throws SQLException {

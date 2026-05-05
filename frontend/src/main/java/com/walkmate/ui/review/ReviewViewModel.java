@@ -134,18 +134,29 @@ public class ReviewViewModel extends ViewModel {
             @Override
             public void onSuccess(List<SessionSummary> sessions) {
                 boolean alreadyReviewed = false;
+                SessionSummary.ReviewSnapshot domainSnap = null;
                 if (sessions != null) {
                     for (SessionSummary s : sessions) {
                         if (sessionId.equals(s.getSessionId())) {
                             alreadyReviewed = s.isReviewed();
+                            domainSnap = s.getReviewSnapshot();
                             break;
                         }
                     }
                 }
                 ReviewUiState cur = reviewUiState.getValue();
                 ReviewUiState next = cur != null ? cur : ReviewUiState.idle();
-                reviewUiState.postValue(next.withKind(
-                        alreadyReviewed ? ReviewUiState.Kind.ALREADY_REVIEWED : ReviewUiState.Kind.IDLE));
+                if (alreadyReviewed) {
+                    ReviewUiState.ReviewSnapshot uiSnap = domainSnap != null
+                            ? new ReviewUiState.ReviewSnapshot(
+                                    domainSnap.getRatingStars(),
+                                    domainSnap.getComment(),
+                                    domainSnap.getTagIds())
+                            : null;
+                    reviewUiState.postValue(next.withAlreadyReviewed(uiSnap));
+                } else {
+                    reviewUiState.postValue(next.withKind(ReviewUiState.Kind.IDLE));
+                }
             }
 
             @Override

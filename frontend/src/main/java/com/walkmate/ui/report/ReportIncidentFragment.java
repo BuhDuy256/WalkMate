@@ -134,6 +134,14 @@ public class ReportIncidentFragment extends Fragment {
                     txtAlreadyReported.setVisibility(View.GONE);
                     break;
                 case ALREADY_REPORTED:
+                    if (state.reportSnapshot != null) {
+                        if (state.reportSnapshot.reason != null) {
+                            selectReasonRadio(state.reportSnapshot.reason);
+                        }
+                        if (state.reportSnapshot.evidenceUrl != null) {
+                            etEvidenceUrl.setText(state.reportSnapshot.evidenceUrl);
+                        }
+                    }
                     rgReason.setEnabled(false);
                     for (int i = 0; i < rgReason.getChildCount(); i++) {
                         rgReason.getChildAt(i).setEnabled(false);
@@ -191,6 +199,25 @@ public class ReportIncidentFragment extends Fragment {
         if (rgReason != null) {
             for (int i = 0; i < rgReason.getChildCount(); i++) {
                 rgReason.getChildAt(i).setEnabled(false);
+            }
+        }
+    }
+
+    private void selectReasonRadio(String apiReason) {
+        for (int i = 0; i < rgReason.getChildCount(); i++) {
+            View child = rgReason.getChildAt(i);
+            if (child instanceof RadioButton) {
+                RadioButton rb = (RadioButton) child;
+                String label = rb.getText().toString();
+                String thisValue;
+                if (label.contains("Safety"))          thisValue = AbortReason.SAFETY_CONCERN.toApiValue();
+                else if (label.contains("Emergency"))  thisValue = AbortReason.EMERGENCY.toApiValue();
+                else if (label.contains("Misconduct")) thisValue = AbortReason.PARTNER_MISCONDUCT.toApiValue();
+                else                                   thisValue = AbortReason.OTHER.toApiValue();
+                if (apiReason.equals(thisValue)) {
+                    rb.setChecked(true);
+                    break;
+                }
             }
         }
     }

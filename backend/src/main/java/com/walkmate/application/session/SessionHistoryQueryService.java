@@ -1,6 +1,9 @@
 package com.walkmate.application.session;
 
+import com.walkmate.domain.report.SessionReport;
 import com.walkmate.domain.report.SessionReportRepository;
+import com.walkmate.domain.review.ReviewTagRepository;
+import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.review.WalkReviewRepository;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
@@ -16,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +30,7 @@ public class SessionHistoryQueryService {
 
     private final WalkSessionRepository   sessionRepository;
     private final WalkReviewRepository    reviewRepository;
+    private final ReviewTagRepository     tagRepository;
     private final SessionReportRepository reportRepository;
     private final UserProfileRepository   profileRepository;
 
@@ -54,6 +59,27 @@ public class SessionHistoryQueryService {
                                               Map<UUID, UserProfileSnapshot> snapshots) {
         boolean isReviewed  = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
         boolean isReported  = reportRepository.existsBySessionAndReporter(s.getSessionId(), callerId);
+
+        SessionSummaryResponse.ReviewSnapshot reviewSnap = null;
+        if (isReviewed) {
+            Optional<WalkReview> maybeReview = reviewRepository.findBySessionAndReviewer(s.getSessionId(), callerId);
+            if (maybeReview.isPresent()) {
+                WalkReview review = maybeReview.get();
+                List<String> tagIds = tagRepository.findTagIdsByReviewId(review.getReviewId());
+                reviewSnap = new SessionSummaryResponse.ReviewSnapshot(
+                        review.getRatingStars(), review.getComment(), tagIds);
+            }
+        }
+
+        SessionSummaryResponse.ReportSnapshot reportSnap = null;
+        if (isReported) {
+            Optional<SessionReport> maybeReport = reportRepository.findBySessionAndReporter(s.getSessionId(), callerId);
+            if (maybeReport.isPresent()) {
+                SessionReport report = maybeReport.get();
+                reportSnap = new SessionSummaryResponse.ReportSnapshot(
+                        report.getReason(), report.getEvidenceUrl());
+            }
+        }
 
         UUID userIdA = UUID.fromString(s.getUserIdA());
         UUID userIdB = UUID.fromString(s.getUserIdB());
@@ -90,6 +116,8 @@ public class SessionHistoryQueryService {
                 endedAt,
                 isReviewed,
                 isReported,
+                reviewSnap,
+                reportSnap,
                 s.getMeetingPointLat(),
                 s.getMeetingPointLng(),
                 List.of(participantA, participantB),

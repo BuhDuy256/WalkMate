@@ -85,6 +85,19 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
     }
 
     @Override
+    public Optional<SessionReport> findBySessionAndReporter(String sessionId, String reporterId) {
+        return jdbcClient.sql("""
+                SELECT * FROM session_report
+                WHERE session_id  = :sessionId
+                  AND reporter_id = :reporterId
+                """)
+                .param("sessionId",  UUID.fromString(sessionId))
+                .param("reporterId", UUID.fromString(reporterId))
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
     public Optional<SessionReport> findById(String reportId) {
         return jdbcClient.sql("""
                 SELECT * FROM session_report

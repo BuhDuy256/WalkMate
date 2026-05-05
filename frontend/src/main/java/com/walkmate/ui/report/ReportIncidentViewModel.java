@@ -44,17 +44,26 @@ public class ReportIncidentViewModel extends ViewModel {
             @Override
             public void onSuccess(List<SessionSummary> sessions) {
                 boolean alreadyReported = false;
+                SessionSummary.ReportSnapshot domainSnap = null;
                 if (sessions != null) {
                     for (SessionSummary s : sessions) {
                         if (sessionId.equals(s.getSessionId())) {
                             alreadyReported = s.isReported();
+                            domainSnap = s.getReportSnapshot();
                             break;
                         }
                     }
                 }
-                uiState.postValue(alreadyReported
-                        ? ReportIncidentUiState.alreadyReported()
-                        : ReportIncidentUiState.idle());
+                if (alreadyReported) {
+                    ReportIncidentUiState.ReportSnapshot uiSnap = domainSnap != null
+                            ? new ReportIncidentUiState.ReportSnapshot(
+                                    domainSnap.getReason(),
+                                    domainSnap.getEvidenceUrl())
+                            : null;
+                    uiState.postValue(ReportIncidentUiState.alreadyReported(uiSnap));
+                } else {
+                    uiState.postValue(ReportIncidentUiState.idle());
+                }
             }
 
             @Override

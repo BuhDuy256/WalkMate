@@ -9,10 +9,10 @@ import java.util.List;
  *
  * {@code participants} contains one entry per walk partner (always two),
  * each carrying the participant's resolved full name and personal walk stats.
- * This avoids a second round-trip from the client to look up partner names.
  *
- * {@code isReviewed} signals whether the authenticated caller has already
- * reviewed this session — the UI uses it to show/hide the "Leave a Review" button.
+ * {@code reviewSnapshot} and {@code reportSnapshot} are non-null only when the
+ * caller has already reviewed or reported this session, allowing the UI to
+ * prefill the form with previously submitted content.
  */
 public record SessionSummaryResponse(
 
@@ -34,6 +34,12 @@ public record SessionSummaryResponse(
         @JsonProperty("is_reported")
         boolean isReported,
 
+        @JsonProperty("review_snapshot")
+        ReviewSnapshot reviewSnapshot,
+
+        @JsonProperty("report_snapshot")
+        ReportSnapshot reportSnapshot,
+
         @JsonProperty("meeting_point_lat")
         double meetingPointLat,
 
@@ -48,4 +54,15 @@ public record SessionSummaryResponse(
 
         @JsonProperty("hotspot_name")
         String hotspotName
-) {}
+) {
+    public record ReviewSnapshot(
+            @JsonProperty("rating_stars") int ratingStars,
+            @JsonProperty("comment") String comment,
+            @JsonProperty("tag_ids") List<String> tagIds
+    ) {}
+
+    public record ReportSnapshot(
+            @JsonProperty("reason") String reason,
+            @JsonProperty("evidence_url") String evidenceUrl
+    ) {}
+}

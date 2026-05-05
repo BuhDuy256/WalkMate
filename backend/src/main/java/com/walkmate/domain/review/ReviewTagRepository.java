@@ -22,4 +22,7 @@ public interface ReviewTagRepository {
      * @param tagIds   the selected tag UUIDs; may be empty
      */
     void saveTagMappings(String reviewId, List<UUID> tagIds);
+
+    /** Returns the tag UUIDs (as strings) stored in {@code walk_review_tag_map} for a review. */
+    List<String> findTagIdsByReviewId(String reviewId);
 }

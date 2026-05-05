@@ -34,12 +34,31 @@ public class SessionSummaryMapper {
             }
         }
 
+        SessionSummary.ReviewSnapshot reviewSnapshot = null;
+        SessionSummaryResponse.ReviewSnapshot dtoReview = response.getReviewSnapshot();
+        if (dtoReview != null) {
+            reviewSnapshot = new SessionSummary.ReviewSnapshot(
+                    dtoReview.getRatingStars(),
+                    dtoReview.getComment(),
+                    dtoReview.getTagIds());
+        }
+
+        SessionSummary.ReportSnapshot reportSnapshot = null;
+        SessionSummaryResponse.ReportSnapshot dtoReport = response.getReportSnapshot();
+        if (dtoReport != null) {
+            reportSnapshot = new SessionSummary.ReportSnapshot(
+                    dtoReport.getReason(),
+                    dtoReport.getEvidenceUrl());
+        }
+
         return new SessionSummary(
                 response.getSessionId(),
                 toStatus(response.getStatus()),
                 response.getScheduledStart(),
                 response.isReviewed(),
                 response.isReported(),
+                reviewSnapshot,
+                reportSnapshot,
                 terminalAtMs,
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),

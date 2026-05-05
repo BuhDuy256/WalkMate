@@ -133,25 +133,42 @@ public class SubmitReviewFragment extends Fragment {
 
             if (!formReady) return;
 
-            int currentStars = (int) ratingBar.getRating();
-            if (!state.availableTags.isEmpty()) {
-                populateChips(state.availableTags, currentStars > 0 ? currentStars : 5);
-            }
-
             switch (state.kind) {
                 case IDLE:
                     btnSubmit.setEnabled(true);
                     txtAlreadyReviewed.setVisibility(View.GONE);
+                    if (!state.availableTags.isEmpty()) {
+                        int stars = (int) ratingBar.getRating();
+                        populateChips(state.availableTags, stars > 0 ? stars : 5);
+                    }
                     break;
                 case ALREADY_REVIEWED:
                     btnSubmit.setEnabled(false);
                     ratingBar.setIsIndicator(true);
                     etComment.setEnabled(false);
-                    layoutTagSection.setVisibility(View.GONE);
                     txtAlreadyReviewed.setVisibility(View.VISIBLE);
+                    if (state.reviewSnapshot != null) {
+                        ratingBar.setRating(state.reviewSnapshot.ratingStars);
+                        if (state.reviewSnapshot.comment != null) {
+                            etComment.setText(state.reviewSnapshot.comment);
+                        }
+                        if (!state.availableTags.isEmpty()) {
+                            populateChips(state.availableTags, state.reviewSnapshot.ratingStars);
+                            preCheckTags(state.reviewSnapshot.tagIds);
+                            layoutTagSection.setVisibility(View.VISIBLE);
+                        } else {
+                            layoutTagSection.setVisibility(View.GONE);
+                        }
+                    } else {
+                        layoutTagSection.setVisibility(View.GONE);
+                    }
                     break;
                 case ERROR:
                     btnSubmit.setEnabled(true);
+                    if (!state.availableTags.isEmpty()) {
+                        int stars = (int) ratingBar.getRating();
+                        populateChips(state.availableTags, stars > 0 ? stars : 5);
+                    }
                     Toast.makeText(requireContext(), state.error, Toast.LENGTH_SHORT).show();
                     break;
                 default:
@@ -246,6 +263,20 @@ public class SubmitReviewFragment extends Fragment {
 
         txtTagSectionLabel.setText(showPositive ? "What went well?" : "What could be improved?");
         layoutTagSection.setVisibility(View.VISIBLE);
+    }
+
+    private void preCheckTags(List<String> tagIds) {
+        if (tagIds == null || tagIds.isEmpty()) return;
+        for (int i = 0; i < chipGroupTags.getChildCount(); i++) {
+            View child = chipGroupTags.getChildAt(i);
+            if (child instanceof Chip) {
+                Chip chip = (Chip) child;
+                Object chipTag = chip.getTag();
+                if (chipTag instanceof String && tagIds.contains(chipTag)) {
+                    chip.setChecked(true);
+                }
+            }
+        }
     }
 
     /** Returns the tag IDs of all checked chips. */

@@ -9,6 +9,9 @@ public interface SessionReportRepository {
 
     boolean existsBySessionAndReporter(String sessionId, String reporterId);
 
+    /** Returns the report the caller submitted for a specific session, if any. */
+    Optional<SessionReport> findBySessionAndReporter(String sessionId, String reporterId);
+
     // ── Admin query methods ────────────────────────────────────────────────────
 
     Optional<SessionReport> findById(String reportId);

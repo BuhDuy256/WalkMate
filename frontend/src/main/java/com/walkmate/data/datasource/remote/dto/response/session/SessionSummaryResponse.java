@@ -43,6 +43,12 @@ public class SessionSummaryResponse {
     @SerializedName("caller_avatar_url")
     private String callerAvatarUrl;
 
+    @SerializedName("review_snapshot")
+    private ReviewSnapshot reviewSnapshot;
+
+    @SerializedName("report_snapshot")
+    private ReportSnapshot reportSnapshot;
+
     public String getSessionId()                         { return sessionId; }
     public String getStatus()                            { return status; }
     public String getScheduledStart()                    { return scheduledStart; }
@@ -54,6 +60,26 @@ public class SessionSummaryResponse {
     public List<ParticipantResponse> getParticipants()   { return participants; }
     public String getHotspotName()                       { return hotspotName; }
     public String getCallerAvatarUrl()                   { return callerAvatarUrl; }
+    public ReviewSnapshot getReviewSnapshot()            { return reviewSnapshot; }
+    public ReportSnapshot getReportSnapshot()            { return reportSnapshot; }
+
+    public static class ReviewSnapshot {
+        @SerializedName("rating_stars") private int ratingStars;
+        @SerializedName("comment")      private String comment;
+        @SerializedName("tag_ids")      private List<String> tagIds;
+
+        public int getRatingStars()    { return ratingStars; }
+        public String getComment()     { return comment; }
+        public List<String> getTagIds(){ return tagIds; }
+    }
+
+    public static class ReportSnapshot {
+        @SerializedName("reason")       private String reason;
+        @SerializedName("evidence_url") private String evidenceUrl;
+
+        public String getReason()      { return reason; }
+        public String getEvidenceUrl() { return evidenceUrl; }
+    }
 
     public static class ParticipantResponse {
 
