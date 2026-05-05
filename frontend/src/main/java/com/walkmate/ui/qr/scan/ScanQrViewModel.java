@@ -87,7 +87,7 @@ public class ScanQrViewModel extends ViewModel {
         if ("SESSION_QR_ALREADY_VERIFIED".equals(errorCode))
             return "Partner has already been verified.";
         if ("SESSION_NOT_ACTIVE".equals(errorCode))
-            return "Session is no longer active.";
+            return "Session is not in a verifiable state (already completed or cancelled).";
         return "Verification failed. Please try again.";
     }
 }

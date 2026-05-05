@@ -312,7 +312,7 @@ public class WalkSession {
      * </ol>
      */
     public void recordQrVerification(String callerUserId) {
-        if (this.status != SessionStatus.ACTIVE) {
+        if (this.status != SessionStatus.ACTIVE && this.status != SessionStatus.PENDING) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
         }
         if (callerUserId.equals(userIdA)) {

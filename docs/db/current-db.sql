@@ -160,7 +160,12 @@ CREATE TABLE public.session_report (
   evidence_url text,
   status USER-DEFINED NOT NULL DEFAULT 'OPEN'::report_status,
   created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  applied_trust_delta integer NOT NULL DEFAULT 0,
+  resolved_by uuid,
+  resolved_at timestamp without time zone,
+  resolution_note text,
   CONSTRAINT session_report_pkey PRIMARY KEY (report_id),
+  CONSTRAINT session_report_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.user_account(user_id),
   CONSTRAINT session_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.user_account(user_id),
   CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id),
   CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
@@ -194,6 +199,7 @@ CREATE TABLE public.user_account (
   last_active_at timestamp without time zone DEFAULT now(),
   completed_sessions integer NOT NULL DEFAULT 0,
   total_distance_km numeric NOT NULL DEFAULT 0,
+  role character varying NOT NULL DEFAULT 'USER'::character varying,
   CONSTRAINT user_account_pkey PRIMARY KEY (user_id)
 );
 CREATE TABLE public.user_badge (

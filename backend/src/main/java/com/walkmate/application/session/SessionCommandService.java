@@ -279,7 +279,7 @@ public class SessionCommandService {
     @Transactional(readOnly = true)
     public String generateSessionQrToken(String sessionId, String callerId) {
         WalkSession session = loadAndVerifyParticipant(sessionId, callerId);
-        if (session.getStatus() != SessionStatus.ACTIVE) {
+        if (session.getStatus() != SessionStatus.ACTIVE && session.getStatus() != SessionStatus.PENDING) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
         }
         return qrTokenProvider.generateQrToken(callerId, sessionId);
