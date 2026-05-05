@@ -40,7 +40,6 @@ public class HomeFragment extends Fragment {
     private View         cardHero;
     private TextView     txtDistanceValue;
     private TextView     txtSessionsValue;
-    private View         cardLeaderboard;
     private View         sectionRecentMates;
     private RecyclerView rvRecentMates;
     private TextView     btnSeeAllMates;
@@ -96,7 +95,6 @@ public class HomeFragment extends Fragment {
         cardHero              = root.findViewById(R.id.cardHero);
         txtDistanceValue      = root.findViewById(R.id.txtDistanceValue);
         txtSessionsValue      = root.findViewById(R.id.txtSessionsValue);
-        cardLeaderboard       = root.findViewById(R.id.cardLeaderboard);
         sectionRecentMates    = root.findViewById(R.id.sectionRecentMates);
         rvRecentMates         = root.findViewById(R.id.rvRecentMates);
         btnSeeAllMates        = root.findViewById(R.id.btnSeeAllMates);
