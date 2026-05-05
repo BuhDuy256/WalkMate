@@ -131,6 +131,15 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
     private ExploreViewModel viewModel;
     private CreateIntentViewModel createIntentViewModel;
 
+    /** Toggle to enable / disable the auto-expand-on-friend-invite behaviour globally. */
+    private static final boolean AUTO_EXPAND_SHEET = false;
+    /** One-shot flag; set from AUTO_EXPAND_SHEET, consumed on the first WELCOME render. */
+    private boolean shouldAutoExpandSheet = false;
+
+    // ── Invite-friend guidance banner (inside welcomeContent) ─────────────
+    private View     bannerInviteFriend;
+    private TextView txtInviteBannerMessage;
+
     // ════════════════════════════════════════════════════════════════════
     // LIFECYCLE
     // ════════════════════════════════════════════════════════════════════
@@ -212,8 +221,11 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
         txtSelectedFriend     = root.findViewById(R.id.txtSelectedFriend);
         txtPrivateIntentError = root.findViewById(R.id.txtPrivateIntentError);
 
-        txtScanningHotspotName = root.findViewById(R.id.txtScanningHotspotName);
-        btnStopSearching = root.findViewById(R.id.btnStopSearching);
+        txtScanningHotspotName  = root.findViewById(R.id.txtScanningHotspotName);
+        btnStopSearching        = root.findViewById(R.id.btnStopSearching);
+
+        bannerInviteFriend      = root.findViewById(R.id.bannerInviteFriend);
+        txtInviteBannerMessage  = root.findViewById(R.id.txtInviteBannerMessage);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -243,7 +255,15 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             String preFilledFriendId   = fragmentArgs.getString("prefilled_friend_id", "");
             String preFilledFriendName = fragmentArgs.getString("prefilled_friend_name", "");
             if (!preFilledFriendId.isEmpty() && !preFilledFriendName.isEmpty()) {
+                CreateIntentUiState currentIntentState = createIntentViewModel.getUiState().getValue();
+                boolean alreadyApplied = currentIntentState != null
+                        && preFilledFriendId.equals(currentIntentState.getInvitedFriendId());
                 createIntentViewModel.preSelectFriend(preFilledFriendId, preFilledFriendName);
+                // Auto-expand the welcome sheet only on genuine first navigation, not on
+                // config-change re-entry where the ViewModel already carries the selection.
+                if (!alreadyApplied) {
+                    shouldAutoExpandSheet = AUTO_EXPAND_SHEET;
+                }
             }
         }
     }
@@ -655,7 +675,15 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
                 if (stateChanged) {
                     sheetBehavior.setDraggable(true);
                     sheetBehavior.setHideable(false);
-                    sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    // Auto-expand on the first render when coming from FriendsFragment
+                    // so the user immediately sees the hotspot search without having to
+                    // drag the sheet up manually.
+                    if (shouldAutoExpandSheet) {
+                        shouldAutoExpandSheet = false;
+                        sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    } else {
+                        sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    }
                     // Clear stale search text when returning from SETUP / SCANNING.
                     searchInputEdit.setText("");
                 }
@@ -821,6 +849,19 @@ public class ExploreFragment extends Fragment implements OnMapReadyCallback {
             String friendName = state.getInvitedFriendName();
             txtSelectedFriend.setText(
                     friendName != null ? friendName : getString(R.string.select_friend));
+        }
+
+        // Guidance banner inside welcomeContent: tells the user to pick a hotspot when
+        // a friend is already pre-selected (navigated here from FriendsFragment).
+        // The banner lives inside welcomeContent so it is automatically invisible in
+        // SETUP and SCANNING states without any extra visibility management here.
+        if (bannerInviteFriend != null) {
+            boolean showBanner = state.isPrivate() && state.getInvitedFriendName() != null;
+            bannerInviteFriend.setVisibility(showBanner ? View.VISIBLE : View.GONE);
+            if (showBanner && txtInviteBannerMessage != null) {
+                txtInviteBannerMessage.setText(
+                        "Select a spot on the map to invite " + state.getInvitedFriendName());
+            }
         }
 
         // Private intent validation error

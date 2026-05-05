@@ -189,6 +189,40 @@
                         android:textSize="14sp"
                     />
 
+                    <!-- Contextual guidance banner — appears when a friend is pre-selected
+                         from FriendsFragment. Hidden by default; shown via Java when
+                         CreateIntentViewModel carries a private + friend selection. -->
+                    <LinearLayout
+                        android:id="@+id/bannerInviteFriend"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_field_outlined"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📍"
+                            android:textSize="15sp"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:id="@+id/txtInviteBannerMessage"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/text_dark"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
+
                     <!-- Search bar -->
                     <LinearLayout
                         android:layout_width="match_parent"
