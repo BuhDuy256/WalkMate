@@ -33,18 +33,19 @@ import java.util.List;
  * Submit Review screen — standalone full-page Fragment.
  *
  * UX flow:
- *   1. Screen opens with 5 stars pre-selected and POSITIVE tags visible immediately.
- *   2. Tags populate automatically as soon as the API responds (non-blocking).
- *   3. Switching to 1–3 stars swaps the chip set to NEGATIVE tags with label
- *      "What could be improved?"; 4–5 stars restore POSITIVE tags.
- *   4. Tapping Submit gathers stars + checked tag IDs + comment and calls the VM.
- *   5. On success the button transitions to a green "submitted" state for 900 ms,
- *      then the screen pops back.
+ * 1. Screen opens with 5 stars pre-selected and POSITIVE tags visible
+ * immediately.
+ * 2. Tags populate automatically as soon as the API responds (non-blocking).
+ * 3. Switching to 1–3 stars swaps the chip set to NEGATIVE tags with label
+ * "What could be improved?"; 4–5 stars restore POSITIVE tags.
+ * 4. Tapping Submit gathers stars + checked tag IDs + comment and calls the VM.
+ * 5. On success the button transitions to a green "submitted" state for 900 ms,
+ * then the screen pops back.
  */
 public class SubmitReviewFragment extends Fragment {
 
-    public static final String TAG              = "SubmitReviewFragment";
-    public static final String ARG_SESSION_ID   = "SESSION_ID";
+    public static final String TAG = "SubmitReviewFragment";
+    public static final String ARG_SESSION_ID = "SESSION_ID";
     public static final String ARG_PARTNER_NAME = "PARTNER_NAME";
 
     public static SubmitReviewFragment newInstance(String sessionId) {
@@ -55,23 +56,24 @@ public class SubmitReviewFragment extends Fragment {
         SubmitReviewFragment f = new SubmitReviewFragment();
         Bundle args = new Bundle();
         args.putString(ARG_SESSION_ID, sessionId);
-        if (partnerName != null) args.putString(ARG_PARTNER_NAME, partnerName);
+        if (partnerName != null)
+            args.putString(ARG_PARTNER_NAME, partnerName);
         f.setArguments(args);
         return f;
     }
 
     // ── Views ─────────────────────────────────────────────────────────────────
 
-    private ProgressBar  progressReview;
-    private View         scrollViewReview;
-    private RatingBar    ratingBar;
+    private ProgressBar progressReview;
+    private View scrollViewReview;
+    private RatingBar ratingBar;
     private LinearLayout layoutTagSection;
-    private TextView     txtTagSectionLabel;
-    private ChipGroup    chipGroupTags;
-    private EditText     etComment;
-    private Button       btnSubmit;
-    private TextView     txtAlreadyReviewed;
-    private View         btnBack;
+    private TextView txtTagSectionLabel;
+    private ChipGroup chipGroupTags;
+    private EditText etComment;
+    private Button btnSubmit;
+    private TextView txtAlreadyReviewed;
+    private View btnBack;
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -82,8 +84,8 @@ public class SubmitReviewFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_submit_review, container, false);
     }
 
@@ -93,26 +95,26 @@ public class SubmitReviewFragment extends Fragment {
 
         WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
-        progressReview     = view.findViewById(R.id.progressReview);
-        scrollViewReview   = view.findViewById(R.id.scrollViewReview);
-        ratingBar          = view.findViewById(R.id.ratingBarReview);
-        layoutTagSection   = view.findViewById(R.id.layoutTagSection);
+        progressReview = view.findViewById(R.id.progressReview);
+        scrollViewReview = view.findViewById(R.id.scrollViewReview);
+        ratingBar = view.findViewById(R.id.ratingBarReview);
+        layoutTagSection = view.findViewById(R.id.layoutTagSection);
         txtTagSectionLabel = view.findViewById(R.id.txtTagSectionLabel);
-        chipGroupTags      = view.findViewById(R.id.chipGroupReviewTags);
-        etComment          = view.findViewById(R.id.etReviewComment);
-        btnSubmit          = view.findViewById(R.id.btnSubmitReview);
+        chipGroupTags = view.findViewById(R.id.chipGroupReviewTags);
+        etComment = view.findViewById(R.id.etReviewComment);
+        btnSubmit = view.findViewById(R.id.btnSubmitReview);
         txtAlreadyReviewed = view.findViewById(R.id.txtAlreadyReviewed);
-        btnBack            = view.findViewById(R.id.btnSubPageBack);
+        btnBack = view.findViewById(R.id.btnSubPageBack);
         ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Leave a Review");
 
-        btnBack.setOnClickListener(v ->
-                requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        btnBack.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
         // Set comment placeholder with partner name if provided
         Bundle args = getArguments();
-        String sessionId    = args != null ? args.getString(ARG_SESSION_ID)   : null;
-        String partnerName  = args != null ? args.getString(ARG_PARTNER_NAME) : null;
-        if (partnerName == null) partnerName = "your walk partner";
+        String sessionId = args != null ? args.getString(ARG_SESSION_ID) : null;
+        String partnerName = args != null ? args.getString(ARG_PARTNER_NAME) : null;
+        if (partnerName == null)
+            partnerName = "your walk partner";
         etComment.setHint("Tell others about walking with " + partnerName + "...");
 
         WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
@@ -131,7 +133,8 @@ public class SubmitReviewFragment extends Fragment {
             progressReview.setVisibility(formReady ? View.GONE : View.VISIBLE);
             scrollViewReview.setVisibility(formReady ? View.VISIBLE : View.GONE);
 
-            if (!formReady) return;
+            if (!formReady)
+                return;
 
             switch (state.kind) {
                 case IDLE:
@@ -208,9 +211,11 @@ public class SubmitReviewFragment extends Fragment {
 
         // ── Rating change: swap chip set based on star polarity ────────────────
         ratingBar.setOnRatingBarChangeListener((bar, rating, fromUser) -> {
-            if (!fromUser) return;
+            if (!fromUser)
+                return;
             int stars = (int) rating;
-            if (stars == 0) return;
+            if (stars == 0)
+                return;
             ReviewUiState state = viewModel.getReviewUiState().getValue();
             List<ReviewTag> tags = (state != null) ? state.availableTags : null;
             if (tags != null && !tags.isEmpty()) {
@@ -225,8 +230,9 @@ public class SubmitReviewFragment extends Fragment {
 
         // ── Submit ────────────────────────────────────────────────────────────
         btnSubmit.setOnClickListener(v -> {
-            if (sessionId == null) return;
-            int stars      = (int) ratingBar.getRating();
+            if (sessionId == null)
+                return;
+            int stars = (int) ratingBar.getRating();
             String comment = etComment.getText().toString().trim();
             List<String> tagIds = collectSelectedTagIds();
             viewModel.submitReview(sessionId, stars,
@@ -250,7 +256,8 @@ public class SubmitReviewFragment extends Fragment {
         boolean showPositive = (stars >= 4);
 
         for (ReviewTag tag : allTags) {
-            if (tag.isPositive() != showPositive) continue;
+            if (tag.isPositive() != showPositive)
+                continue;
 
             Chip chip = new Chip(
                     new ContextThemeWrapper(requireContext(), R.style.Widget_WalkMate_Chip_Review));
@@ -266,7 +273,8 @@ public class SubmitReviewFragment extends Fragment {
     }
 
     private void preCheckTags(List<String> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) return;
+        if (tagIds == null || tagIds.isEmpty())
+            return;
         for (int i = 0; i < chipGroupTags.getChildCount(); i++) {
             View child = chipGroupTags.getChildAt(i);
             if (child instanceof Chip) {
