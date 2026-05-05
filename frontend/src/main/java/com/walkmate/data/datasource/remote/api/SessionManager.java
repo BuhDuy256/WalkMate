@@ -85,6 +85,26 @@ public class SessionManager {
     }
 
     /**
+     * Extracts the user role from the JWT {@code role} claim.
+     * Returns "USER" if no token is stored or the claim is absent.
+     */
+    public String getUserRole() {
+        String token = getAccessToken();
+        if (token == null) return "USER";
+        try {
+            JSONObject json = decodePayload(token);
+            return json.optString("role", "USER");
+        } catch (Exception e) {
+            Log.w("SessionManager", "Failed to decode JWT role claim", e);
+            return "USER";
+        }
+    }
+
+    public boolean isAdmin() {
+        return "ADMIN".equals(getUserRole());
+    }
+
+    /**
      * Extracts the user ID from the JWT {@code sub} claim by Base64-decoding the
      * payload section. Returns null if no token is stored or decoding fails.
      */

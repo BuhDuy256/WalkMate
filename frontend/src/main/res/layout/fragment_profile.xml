@@ -388,6 +388,164 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ── ADMIN DASHBOARD CARD (visible only for ADMIN role) ───────────── -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAdminDashboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#0F172A"
+                app:strokeColor="@color/orange_primary"
+                app:strokeWidth="1.5dp"
+                tools:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <!-- Row 1: Shield icon + title + pending badge -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_edit_profile_btn"
+                            android:layout_marginEnd="12dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_trust_shield"
+                                android:contentDescription="Admin" />
+
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Admin Dashboard"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Super Admin · Elevated Access"
+                                android:textSize="12sp"
+                                android:textColor="#6BFFFFFF" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txtAdminPendingBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_edit_profile_btn"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:paddingTop="4dp"
+                            android:paddingBottom="4dp"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            tools:text="3" />
+
+                    </LinearLayout>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="14dp"
+                        android:background="#14FFFFFF" />
+
+                    <!-- Quick stats row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="14dp">
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:src="@drawable/ic_bell"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="@null" />
+
+                        <TextView
+                            android:id="@+id/txtAdminPendingInfo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="13sp"
+                            android:textColor="#8CFFFFFF"
+                            tools:text="3 reports awaiting review" />
+
+                    </LinearLayout>
+
+                    <!-- CTA: Open Admin Panel -->
+                    <LinearLayout
+                        android:id="@+id/btnOpenAdminPanel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:background="@drawable/bg_edit_profile_btn"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_session"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="@null" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Open Admin Panel"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/white" />
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            android:contentDescription="@null" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- ── MENU CARD (4 rows only) ─────────────────────────────────────── -->
             <!-- Menu card -->
             <com.google.android.material.card.MaterialCardView
