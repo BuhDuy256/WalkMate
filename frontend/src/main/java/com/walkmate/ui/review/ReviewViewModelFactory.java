@@ -12,12 +12,12 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  */
 public class ReviewViewModelFactory implements ViewModelProvider.Factory {
 
-    private final ReviewRepository      reviewRepo;
+    private final ReviewRepository reviewRepo;
     private final WalkSessionRepository sessionRepo;
 
     public ReviewViewModelFactory(ReviewRepository reviewRepo,
-                                  WalkSessionRepository sessionRepo) {
-        this.reviewRepo  = reviewRepo;
+            WalkSessionRepository sessionRepo) {
+        this.reviewRepo = reviewRepo;
         this.sessionRepo = sessionRepo;
     }
 

@@ -4,24 +4,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record ReviewResponse(
 
-        @JsonProperty("review_id")
-        String reviewId,
+        @JsonProperty("review_id") String reviewId,
 
-        @JsonProperty("session_id")
-        String sessionId,
+        @JsonProperty("session_id") String sessionId,
 
-        @JsonProperty("reviewer_id")
-        String reviewerId,
+        @JsonProperty("reviewer_id") String reviewerId,
 
-        @JsonProperty("reviewee_id")
-        String revieweeId,
+        @JsonProperty("reviewee_id") String revieweeId,
 
-        @JsonProperty("rating_stars")
-        int ratingStars,
+        @JsonProperty("rating_stars") int ratingStars,
 
-        @JsonProperty("comment")
-        String comment,
+        @JsonProperty("comment") String comment,
 
-        @JsonProperty("created_at")
-        String createdAt   // ISO-8601
-) {}
+        @JsonProperty("created_at") String createdAt // ISO-8601
+) {
+}
