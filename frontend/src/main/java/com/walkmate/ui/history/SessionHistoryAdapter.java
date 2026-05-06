@@ -27,11 +27,11 @@ import java.util.Locale;
  * RecyclerView adapter for the Session History list.
  *
  * Button visibility per UX invariant:
- *   ACTIVE global          → both buttons hidden (silent wait)
- *   COMPLETED global:
- *     caller≠NO_SHOW + partner=COMPLETED → "Leave a Review" + "Report"
- *     caller≠NO_SHOW + partner≠COMPLETED → "Report" only
- *     caller=NO_SHOW (any partner)       → both hidden
+ * ACTIVE global → both buttons hidden (silent wait)
+ * COMPLETED global:
+ * caller≠NO_SHOW + partner=COMPLETED → "Leave a Review" + "Report"
+ * caller≠NO_SHOW + partner≠COMPLETED → "Report" only
+ * caller=NO_SHOW (any partner) → both hidden
  */
 public class SessionHistoryAdapter
         extends ListAdapter<SessionSummary, SessionHistoryAdapter.ViewHolder> {
@@ -53,19 +53,30 @@ public class SessionHistoryAdapter
     }
 
     private OnSessionSelectedListener sessionSelectedListener;
-    private OnPartnerClickListener    partnerClickListener;
-    private OnReviewClickListener     reviewClickListener;
-    private OnReportClickListener     reportClickListener;
+    private OnPartnerClickListener partnerClickListener;
+    private OnReviewClickListener reviewClickListener;
+    private OnReportClickListener reportClickListener;
     private String currentUserId = "";
 
     public SessionHistoryAdapter() {
         super(DIFF_CALLBACK);
     }
 
-    public void setOnSessionSelectedListener(OnSessionSelectedListener l) { this.sessionSelectedListener = l; }
-    public void setOnPartnerClickListener(OnPartnerClickListener l)        { this.partnerClickListener = l; }
-    public void setOnReviewClickListener(OnReviewClickListener l)          { this.reviewClickListener = l; }
-    public void setOnReportClickListener(OnReportClickListener l)          { this.reportClickListener = l; }
+    public void setOnSessionSelectedListener(OnSessionSelectedListener l) {
+        this.sessionSelectedListener = l;
+    }
+
+    public void setOnPartnerClickListener(OnPartnerClickListener l) {
+        this.partnerClickListener = l;
+    }
+
+    public void setOnReviewClickListener(OnReviewClickListener l) {
+        this.reviewClickListener = l;
+    }
+
+    public void setOnReportClickListener(OnReportClickListener l) {
+        this.reportClickListener = l;
+    }
 
     public void setCurrentUserId(String userId) {
         this.currentUserId = userId != null ? userId : "";
@@ -113,10 +124,10 @@ public class SessionHistoryAdapter
         holder.dividerAction.setVisibility(View.GONE);
 
         if (global == WalkSession.Status.COMPLETED) {
-            ParticipantSummary caller  = summary.getCallerParticipant(currentUserId);
+            ParticipantSummary caller = summary.getCallerParticipant(currentUserId);
             ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
 
-            WalkSession.Status callerStatus  = caller  != null ? caller.getUserStatus()  : null;
+            WalkSession.Status callerStatus = caller != null ? caller.getUserStatus() : null;
             WalkSession.Status partnerStatus = partner != null ? partner.getUserStatus() : null;
 
             if (callerStatus != WalkSession.Status.NO_SHOW) {
@@ -150,44 +161,44 @@ public class SessionHistoryAdapter
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        final TextView          txtDate;
-        final TextView          txtStatus;
-        final TextView          txtHotspotName;
+        final TextView txtDate;
+        final TextView txtStatus;
+        final TextView txtHotspotName;
         // Participant 2 row = partner (shown at top)
-        final TextView          txtParticipant2Name;
-        final TextView          txtParticipant2Status;
-        final TextView          txtParticipant2Distance;
-        final TextView          txtParticipant2Duration;
+        final TextView txtParticipant2Name;
+        final TextView txtParticipant2Status;
+        final TextView txtParticipant2Distance;
+        final TextView txtParticipant2Duration;
         final AvatarInitialView avatarPartner;
         // Participant 1 row = you (shown at bottom)
-        final TextView          txtParticipant1Name;
-        final TextView          txtParticipant1Status;
-        final TextView          txtParticipant1Distance;
-        final TextView          txtParticipant1Duration;
+        final TextView txtParticipant1Name;
+        final TextView txtParticipant1Status;
+        final TextView txtParticipant1Distance;
+        final TextView txtParticipant1Duration;
         final AvatarInitialView avatarSelf;
         // Actions
-        final View              dividerAction;
-        final MaterialButton    btnReview;
-        final MaterialButton    btnReport;
+        final View dividerAction;
+        final MaterialButton btnReview;
+        final MaterialButton btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
-            txtDate                 = itemView.findViewById(R.id.txtSessionDate);
-            txtStatus               = itemView.findViewById(R.id.txtSessionStatus);
-            txtHotspotName          = itemView.findViewById(R.id.txtHotspotName);
-            txtParticipant2Name     = itemView.findViewById(R.id.txtParticipant2Name);
-            txtParticipant2Status   = itemView.findViewById(R.id.txtParticipant2Status);
+            txtDate = itemView.findViewById(R.id.txtSessionDate);
+            txtStatus = itemView.findViewById(R.id.txtSessionStatus);
+            txtHotspotName = itemView.findViewById(R.id.txtHotspotName);
+            txtParticipant2Name = itemView.findViewById(R.id.txtParticipant2Name);
+            txtParticipant2Status = itemView.findViewById(R.id.txtParticipant2Status);
             txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
             txtParticipant2Duration = itemView.findViewById(R.id.txtParticipant2Duration);
-            avatarPartner           = itemView.findViewById(R.id.avatarPartner);
-            txtParticipant1Name     = itemView.findViewById(R.id.txtParticipant1Name);
-            txtParticipant1Status   = itemView.findViewById(R.id.txtParticipant1Status);
+            avatarPartner = itemView.findViewById(R.id.avatarPartner);
+            txtParticipant1Name = itemView.findViewById(R.id.txtParticipant1Name);
+            txtParticipant1Status = itemView.findViewById(R.id.txtParticipant1Status);
             txtParticipant1Distance = itemView.findViewById(R.id.txtParticipant1Distance);
             txtParticipant1Duration = itemView.findViewById(R.id.txtParticipant1Duration);
-            avatarSelf              = itemView.findViewById(R.id.avatarSelf);
-            dividerAction           = itemView.findViewById(R.id.dividerAction);
-            btnReview               = itemView.findViewById(R.id.btnReview);
-            btnReport               = itemView.findViewById(R.id.btnReport);
+            avatarSelf = itemView.findViewById(R.id.avatarSelf);
+            dividerAction = itemView.findViewById(R.id.dividerAction);
+            btnReview = itemView.findViewById(R.id.btnReview);
+            btnReport = itemView.findViewById(R.id.btnReport);
         }
 
         void bind(SessionSummary summary, String currentUserId) {
@@ -201,7 +212,8 @@ public class SessionHistoryAdapter
             ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
             if (partner != null) {
                 String partnerName = partner.getFullName() != null && !partner.getFullName().isEmpty()
-                        ? partner.getFullName() : "Unknown";
+                        ? partner.getFullName()
+                        : "Unknown";
                 txtParticipant2Name.setText(partnerName);
                 txtParticipant2Status.setText(formatUserStatus(partner.getUserStatus()));
                 txtParticipant2Distance.setText(formatDistance(partner.getDistanceKm()));
@@ -218,7 +230,8 @@ public class SessionHistoryAdapter
                 txtParticipant1Duration.setText(formatDuration(caller.getDurationMinutes()));
                 if (avatarSelf != null) {
                     String callerName = caller.getFullName() != null && !caller.getFullName().isEmpty()
-                            ? caller.getFullName() : "Y";
+                            ? caller.getFullName()
+                            : "Y";
                     avatarSelf.setBackground(
                             ContextCompat.getDrawable(avatarSelf.getContext(), R.drawable.bg_circle_orange));
                     avatarSelf.setInitialTextColor(Color.WHITE);
@@ -233,14 +246,24 @@ public class SessionHistoryAdapter
             int textColor;
             switch (status != null ? status : WalkSession.Status.PENDING) {
                 case ACTIVE:
-                    label = "ACTIVE"; bgColor = 0xFFFFF7ED; textColor = 0xFFF97316; break;
+                    label = "ACTIVE";
+                    bgColor = 0xFFFFF7ED;
+                    textColor = 0xFFF97316;
+                    break;
                 case COMPLETED:
-                    label = "COMPLETED"; bgColor = 0xFFF0FDF4; textColor = 0xFF16A34A; break;
+                    label = "COMPLETED";
+                    bgColor = 0xFFF0FDF4;
+                    textColor = 0xFF16A34A;
+                    break;
                 case CANCELLED:
-                    label = "CANCELLED"; bgColor = 0xFFFEF2F2; textColor = 0xFFEF4444; break;
+                    label = "CANCELLED";
+                    bgColor = 0xFFFEF2F2;
+                    textColor = 0xFFEF4444;
+                    break;
                 default:
                     label = status != null ? status.name() : "PENDING";
-                    bgColor = 0xFFF3F2F0; textColor = 0xFF78716C;
+                    bgColor = 0xFFF3F2F0;
+                    textColor = 0xFF78716C;
             }
             badge.setText(label);
             badge.setTextColor(textColor);
@@ -252,18 +275,25 @@ public class SessionHistoryAdapter
         }
 
         private static String formatDate(String iso) {
-            if (iso == null || iso.length() < 10) return "—";
+            if (iso == null || iso.length() < 10)
+                return "—";
             return iso.substring(0, 10);
         }
 
         private static String formatUserStatus(WalkSession.Status status) {
-            if (status == null) return "";
+            if (status == null)
+                return "";
             switch (status) {
-                case ACTIVE:    return "Walking...";
-                case COMPLETED: return "Completed";
-                case NO_SHOW:   return "No Show";
-                case PENDING:   return "Waiting...";
-                default:        return "";
+                case ACTIVE:
+                    return "Walking...";
+                case COMPLETED:
+                    return "Completed";
+                case NO_SHOW:
+                    return "No Show";
+                case PENDING:
+                    return "Waiting...";
+                default:
+                    return "";
             }
         }
 
@@ -272,26 +302,26 @@ public class SessionHistoryAdapter
         }
 
         private static String formatDuration(int minutes) {
-            if (minutes < 60) return minutes + " min";
+            if (minutes < 60)
+                return minutes + " min";
             return (minutes / 60) + "h " + (minutes % 60) + "m";
         }
     }
 
     // ── DiffUtil ──────────────────────────────────────────────────────────────
 
-    private static final DiffUtil.ItemCallback<SessionSummary> DIFF_CALLBACK =
-            new DiffUtil.ItemCallback<SessionSummary>() {
-                @Override
-                public boolean areItemsTheSame(@NonNull SessionSummary a,
-                                               @NonNull SessionSummary b) {
-                    return a.getSessionId().equals(b.getSessionId());
-                }
+    private static final DiffUtil.ItemCallback<SessionSummary> DIFF_CALLBACK = new DiffUtil.ItemCallback<SessionSummary>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull SessionSummary a,
+                @NonNull SessionSummary b) {
+            return a.getSessionId().equals(b.getSessionId());
+        }
 
-                @Override
-                public boolean areContentsTheSame(@NonNull SessionSummary a,
-                                                  @NonNull SessionSummary b) {
-                    return a.getSessionId().equals(b.getSessionId())
-                            && a.getStatus() == b.getStatus();
-                }
-            };
+        @Override
+        public boolean areContentsTheSame(@NonNull SessionSummary a,
+                @NonNull SessionSummary b) {
+            return a.getSessionId().equals(b.getSessionId())
+                    && a.getStatus() == b.getStatus();
+        }
+    };
 }

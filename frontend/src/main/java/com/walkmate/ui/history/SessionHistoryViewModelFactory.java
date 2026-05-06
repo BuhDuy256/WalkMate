@@ -10,11 +10,13 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  * Manual DI factory for SessionHistoryViewModel.
  *
  * Usage:
- *   WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
- *   String currentUserId = app.getSessionManager().getUserId();
- *   viewModel = new ViewModelProvider(this,
- *       new SessionHistoryViewModelFactory(app.getWalkSessionRepository(), currentUserId))
- *       .get(SessionHistoryViewModel.class);
+ * WalkMateApplication app = (WalkMateApplication)
+ * requireActivity().getApplication();
+ * String currentUserId = app.getSessionManager().getUserId();
+ * viewModel = new ViewModelProvider(this,
+ * new SessionHistoryViewModelFactory(app.getWalkSessionRepository(),
+ * currentUserId))
+ * .get(SessionHistoryViewModel.class);
  */
 public class SessionHistoryViewModelFactory implements ViewModelProvider.Factory {
 
@@ -22,7 +24,7 @@ public class SessionHistoryViewModelFactory implements ViewModelProvider.Factory
     private final String currentUserId;
 
     public SessionHistoryViewModelFactory(WalkSessionRepository sessionRepo, String currentUserId) {
-        this.sessionRepo   = sessionRepo;
+        this.sessionRepo = sessionRepo;
         this.currentUserId = currentUserId;
     }
 

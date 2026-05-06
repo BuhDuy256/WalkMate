@@ -12,19 +12,21 @@ import java.util.List;
  */
 public class SessionHistoryUiState {
 
-    public enum Kind { LOADING, READY, ERROR }
+    public enum Kind {
+        LOADING, READY, ERROR
+    }
 
-    public final Kind                 kind;
-    public final List<SessionSummary> sessions;     // non-null when READY
-    public final String               currentUserId; // non-null when READY
-    public final String               error;         // non-null when ERROR
+    public final Kind kind;
+    public final List<SessionSummary> sessions; // non-null when READY
+    public final String currentUserId; // non-null when READY
+    public final String error; // non-null when ERROR
 
     private SessionHistoryUiState(Kind kind, List<SessionSummary> sessions,
-                                   String currentUserId, String error) {
-        this.kind          = kind;
-        this.sessions      = sessions;
+            String currentUserId, String error) {
+        this.kind = kind;
+        this.sessions = sessions;
         this.currentUserId = currentUserId;
-        this.error         = error;
+        this.error = error;
     }
 
     public static SessionHistoryUiState loading() {

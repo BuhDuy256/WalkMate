@@ -33,8 +33,8 @@ import java.util.Locale;
  *
  * Decodes the encoded polyline strings from {@link SessionRoute} and draws
  * two coloured paths on a Google Map:
- *   • User A — blue (Color.BLUE)
- *   • User B — red (Color.RED)
+ * • User A — blue (Color.BLUE)
+ * • User B — red (Color.RED)
  *
  * Entry point: {@link com.walkmate.ui.history.SessionHistoryFragment} passes
  * {@code SESSION_ID} via Intent extra.
@@ -43,15 +43,15 @@ public class RouteReplayActivity extends AppCompatActivity implements OnMapReady
 
     public static final String EXTRA_SESSION_ID = "SESSION_ID";
 
-    private static final String TAG         = "RouteReplayActivity";
-    private static final int    PADDING_PX  = 120;   // map camera bounds padding
+    private static final String TAG = "RouteReplayActivity";
+    private static final int PADDING_PX = 120; // map camera bounds padding
 
     private RouteReplayViewModel viewModel;
-    private GoogleMap            googleMap;
+    private GoogleMap googleMap;
 
     private ProgressBar progressBar;
-    private TextView    txtError;
-    private TextView    txtStats;
+    private TextView txtError;
+    private TextView txtStats;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -68,14 +68,14 @@ public class RouteReplayActivity extends AppCompatActivity implements OnMapReady
         }
 
         progressBar = findViewById(R.id.progressRouteReplay);
-        txtError    = findViewById(R.id.txtRouteReplayError);
-        txtStats    = findViewById(R.id.txtRouteReplayStats);
+        txtError = findViewById(R.id.txtRouteReplayError);
+        txtStats = findViewById(R.id.txtRouteReplayStats);
 
         View btnBack = findViewById(R.id.btnBackRouteReplay);
         btnBack.setOnClickListener(v -> finish());
 
-        SupportMapFragment mapFragment = (SupportMapFragment)
-                getSupportFragmentManager().findFragmentById(R.id.mapRouteReplay);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapRouteReplay);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
@@ -116,7 +116,8 @@ public class RouteReplayActivity extends AppCompatActivity implements OnMapReady
                 txtError.setVisibility(View.GONE);
                 txtStats.setText(formatStats(state.route));
                 txtStats.setVisibility(View.VISIBLE);
-                if (googleMap != null) drawRoute(state.route);
+                if (googleMap != null)
+                    drawRoute(state.route);
                 break;
 
             case ERROR:
@@ -138,7 +139,8 @@ public class RouteReplayActivity extends AppCompatActivity implements OnMapReady
      * Camera is moved to encompass all drawn points on completion.
      */
     private void drawRoute(SessionRoute route) {
-        if (googleMap == null) return;
+        if (googleMap == null)
+            return;
         googleMap.clear();
 
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
@@ -163,13 +165,15 @@ public class RouteReplayActivity extends AppCompatActivity implements OnMapReady
      * Returns true if at least one point was added to the bounds builder.
      */
     private boolean drawPolylines(List<String> encodedSegments, int color,
-                                   LatLngBounds.Builder boundsBuilder) {
-        if (encodedSegments == null || encodedSegments.isEmpty()) return false;
+            LatLngBounds.Builder boundsBuilder) {
+        if (encodedSegments == null || encodedSegments.isEmpty())
+            return false;
         boolean hasPoints = false;
 
         for (String encoded : encodedSegments) {
             List<LatLng> points = decodePolyline(encoded);
-            if (points.isEmpty()) continue;
+            if (points.isEmpty())
+                continue;
 
             googleMap.addPolyline(new PolylineOptions()
                     .addAll(points)
@@ -190,7 +194,8 @@ public class RouteReplayActivity extends AppCompatActivity implements OnMapReady
      * Returns an empty list on any error so the caller can safely skip the segment.
      */
     private static List<LatLng> decodePolyline(String encoded) {
-        if (encoded == null || encoded.isEmpty()) return Collections.emptyList();
+        if (encoded == null || encoded.isEmpty())
+            return Collections.emptyList();
         try {
             return PolyUtil.decode(encoded);
         } catch (Exception e) {

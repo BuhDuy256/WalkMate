@@ -36,20 +36,20 @@ public class SessionHistoryFragment extends Fragment {
     public static final String TAG = "SessionHistoryFragment";
 
     private SessionHistoryViewModel viewModel;
-    private SessionHistoryAdapter   adapter;
+    private SessionHistoryAdapter adapter;
 
     private ProgressBar progressBar;
     private RecyclerView recyclerView;
-    private TextView    txtEmpty;
-    private TextView    txtError;
+    private TextView txtEmpty;
+    private TextView txtError;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_session_history, container, false);
     }
 
@@ -59,15 +59,14 @@ public class SessionHistoryFragment extends Fragment {
 
         WindowInsetUtils.applyStatusBarPadding(view.findViewById(R.id.subPageHeader));
 
-        progressBar  = view.findViewById(R.id.progressHistory);
+        progressBar = view.findViewById(R.id.progressHistory);
         recyclerView = view.findViewById(R.id.rvSessionHistory);
-        txtEmpty     = view.findViewById(R.id.txtHistoryEmpty);
-        txtError     = view.findViewById(R.id.txtHistoryError);
+        txtEmpty = view.findViewById(R.id.txtHistoryEmpty);
+        txtError = view.findViewById(R.id.txtHistoryError);
         View btnBack = view.findViewById(R.id.btnSubPageBack);
         ((TextView) view.findViewById(R.id.txtSubPageTitle)).setText("Walk History");
 
-        btnBack.setOnClickListener(v ->
-                requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        btnBack.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
         adapter = new SessionHistoryAdapter();
 
@@ -94,8 +93,8 @@ public class SessionHistoryFragment extends Fragment {
 
         adapter.setOnReportClickListener((sessionId, partnerId, terminalAtMs) -> {
             Bundle args = new Bundle();
-            args.putString(ReportIncidentFragment.ARG_SESSION_ID,           sessionId);
-            args.putString(ReportIncidentFragment.ARG_REPORTED_UID,         partnerId);
+            args.putString(ReportIncidentFragment.ARG_SESSION_ID, sessionId);
+            args.putString(ReportIncidentFragment.ARG_REPORTED_UID, partnerId);
             args.putLong(ReportIncidentFragment.ARG_SESSION_TERMINAL_AT_MS, terminalAtMs);
             NavHostFragment.findNavController(SessionHistoryFragment.this)
                     .navigate(R.id.action_sessionHistory_to_reportIncidentFragment, args);
@@ -104,8 +103,7 @@ public class SessionHistoryFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
-        WalkMateApplication app =
-                (WalkMateApplication) requireActivity().getApplication();
+        WalkMateApplication app = (WalkMateApplication) requireActivity().getApplication();
         viewModel = new ViewModelProvider(this,
                 new SessionHistoryViewModelFactory(
                         app.getWalkSessionRepository(),

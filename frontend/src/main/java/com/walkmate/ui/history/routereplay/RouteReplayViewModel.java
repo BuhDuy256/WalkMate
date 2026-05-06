@@ -16,8 +16,7 @@ import com.walkmate.domain.walksession.WalkSessionRepository;
  */
 public class RouteReplayViewModel extends ViewModel {
 
-    private final MutableLiveData<RouteReplayUiState> uiState =
-            new MutableLiveData<>(RouteReplayUiState.loading());
+    private final MutableLiveData<RouteReplayUiState> uiState = new MutableLiveData<>(RouteReplayUiState.loading());
 
     private final WalkSessionRepository sessionRepo;
 

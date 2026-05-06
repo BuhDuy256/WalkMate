@@ -18,14 +18,14 @@ import java.util.List;
  */
 public class SessionHistoryViewModel extends ViewModel {
 
-    private final MutableLiveData<SessionHistoryUiState> uiState =
-            new MutableLiveData<>(SessionHistoryUiState.loading());
+    private final MutableLiveData<SessionHistoryUiState> uiState = new MutableLiveData<>(
+            SessionHistoryUiState.loading());
 
     private final WalkSessionRepository sessionRepo;
     private final String currentUserId;
 
     public SessionHistoryViewModel(WalkSessionRepository sessionRepo, String currentUserId) {
-        this.sessionRepo   = sessionRepo;
+        this.sessionRepo = sessionRepo;
         this.currentUserId = currentUserId;
     }
 
