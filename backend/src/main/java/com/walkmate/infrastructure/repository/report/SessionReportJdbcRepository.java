@@ -34,15 +34,15 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
                      :reason, :evidenceUrl, :createdAt,
                      :status::report_status, :appliedTrustDelta)
                 """)
-                .param("reportId",           UUID.fromString(report.getReportId()))
-                .param("sessionId",          UUID.fromString(report.getSessionId()))
-                .param("reporterId",         UUID.fromString(report.getReporterId()))
-                .param("reportedUserId",     UUID.fromString(report.getReportedUserId()))
-                .param("reason",             report.getReason())
-                .param("evidenceUrl",        report.getEvidenceUrl())
-                .param("createdAt",          Timestamp.from(report.getCreatedAt()))
-                .param("status",             report.getStatus())
-                .param("appliedTrustDelta",  report.getAppliedTrustDelta())
+                .param("reportId", UUID.fromString(report.getReportId()))
+                .param("sessionId", UUID.fromString(report.getSessionId()))
+                .param("reporterId", UUID.fromString(report.getReporterId()))
+                .param("reportedUserId", UUID.fromString(report.getReportedUserId()))
+                .param("reason", report.getReason())
+                .param("evidenceUrl", report.getEvidenceUrl())
+                .param("createdAt", Timestamp.from(report.getCreatedAt()))
+                .param("status", report.getStatus())
+                .param("appliedTrustDelta", report.getAppliedTrustDelta())
                 .update();
     }
 
@@ -57,14 +57,16 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
                     resolution_note    = :resolutionNote
                 WHERE report_id = :reportId
                 """)
-                .param("status",             report.getStatus())
-                .param("appliedTrustDelta",  report.getAppliedTrustDelta())
-                .param("resolvedBy",         report.getResolvedBy() != null
-                                                ? UUID.fromString(report.getResolvedBy()) : null)
-                .param("resolvedAt",         report.getResolvedAt() != null
-                                                ? Timestamp.from(report.getResolvedAt()) : null)
-                .param("resolutionNote",     report.getResolutionNote())
-                .param("reportId",           UUID.fromString(report.getReportId()))
+                .param("status", report.getStatus())
+                .param("appliedTrustDelta", report.getAppliedTrustDelta())
+                .param("resolvedBy", report.getResolvedBy() != null
+                        ? UUID.fromString(report.getResolvedBy())
+                        : null)
+                .param("resolvedAt", report.getResolvedAt() != null
+                        ? Timestamp.from(report.getResolvedAt())
+                        : null)
+                .param("resolutionNote", report.getResolutionNote())
+                .param("reportId", UUID.fromString(report.getReportId()))
                 .update();
     }
 
@@ -77,7 +79,7 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
                 WHERE session_id  = :sessionId
                   AND reporter_id = :reporterId
                 """)
-                .param("sessionId",  UUID.fromString(sessionId))
+                .param("sessionId", UUID.fromString(sessionId))
                 .param("reporterId", UUID.fromString(reporterId))
                 .query(Integer.class)
                 .single();
@@ -91,7 +93,7 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
                 WHERE session_id  = :sessionId
                   AND reporter_id = :reporterId
                 """)
-                .param("sessionId",  UUID.fromString(sessionId))
+                .param("sessionId", UUID.fromString(sessionId))
                 .param("reporterId", UUID.fromString(reporterId))
                 .query((rs, rowNum) -> mapRow(rs))
                 .optional();
@@ -134,7 +136,7 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
 
     private SessionReport mapRow(ResultSet rs) throws SQLException {
         Timestamp resolvedAtTs = rs.getTimestamp("resolved_at");
-        String    resolvedBy   = rs.getString("resolved_by");
+        String resolvedBy = rs.getString("resolved_by");
 
         return new SessionReport(
                 rs.getString("report_id"),
@@ -148,7 +150,6 @@ public class SessionReportJdbcRepository implements SessionReportRepository {
                 rs.getInt("applied_trust_delta"),
                 resolvedBy,
                 resolvedAtTs != null ? resolvedAtTs.toInstant() : null,
-                rs.getString("resolution_note")
-        );
+                rs.getString("resolution_note"));
     }
 }

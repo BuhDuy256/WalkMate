@@ -44,19 +44,20 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                     """;
 
             jdbcClient.sql(insertSql)
-                    .param("proposalId",        UUID.fromString(proposal.getProposalId()))
-                    .param("intentIdA",         UUID.fromString(proposal.getIntentIdA()))
-                    .param("intentIdB",         UUID.fromString(proposal.getIntentIdB()))
+                    .param("proposalId", UUID.fromString(proposal.getProposalId()))
+                    .param("intentIdA", UUID.fromString(proposal.getIntentIdA()))
+                    .param("intentIdB", UUID.fromString(proposal.getIntentIdB()))
                     .param("proposedStartTime", Timestamp.from(proposal.getProposedStartTime()))
-                    .param("proposedEndTime",   Timestamp.from(proposal.getProposedEndTime()))
-                    .param("hotspotId",         UUID.fromString(proposal.getHotspotId()))
-                    .param("acceptedByA",       proposal.isAcceptedByA())
-                    .param("acceptedByB",       proposal.isAcceptedByB())
-                    .param("status",            proposal.getStatus().name())
-                    .param("createdAt",         Timestamp.from(proposal.getCreatedAt()))
-                    .param("expiresAt",         Timestamp.from(proposal.getExpiresAt()))
-                    .param("confirmedAt",       proposal.getConfirmedAt() != null
-                            ? Timestamp.from(proposal.getConfirmedAt()) : null)
+                    .param("proposedEndTime", Timestamp.from(proposal.getProposedEndTime()))
+                    .param("hotspotId", UUID.fromString(proposal.getHotspotId()))
+                    .param("acceptedByA", proposal.isAcceptedByA())
+                    .param("acceptedByB", proposal.isAcceptedByB())
+                    .param("status", proposal.getStatus().name())
+                    .param("createdAt", Timestamp.from(proposal.getCreatedAt()))
+                    .param("expiresAt", Timestamp.from(proposal.getExpiresAt()))
+                    .param("confirmedAt", proposal.getConfirmedAt() != null
+                            ? Timestamp.from(proposal.getConfirmedAt())
+                            : null)
                     .update();
         } else {
             // Existing proposal — UPDATE with OCC guard (X-5)
@@ -73,13 +74,14 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                     """;
 
             int rows = jdbcClient.sql(updateSql)
-                    .param("proposalId",       UUID.fromString(proposal.getProposalId()))
-                    .param("acceptedByA",      proposal.isAcceptedByA())
-                    .param("acceptedByB",      proposal.isAcceptedByB())
-                    .param("status",           proposal.getStatus().name())
-                    .param("confirmedAt",      proposal.getConfirmedAt() != null
-                            ? Timestamp.from(proposal.getConfirmedAt()) : null)
-                    .param("expectedVersion",  proposal.getVersion() - 1)
+                    .param("proposalId", UUID.fromString(proposal.getProposalId()))
+                    .param("acceptedByA", proposal.isAcceptedByA())
+                    .param("acceptedByB", proposal.isAcceptedByB())
+                    .param("status", proposal.getStatus().name())
+                    .param("confirmedAt", proposal.getConfirmedAt() != null
+                            ? Timestamp.from(proposal.getConfirmedAt())
+                            : null)
+                    .param("expectedVersion", proposal.getVersion() - 1)
                     .update();
 
             if (rows == 0) {
@@ -186,8 +188,8 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("expires_at").toInstant(),
                 rs.getTimestamp("confirmed_at") != null
-                        ? rs.getTimestamp("confirmed_at").toInstant() : null,
-                rs.getLong("version")
-        );
+                        ? rs.getTimestamp("confirmed_at").toInstant()
+                        : null,
+                rs.getLong("version"));
     }
 }

@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NotificationJdbcRepository implements NotificationRepository {
 
-    private final JdbcClient   jdbcClient;
+    private final JdbcClient jdbcClient;
     private final ObjectMapper objectMapper;
 
     // ── Save (upsert) ─────────────────────────────────────────────────────────
@@ -46,12 +46,12 @@ public class NotificationJdbcRepository implements NotificationRepository {
 
         jdbcClient.sql(sql)
                 .param("notificationId", UUID.fromString(notification.getNotificationId()))
-                .param("userId",         UUID.fromString(notification.getUserId()))
-                .param("type",           notification.getType().name())
-                .param("payload",        toJson(notification.getPayload()))
-                .param("status",         notification.getStatus().name())
-                .param("createdAt",      Timestamp.from(notification.getCreatedAt()))
-                .param("readAt",         toTs(notification.getReadAt()))
+                .param("userId", UUID.fromString(notification.getUserId()))
+                .param("type", notification.getType().name())
+                .param("payload", toJson(notification.getPayload()))
+                .param("status", notification.getStatus().name())
+                .param("createdAt", Timestamp.from(notification.getCreatedAt()))
+                .param("readAt", toTs(notification.getReadAt()))
                 .update();
 
         return notification;
@@ -93,8 +93,7 @@ public class NotificationJdbcRepository implements NotificationRepository {
                 fromJson(rs.getString("payload")),
                 NotificationStatus.valueOf(rs.getString("status")),
                 rs.getTimestamp("created_at").toInstant(),
-                toInstant(rs, "read_at")
-        );
+                toInstant(rs, "read_at"));
     }
 
     private String toJson(Map<String, Object> payload) {
@@ -107,8 +106,10 @@ public class NotificationJdbcRepository implements NotificationRepository {
 
     private Map<String, Object> fromJson(String json) {
         try {
-            if (json == null || json.isBlank()) return Map.of();
-            return objectMapper.readValue(json, new TypeReference<>() {});
+            if (json == null || json.isBlank())
+                return Map.of();
+            return objectMapper.readValue(json, new TypeReference<>() {
+            });
         } catch (JsonProcessingException e) {
             return Map.of();
         }
