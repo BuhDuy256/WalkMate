@@ -361,7 +361,14 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
             }
         }
         updatePartnerStatusLabel(state.getPartnerOverlayState(),
-                state.getPartnerLastUpdatedSeconds());
+                state.getPartnerLastUpdatedSeconds(),
+                state.getWalkState());
+
+        String notice = state.getPartnerNoticeMessage();
+        if (notice != null) {
+            Toast.makeText(this, notice, Toast.LENGTH_SHORT).show();
+            viewModel.consumePartnerNotice();
+        }
 
         if (state.getWalkState() == WalkState.FINISHED && !finishDialogShown) {
             finishDialogShown = true;
@@ -493,19 +500,29 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
         partnerPolyline.setPoints(points); // setPoints only — no animateCamera
     }
 
-    private void updatePartnerStatusLabel(PartnerOverlayState overlayState, long lastUpdatedSecs) {
+    private void updatePartnerStatusLabel(PartnerOverlayState overlayState,
+                                           long lastUpdatedSecs,
+                                           WalkState currentUserState) {
         if (txtPartnerStatus == null) return;
+        boolean userFinished = (currentUserState == WalkState.FINISHED
+                || currentUserState == WalkState.FINISHING);
+
         switch (overlayState) {
             case WAITING_FOR_PARTNER:
                 txtPartnerStatus.setVisibility(View.VISIBLE);
-                txtPartnerStatus.setText(R.string.tracking_partner_waiting);
+                txtPartnerStatus.setText(userFinished
+                        ? R.string.tracking_self_done_partner_pending
+                        : R.string.tracking_partner_waiting);
                 break;
             case WAITING_FOR_GPS:
                 txtPartnerStatus.setVisibility(View.VISIBLE);
                 txtPartnerStatus.setText(R.string.tracking_partner_waiting_gps);
                 break;
             case SHOWING_PATH:
-                if (lastUpdatedSecs < 15) {
+                if (userFinished) {
+                    txtPartnerStatus.setVisibility(View.VISIBLE);
+                    txtPartnerStatus.setText(R.string.tracking_self_done_partner_active);
+                } else if (lastUpdatedSecs < 15) {
                     txtPartnerStatus.setVisibility(View.GONE);
                 } else if (lastUpdatedSecs < 60) {
                     txtPartnerStatus.setVisibility(View.VISIBLE);
@@ -519,7 +536,13 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                 break;
             case PARTNER_COMPLETED:
                 txtPartnerStatus.setVisibility(View.VISIBLE);
-                txtPartnerStatus.setText(R.string.tracking_partner_completed);
+                txtPartnerStatus.setText(userFinished
+                        ? R.string.tracking_both_finished
+                        : R.string.tracking_partner_completed);
+                break;
+            case PARTNER_NO_SHOW:
+                txtPartnerStatus.setVisibility(View.VISIBLE);
+                txtPartnerStatus.setText(R.string.tracking_partner_no_show);
                 break;
         }
     }

@@ -11,6 +11,8 @@ public enum PartnerOverlayState {
     WAITING_FOR_GPS,
     /** Partner has GPS data — polyline is visible on the map. */
     SHOWING_PATH,
-    /** Partner finished (COMPLETED or NO_SHOW) — path is frozen. */
-    PARTNER_COMPLETED
+    /** Partner personal status is COMPLETED — path is frozen. */
+    PARTNER_COMPLETED,
+    /** Partner personal status is NO_SHOW — partner never arrived. */
+    PARTNER_NO_SHOW
 }

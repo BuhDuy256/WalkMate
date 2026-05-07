@@ -35,6 +35,11 @@ public class TrackingUiState {
     private final PartnerOverlayState partnerOverlayState;
     /** Seconds since the last received partner GPS chunk; 0 when no chunk has ever arrived. */
     private final long partnerLastUpdatedSeconds;
+    /**
+     * Non-null when a partner status transition just occurred and the Activity
+     * should show a one-time Toast. Null after {@link TrackingViewModel#consumePartnerNotice()}.
+     */
+    private final String partnerNoticeMessage;
 
     public TrackingUiState(
             WalkState walkState,
@@ -48,7 +53,8 @@ public class TrackingUiState {
             boolean isSaving,
             List<LatLng> partnerMapPoints,
             PartnerOverlayState partnerOverlayState,
-            long partnerLastUpdatedSeconds) {
+            long partnerLastUpdatedSeconds,
+            String partnerNoticeMessage) {
         this.walkState = walkState;
         this.mapPoints = mapPoints != null
                 ? Collections.unmodifiableList(mapPoints)
@@ -66,6 +72,7 @@ public class TrackingUiState {
         this.partnerOverlayState = partnerOverlayState != null
                 ? partnerOverlayState : PartnerOverlayState.WAITING_FOR_PARTNER;
         this.partnerLastUpdatedSeconds = partnerLastUpdatedSeconds;
+        this.partnerNoticeMessage = partnerNoticeMessage;
     }
 
     // ── Getters ───────────────────────────────────────────────────────────────
@@ -82,4 +89,5 @@ public class TrackingUiState {
     public List<LatLng> getPartnerMapPoints()               { return partnerMapPoints; }
     public PartnerOverlayState getPartnerOverlayState()     { return partnerOverlayState; }
     public long getPartnerLastUpdatedSeconds()              { return partnerLastUpdatedSeconds; }
+    public String getPartnerNoticeMessage()                 { return partnerNoticeMessage; }
 }

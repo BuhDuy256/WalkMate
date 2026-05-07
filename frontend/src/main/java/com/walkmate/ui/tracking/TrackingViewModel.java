@@ -117,6 +117,10 @@ public class TrackingViewModel extends AndroidViewModel {
     private long   partnerLastChunkMs           = 0L;
     /** Last known personal status of the partner: "PENDING" / "ACTIVE" / "COMPLETED" / "NO_SHOW". */
     private String partnerPersonalStatus        = "PENDING";
+    /** Tracks the previous partner status to detect transitions and emit one-time notices. */
+    private String lastKnownPartnerStatus       = "PENDING";
+    /** Non-null when a partner status transition has not yet been shown as a Toast by the Activity. */
+    private String pendingPartnerNotice         = null;
 
     private final ScheduledExecutorService partnerPollExecutor =
             Executors.newSingleThreadScheduledExecutor();
@@ -163,7 +167,13 @@ public class TrackingViewModel extends AndroidViewModel {
         uiStateLiveData.addSource(partnerResultLiveData,  result -> {
             // This observer runs on the main thread — safe to mutate partner state fields.
             if (result != null) {
-                partnerPersonalStatus = result.getPartnerStatus();
+                String newStatus = result.getPartnerStatus();
+                if (!newStatus.equals(lastKnownPartnerStatus)) {
+                    pendingPartnerNotice  = mapPartnerStatusTransitionToNotice(
+                            lastKnownPartnerStatus, newStatus);
+                    lastKnownPartnerStatus = newStatus;
+                }
+                partnerPersonalStatus = newStatus;
                 if (!result.getNewPoints().isEmpty()) {
                     partnerAccumulatedPoints.addAll(result.getNewPoints());
                     lastFetchedPartnerChunkIndex = result.getLastChunkIndex();
@@ -329,7 +339,6 @@ public class TrackingViewModel extends AndroidViewModel {
         }
 
         stopTimer();
-        stopPartnerPolling();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHING);
 
@@ -494,8 +503,11 @@ public class TrackingViewModel extends AndroidViewModel {
                 });
     }
 
-    private PartnerOverlayState computePartnerOverlayState() {
-        if ("COMPLETED".equals(partnerPersonalStatus) || "NO_SHOW".equals(partnerPersonalStatus)) {
+    private PartnerOverlayState computePartnerOverlayState(WalkState currentState) {
+        if ("NO_SHOW".equals(partnerPersonalStatus)) {
+            return PartnerOverlayState.PARTNER_NO_SHOW;
+        }
+        if ("COMPLETED".equals(partnerPersonalStatus)) {
             return PartnerOverlayState.PARTNER_COMPLETED;
         }
         if ("ACTIVE".equals(partnerPersonalStatus) && !partnerAccumulatedPoints.isEmpty()) {
@@ -505,6 +517,28 @@ public class TrackingViewModel extends AndroidViewModel {
             return PartnerOverlayState.WAITING_FOR_GPS;
         }
         return PartnerOverlayState.WAITING_FOR_PARTNER;
+        // WAITING_FOR_PARTNER covers both "current user ACTIVE, partner PENDING" and
+        // "current user FINISHED, partner PENDING". The label distinction is handled
+        // in Activity's updatePartnerStatusLabel() using currentUserState.
+    }
+
+    /** Maps a partner status transition to a one-time Toast message, or null if no toast needed. */
+    private static String mapPartnerStatusTransitionToNotice(String from, String to) {
+        if ("PENDING".equals(from) && "ACTIVE".equals(to))    return "Partner has started walking";
+        if ("ACTIVE".equals(from)  && "COMPLETED".equals(to)) return "Partner has finished";
+        if ("PENDING".equals(from) && "NO_SHOW".equals(to))   return "Partner didn't show up";
+        return null;
+    }
+
+    /**
+     * Called by the Activity after it has displayed the pending partner notice Toast.
+     * Rebuilds UiState immediately so the next delivered snapshot has a null notice,
+     * preventing the Toast from re-appearing if the Activity re-renders before the
+     * next timer tick.
+     */
+    public void consumePartnerNotice() {
+        pendingPartnerNotice = null;
+        rebuildUiState();
     }
 
     // ── Timer ─────────────────────────────────────────────────────────────────
@@ -580,7 +614,7 @@ public class TrackingViewModel extends AndroidViewModel {
 
         // Partner overlay — snapshot the accumulated list to avoid external mutation.
         List<LatLng> partnerSnapshot    = new ArrayList<>(partnerAccumulatedPoints);
-        PartnerOverlayState overlayState = computePartnerOverlayState();
+        PartnerOverlayState overlayState = computePartnerOverlayState(state);
         long partnerLastUpdatedSecs     = (partnerLastChunkMs > 0)
                 ? (System.currentTimeMillis() - partnerLastChunkMs) / 1000L : 0L;
 
@@ -596,7 +630,8 @@ public class TrackingViewModel extends AndroidViewModel {
                 isSaving,
                 partnerSnapshot,
                 overlayState,
-                partnerLastUpdatedSecs
+                partnerLastUpdatedSecs,
+                pendingPartnerNotice
         ));
     }
 
