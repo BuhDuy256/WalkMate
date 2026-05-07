@@ -103,7 +103,10 @@ public class ProposalController {
 
     /**
      * POST /api/v1/proposals/{proposalId}/pass
-     * Rejects the proposal. Both intents remain OPEN for further matching.
+     * Rejects the proposal.
+     * Public: both intents revert to OPEN and re-enter the matching pool.
+     * Private: both intents transition to CANCELLED — the private invite is closed
+     * and must not be publicised (SSOT lifecycle §1).
      */
     @PostMapping("/{proposalId}/pass")
     public ResponseEntity<ApiResponse<Void>> passProposal(

@@ -95,6 +95,52 @@ public class MatchesViewModelTest {
     }
 
     @Test
+    public void passProposal_privateInvite_removesProposalAndDoesNotNavigate() {
+        WalkProposal p = new WalkProposal("pid","iid","u","name",null,25,0,null,16f,16.5f,
+                WalkProposal.Status.PENDING, null,"h","H",null,null,true);
+        viewModel.getUiState().setValue(new MatchesUiState(false, List.of(), List.of(p), List.of(), null));
+
+        doAnswer(invocation -> {
+            DomainCallback<Void> cb = invocation.getArgument(1);
+            cb.onSuccess(null);
+            return null;
+        }).when(proposalRepository).passProposal(any(String.class), any(DomainCallback.class));
+
+        viewModel.passProposal("pid", true);
+
+        MatchesUiState state = viewModel.getUiState().getValue();
+        assertTrue(state.getProposals().isEmpty());
+        // Private decline must NOT trigger Finding refresh or tab navigation
+        assertNull(viewModel.getScrollToTabEvent().getValue());
+    }
+
+    @Test
+    public void passProposal_publicProposal_removesProposalAndNavigatesToFinding() {
+        WalkProposal p = new WalkProposal("pid","iid","u","name",null,25,0,null,16f,16.5f,
+                WalkProposal.Status.PENDING, null,"h","H",null,null,false);
+        viewModel.getUiState().setValue(new MatchesUiState(false, List.of(), List.of(p), List.of(), null));
+
+        doAnswer(invocation -> {
+            DomainCallback<Void> cb = invocation.getArgument(1);
+            cb.onSuccess(null);
+            return null;
+        }).when(proposalRepository).passProposal(any(String.class), any(DomainCallback.class));
+
+        doAnswer(invocation -> {
+            DomainCallback<List<WalkIntent>> cb = invocation.getArgument(0);
+            cb.onSuccess(List.of());
+            return null;
+        }).when(intentRepository).listActiveIntents(any(DomainCallback.class));
+
+        viewModel.passProposal("pid", false);
+
+        MatchesUiState state = viewModel.getUiState().getValue();
+        assertTrue(state.getProposals().isEmpty());
+        Integer tab = viewModel.getScrollToTabEvent().getValue();
+        assertEquals(MatchesPagerAdapter.TAB_FINDING, tab.intValue());
+    }
+
+    @Test
     public void acceptProposal_whenNotConfirmed_updatesProposalInPlace() {
         WalkProposal original = new WalkProposal("pid","iid","u","name",null,25,0,null,16f,16.5f, WalkProposal.Status.PENDING, null,"h","H",null,null,false);
         WalkProposal updated = new WalkProposal("pid","iid","u","name",null,25,0,null,16f,16.5f, WalkProposal.Status.PENDING, null,"h","H","ACCEPTED",null,false);

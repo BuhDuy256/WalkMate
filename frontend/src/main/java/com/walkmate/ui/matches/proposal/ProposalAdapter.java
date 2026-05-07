@@ -190,6 +190,7 @@ public class ProposalAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 txtWaitingOverlay.setVisibility(View.GONE);
                 btnAccept.setVisibility(View.VISIBLE);
                 btnPass.setVisibility(View.VISIBLE);
+                btnPass.setText(proposal.isPrivateInvite() ? "Decline" : "Pass");
                 btnPass.setOnClickListener(v -> {
                     if (actionListener != null)
                         actionListener.onPass(proposal.getProposalId(), proposal.isPrivateInvite());

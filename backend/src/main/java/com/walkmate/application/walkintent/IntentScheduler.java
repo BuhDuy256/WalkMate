@@ -80,7 +80,9 @@ public class IntentScheduler {
         intent.expire();
         walkIntentRepository.save(intent);
 
-        // I-5: cascade expiry to any PENDING proposal and unlock the partner's intent
+        // I-5: cascade expiry to any PENDING proposal and transition the partner's intent.
+        // Public pair → partner returns to OPEN (re-enter matching pool).
+        // Private pair → partner transitions to CANCELLED (do not publicize, SSOT §1).
         matchProposalRepository.findPendingByIntentId(intent.getId())
                 .ifPresent(proposal -> {
                     proposal.expire();
@@ -91,7 +93,11 @@ public class IntentScheduler {
                     walkIntentRepository.findById(partnerIntentId)
                             .filter(p -> p.getStatus() == IntentStatus.MATCHING)
                             .ifPresent(partner -> {
-                                partner.unlock();
+                                if (intent.isPrivate() && partner.isPrivate()) {
+                                    partner.cancel();
+                                } else {
+                                    partner.unlock();
+                                }
                                 walkIntentRepository.save(partner);
                             });
                 });

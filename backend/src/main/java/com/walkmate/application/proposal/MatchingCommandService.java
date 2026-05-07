@@ -260,6 +260,13 @@ public class MatchingCommandService {
 
     // ── Pass / reject proposal ────────────────────────────────────────────────
 
+    /**
+     * Rejects the proposal on behalf of the caller.
+     *
+     * Public flow: both intents revert to OPEN; caller excludes partner (X-3).
+     * Private flow: both intents transition to CANCELLED — the private pairing is
+     * closed definitively and must not re-enter the public matching pool (SSOT §1).
+     */
     @Transactional
     public void passProposal(String proposalId, String callerId) {
         MatchProposal proposal = matchProposalRepository.findById(proposalId)
@@ -272,34 +279,23 @@ public class MatchingCommandService {
         proposal.reject();
         matchProposalRepository.save(proposal);
 
-        // Return both intents to OPEN so they re-enter the matching pool (GAP-3)
         WalkIntent intentA = walkIntentRepository.findById(proposal.getIntentIdA())
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
         WalkIntent intentB = walkIntentRepository.findById(proposal.getIntentIdB())
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
-        intentA.unlock();
-        intentB.unlock();
 
-        // Caller excludes the matched user from their intent so the engine
-        // won't re-pair them in the same search session (X-3, GAP-11).
-        String callerIntentId = proposal.resolveIntentIdForUser(callerId);
-        String partnerUserId  = callerIntentId.equals(proposal.getIntentIdA())
-                ? proposal.getUserIdB() : proposal.getUserIdA();
-        WalkIntent callerIntent = callerIntentId.equals(proposal.getIntentIdA()) ? intentA : intentB;
-        callerIntent.excludeUser(UUID.fromString(partnerUserId));
-
-        walkIntentRepository.save(intentA);
-        walkIntentRepository.save(intentB);
+        transitionRejectedProposalIntents(proposal, intentA, intentB, callerId);
     }
 
     // ── Cancel proposal ───────────────────────────────────────────────────────
 
     /**
-     * Hard-cancels a PENDING proposal on behalf of the caller.
+     * Hard-cancels a PENDING proposal on behalf of the caller. The caller's own
+     * intent is always CANCELLED (explicit withdrawal).
      *
-     * Unlike pass (which leaves both intents OPEN), cancel also closes the
-     * caller's own intent — they are explicitly withdrawing from the search.
-     * The partner's intent remains OPEN so they can be matched again.
+     * Public flow: partner's intent reverts to OPEN for further matching (GAP-3).
+     * Private flow: partner's intent is also CANCELLED — the private pairing is
+     * closed and must not re-enter the public matching pool (SSOT §1).
      */
     @Transactional
     public void cancelProposal(String proposalId, String callerId) {
@@ -311,23 +307,27 @@ public class MatchingCommandService {
             throw new DomainException(ProposalErrorCode.PROPOSAL_NOT_PARTICIPANT);
         }
 
-        // Mark the proposal terminal — reuses the same guard as pass
         proposal.reject();
         matchProposalRepository.save(proposal);
 
-        // Close the caller's intent — they are explicitly withdrawing from the search
+        String partnerIntentId = callerIntentId.equals(proposal.getIntentIdA())
+                ? proposal.getIntentIdB() : proposal.getIntentIdA();
+
         WalkIntent callerIntent = walkIntentRepository.findById(callerIntentId)
                 .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+        WalkIntent partnerIntent = walkIntentRepository.findById(partnerIntentId)
+                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
+
+        ProposalFlowType flowType = resolveProposalFlowType(callerIntent, partnerIntent);
+
         callerIntent.cancel();
         walkIntentRepository.save(callerIntent);
 
-        // Return the partner's intent to OPEN so they can be matched again (GAP-3)
-        String partnerIntentId = callerIntentId.equals(proposal.getIntentIdA())
-                ? proposal.getIntentIdB()
-                : proposal.getIntentIdA();
-        WalkIntent partnerIntent = walkIntentRepository.findById(partnerIntentId)
-                .orElseThrow(() -> new DomainException(WalkIntentErrorCode.INTENT_NOT_FOUND));
-        partnerIntent.unlock();
+        if (flowType == ProposalFlowType.PRIVATE) {
+            partnerIntent.cancel();
+        } else {
+            partnerIntent.unlock();
+        }
         walkIntentRepository.save(partnerIntent);
     }
 
@@ -341,14 +341,13 @@ public class MatchingCommandService {
     // ── Scheduler sweep ───────────────────────────────────────────────────────
 
     /**
-     * Called by the scheduler to expire overdue proposals and return both
-     * intents to OPEN so participants re-enter the matching pool (P-4, GAP-3).
+     * Called by the scheduler to expire overdue proposals and transition both
+     * intents according to their flow type (P-4, GAP-3, SSOT §1).
      *
-     * Each proposal is processed in its own isolated transaction (Phase-0 Issue-2).
-     * A failure on one proposal (e.g. OCC conflict) rolls back only that proposal's
-     * changes and is logged; the sweep continues to the next proposal.
-     * The outer method is intentionally not @Transactional — the TransactionTemplate
-     * creates a fresh REQUIRED transaction per iteration.
+     * Public: both intents → OPEN (re-enter matching pool).
+     * Private: both intents → CANCELLED (close the private pairing).
+     *
+     * Each proposal runs in its own isolated transaction (Phase-0 Issue-2).
      */
     public void sweepExpiredProposals() {
         List<MatchProposal> overdue = matchProposalRepository.findExpiredPending();
@@ -357,16 +356,88 @@ public class MatchingCommandService {
                 proposal.expire();
                 matchProposalRepository.save(proposal);
 
-                walkIntentRepository.findById(proposal.getIntentIdA())
-                        .filter(i -> i.getStatus() == IntentStatus.MATCHING)
-                        .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+                Optional<WalkIntent> optA = walkIntentRepository.findById(proposal.getIntentIdA());
+                Optional<WalkIntent> optB = walkIntentRepository.findById(proposal.getIntentIdB());
 
-                walkIntentRepository.findById(proposal.getIntentIdB())
-                        .filter(i -> i.getStatus() == IntentStatus.MATCHING)
-                        .ifPresent(i -> { i.unlock(); walkIntentRepository.save(i); });
+                if (optA.isPresent() && optB.isPresent()) {
+                    transitionExpiredProposalIntents(optA.get(), optB.get());
+                } else {
+                    log.warn("sweepExpiredProposals: missing intent(s) for proposal={} intentA-found={} intentB-found={}",
+                            proposal.getProposalId(), optA.isPresent(), optB.isPresent());
+                    optA.filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                            .ifPresent(i -> { if (i.isPrivate()) i.cancel(); else i.unlock(); walkIntentRepository.save(i); });
+                    optB.filter(i -> i.getStatus() == IntentStatus.MATCHING)
+                            .ifPresent(i -> { if (i.isPrivate()) i.cancel(); else i.unlock(); walkIntentRepository.save(i); });
+                }
 
                 return null;
             });
+        }
+    }
+
+    // ── Proposal flow type helpers ────────────────────────────────────────────
+
+    private enum ProposalFlowType { PUBLIC, PRIVATE }
+
+    /**
+     * Determines whether a proposal is part of a private invite or a public match.
+     * Both intents in a legitimately created pair always share the same isPrivate flag.
+     * Throws {@link IllegalStateException} if the flags are mismatched — this indicates
+     * a data-integrity violation that must not be silently swallowed.
+     */
+    private ProposalFlowType resolveProposalFlowType(WalkIntent intentA, WalkIntent intentB) {
+        boolean aPrivate = intentA.isPrivate();
+        boolean bPrivate = intentB.isPrivate();
+        if (aPrivate == bPrivate) {
+            return aPrivate ? ProposalFlowType.PRIVATE : ProposalFlowType.PUBLIC;
+        }
+        log.error("Invariant violation: mismatched isPrivate flags — intentA={} isPrivate={}, intentB={} isPrivate={}",
+                intentA.getId(), aPrivate, intentB.getId(), bPrivate);
+        throw new IllegalStateException(
+                "Proposal intent pair has mismatched isPrivate flags: intentA=" + intentA.getId()
+                + " intentB=" + intentB.getId());
+    }
+
+    /**
+     * Transitions both intents after a proposal is rejected (pass / decline).
+     *
+     * PUBLIC: both → OPEN; caller's intent excludes partner to prevent immediate re-pairing (X-3, GAP-11).
+     * PRIVATE: both → CANCELLED; private pairing is closed, do not publicize (SSOT §1).
+     */
+    private void transitionRejectedProposalIntents(
+            MatchProposal proposal, WalkIntent intentA, WalkIntent intentB, String callerId) {
+        ProposalFlowType flowType = resolveProposalFlowType(intentA, intentB);
+        if (flowType == ProposalFlowType.PRIVATE) {
+            intentA.cancel();
+            intentB.cancel();
+        } else {
+            intentA.unlock();
+            intentB.unlock();
+            String callerIntentId = proposal.resolveIntentIdForUser(callerId);
+            String partnerUserId  = callerIntentId.equals(proposal.getIntentIdA())
+                    ? proposal.getUserIdB() : proposal.getUserIdA();
+            WalkIntent callerIntent = callerIntentId.equals(proposal.getIntentIdA()) ? intentA : intentB;
+            callerIntent.excludeUser(UUID.fromString(partnerUserId));
+        }
+        walkIntentRepository.save(intentA);
+        walkIntentRepository.save(intentB);
+    }
+
+    /**
+     * Transitions both intents after a proposal expires (scheduler sweep).
+     *
+     * PUBLIC: MATCHING → OPEN (re-enter matching pool).
+     * PRIVATE: MATCHING → CANCELLED (close the private pairing, do not publicize).
+     * Intents already in a terminal state are silently skipped.
+     */
+    private void transitionExpiredProposalIntents(WalkIntent intentA, WalkIntent intentB) {
+        ProposalFlowType flowType = resolveProposalFlowType(intentA, intentB);
+        if (flowType == ProposalFlowType.PRIVATE) {
+            if (intentA.getStatus() == IntentStatus.MATCHING) { intentA.cancel(); walkIntentRepository.save(intentA); }
+            if (intentB.getStatus() == IntentStatus.MATCHING) { intentB.cancel(); walkIntentRepository.save(intentB); }
+        } else {
+            if (intentA.getStatus() == IntentStatus.MATCHING) { intentA.unlock(); walkIntentRepository.save(intentA); }
+            if (intentB.getStatus() == IntentStatus.MATCHING) { intentB.unlock(); walkIntentRepository.save(intentB); }
         }
     }
 }
