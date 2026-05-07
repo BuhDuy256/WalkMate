@@ -4,6 +4,9 @@ import java.util.List;
 
 public interface TrackingChunkRepository {
 
+    /** Lightweight projection returned by {@link #findChunksAfterIndex}. */
+    record ChunkRow(int chunkIndex, String polyline, long createdAtMs) {}
+
     /**
      * Returns the next available chunk index for a specific user within a session.
      * Returns 0 when the user has no chunks yet; MAX(chunk_index) + 1 otherwise.
@@ -25,6 +28,13 @@ public interface TrackingChunkRepository {
      * Returns the number of chunks a specific user has uploaded for a session.
      */
     int countChunks(String sessionId, String userId);
+
+    /**
+     * Returns chunks for a single participant with {@code chunk_index > afterChunkIndex},
+     * ordered ascending. Pass {@code -1} to fetch all chunks.
+     * Used by the live partner-path overlay during an active session.
+     */
+    List<ChunkRow> findChunksAfterIndex(String sessionId, String userId, int afterChunkIndex);
 
     /**
      * Persists a single compressed chunk of GPS route data, tagged to the uploading user.

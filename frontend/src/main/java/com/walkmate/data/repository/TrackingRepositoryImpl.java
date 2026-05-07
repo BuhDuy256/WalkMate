@@ -2,21 +2,27 @@ package com.walkmate.data.repository;
 
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.PolyUtil;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Transformations;
 
 import com.walkmate.data.datasource.local.dao.RoutePointDao;
 import com.walkmate.data.datasource.local.entity.RoutePointEntity;
 import com.walkmate.data.datasource.remote.api.ApiClient;
+import com.walkmate.data.datasource.remote.api.PartnerPathApiService;
 import com.walkmate.data.datasource.remote.api.RoutePointSyncApiService;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.data.datasource.remote.dto.request.tracking.PushRoutePointsRequest;
 import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
+import com.walkmate.data.datasource.remote.dto.response.tracking.PartnerPathResponseDto;
 import com.walkmate.data.datasource.remote.dto.response.tracking.PushRoutePointsResponse;
 import com.walkmate.data.mapper.RoutePointMapper;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.tracking.PartnerPathResult;
 import com.walkmate.domain.tracking.RoutePoint;
 import com.walkmate.domain.tracking.TrackingErrorCode;
 import com.walkmate.domain.tracking.TrackingRepository;
@@ -393,6 +399,76 @@ public class TrackingRepositoryImpl implements TrackingRepository {
                 }
                 callback.onSuccess(null);
             } catch (Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    // ── Partner path fetch ────────────────────────────────────────────────────
+
+    /**
+     * Fetches partner GPS chunks since {@code afterChunkIndex} from the backend,
+     * decodes each Google Encoded Polyline string into a {@code List<LatLng>},
+     * and returns the aggregated result via {@code callback}.
+     *
+     * <p>Runs on the shared executor thread. Uses synchronous {@code .execute()}
+     * to keep the executor task sequential (same pattern as {@link #doHttpPush}).
+     *
+     * <p>On a terminal-session error ({@code SESSION_NOT_ACTIVE} /
+     * {@code SESSION_NOT_FOUND}) the error message is prefixed with
+     * {@code "SESSION_TERMINAL|"} so the ViewModel can stop polling.
+     */
+    @Override
+    public void fetchPartnerPath(String sessionId, int afterChunkIndex,
+                                 DomainCallback<PartnerPathResult> callback) {
+        executor.execute(() -> {
+            try {
+                PartnerPathApiService api =
+                        ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService())
+                                .create(PartnerPathApiService.class);
+
+                retrofit2.Response<ApiResponse<PartnerPathResponseDto>> response =
+                        api.getPartnerPath(sessionId, afterChunkIndex).execute();
+
+                if (response.isSuccessful()
+                        && response.body() != null
+                        && response.body().isSuccess()) {
+
+                    PartnerPathResponseDto dto = response.body().getData();
+
+                    List<LatLng> decoded = new ArrayList<>();
+                    int lastChunkIndex = afterChunkIndex;
+
+                    if (dto.getChunks() != null) {
+                        for (PartnerPathResponseDto.PartnerChunkDto chunk : dto.getChunks()) {
+                            if (chunk.getPolyline() != null && !chunk.getPolyline().isEmpty()) {
+                                decoded.addAll(PolyUtil.decode(chunk.getPolyline()));
+                            }
+                            if (chunk.getChunkIndex() > lastChunkIndex) {
+                                lastChunkIndex = chunk.getChunkIndex();
+                            }
+                        }
+                    }
+
+                    callback.onSuccess(new PartnerPathResult(
+                            decoded,
+                            lastChunkIndex,
+                            dto.getLastChunkCreatedAtMs(),
+                            dto.getPartnerStatus()));
+
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(
+                            response, TrackingErrorCode.FETCH_PARTNER_PATH_FAILED);
+                    String code = apiError.getCode();
+                    Log.w(TAG, "fetchPartnerPath HTTP error: " + code);
+                    if ("SESSION_NOT_ACTIVE".equals(code) || "SESSION_NOT_FOUND".equals(code)) {
+                        callback.onError(new Exception("SESSION_TERMINAL|" + code));
+                    } else {
+                        callback.onError(new Exception(code));
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "fetchPartnerPath network error", e);
                 callback.onError(e);
             }
         });

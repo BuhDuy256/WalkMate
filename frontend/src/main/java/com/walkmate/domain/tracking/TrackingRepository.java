@@ -54,6 +54,20 @@ public interface TrackingRepository {
     void triggerPeriodicSync(String sessionId);
 
     /**
+     * Fetches partner GPS chunks incrementally from the backend.
+     *
+     * <p>Pass {@code afterChunkIndex = -1} on first call to receive all available chunks.
+     * Subsequent calls should pass the highest {@code chunkIndex} received so far.
+     *
+     * <p>The callback is invoked with a {@link PartnerPathResult} whose
+     * {@code newPoints} list contains decoded {@link com.google.android.gms.maps.model.LatLng}
+     * values from the newly received polyline strings. If the partner has no data yet,
+     * {@code newPoints} is empty and {@code partnerStatus} is {@code "PENDING"}.
+     */
+    void fetchPartnerPath(String sessionId, int afterChunkIndex,
+                          DomainCallback<PartnerPathResult> callback);
+
+    /**
      * Deletes all GPS points recorded by a specific user. Call this on logout
      * to prevent the previous user's path data from being visible to the next
      * user on the same device.

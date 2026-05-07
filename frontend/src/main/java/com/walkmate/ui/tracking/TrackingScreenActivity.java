@@ -37,6 +37,7 @@ import com.walkmate.R;
 import com.walkmate.core.designsystem.view.AvatarInitialView;
 import com.walkmate.ui.qr.QrVerifyActivity;
 import com.walkmate.core.designsystem.view.WalkMateStatColumn;
+import com.walkmate.domain.tracking.PartnerOverlayState;
 import com.walkmate.domain.tracking.WalkState;
 import com.walkmate.service.WalkTrackerService;
 import com.walkmate.ui.gamification.PostSessionSummaryFragment;
@@ -72,8 +73,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private static final String TAG = "TrackingScreenActivity";
     private static final int    REQUEST_LOCATION_PERMISSION = 100;
-    private static final float  MAP_TRACKING_ZOOM  = 18.5f; // close follow during walk
-    private static final int    POLYLINE_COLOR      = 0xFFFF7B3A; // orange_end
+    private static final float  MAP_TRACKING_ZOOM   = 18.5f;
+    private static final int    POLYLINE_COLOR       = 0xFFFF7B3A; // orange — own path
+    private static final int    PARTNER_POLYLINE_COLOR = 0xFF4A90E2; // blue — partner path
 
     // ── Session contract ──────────────────────────────────────────────────────
 
@@ -92,6 +94,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private GoogleMap    googleMap;
     private Polyline     polyline;
+    private Polyline     partnerPolyline;
     /** True after the camera has flown to the first GPS point. */
     private boolean      hasInitialCameraFly = false;
 
@@ -103,6 +106,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
     private AvatarInitialView      avatarPartner;
     private TextView               txtPartnerNameSheet;
+    private TextView               txtPartnerStatus;
     private WalkMateStatColumn     statDistance;
     private WalkMateStatColumn     statDuration;
     private WalkMateStatColumn     statPace;
@@ -347,15 +351,17 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
 
         if (googleMap != null) {
             updatePolyline(state.getMapPoints());
+            // Partner polyline — updated WITHOUT touching camera
+            updatePartnerPolyline(state.getPartnerMapPoints());
             handleCameraUpdate(state);
             if (state.isCameraFollowingUser()
                     && state.getMapPoints().isEmpty()
                     && !hasInitialCameraFly) {
-                // ACTIVE but no route points yet: keep trying to center on device
-                // so users don't stay stuck at a world/default viewport.
                 zoomToDeviceLocation(true);
             }
         }
+        updatePartnerStatusLabel(state.getPartnerOverlayState(),
+                state.getPartnerLastUpdatedSeconds());
 
         if (state.getWalkState() == WalkState.FINISHED && !finishDialogShown) {
             finishDialogShown = true;
@@ -466,6 +472,56 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                     .geodesic(true));
         }
         polyline.setPoints(points);
+    }
+
+    /**
+     * Updates the partner polyline on the map.
+     * Deliberately never touches the camera — partner updates must not
+     * disrupt the user's own map view.
+     */
+    private void updatePartnerPolyline(List<LatLng> points) {
+        if (googleMap == null || points.isEmpty()) return;
+
+        if (partnerPolyline == null) {
+            partnerPolyline = googleMap.addPolyline(new PolylineOptions()
+                    .color(PARTNER_POLYLINE_COLOR)
+                    .width(8f)
+                    .startCap(new RoundCap())
+                    .endCap(new RoundCap())
+                    .geodesic(true));
+        }
+        partnerPolyline.setPoints(points); // setPoints only — no animateCamera
+    }
+
+    private void updatePartnerStatusLabel(PartnerOverlayState overlayState, long lastUpdatedSecs) {
+        if (txtPartnerStatus == null) return;
+        switch (overlayState) {
+            case WAITING_FOR_PARTNER:
+                txtPartnerStatus.setVisibility(View.VISIBLE);
+                txtPartnerStatus.setText(R.string.tracking_partner_waiting);
+                break;
+            case WAITING_FOR_GPS:
+                txtPartnerStatus.setVisibility(View.VISIBLE);
+                txtPartnerStatus.setText(R.string.tracking_partner_waiting_gps);
+                break;
+            case SHOWING_PATH:
+                if (lastUpdatedSecs < 15) {
+                    txtPartnerStatus.setVisibility(View.GONE);
+                } else if (lastUpdatedSecs < 60) {
+                    txtPartnerStatus.setVisibility(View.VISIBLE);
+                    txtPartnerStatus.setText(
+                            getString(R.string.tracking_partner_last_updated, lastUpdatedSecs));
+                } else {
+                    txtPartnerStatus.setVisibility(View.VISIBLE);
+                    txtPartnerStatus.setText(
+                            getString(R.string.tracking_partner_disconnected, lastUpdatedSecs));
+                }
+                break;
+            case PARTNER_COMPLETED:
+                txtPartnerStatus.setVisibility(View.VISIBLE);
+                txtPartnerStatus.setText(R.string.tracking_partner_completed);
+                break;
+        }
     }
 
     /**
@@ -643,6 +699,7 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
     private void bindViews() {
         avatarPartner       = findViewById(R.id.avatarPartner);
         txtPartnerNameSheet = findViewById(R.id.txtPartnerNameSheet);
+        txtPartnerStatus    = findViewById(R.id.txtPartnerStatus);
         statDistance        = findViewById(R.id.statDistance);
         statDuration        = findViewById(R.id.statDuration);
         statPace            = findViewById(R.id.statPace);

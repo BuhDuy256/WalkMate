@@ -14,6 +14,8 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.android.gms.maps.model.LatLng;
 import com.walkmate.WalkMateApplication;
 import com.walkmate.domain.shared.DomainCallback;
+import com.walkmate.domain.tracking.PartnerOverlayState;
+import com.walkmate.domain.tracking.PartnerPathResult;
 import com.walkmate.domain.tracking.RoutePoint;
 import com.walkmate.domain.tracking.TrackingRepository;
 import com.walkmate.domain.tracking.TrackingRuntimeState;
@@ -98,6 +100,28 @@ public class TrackingViewModel extends AndroidViewModel {
     /** Epoch ms when the most recent pause began. 0 if not currently paused. */
     private long pauseStartEpochMs;
 
+    // ── Partner path overlay ──────────────────────────────────────────────────
+
+    /**
+     * Signals new partner data (or null on poll failure) from the background
+     * polling thread to the main-thread MediatorLiveData pipeline.
+     * Using LiveData instead of direct field mutation ensures all partner state
+     * updates happen on the main thread through the addSource observer.
+     */
+    private final MutableLiveData<PartnerPathResult> partnerResultLiveData =
+            new MutableLiveData<>();
+
+    /** In-memory accumulation of all decoded partner LatLng points. Main-thread only. */
+    private final List<LatLng> partnerAccumulatedPoints = new ArrayList<>();
+    private int    lastFetchedPartnerChunkIndex = -1;
+    private long   partnerLastChunkMs           = 0L;
+    /** Last known personal status of the partner: "PENDING" / "ACTIVE" / "COMPLETED" / "NO_SHOW". */
+    private String partnerPersonalStatus        = "PENDING";
+
+    private final ScheduledExecutorService partnerPollExecutor =
+            Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> partnerPollFuture;
+
     // ── Completion error event ────────────────────────────────────────────────
 
     private final MutableLiveData<String> completionErrorLiveData = new MutableLiveData<>();
@@ -133,9 +157,21 @@ public class TrackingViewModel extends AndroidViewModel {
         this.sessionRepository = sessionRepository;
         this.stateRepository   = stateRepository;
 
-        // Wire the two always-present sources; route points are added lazily.
-        uiStateLiveData.addSource(walkStateLiveData,      state -> rebuildUiState());
-        uiStateLiveData.addSource(elapsedSecondsLiveData, secs  -> rebuildUiState());
+        // Wire always-present sources; route points and partner results are added lazily/here.
+        uiStateLiveData.addSource(walkStateLiveData,      state  -> rebuildUiState());
+        uiStateLiveData.addSource(elapsedSecondsLiveData, secs   -> rebuildUiState());
+        uiStateLiveData.addSource(partnerResultLiveData,  result -> {
+            // This observer runs on the main thread — safe to mutate partner state fields.
+            if (result != null) {
+                partnerPersonalStatus = result.getPartnerStatus();
+                if (!result.getNewPoints().isEmpty()) {
+                    partnerAccumulatedPoints.addAll(result.getNewPoints());
+                    lastFetchedPartnerChunkIndex = result.getLastChunkIndex();
+                    partnerLastChunkMs           = result.getLastChunkCreatedAtMs();
+                }
+            }
+            rebuildUiState();
+        });
 
         // Emit an initial non-null snapshot so the Activity never observes null.
         rebuildUiState();
@@ -214,6 +250,7 @@ public class TrackingViewModel extends AndroidViewModel {
         startGpsService();
         walkStateLiveData.setValue(WalkState.ACTIVE);
         startTimer();
+        startPartnerPolling();
 
         persistState(WalkState.ACTIVE);
     }
@@ -259,6 +296,7 @@ public class TrackingViewModel extends AndroidViewModel {
      */
     public void finishWalk() {
         stopTimer();
+        stopPartnerPolling();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHED);
         clearPersistedState();
@@ -291,6 +329,7 @@ public class TrackingViewModel extends AndroidViewModel {
         }
 
         stopTimer();
+        stopPartnerPolling();
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHING);
 
@@ -371,6 +410,7 @@ public class TrackingViewModel extends AndroidViewModel {
             startGpsService();
             walkStateLiveData.postValue(WalkState.ACTIVE);
             startTimer();
+            startPartnerPolling();
 
         }
         // READY / FINISHING / FINISHED → no restore; use default READY.
@@ -410,6 +450,61 @@ public class TrackingViewModel extends AndroidViewModel {
             @Override public void onSuccess(Void result) { /* no-op */ }
             @Override public void onError(Exception e)   { /* non-fatal, swallow */ }
         });
+    }
+
+    // ── Partner path polling ──────────────────────────────────────────────────
+
+    private void startPartnerPolling() {
+        stopPartnerPolling(); // cancel any stale future first
+        partnerPollFuture = partnerPollExecutor.scheduleAtFixedRate(
+                this::pollPartnerPath, 3L, 8L, TimeUnit.SECONDS);
+    }
+
+    private void stopPartnerPolling() {
+        if (partnerPollFuture != null && !partnerPollFuture.isCancelled()) {
+            partnerPollFuture.cancel(false);
+            partnerPollFuture = null;
+        }
+    }
+
+    private void pollPartnerPath() {
+        final String sid = sessionId;
+        if (sid == null) return;
+
+        repository.fetchPartnerPath(sid, lastFetchedPartnerChunkIndex,
+                new DomainCallback<PartnerPathResult>() {
+                    @Override
+                    public void onSuccess(PartnerPathResult result) {
+                        // postValue marshals to the main thread; the addSource observer
+                        // in the constructor handles the actual state mutation.
+                        partnerResultLiveData.postValue(result);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.w("TrackingViewModel", "Partner poll failed: " + e.getMessage());
+                        if (e.getMessage() != null
+                                && e.getMessage().startsWith("SESSION_TERMINAL|")) {
+                            stopPartnerPolling();
+                        }
+                        // Do not clear partner data — keep last known path visible.
+                        // The 1-second timer keeps incrementing partnerLastUpdatedSeconds
+                        // via the normal rebuildUiState() cadence.
+                    }
+                });
+    }
+
+    private PartnerOverlayState computePartnerOverlayState() {
+        if ("COMPLETED".equals(partnerPersonalStatus) || "NO_SHOW".equals(partnerPersonalStatus)) {
+            return PartnerOverlayState.PARTNER_COMPLETED;
+        }
+        if ("ACTIVE".equals(partnerPersonalStatus) && !partnerAccumulatedPoints.isEmpty()) {
+            return PartnerOverlayState.SHOWING_PATH;
+        }
+        if ("ACTIVE".equals(partnerPersonalStatus)) {
+            return PartnerOverlayState.WAITING_FOR_GPS;
+        }
+        return PartnerOverlayState.WAITING_FOR_PARTNER;
     }
 
     // ── Timer ─────────────────────────────────────────────────────────────────
@@ -483,6 +578,12 @@ public class TrackingViewModel extends AndroidViewModel {
 
         boolean isSaving = (state == WalkState.FINISHING);
 
+        // Partner overlay — snapshot the accumulated list to avoid external mutation.
+        List<LatLng> partnerSnapshot    = new ArrayList<>(partnerAccumulatedPoints);
+        PartnerOverlayState overlayState = computePartnerOverlayState();
+        long partnerLastUpdatedSecs     = (partnerLastChunkMs > 0)
+                ? (System.currentTimeMillis() - partnerLastChunkMs) / 1000L : 0L;
+
         uiStateLiveData.setValue(new TrackingUiState(
                 state,
                 mapPoints,
@@ -492,7 +593,10 @@ public class TrackingViewModel extends AndroidViewModel {
                 partnerName,
                 cameraFollowing,
                 completeTooEarlySeconds,
-                isSaving
+                isSaving,
+                partnerSnapshot,
+                overlayState,
+                partnerLastUpdatedSecs
         ));
     }
 
@@ -559,8 +663,8 @@ public class TrackingViewModel extends AndroidViewModel {
     protected void onCleared() {
         super.onCleared();
         stopTimer();
-        // Shutdown the executor so the background thread is released when the
-        // ViewModel is cleared (e.g. back-stack pop, process death).
+        stopPartnerPolling();
         timerExecutor.shutdown();
+        partnerPollExecutor.shutdown();
     }
 }

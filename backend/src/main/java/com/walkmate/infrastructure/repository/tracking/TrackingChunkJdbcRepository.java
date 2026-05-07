@@ -66,6 +66,28 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
     }
 
     @Override
+    public List<ChunkRow> findChunksAfterIndex(String sessionId, String userId, int afterChunkIndex) {
+        return jdbcClient.sql("""
+                        SELECT chunk_index,
+                               polyline,
+                               (EXTRACT(EPOCH FROM created_at) * 1000)::bigint AS created_at_ms
+                        FROM session_point_chunks
+                        WHERE session_id = :sessionId
+                          AND user_id    = :userId
+                          AND chunk_index > :afterChunkIndex
+                        ORDER BY chunk_index ASC
+                        """)
+                .param("sessionId",      UUID.fromString(sessionId))
+                .param("userId",         UUID.fromString(userId))
+                .param("afterChunkIndex", afterChunkIndex)
+                .query((rs, rowNum) -> new ChunkRow(
+                        rs.getInt("chunk_index"),
+                        rs.getString("polyline"),
+                        rs.getLong("created_at_ms")))
+                .list();
+    }
+
+    @Override
     public void saveChunk(String sessionId, String userId, int chunkIndex, String polyline,
                           byte[] timestamps, int pointCount, String syncRequestId) {
         jdbcClient.sql("""

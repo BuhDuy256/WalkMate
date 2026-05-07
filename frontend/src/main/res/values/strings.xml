@@ -99,6 +99,11 @@
     <string name="btn_resume">Resume</string>
     <string name="btn_finish_walk">Finish</string>
     <string name="tracking_partner_subtitle">Walking with you</string>
+    <string name="tracking_partner_waiting">Partner hasn\'t arrived yet</string>
+    <string name="tracking_partner_waiting_gps">Waiting for partner\'s location…</string>
+    <string name="tracking_partner_completed">Partner has finished</string>
+    <string name="tracking_partner_last_updated">Updated %ds ago</string>
+    <string name="tracking_partner_disconnected">May be disconnected (%ds ago)</string>
     <string name="label_distance_unit">km</string>
     <string name="label_duration">duration</string>
     <string name="label_pace_unit">min / km</string>

@@ -77,10 +77,11 @@
                     android:ellipsize="end" />
 
                 <TextView
+                    android:id="@+id/txtPartnerStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="@string/tracking_partner_subtitle"
+                    android:text="@string/tracking_partner_waiting"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
 
