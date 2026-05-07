@@ -174,6 +174,11 @@ public class TrackingViewModel extends AndroidViewModel {
                     lastKnownPartnerStatus = newStatus;
                 }
                 partnerPersonalStatus = newStatus;
+                // Partner is in a terminal state — no further updates are possible.
+                // Stop polling proactively rather than waiting for SESSION_TERMINAL.
+                if ("COMPLETED".equals(newStatus) || "NO_SHOW".equals(newStatus)) {
+                    stopPartnerPolling();
+                }
                 if (!result.getNewPoints().isEmpty()) {
                     partnerAccumulatedPoints.addAll(result.getNewPoints());
                     lastFetchedPartnerChunkIndex = result.getLastChunkIndex();
@@ -243,6 +248,12 @@ public class TrackingViewModel extends AndroidViewModel {
                 walkStateLiveData.postValue(WalkState.READY);
             }
         });
+
+        // Start partner status polling immediately so the Partner Card reflects the
+        // partner's actual state even while current user is still in READY (pre-Start Walk).
+        // applyRestoredState() will call startPartnerPolling() again for ACTIVE restores —
+        // that is harmless because startPartnerPolling() always cancels the prior future first.
+        startPartnerPolling();
     }
 
     /**

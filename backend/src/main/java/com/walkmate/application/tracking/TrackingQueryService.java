@@ -49,7 +49,15 @@ public class TrackingQueryService {
             throw new DomainException(SessionErrorCode.SESSION_NOT_PARTICIPANT);
         }
 
-        if (session.getStatus() != SessionStatus.ACTIVE) {
+        // Allow PENDING, ACTIVE, and COMPLETED global sessions.
+        // PENDING: both users have accepted the proposal but neither has pressed Start Walk yet;
+        //          the Tracking Screen is open and the Partner Card must still reflect
+        //          partner personal status (always PENDING at this point — returns empty chunks).
+        // COMPLETED: both participants finished; frontend needs one final poll to learn the
+        //            partner's terminal personal status before stopping polling.
+        if (session.getStatus() != SessionStatus.PENDING
+                && session.getStatus() != SessionStatus.ACTIVE
+                && session.getStatus() != SessionStatus.COMPLETED) {
             throw new DomainException(SessionErrorCode.SESSION_NOT_ACTIVE);
         }
 

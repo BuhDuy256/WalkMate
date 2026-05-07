@@ -515,23 +515,22 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
                         : R.string.tracking_partner_waiting);
                 break;
             case WAITING_FOR_GPS:
+                // Partner is ACTIVE but hasn't sent GPS chunks yet — still show "Partner is walking".
+                // Polyline absence is not a reason to hide active status from the user.
                 txtPartnerStatus.setVisibility(View.VISIBLE);
-                txtPartnerStatus.setText(R.string.tracking_partner_waiting_gps);
+                txtPartnerStatus.setText(R.string.tracking_partner_walking);
                 break;
             case SHOWING_PATH:
-                if (userFinished) {
-                    txtPartnerStatus.setVisibility(View.VISIBLE);
-                    txtPartnerStatus.setText(R.string.tracking_self_done_partner_active);
-                } else if (lastUpdatedSecs < 15) {
-                    txtPartnerStatus.setVisibility(View.GONE);
-                } else if (lastUpdatedSecs < 60) {
-                    txtPartnerStatus.setVisibility(View.VISIBLE);
+                txtPartnerStatus.setVisibility(View.VISIBLE);
+                if (lastUpdatedSecs >= 60) {
+                    txtPartnerStatus.setText(
+                            getString(R.string.tracking_partner_disconnected, lastUpdatedSecs));
+                } else if (lastUpdatedSecs >= 15) {
                     txtPartnerStatus.setText(
                             getString(R.string.tracking_partner_last_updated, lastUpdatedSecs));
                 } else {
-                    txtPartnerStatus.setVisibility(View.VISIBLE);
-                    txtPartnerStatus.setText(
-                            getString(R.string.tracking_partner_disconnected, lastUpdatedSecs));
+                    // Fresh GPS (< 15 s) or self-done — partner is actively walking.
+                    txtPartnerStatus.setText(R.string.tracking_partner_walking);
                 }
                 break;
             case PARTNER_COMPLETED:

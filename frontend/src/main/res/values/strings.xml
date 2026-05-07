@@ -105,6 +105,7 @@
     <string name="tracking_partner_last_updated">Updated %ds ago</string>
     <string name="tracking_partner_disconnected">May be disconnected (%ds ago)</string>
     <string name="tracking_self_done_partner_pending">Walk complete. Waiting for partner…</string>
+    <string name="tracking_partner_walking">Partner is walking</string>
     <string name="tracking_self_done_partner_active">Partner is walking</string>
     <string name="tracking_both_finished">Both have finished</string>
     <string name="tracking_partner_no_show">Partner didn\'t show up</string>
