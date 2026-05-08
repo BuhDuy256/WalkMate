@@ -23,75 +23,75 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewController {
 
-        private final ReviewCommandService reviewCommandService;
-        private final ReviewQueryService reviewQueryService;
+    private final ReviewCommandService reviewCommandService;
+    private final ReviewQueryService reviewQueryService;
 
-        /**
-         * POST /api/v1/sessions/{sessionId}/review
-         *
-         * Submits a review for a COMPLETED session. The reviewer must have been a
-         * participant. Each participant may review a session exactly once.
-         * Atomically updates the reviewee's trust score.
-         */
-        @PostMapping("/api/v1/sessions/{sessionId}/review")
-        public ResponseEntity<ApiResponse<ReviewResponse>> submitReview(
-                        @AuthenticationPrincipal UserPrincipal principal,
-                        @PathVariable String sessionId,
-                        @Valid @RequestBody SubmitReviewRequest request) {
+    /**
+     * POST /api/v1/sessions/{sessionId}/review
+     *
+     * Submits a review for a COMPLETED session. The reviewer must have been a
+     * participant. Each participant may review a session exactly once.
+     * Atomically updates the reviewee's trust score.
+     */
+    @PostMapping("/api/v1/sessions/{sessionId}/review")
+    public ResponseEntity<ApiResponse<ReviewResponse>> submitReview(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable String sessionId,
+            @Valid @RequestBody SubmitReviewRequest request) {
 
-                List<java.util.UUID> tagIds = request.tagIds() != null
-                                ? request.tagIds()
-                                : Collections.emptyList();
+        List<java.util.UUID> tagIds = request.tagIds() != null
+                ? request.tagIds()
+                : Collections.emptyList();
 
-                WalkReview review = reviewCommandService.submitReview(
-                                sessionId, principal.userId(), request.ratingStars(), request.comment(), tagIds);
+        WalkReview review = reviewCommandService.submitReview(
+                sessionId, principal.userId(), request.ratingStars(), request.comment(), tagIds);
 
-                return ResponseEntity.ok(ApiResponse.success(toResponse(review)));
-        }
+        return ResponseEntity.ok(ApiResponse.success(toResponse(review)));
+    }
 
-        /**
-         * GET /api/v1/reviews/tags
-         *
-         * Returns all active tags from the master vocabulary.
-         * The client uses {@code tag_type} prefix (POSITIVE_* / NEGATIVE_*) to decide
-         * which tags to surface for a given star rating.
-         */
-        @GetMapping("/api/v1/reviews/tags")
-        public ResponseEntity<ApiResponse<List<ReviewTagResponse>>> getReviewTags() {
-                List<ReviewTagResponse> tags = reviewQueryService.getActiveTags()
-                                .stream()
-                                .map(t -> new ReviewTagResponse(t.tagId(), t.tagName(), t.tagType()))
-                                .toList();
-                return ResponseEntity.ok(ApiResponse.success(tags));
-        }
+    /**
+     * GET /api/v1/reviews/tags
+     *
+     * Returns all active tags from the master vocabulary.
+     * The client uses {@code tag_type} prefix (POSITIVE_* / NEGATIVE_*) to decide
+     * which tags to surface for a given star rating.
+     */
+    @GetMapping("/api/v1/reviews/tags")
+    public ResponseEntity<ApiResponse<List<ReviewTagResponse>>> getReviewTags() {
+        List<ReviewTagResponse> tags = reviewQueryService.getActiveTags()
+                .stream()
+                .map(t -> new ReviewTagResponse(t.tagId(), t.tagName(), t.tagType()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(tags));
+    }
 
-        /**
-         * GET /api/v1/users/{userId}/reviews
-         *
-         * Returns all reviews written about a user (most recent first).
-         */
-        @GetMapping("/api/v1/users/{userId}/reviews")
-        public ResponseEntity<ApiResponse<List<ReviewResponse>>> getUserReviews(
-                        @PathVariable String userId) {
+    /**
+     * GET /api/v1/users/{userId}/reviews
+     *
+     * Returns all reviews written about a user (most recent first).
+     */
+    @GetMapping("/api/v1/users/{userId}/reviews")
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getUserReviews(
+            @PathVariable String userId) {
 
-                List<ReviewResponse> responses = reviewQueryService.getReviewsForUser(userId)
-                                .stream()
-                                .map(this::toResponse)
-                                .toList();
+        List<ReviewResponse> responses = reviewQueryService.getReviewsForUser(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
 
-                return ResponseEntity.ok(ApiResponse.success(responses));
-        }
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
 
-        // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-        private ReviewResponse toResponse(WalkReview review) {
-                return new ReviewResponse(
-                                review.getReviewId(),
-                                review.getSessionId(),
-                                review.getReviewerId(),
-                                review.getRevieweeId(),
-                                review.getRatingStars(),
-                                review.getComment(),
-                                review.getCreatedAt().toString());
-        }
+    private ReviewResponse toResponse(WalkReview review) {
+        return new ReviewResponse(
+                review.getReviewId(),
+                review.getSessionId(),
+                review.getReviewerId(),
+                review.getRevieweeId(),
+                review.getRatingStars(),
+                review.getComment(),
+                review.getCreatedAt().toString());
+    }
 }

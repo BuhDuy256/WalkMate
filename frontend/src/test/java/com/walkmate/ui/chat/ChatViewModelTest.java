@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,6 +62,38 @@ public class ChatViewModelTest {
   }
 
   @Test
+  public void startChat_successWithEmptyHistory_stillConnects() {
+    AtomicReference<DomainCallback<List<ChatMessage>>> cbRef = new AtomicReference<>();
+
+    doAnswer(invocation -> {
+      cbRef.set(invocation.getArgument(2));
+      return null;
+    }).when(chatRepository).loadHistory(eq("s-empty"), eq("me"), any(DomainCallback.class));
+
+    viewModel.startChat("s-empty", "me");
+
+    cbRef.get().onSuccess(Collections.emptyList());
+
+    verify(chatRepository, times(1)).connect("s-empty", "me");
+  }
+
+  @Test
+  public void startChat_successWithNullHistory_stillConnects() {
+    AtomicReference<DomainCallback<List<ChatMessage>>> cbRef = new AtomicReference<>();
+
+    doAnswer(invocation -> {
+      cbRef.set(invocation.getArgument(2));
+      return null;
+    }).when(chatRepository).loadHistory(eq("s-null"), eq("me"), any(DomainCallback.class));
+
+    viewModel.startChat("s-null", "me");
+
+    cbRef.get().onSuccess(null);
+
+    verify(chatRepository, times(1)).connect("s-null", "me");
+  }
+
+  @Test
   public void startChat_loadsHistory_thenConnectsOnError() {
     AtomicReference<DomainCallback<List<ChatMessage>>> cbRef = new AtomicReference<>();
 
@@ -80,6 +113,32 @@ public class ChatViewModelTest {
   }
 
   @Test
+  public void startChat_multipleCalls_eachCallLoadsHistoryAndConnectsAfterCallback() {
+    AtomicReference<DomainCallback<List<ChatMessage>>> cbRef1 = new AtomicReference<>();
+    AtomicReference<DomainCallback<List<ChatMessage>>> cbRef2 = new AtomicReference<>();
+
+    doAnswer(invocation -> {
+      if ("s-a".equals(invocation.getArgument(0))) {
+        cbRef1.set(invocation.getArgument(2));
+      } else {
+        cbRef2.set(invocation.getArgument(2));
+      }
+      return null;
+    }).when(chatRepository).loadHistory(any(), any(), any(DomainCallback.class));
+
+    viewModel.startChat("s-a", "me");
+    viewModel.startChat("s-b", "me");
+
+    verify(chatRepository, times(2)).loadHistory(any(), any(), any(DomainCallback.class));
+
+    cbRef1.get().onSuccess(List.of());
+    cbRef2.get().onError(new Exception("x"));
+
+    verify(chatRepository, times(1)).connect("s-a", "me");
+    verify(chatRepository, times(1)).connect("s-b", "me");
+  }
+
+  @Test
   public void sendMessage_ignoresNullOrBlank() {
     viewModel.sendMessage(null);
     viewModel.sendMessage(" ");
@@ -93,6 +152,13 @@ public class ChatViewModelTest {
     viewModel.sendMessage("  hello  ");
 
     verify(chatRepository, times(1)).sendMessage("hello");
+  }
+
+  @Test
+  public void sendMessage_preservesInternalWhitespace() {
+    viewModel.sendMessage("  hi   there  ");
+
+    verify(chatRepository, times(1)).sendMessage("hi   there");
   }
 
   @Test

@@ -476,8 +476,11 @@ public class FriendsViewModelTest {
 
     @Test
     public void navigateToInviteWalk_postsEvent_andConsumeClearsIt() {
-        viewModel.navigateToInviteWalk("friend-123");
-        assertEquals("friend-123", viewModel.getInviteWalkEvent().getValue());
+        viewModel.navigateToInviteWalk("friend-123", "Alice");
+        android.util.Pair<String, String> event = viewModel.getInviteWalkEvent().getValue();
+        assertNotNull(event);
+        assertEquals("friend-123", event.first);
+        assertEquals("Alice", event.second);
 
         viewModel.consumeInviteWalkEvent();
         assertNull(viewModel.getInviteWalkEvent().getValue());

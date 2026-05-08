@@ -19,48 +19,48 @@ import retrofit2.http.Path;
 
 public interface SessionApiService {
 
-    @GET("api/v1/sessions/active")
-    Call<ApiResponse<List<WalkSessionResponse>>> getActiveSessions();
+	@GET("api/v1/sessions/active")
+	Call<ApiResponse<List<WalkSessionResponse>>> getActiveSessions();
 
-    @POST("api/v1/sessions/{sessionId}/activate")
-    Call<ApiResponse<WalkSessionResponse>> activateSession(@Path("sessionId") String sessionId);
+	@POST("api/v1/sessions/{sessionId}/activate")
+	Call<ApiResponse<WalkSessionResponse>> activateSession(@Path("sessionId") String sessionId);
 
-    @POST("api/v1/sessions/{sessionId}/cancel")
-    Call<ApiResponse<Void>> cancelSession(@Path("sessionId") String sessionId,
-                                          @Body CancelWalkSessionRequest body);
+	@POST("api/v1/sessions/{sessionId}/cancel")
+	Call<ApiResponse<Void>> cancelSession(@Path("sessionId") String sessionId,
+			@Body CancelWalkSessionRequest body);
 
-    // UC-19 — Complete an active walk session
-    @POST("api/v1/sessions/{sessionId}/complete")
-    Call<ApiResponse<WalkSessionResponse>> completeSession(
-            @Path("sessionId") String sessionId);
+	// UC-19 — Complete an active walk session
+	@POST("api/v1/sessions/{sessionId}/complete")
+	Call<ApiResponse<WalkSessionResponse>> completeSession(
+			@Path("sessionId") String sessionId);
 
-    // UC-22 — Fetch terminal session history list
-    @GET("api/v1/sessions/history")
-    Call<ApiResponse<List<SessionSummaryResponse>>> getSessionHistory();
+	// UC-22 — Fetch terminal session history list
+	@GET("api/v1/sessions/history")
+	Call<ApiResponse<List<SessionSummaryResponse>>> getSessionHistory();
 
-    // UC-22b — Fetch single session summary (review + report snapshot) by ID
-    @GET("api/v1/sessions/{sessionId}/summary")
-    Call<ApiResponse<SessionSummaryResponse>> getSessionSummary(
-            @Path("sessionId") String sessionId);
+	// UC-22b — Fetch single session summary (review + report snapshot) by ID
+	@GET("api/v1/sessions/{sessionId}/summary")
+	Call<ApiResponse<SessionSummaryResponse>> getSessionSummary(
+			@Path("sessionId") String sessionId);
 
-    // UC-23 — Fetch GPS route for a completed session
-    @GET("api/v1/sessions/{sessionId}/route")
-    Call<ApiResponse<SessionRouteResponse>> getSessionRoute(
-            @Path("sessionId") String sessionId);
+	// UC-23 — Fetch GPS route for a completed session
+	@GET("api/v1/sessions/{sessionId}/route")
+	Call<ApiResponse<SessionRouteResponse>> getSessionRoute(
+			@Path("sessionId") String sessionId);
 
-    // UC-25 — Submit an incident report
-    @POST("api/v1/sessions/{sessionId}/report")
-    Call<ApiResponse<Void>> reportSession(
-            @Path("sessionId") String sessionId,
-            @Body ReportSessionRequest body);
+	// UC-25 — Submit an incident report
+	@POST("api/v1/sessions/{sessionId}/report")
+	Call<ApiResponse<Void>> reportSession(
+			@Path("sessionId") String sessionId,
+			@Body ReportSessionRequest body);
 
-    // QR — fetch a short-lived signed token to display as a QR code
-    @GET("api/v1/sessions/{sessionId}/qr-token")
-    Call<ApiResponse<QrTokenResponse>> getQrToken(@Path("sessionId") String sessionId);
+	// QR — fetch a short-lived signed token to display as a QR code
+	@GET("api/v1/sessions/{sessionId}/qr-token")
+	Call<ApiResponse<QrTokenResponse>> getQrToken(@Path("sessionId") String sessionId);
 
-    // QR — submit the partner's scanned token string for verification
-    @POST("api/v1/sessions/{sessionId}/verify-partner")
-    Call<ApiResponse<WalkSessionResponse>> verifyPartner(
-            @Path("sessionId") String sessionId,
-            @Body VerifyPartnerQrRequest body);
+	// QR — submit the partner's scanned token string for verification
+	@POST("api/v1/sessions/{sessionId}/verify-partner")
+	Call<ApiResponse<WalkSessionResponse>> verifyPartner(
+			@Path("sessionId") String sessionId,
+			@Body VerifyPartnerQrRequest body);
 }
