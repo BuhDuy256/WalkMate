@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSessionRepository;
@@ -44,9 +45,8 @@ public class SessionHistoryViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                String msg = e.getMessage();
                 uiState.postValue(SessionHistoryUiState.error(
-                        (msg != null && !msg.isEmpty()) ? msg : "Failed to load history"));
+                        ErrorMessageResolver.resolve(e.getMessage())));
             }
         });
     }

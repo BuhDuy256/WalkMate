@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.walkmate.core.event.AuthEventBus;
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.data.datasource.remote.api.SessionManager;
 import com.walkmate.domain.report.AdminReport;
 import com.walkmate.domain.report.AdminReportRepository;
@@ -315,7 +316,6 @@ public class ProfileViewModel extends ViewModel {
     }
 
     private static String friendlyError(Exception e) {
-        String msg = e.getMessage();
-        return (msg != null && !msg.isEmpty()) ? msg : "Failed to load profile";
+        return ErrorMessageResolver.resolve(e.getMessage());
     }
 }

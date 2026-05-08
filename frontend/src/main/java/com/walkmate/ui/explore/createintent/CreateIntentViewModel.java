@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.core.util.ValidationErrorParser;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.social.SocialRepository;
@@ -117,7 +118,8 @@ public class CreateIntentViewModel extends ViewModel {
                                     ? raw : fieldErrors.values().iterator().next();
                             uiState.postValue(current().withLoading(false).withError(firstError));
                         } else {
-                            uiState.postValue(current().withLoading(false).withError(msg));
+                            uiState.postValue(current().withLoading(false)
+                                    .withError(ErrorMessageResolver.resolve(msg)));
                         }
                     }
                 });

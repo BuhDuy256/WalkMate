@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.social.FriendRequest;
 import com.walkmate.domain.social.SocialRepository;
@@ -161,6 +162,6 @@ public class FriendsViewModel extends ViewModel {
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private static String friendlyError(Exception e) {
-        return e.getMessage() != null ? e.getMessage() : "Something went wrong.";
+        return ErrorMessageResolver.resolve(e.getMessage());
     }
 }

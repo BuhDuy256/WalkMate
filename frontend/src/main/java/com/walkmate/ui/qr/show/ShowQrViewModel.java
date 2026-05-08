@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walksession.WalkSessionRepository;
 
@@ -28,7 +29,7 @@ public class ShowQrViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                uiState.postValue(ShowQrUiState.error(e.getMessage()));
+                uiState.postValue(ShowQrUiState.error(ErrorMessageResolver.resolve(e.getMessage())));
             }
         });
     }

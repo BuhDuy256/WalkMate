@@ -148,16 +148,14 @@ public class SessionFragment extends Fragment {
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LAT,  result.session.getMeetingPointLat())
                         .putExtra(TrackingScreenActivity.EXTRA_MEETING_LNG,  result.session.getMeetingPointLng()));
 
-            } else if ("SESSION_ACTIVATION_WINDOW_CLOSED".equals(result.errorCode)) {
-                Toast.makeText(requireContext(),
-                        "Activation window closed. Waiting for status update.",
-                        Toast.LENGTH_LONG).show();
+            } else if (result.isWindowClosed) {
+                Toast.makeText(requireContext(), result.errorMessage, Toast.LENGTH_LONG).show();
                 pendingWindowClosedSessionId = lastActivatingSessionId;
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (matchesViewModel != null) matchesViewModel.loadSessions();
                 }, 5_000L);
-            } else if (result.errorCode != null) {
-                Toast.makeText(requireContext(), result.errorCode, Toast.LENGTH_SHORT).show();
+            } else if (result.errorMessage != null) {
+                Toast.makeText(requireContext(), result.errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
 

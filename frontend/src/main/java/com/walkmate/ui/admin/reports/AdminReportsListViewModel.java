@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.report.AdminReport;
 import com.walkmate.domain.report.AdminReportRepository;
 import com.walkmate.domain.shared.DomainCallback;
@@ -43,9 +44,8 @@ public class AdminReportsListViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                String msg = e.getMessage();
                 uiState.postValue(AdminReportsListUiState.error(
-                        msg != null ? msg : "Failed to load reports"));
+                        ErrorMessageResolver.resolve(e.getMessage())));
             }
         });
     }

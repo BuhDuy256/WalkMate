@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.gamification.UserBadge;
 import com.walkmate.domain.gamification.UserStats;
@@ -65,7 +66,7 @@ public class PostSessionSummaryViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                error.postValue(e.getMessage());
+                error.postValue(ErrorMessageResolver.resolve(e.getMessage()));
                 statsState.postValue(LoadState.ERROR);
             }
         });
@@ -79,7 +80,7 @@ public class PostSessionSummaryViewModel extends ViewModel {
             @Override
             public void onError(Exception e) {
                 // Non-fatal: stats may still load successfully
-                error.postValue(e.getMessage());
+                error.postValue(ErrorMessageResolver.resolve(e.getMessage()));
             }
         });
     }
@@ -108,7 +109,7 @@ public class PostSessionSummaryViewModel extends ViewModel {
             @Override
             public void onError(Exception e) {
                 // Non-fatal: summary card simply won't populate if history fails.
-                error.postValue(e.getMessage());
+                error.postValue(ErrorMessageResolver.resolve(e.getMessage()));
             }
         });
     }

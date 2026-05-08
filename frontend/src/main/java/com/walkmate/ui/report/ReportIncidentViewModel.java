@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walksession.SessionSummary;
 import com.walkmate.domain.walksession.WalkSessionRepository;
@@ -95,9 +96,8 @@ public class ReportIncidentViewModel extends ViewModel {
 
                     @Override
                     public void onError(Exception e) {
-                        String msg = e.getMessage();
                         uiState.postValue(ReportIncidentUiState.error(
-                                (msg != null && !msg.isEmpty()) ? msg : "Failed to submit report"));
+                                ErrorMessageResolver.resolve(e.getMessage())));
                     }
                 });
     }
