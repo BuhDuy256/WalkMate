@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.gamification.GamificationRepository;
 import com.walkmate.domain.gamification.UserBadge;
@@ -221,6 +222,6 @@ public class PublicProfileViewModel extends ViewModel {
     }
 
     private static String friendlyError(Exception e) {
-        return e.getMessage() != null ? e.getMessage() : "Something went wrong.";
+        return ErrorMessageResolver.resolve(e.getMessage());
     }
 }

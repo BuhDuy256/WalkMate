@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.walkmate.core.event.AppEvent;
 import com.walkmate.core.event.AppEventBus;
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.hotspot.Hotspot;
 import com.walkmate.domain.hotspot.HotspotRepository;
 import com.walkmate.domain.shared.DomainCallback;
@@ -113,7 +114,8 @@ public class ExploreViewModel extends ViewModel {
                 // Bug 1: same — preserve AppState and selectedHotspot on error
                 ExploreUiState s = current();
                 post(new ExploreUiState(false, s.getHotspots(),
-                        s.getSelectedHotspot(), s.getAppState(), error.getMessage()));
+                        s.getSelectedHotspot(), s.getAppState(),
+                        ErrorMessageResolver.resolve(error.getMessage())));
             }
         });
     }

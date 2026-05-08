@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.notification.Notification;
 import com.walkmate.domain.notification.NotificationRepository;
 import com.walkmate.domain.shared.DomainCallback;
@@ -96,7 +97,7 @@ public class NotificationViewModel extends ViewModel {
                 uiState.postValue(NotificationUiState.ready(result));
             }
             @Override public void onError(Exception error) {
-                uiState.postValue(NotificationUiState.error(error.getMessage()));
+                uiState.postValue(NotificationUiState.error(ErrorMessageResolver.resolve(error.getMessage())));
             }
         });
     }

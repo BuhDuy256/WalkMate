@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.walkintent.WalkIntent;
 import com.walkmate.domain.walkintent.WalkIntentRepository;
@@ -66,8 +67,11 @@ public class MatchesViewModel extends ViewModel {
 
     public static class ActivationResult {
         public final WalkSession session;
-        public final String errorCode;
-        ActivationResult(WalkSession s, String e) { session = s; errorCode = e; }
+        public final String errorMessage;
+        public final boolean isWindowClosed;
+        ActivationResult(WalkSession s, String msg, boolean windowClosed) {
+            session = s; errorMessage = msg; isWindowClosed = windowClosed;
+        }
     }
 
     // ── Per-tab data loading ──────────────────────────────────────────────────
@@ -84,7 +88,7 @@ public class MatchesViewModel extends ViewModel {
                 MatchesUiState c = safeGetState();
                 uiState.postValue(new MatchesUiState(
                         false, c.getActiveIntents(), c.getProposals(),
-                        c.getActiveSessions(), error.getMessage()));
+                        c.getActiveSessions(), ErrorMessageResolver.resolve(error.getMessage())));
             }
         });
     }
@@ -101,7 +105,7 @@ public class MatchesViewModel extends ViewModel {
                 MatchesUiState c = safeGetState();
                 uiState.postValue(new MatchesUiState(
                         false, c.getActiveIntents(), c.getProposals(),
-                        c.getActiveSessions(), error.getMessage()));
+                        c.getActiveSessions(), ErrorMessageResolver.resolve(error.getMessage())));
             }
         });
     }
@@ -128,7 +132,7 @@ public class MatchesViewModel extends ViewModel {
                 MatchesUiState c = safeGetState();
                 uiState.postValue(new MatchesUiState(
                         false, c.getActiveIntents(), c.getProposals(),
-                        c.getActiveSessions(), error.getMessage()));
+                        c.getActiveSessions(), ErrorMessageResolver.resolve(error.getMessage())));
             }
         });
     }
@@ -146,7 +150,7 @@ public class MatchesViewModel extends ViewModel {
                 uiState.postValue(new MatchesUiState(
                         false, updated, c.getProposals(), c.getActiveSessions(), null));
             }
-            @Override public void onError(Exception error) { postError(error.getMessage()); }
+            @Override public void onError(Exception error) { postError(ErrorMessageResolver.resolve(error.getMessage())); }
         });
     }
 
@@ -168,7 +172,7 @@ public class MatchesViewModel extends ViewModel {
                     scrollToTabEvent.postValue(MatchesPagerAdapter.TAB_FINDING);
                 }
             }
-            @Override public void onError(Exception error) { postError(error.getMessage()); }
+            @Override public void onError(Exception error) { postError(ErrorMessageResolver.resolve(error.getMessage())); }
         });
     }
 
@@ -178,7 +182,7 @@ public class MatchesViewModel extends ViewModel {
                 loadIntents();
                 loadProposals();
             }
-            @Override public void onError(Exception error) { postError(error.getMessage()); }
+            @Override public void onError(Exception error) { postError(ErrorMessageResolver.resolve(error.getMessage())); }
         });
     }
 
@@ -197,30 +201,16 @@ public class MatchesViewModel extends ViewModel {
             }
             @Override public void onError(Exception error) {
                 String code = error.getMessage() != null ? error.getMessage() : "";
+                // Refresh proposal list for codes where server-side state has changed
                 switch (code) {
                     case "PROPOSAL_CONCURRENT_MODIFICATION":
-                        postError("A conflict occurred. Please refresh and try again.");
-                        loadProposals();
-                        break;
                     case "PROPOSAL_INTENT_NO_LONGER_OPEN":
-                        postError("Could not confirm — one of the intents is no longer available. The proposal has been cancelled.");
-                        loadProposals();
-                        break;
                     case "PROPOSAL_ALREADY_TERMINAL":
-                        postError("This proposal is no longer active.");
-                        loadProposals();
-                        break;
-                    case "PROPOSAL_NOT_PARTICIPANT":
-                        postError("Permission denied.");
-                        break;
                     case "PROPOSAL_NOT_FOUND":
-                        postError("Proposal not found.");
                         loadProposals();
-                        break;
-                    default:
-                        postError(code);
                         break;
                 }
+                postError(ErrorMessageResolver.resolve(code));
             }
         });
     }
@@ -245,11 +235,11 @@ public class MatchesViewModel extends ViewModel {
                 loadIntents();
             }
             @Override public void onError(Exception error) {
-                String code = error.getMessage() != null ? error.getMessage() : "";
-                if (code.startsWith("VALIDATION_ERROR")) {
-                    postError("Please provide a reason.");
+                String msg = error.getMessage() != null ? error.getMessage() : "";
+                if (msg.startsWith("VALIDATION_ERROR|")) {
+                    postError("Please provide a reason for cancelling.");
                 } else {
-                    postError(code);
+                    postError(ErrorMessageResolver.resolve(msg));
                 }
             }
         });
@@ -258,11 +248,14 @@ public class MatchesViewModel extends ViewModel {
     public void activateSession(String sessionId) {
         sessionRepository.activateSession(sessionId, new DomainCallback<WalkSession>() {
             @Override public void onSuccess(WalkSession result) {
-                activationResultEvent.postValue(new ActivationResult(result, null));
+                activationResultEvent.postValue(new ActivationResult(result, null, false));
                 loadSessions();
             }
             @Override public void onError(Exception e) {
-                activationResultEvent.postValue(new ActivationResult(null, e.getMessage()));
+                String code = e.getMessage() != null ? e.getMessage() : "";
+                boolean isWindowClosed = "SESSION_ACTIVATION_WINDOW_CLOSED".equals(code);
+                activationResultEvent.postValue(new ActivationResult(
+                        null, ErrorMessageResolver.resolve(code), isWindowClosed));
             }
         });
     }

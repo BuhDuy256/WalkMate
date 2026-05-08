@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.review.ReviewTag;
 import com.walkmate.domain.review.WalkReview;
@@ -95,7 +96,7 @@ public class ReviewViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                error.postValue(e.getMessage());
+                error.postValue(ErrorMessageResolver.resolve(e.getMessage()));
                 submitState.postValue(SubmitState.ERROR);
             }
         });
@@ -114,7 +115,7 @@ public class ReviewViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                error.postValue(e.getMessage());
+                error.postValue(ErrorMessageResolver.resolve(e.getMessage()));
             }
         });
     }

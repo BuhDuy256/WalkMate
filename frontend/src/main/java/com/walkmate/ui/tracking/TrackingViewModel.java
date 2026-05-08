@@ -13,6 +13,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.walkmate.WalkMateApplication;
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.tracking.PartnerOverlayState;
 import com.walkmate.domain.tracking.PartnerPathResult;
@@ -390,7 +391,7 @@ public class TrackingViewModel extends AndroidViewModel {
                     startTimer();
                     startGpsService();
                 }
-                completionErrorLiveData.postValue(e.getMessage());
+                completionErrorLiveData.postValue(ErrorMessageResolver.resolve(e.getMessage()));
             }
         });
     }

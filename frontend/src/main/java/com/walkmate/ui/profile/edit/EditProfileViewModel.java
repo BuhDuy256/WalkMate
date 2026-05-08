@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.walkmate.core.util.ErrorMessageResolver;
 import com.walkmate.domain.shared.DomainCallback;
 import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.UserProfile;
@@ -167,7 +168,6 @@ public class EditProfileViewModel extends ViewModel {
     }
 
     private static String friendlyError(Exception e) {
-        String msg = e.getMessage();
-        return (msg != null && !msg.isEmpty()) ? msg : "An error occurred. Please try again.";
+        return ErrorMessageResolver.resolve(e.getMessage());
     }
 }
