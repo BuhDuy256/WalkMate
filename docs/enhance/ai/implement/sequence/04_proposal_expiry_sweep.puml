@@ -1,0 +1,75 @@
+@startuml 04_proposal_expiry_sweep
+title Proposal Expiry — Scheduler Sweep (No User Action)
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+
+participant "@Scheduled\nScheduler" as Scheduler
+participant "MatchingCommandService\n.sweepExpiredProposals()" as MatchSvc
+participant "MatchProposalRepository\n.findExpiredPending()" as ProposalRepo
+participant "TransactionTemplate" as TxTemplate
+participant "WalkIntentRepository" as IntentRepo
+participant "NotificationPublisher" as Notif
+
+note over Scheduler
+  Runs periodically (e.g. every 60s via @Scheduled cron).
+  Finds all PENDING proposals where expires_at < now.
+  Proposals are created with expires_at = now + 5 minutes.
+end note
+
+Scheduler -> MatchSvc : sweepExpiredProposals()
+MatchSvc -> ProposalRepo : findExpiredPending()\n[WHERE status='PENDING' AND expires_at < now]
+ProposalRepo --> MatchSvc : List<MatchProposal> overdueProposals
+
+loop for each overdueProposal (isolated transaction per proposal)
+    MatchSvc -> TxTemplate : execute(txn) {
+
+        TxTemplate -> ProposalRepo : proposal.expire() → status=EXPIRED
+        TxTemplate -> ProposalRepo : save(proposal)
+
+        TxTemplate -> IntentRepo : findById(intentIdA)
+        TxTemplate -> IntentRepo : findById(intentIdB)
+        IntentRepo --> TxTemplate : intentA, intentB
+
+        TxTemplate -> TxTemplate : resolveProposalFlowType(intentA, intentB)
+
+        alt PRIVATE flow
+            note over TxTemplate
+                Private invite timeout: both intents → CANCELLED.
+                The friend invitation is definitively closed.
+            end note
+            TxTemplate -> IntentRepo : intentA.cancel() → status=CANCELLED [if MATCHING]
+            TxTemplate -> IntentRepo : intentB.cancel() → status=CANCELLED [if MATCHING]
+        else PUBLIC flow
+            note over TxTemplate
+                Public proposal timeout: both intents → OPEN.
+                Both re-enter the matching pool for a new attempt.
+                Unlike pass/reject, NO exclusion is added —
+                the partner simply didn't respond in time.
+            end note
+            TxTemplate -> IntentRepo : intentA.unlock() → status=OPEN [if MATCHING]
+            TxTemplate -> IntentRepo : intentB.unlock() → status=OPEN [if MATCHING]
+        end
+
+        TxTemplate -> IntentRepo : save(intentA), save(intentB)
+    }
+
+    note over Notif
+      Optional (not yet in current code):
+      "Your match timed out. Looking for a new partner..."
+      push notification to both users.
+    end note
+
+end
+
+note over MatchSvc
+    Each proposal runs in its own isolated transaction
+    (Phase-0 Issue-2 fix). A failure on one proposal
+    does not roll back the others.
+
+    AI matching weights are NOT affected by proposal expiry.
+    The system will attempt to re-match both users
+    next time they call POST /intents/{id}/match.
+end note
+
+@enduml

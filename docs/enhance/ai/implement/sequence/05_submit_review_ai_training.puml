@@ -1,0 +1,115 @@
+@startuml 05_submit_review_ai_training
+title Submit Post-Session Review → Trust Score + AI Weight Training
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+}
+
+actor "Reviewer (User A)" as User
+participant "SubmitReviewFragment" as Fragment
+participant "ReviewViewModel\n.submitReview()" as VM
+participant "ReviewRepositoryImpl" as FERepo
+participant "ReviewController\nPOST /sessions/{id}/review" as Controller
+participant "ReviewCommandService\n.submitReview()" as ReviewSvc
+participant "WalkSessionRepository" as SessionRepo
+participant "WalkReviewRepository" as ReviewRepo
+participant "ReviewTagRepository" as TagRepo
+participant "UserRepository\n(trust score)" as UserRepo
+participant "BadgeEvaluationService" as BadgeSvc
+participant "AiTrainingService\n@Async" as AiSvc
+participant "MatchingPreferenceRepository" as PrefRepo
+
+== User submits review ==
+
+User -> Fragment : Tap stars (1–5), select tags, optional comment, tap Submit
+Fragment -> VM : submitReview(sessionId, ratingStars, comment, tagIds)
+VM -> FERepo : submitReview(sessionId, ratingStars, comment, tagIds, callback)
+FERepo -> Controller : POST /api/v1/sessions/{sessionId}/review\n{ratingStars, comment, tagIds[]}
+
+Controller -> ReviewSvc : submitReview(sessionId, reviewerId,\n  ratingStars, comment, tagIds)
+
+== Validation (same transaction) ==
+
+ReviewSvc -> SessionRepo : findById(sessionId)
+SessionRepo --> ReviewSvc : WalkSession{status=COMPLETED}
+ReviewSvc -> ReviewSvc : verify status = COMPLETED
+ReviewSvc -> ReviewSvc : verify reviewer is participant
+ReviewSvc -> ReviewRepo : existsBySessionAndReviewer(sessionId, reviewerId)
+ReviewRepo --> ReviewSvc : false (no duplicate)
+
+== Persist review + Update reviewee trust score (same transaction) ==
+
+ReviewSvc -> ReviewRepo : WalkReview.create(...) → save
+ReviewRepo --> ReviewSvc : persistedReview
+
+ReviewSvc -> ReviewSvc : ratingDelta = \n  5★→+10 | 4★→+5 | 3★→0 | 2★→-10 | 1★→-20
+ReviewSvc -> UserRepo : findById(revieweeId) → reviewee
+UserRepo --> ReviewSvc : reviewee{trustScore}
+ReviewSvc -> ReviewSvc : newScore = TrustScorePolicy.apply(trustScore, delta)
+ReviewSvc -> UserRepo : save(reviewee{trustScore=newScore})
+ReviewSvc -> BadgeSvc : evaluateAndAward(reviewee)
+
+ReviewSvc -> TagRepo : saveTagMappings(reviewId, tagIds)
+
+== Async AI Weight Training (fires AFTER transaction commits) ==
+
+ReviewSvc -> AiSvc : trainWeightsFromReview(reviewerId, selectedTags)\n[@Async — separate thread]
+
+note over AiSvc
+    ⚠️ CURRENT BUG (Task 2.1):
+    Loops over ALL tags. Each tag adds +0.05.
+    Selecting 10 INTEREST tags → +0.50 to weightInterest.
+
+    ✅ PROPOSED FIX:
+    Use boolean gate — 1 signal per category per review:
+    hasInterest? → +0.05 once
+    hasBehavior? → +0.05 once
+end note
+
+AiSvc -> PrefRepo : findByUserId(reviewerId)
+PrefRepo --> AiSvc : MatchingPreference or defaultFor(reviewerId)
+
+AiSvc -> AiSvc : [CURRENT] for each tag:\n  INTEREST type → weightInterest += 0.05\n  BEHAVIOR type → weightBehavior += 0.05
+
+note right of AiSvc #FFE0E0
+    BUG: 5 INTEREST tags = +0.25 to weightInterest
+    FIX: 5 INTEREST tags = +0.05 to weightInterest (same as 1)
+end note
+
+AiSvc -> AiSvc : normalize():
+note right of AiSvc
+    Pass 1: divide each weight by total sum → sum=1.0
+    Pass 2: clamp any weight exceeding MAX_WEIGHT_CAP=0.70
+    [MISSING]: Pass 3 — MIN_TIME_WEIGHT=0.25 floor (Task 1.4)
+
+    Effect: weightTimeOverlap SILENTLY DECAYS
+    because only interest and behavior are ever incremented.
+    After many reviews, weightTimeOverlap → near 0.
+end note
+
+AiSvc -> PrefRepo : save(updatedPreference)
+PrefRepo --> AiSvc : OK
+
+== HTTP response returns before async training completes ==
+
+ReviewSvc --> Controller : WalkReview
+Controller --> FERepo : 200 OK {reviewId, ratingStars, ...}
+FERepo --> VM : onSuccess(review)
+VM -> VM : submitState = SUCCESS
+VM --> User : Show success + dismiss review screen
+
+note over User, PrefRepo
+    Impact on Future Matching:
+    • Reviewee's trust score is updated → affects S_trust score in next matching
+    • Reviewer's weightInterest / weightBehavior updated → shifts W_* weights for next match
+    • weightTimeOverlap decays silently (bug) → time overlap becomes less important over time
+
+    Next time reviewer calls POST /intents/{id}/match:
+    AiWeightedMatchingStrategy reads updated MatchingPreference
+    → candidates are re-ranked with new W_* weights
+end note
+
+@enduml

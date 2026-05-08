@@ -117,8 +117,10 @@ public class ReportCommandService {
         report.setAppliedTrustDelta(actualDelta);
         reportRepository.save(report);
 
-        // 10. Async weight training — fires after transaction commits, on a separate thread
-        aiTrainingService.trainWeightsFromReport(UUID.fromString(reporterId), reason);
+        // Task 2.2a: AI weight training is intentionally deferred to admin resolution.
+        // Firing here would let false reports permanently inflate the reporter's
+        // weightBehavior with no rollback path when an admin later rejects the report.
+        // See AdminReportCommandService.resolveReport() for the training trigger.
 
         return report;
     }

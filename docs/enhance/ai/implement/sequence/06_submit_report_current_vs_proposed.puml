@@ -1,0 +1,93 @@
+@startuml 06_submit_report_current_vs_proposed
+title Submit Incident Report — Current Behavior vs. Proposed Fix
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+}
+
+actor "Reporter (User)" as User
+participant "ReportIncidentFragment" as Fragment
+participant "ReportIncidentViewModel\n.submitReport()" as VM
+participant "WalkSessionRepositoryImpl" as FERepo
+participant "ReportController\nPOST /sessions/{id}/report" as Controller
+participant "ReportCommandService\n.submitReport()" as ReportSvc
+participant "WalkSessionRepository" as SessionRepo
+participant "SessionReportRepository" as ReportRepo
+participant "UserRepository\n(trust score)" as UserRepo
+participant "AiTrainingService\n@Async [CURRENT]" as AiSvcCurrent
+participant "MatchingPreferenceRepository" as PrefRepo
+
+== User submits an incident report ==
+
+User -> Fragment : Select reason, optional evidence URL, tap Submit
+Fragment -> VM : submitReport(sessionId, reportedUserId, reason, evidenceUrl)
+VM -> FERepo : reportSession(sessionId, reportedUserId, reason, evidenceUrl, callback)
+FERepo -> Controller : POST /api/v1/sessions/{sessionId}/report\n{reportedUserId, reason, evidenceUrl}
+
+Controller -> ReportSvc : submitReport(sessionId, reporterId,\n  reportedUserId, reason, evidenceUrl)
+
+== Validation (same transaction) ==
+
+ReportSvc -> SessionRepo : findById(sessionId)
+SessionRepo --> ReportSvc : WalkSession{status=COMPLETED}
+ReportSvc -> ReportSvc : verify status = COMPLETED\nverify reporter is participant\nverify reporter != reportedUser\nverify within 72h window\nverify reporter personal status != NO_SHOW
+ReportSvc -> ReportRepo : existsBySessionAndReporter(sessionId, reporterId)
+ReportRepo --> ReportSvc : false (no duplicate)
+
+== Apply Trust Penalty on Reported User (same transaction) ==
+
+ReportSvc -> ReportSvc : theoreticalDelta = TrustScorePolicy.deltaForReason(reason)
+ReportSvc -> ReportSvc : guard: if reportedUser is NO_SHOW → actualDelta = 0
+ReportSvc -> UserRepo : findById(reportedUserId) → reportedUser
+UserRepo --> ReportSvc : reportedUser{trustScore}
+ReportSvc -> ReportSvc : newScore = TrustScorePolicy.apply(trustScore, actualDelta)
+ReportSvc -> UserRepo : save(reportedUser{trustScore=newScore})
+ReportSvc -> ReportRepo : SessionReport.create(...)\n{appliedTrustDelta=actualDelta}\n→ save
+
+== ⚠️ CURRENT BUG: Immediate AI Training (Task 2.2) ==
+
+ReportSvc -> AiSvcCurrent : trainWeightsFromReport(reporterId, reason)\n[@Async — fires immediately, before admin review]
+
+note over AiSvcCurrent #FFE0E0
+    ⚠️ CURRENT BEHAVIOR (Bug):
+    Any user who submits a report immediately gets:
+      weightBehavior += 0.10 (base)
+      weightBehavior += 0.05 (if SAFETY_CONCERN or PARTNER_MISCONDUCT)
+    Total: up to +0.15 per report.
+
+    If admin later REJECTS the report:
+    ✗ Trust delta on reported user IS reversed (see AdminReportCommandService)
+    ✗ Reporter's weightBehavior bump is NEVER rolled back
+    → Malicious reporter can abuse this to force
+      weightBehavior → MAX_CAP (0.70) permanently
+end note
+
+AiSvcCurrent -> PrefRepo : findByUserId(reporterId)
+PrefRepo --> AiSvcCurrent : MatchingPreference
+AiSvcCurrent -> AiSvcCurrent : weightBehavior += 0.10\n(+0.05 if high severity reason)
+AiSvcCurrent -> AiSvcCurrent : normalize()
+AiSvcCurrent -> PrefRepo : save(updatedPreference)
+
+ReportSvc --> Controller : SessionReport{reportId, createdAt}
+Controller --> FERepo : 201 Created {reportId, createdAt}
+FERepo --> VM : onSuccess
+VM --> User : "Report submitted. Thank you."
+
+== ✅ PROPOSED FIX: Defer AI Training to Admin Resolution ==
+
+note over ReportSvc, AiSvcCurrent #E8F5E9
+    PROPOSED FIX (Task 2.2):
+    • Remove trainWeightsFromReport() call from submitReport()
+    • Move it to AdminReportCommandService.resolveReport()
+
+    On APPROVED: fire trainWeightsFromReport() → weights update
+    On REJECTED: no weight change (reporter stays clean)
+
+    This makes AI training symmetric with trust reversal:
+    both are now gated behind admin resolution.
+end note
+
+@enduml

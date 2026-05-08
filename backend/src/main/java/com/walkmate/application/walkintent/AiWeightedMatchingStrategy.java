@@ -105,7 +105,7 @@ public class AiWeightedMatchingStrategy implements MatchingStrategy {
         Instant overlapEnd = a.getTimeWindowEnd().isBefore(b.getTimeWindowEnd())
                 ? a.getTimeWindowEnd() : b.getTimeWindowEnd();
 
-        double sTime  = scoreTime(overlapStart, overlapEnd);
+        double sTime  = scoreTime(a, b, overlapStart, overlapEnd);
         double sTags  = scoreTags(tagsA, b);
         double sTrust = scoreTrust(b.getUserId());
 
@@ -116,16 +116,25 @@ public class AiWeightedMatchingStrategy implements MatchingStrategy {
         return new ScoredResult(b, overlapStart, overlapEnd, total);
     }
 
-    private double scoreTime(Instant start, Instant end) {
-        long overlapMinutes = Duration.between(start, end).toMinutes();
-        return Math.min((overlapMinutes / 60.0) * 100.0, 100.0);
+    // Task 1.2: ratio-based against the shorter desired duration instead of a fixed 60-min cap.
+    // Ensures a 3-hour overlap scores higher than a 1-hour overlap for long-walk users.
+    private double scoreTime(WalkIntent a, WalkIntent b, Instant overlapStart, Instant overlapEnd) {
+        long overlapMinutes  = Duration.between(overlapStart, overlapEnd).toMinutes();
+        long durationA       = Duration.between(a.getTimeWindowStart(), a.getTimeWindowEnd()).toMinutes();
+        long durationB       = Duration.between(b.getTimeWindowStart(), b.getTimeWindowEnd()).toMinutes();
+        long desiredDuration = Math.min(durationA, durationB);
+        if (desiredDuration <= 0) return 0.0;
+        return Math.min((overlapMinutes / (double) desiredDuration) * 100.0, 100.0);
     }
 
     private double scoreTags(List<String> tagsA, WalkIntent b) {
         UUID candidateUuid = UUID.fromString(b.getUserId());
         List<String> tagsB = userProfileRepository.findTagsByUserId(candidateUuid);
 
-        if (tagsA.isEmpty() && tagsB.isEmpty()) return 50.0;
+        // Task 1.3: lower the default score for empty profiles so incomplete
+        // profiles are not rewarded over users with low-but-real tag overlap.
+        if (tagsA.isEmpty() && tagsB.isEmpty()) return 20.0;
+        if (tagsA.isEmpty() || tagsB.isEmpty()) return 10.0;
 
         Set<String> setA = toLower(tagsA);
         Set<String> setB = toLower(tagsB);
@@ -136,12 +145,14 @@ public class AiWeightedMatchingStrategy implements MatchingStrategy {
         Set<String> union = new HashSet<>(setA);
         union.addAll(setB);
 
-        return union.isEmpty() ? 50.0 : (intersection.size() / (double) union.size()) * 100.0;
+        return union.isEmpty() ? 0.0 : (intersection.size() / (double) union.size()) * 100.0;
     }
 
+    // Task 1.1: clamp to 100.0 so S_trust stays within [0, 100] even when
+    // trust_score exceeds 1000, preserving the mathematical meaning of MAX_WEIGHT_CAP.
     private double scoreTrust(String userId) {
         return userRepository.findById(userId)
-                .map(u -> u.getTrustScore() / 10.0)
+                .map(u -> Math.min(u.getTrustScore() / 10.0, 100.0))
                 .orElse(0.0);
     }
 
