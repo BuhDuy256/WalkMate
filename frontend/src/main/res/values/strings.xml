@@ -243,6 +243,16 @@
     <string name="security_field_new_password">New Password</string>
     <string name="security_field_confirm_password">Confirm New Password</string>
     <string name="security_password_success">Password updated successfully.</string>
+    <string name="security_section_change_password">Change Password</string>
+    <string name="security_password_status_set">Set</string>
+    <string name="security_password_status_not_set">Not Set</string>
+    <string name="security_google_status_connected">Connected</string>
+    <string name="security_google_status_not_connected">Not Connected</string>
+    <string name="security_strength_weak">Weak</string>
+    <string name="security_strength_good">Good</string>
+    <string name="security_strength_strong">Strong</string>
+    <string name="security_tip_title">Keep your account safe</string>
+    <string name="security_tip_body">Use at least 8 characters with a mix of uppercase, lowercase, numbers, and symbols.</string>
 
     <!-- Forgot password flow -->
     <string name="forgot_password_title">Forgot Password</string>
