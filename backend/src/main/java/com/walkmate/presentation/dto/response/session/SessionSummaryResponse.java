@@ -53,7 +53,28 @@ public record SessionSummaryResponse(
         String callerAvatarUrl,
 
         @JsonProperty("hotspot_name")
-        String hotspotName
+        String hotspotName,
+
+        @JsonProperty("current_user_personal_status")
+        String currentUserPersonalStatus,
+
+        @JsonProperty("partner_personal_status")
+        String partnerPersonalStatus,
+
+        @JsonProperty("current_user_has_posted")
+        boolean currentUserHasPosted,
+
+        @JsonProperty("current_user_post_id")
+        String currentUserPostId,
+
+        @JsonProperty("can_post")
+        boolean canPost,
+
+        @JsonProperty("can_review")
+        boolean canReview,
+
+        @JsonProperty("can_report")
+        boolean canReport
 ) {
     public record ReviewSnapshot(
             @JsonProperty("rating_stars") int ratingStars,

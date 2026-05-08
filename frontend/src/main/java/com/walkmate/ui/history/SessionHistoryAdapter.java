@@ -5,11 +5,11 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,16 +23,6 @@ import com.walkmate.domain.walksession.WalkSession;
 
 import java.util.Locale;
 
-/**
- * RecyclerView adapter for the Session History list.
- *
- * Button visibility per UX invariant:
- * ACTIVE global → both buttons hidden (silent wait)
- * COMPLETED global:
- * caller≠NO_SHOW + partner=COMPLETED → "Leave a Review" + "Report"
- * caller≠NO_SHOW + partner≠COMPLETED → "Report" only
- * caller=NO_SHOW (any partner) → both hidden
- */
 public class SessionHistoryAdapter
         extends ListAdapter<SessionSummary, SessionHistoryAdapter.ViewHolder> {
 
@@ -44,8 +34,22 @@ public class SessionHistoryAdapter
         void onPartnerClick(String partnerId);
     }
 
+    public interface OnPostClickListener {
+        void onPostClick(String sessionId, String partnerName, boolean myWalkOnly,
+                         double distanceKm, long durationSeconds, String hotspotName,
+                         double lat, double lng);
+    }
+
+    public interface OnViewPostClickListener {
+        void onViewPostClick(String postId);
+    }
+
     public interface OnReviewClickListener {
         void onReviewClick(String sessionId);
+    }
+
+    public interface OnViewReviewClickListener {
+        void onViewReviewClick(String sessionId);
     }
 
     public interface OnReportClickListener {
@@ -54,7 +58,10 @@ public class SessionHistoryAdapter
 
     private OnSessionSelectedListener sessionSelectedListener;
     private OnPartnerClickListener partnerClickListener;
+    private OnPostClickListener postClickListener;
+    private OnViewPostClickListener viewPostClickListener;
     private OnReviewClickListener reviewClickListener;
+    private OnViewReviewClickListener viewReviewClickListener;
     private OnReportClickListener reportClickListener;
     private String currentUserId = "";
 
@@ -62,21 +69,13 @@ public class SessionHistoryAdapter
         super(DIFF_CALLBACK);
     }
 
-    public void setOnSessionSelectedListener(OnSessionSelectedListener l) {
-        this.sessionSelectedListener = l;
-    }
-
-    public void setOnPartnerClickListener(OnPartnerClickListener l) {
-        this.partnerClickListener = l;
-    }
-
-    public void setOnReviewClickListener(OnReviewClickListener l) {
-        this.reviewClickListener = l;
-    }
-
-    public void setOnReportClickListener(OnReportClickListener l) {
-        this.reportClickListener = l;
-    }
+    public void setOnSessionSelectedListener(OnSessionSelectedListener l) { this.sessionSelectedListener = l; }
+    public void setOnPartnerClickListener(OnPartnerClickListener l)       { this.partnerClickListener = l; }
+    public void setOnPostClickListener(OnPostClickListener l)             { this.postClickListener = l; }
+    public void setOnViewPostClickListener(OnViewPostClickListener l)     { this.viewPostClickListener = l; }
+    public void setOnReviewClickListener(OnReviewClickListener l)         { this.reviewClickListener = l; }
+    public void setOnViewReviewClickListener(OnViewReviewClickListener l) { this.viewReviewClickListener = l; }
+    public void setOnReportClickListener(OnReportClickListener l)         { this.reportClickListener = l; }
 
     public void setCurrentUserId(String userId) {
         this.currentUserId = userId != null ? userId : "";
@@ -116,45 +115,78 @@ public class SessionHistoryAdapter
             });
         }
 
-        // ── Button visibility per UX invariant ────────────────────────────────
-        WalkSession.Status global = summary.getStatus();
+        // ── Action button visibility (uses server-computed flags) ─────────────
+        boolean anyAction = summary.isCanPost() || summary.isHasPosted()
+                || summary.isCanReview() || summary.isReviewed() || summary.isCanReport();
 
-        holder.btnReview.setVisibility(View.GONE);
-        holder.btnReport.setVisibility(View.GONE);
-        holder.dividerAction.setVisibility(View.GONE);
+        holder.dividerAction.setVisibility(anyAction ? View.VISIBLE : View.GONE);
 
-        if (global == WalkSession.Status.COMPLETED) {
-            ParticipantSummary caller = summary.getCallerParticipant(currentUserId);
-            ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
-
-            WalkSession.Status callerStatus = caller != null ? caller.getUserStatus() : null;
-            WalkSession.Status partnerStatus = partner != null ? partner.getUserStatus() : null;
-
-            if (callerStatus != WalkSession.Status.NO_SHOW) {
-                holder.dividerAction.setVisibility(View.VISIBLE);
-
-                if (partnerStatus == WalkSession.Status.COMPLETED) {
-                    holder.btnReview.setVisibility(View.VISIBLE);
-                    holder.btnReview.setOnClickListener(v -> {
-                        if (reviewClickListener != null) {
-                            reviewClickListener.onReviewClick(summary.getSessionId());
-                        }
-                    });
-                }
-
-                holder.btnReport.setVisibility(View.VISIBLE);
-                holder.btnReport.setOnClickListener(v -> {
-                    if (reportClickListener != null) {
-                        reportClickListener.onReportClick(
-                                summary.getSessionId(),
-                                partnerId,
-                                summary.getTerminalAtMs());
-                    }
-                });
-            }
-            // callerStatus == NO_SHOW → both buttons stay GONE
+        // Share Walk
+        if (summary.isCanPost()) {
+            holder.btnPost.setVisibility(View.VISIBLE);
+            holder.btnPost.setOnClickListener(v -> {
+                if (postClickListener == null) return;
+                ParticipantSummary caller  = summary.getCallerParticipant(currentUserId);
+                ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
+                String partnerName = partner != null ? partner.getFullName() : null;
+                boolean myWalkOnly = partnerName == null;
+                double distKm  = caller != null ? caller.getDistanceKm() : 0.0;
+                long   durSec  = caller != null ? (long) caller.getDurationMinutes() * 60L : 0L;
+                postClickListener.onPostClick(
+                        summary.getSessionId(), partnerName, myWalkOnly,
+                        distKm, durSec, summary.getHotspotName(),
+                        summary.getMeetingPointLat(), summary.getMeetingPointLng());
+            });
+        } else {
+            holder.btnPost.setVisibility(View.GONE);
         }
-        // global ACTIVE / PENDING / CANCELLED → both buttons stay GONE
+
+        // Posted chip + View Post
+        if (summary.isHasPosted()) {
+            holder.layoutPostedState.setVisibility(View.VISIBLE);
+            holder.btnViewPost.setOnClickListener(v -> {
+                if (viewPostClickListener != null && summary.getPostId() != null) {
+                    viewPostClickListener.onViewPostClick(summary.getPostId());
+                }
+            });
+        } else {
+            holder.layoutPostedState.setVisibility(View.GONE);
+        }
+
+        // Leave a Review
+        if (summary.isCanReview()) {
+            holder.btnReview.setVisibility(View.VISIBLE);
+            holder.btnViewReview.setVisibility(View.GONE);
+            holder.btnReview.setOnClickListener(v -> {
+                if (reviewClickListener != null) {
+                    reviewClickListener.onReviewClick(summary.getSessionId());
+                }
+            });
+        } else if (summary.isReviewed()) {
+            holder.btnReview.setVisibility(View.GONE);
+            holder.btnViewReview.setVisibility(View.VISIBLE);
+            holder.btnViewReview.setOnClickListener(v -> {
+                if (viewReviewClickListener != null) {
+                    viewReviewClickListener.onViewReviewClick(summary.getSessionId());
+                }
+            });
+        } else {
+            holder.btnReview.setVisibility(View.GONE);
+            holder.btnViewReview.setVisibility(View.GONE);
+        }
+
+        // Report
+        if (summary.isCanReport()) {
+            holder.btnReport.setVisibility(View.VISIBLE);
+            holder.btnReport.setOnClickListener(v -> {
+                if (reportClickListener != null) {
+                    reportClickListener.onReportClick(
+                            summary.getSessionId(), partnerId, summary.getTerminalAtMs());
+                }
+            });
+        } else {
+            holder.btnReport.setVisibility(View.GONE);
+        }
     }
 
     // ── ViewHolder ────────────────────────────────────────────────────────────
@@ -164,41 +196,48 @@ public class SessionHistoryAdapter
         final TextView txtDate;
         final TextView txtStatus;
         final TextView txtHotspotName;
-        // Participant 2 row = partner (shown at top)
         final TextView txtParticipant2Name;
         final TextView txtParticipant2Status;
         final TextView txtParticipant2Distance;
         final TextView txtParticipant2Duration;
         final AvatarInitialView avatarPartner;
-        // Participant 1 row = you (shown at bottom)
         final TextView txtParticipant1Name;
         final TextView txtParticipant1Status;
         final TextView txtParticipant1Distance;
         final TextView txtParticipant1Duration;
         final AvatarInitialView avatarSelf;
-        // Actions
         final View dividerAction;
+        final MaterialButton btnPost;
+        final LinearLayout layoutPostedState;
+        final TextView txtPostedChip;
+        final MaterialButton btnViewPost;
         final MaterialButton btnReview;
+        final MaterialButton btnViewReview;
         final MaterialButton btnReport;
 
         ViewHolder(View itemView) {
             super(itemView);
-            txtDate = itemView.findViewById(R.id.txtSessionDate);
-            txtStatus = itemView.findViewById(R.id.txtSessionStatus);
-            txtHotspotName = itemView.findViewById(R.id.txtHotspotName);
-            txtParticipant2Name = itemView.findViewById(R.id.txtParticipant2Name);
-            txtParticipant2Status = itemView.findViewById(R.id.txtParticipant2Status);
+            txtDate                = itemView.findViewById(R.id.txtSessionDate);
+            txtStatus              = itemView.findViewById(R.id.txtSessionStatus);
+            txtHotspotName         = itemView.findViewById(R.id.txtHotspotName);
+            txtParticipant2Name    = itemView.findViewById(R.id.txtParticipant2Name);
+            txtParticipant2Status  = itemView.findViewById(R.id.txtParticipant2Status);
             txtParticipant2Distance = itemView.findViewById(R.id.txtParticipant2Distance);
             txtParticipant2Duration = itemView.findViewById(R.id.txtParticipant2Duration);
-            avatarPartner = itemView.findViewById(R.id.avatarPartner);
-            txtParticipant1Name = itemView.findViewById(R.id.txtParticipant1Name);
-            txtParticipant1Status = itemView.findViewById(R.id.txtParticipant1Status);
+            avatarPartner          = itemView.findViewById(R.id.avatarPartner);
+            txtParticipant1Name    = itemView.findViewById(R.id.txtParticipant1Name);
+            txtParticipant1Status  = itemView.findViewById(R.id.txtParticipant1Status);
             txtParticipant1Distance = itemView.findViewById(R.id.txtParticipant1Distance);
             txtParticipant1Duration = itemView.findViewById(R.id.txtParticipant1Duration);
-            avatarSelf = itemView.findViewById(R.id.avatarSelf);
-            dividerAction = itemView.findViewById(R.id.dividerAction);
-            btnReview = itemView.findViewById(R.id.btnReview);
-            btnReport = itemView.findViewById(R.id.btnReport);
+            avatarSelf             = itemView.findViewById(R.id.avatarSelf);
+            dividerAction          = itemView.findViewById(R.id.dividerAction);
+            btnPost                = itemView.findViewById(R.id.btnPost);
+            layoutPostedState      = itemView.findViewById(R.id.layoutPostedState);
+            txtPostedChip          = itemView.findViewById(R.id.txtPostedChip);
+            btnViewPost            = itemView.findViewById(R.id.btnViewPost);
+            btnReview              = itemView.findViewById(R.id.btnReview);
+            btnViewReview          = itemView.findViewById(R.id.btnViewReview);
+            btnReport              = itemView.findViewById(R.id.btnReport);
         }
 
         void bind(SessionSummary summary, String currentUserId) {
@@ -208,12 +247,10 @@ public class SessionHistoryAdapter
             String hotspot = summary.getHotspotName();
             txtHotspotName.setText(hotspot != null && !hotspot.isEmpty() ? hotspot : "—");
 
-            // Partner is always shown in the top row (participant2 views)
             ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
             if (partner != null) {
                 String partnerName = partner.getFullName() != null && !partner.getFullName().isEmpty()
-                        ? partner.getFullName()
-                        : "Unknown";
+                        ? partner.getFullName() : "Unknown";
                 txtParticipant2Name.setText(partnerName);
                 txtParticipant2Status.setText(formatUserStatus(partner.getUserStatus()));
                 txtParticipant2Distance.setText(formatDistance(partner.getDistanceKm()));
@@ -221,7 +258,6 @@ public class SessionHistoryAdapter
                 avatarPartner.bind(partnerName, partner.getAvatarUrl());
             }
 
-            // Caller ("You") is always shown in the bottom row (participant1 views)
             ParticipantSummary caller = summary.getCallerParticipant(currentUserId);
             if (caller != null) {
                 txtParticipant1Name.setText("You");
@@ -230,8 +266,7 @@ public class SessionHistoryAdapter
                 txtParticipant1Duration.setText(formatDuration(caller.getDurationMinutes()));
                 if (avatarSelf != null) {
                     String callerName = caller.getFullName() != null && !caller.getFullName().isEmpty()
-                            ? caller.getFullName()
-                            : "Y";
+                            ? caller.getFullName() : "Y";
                     avatarSelf.setBackground(
                             ContextCompat.getDrawable(avatarSelf.getContext(), R.drawable.bg_circle_orange));
                     avatarSelf.setInitialTextColor(Color.WHITE);
@@ -242,28 +277,17 @@ public class SessionHistoryAdapter
 
         private static void applyStatusBadge(TextView badge, WalkSession.Status status) {
             String label;
-            int bgColor;
-            int textColor;
+            int bgColor, textColor;
             switch (status != null ? status : WalkSession.Status.PENDING) {
                 case ACTIVE:
-                    label = "ACTIVE";
-                    bgColor = 0xFFFFF7ED;
-                    textColor = 0xFFF97316;
-                    break;
+                    label = "ACTIVE"; bgColor = 0xFFFFF7ED; textColor = 0xFFF97316; break;
                 case COMPLETED:
-                    label = "COMPLETED";
-                    bgColor = 0xFFF0FDF4;
-                    textColor = 0xFF16A34A;
-                    break;
+                    label = "COMPLETED"; bgColor = 0xFFF0FDF4; textColor = 0xFF16A34A; break;
                 case CANCELLED:
-                    label = "CANCELLED";
-                    bgColor = 0xFFFEF2F2;
-                    textColor = 0xFFEF4444;
-                    break;
+                    label = "CANCELLED"; bgColor = 0xFFFEF2F2; textColor = 0xFFEF4444; break;
                 default:
                     label = status != null ? status.name() : "PENDING";
-                    bgColor = 0xFFF3F2F0;
-                    textColor = 0xFF78716C;
+                    bgColor = 0xFFF3F2F0; textColor = 0xFF78716C;
             }
             badge.setText(label);
             badge.setTextColor(textColor);
@@ -275,25 +299,18 @@ public class SessionHistoryAdapter
         }
 
         private static String formatDate(String iso) {
-            if (iso == null || iso.length() < 10)
-                return "—";
+            if (iso == null || iso.length() < 10) return "—";
             return iso.substring(0, 10);
         }
 
         private static String formatUserStatus(WalkSession.Status status) {
-            if (status == null)
-                return "";
+            if (status == null) return "";
             switch (status) {
-                case ACTIVE:
-                    return "Walking...";
-                case COMPLETED:
-                    return "Completed";
-                case NO_SHOW:
-                    return "No Show";
-                case PENDING:
-                    return "Waiting...";
-                default:
-                    return "";
+                case ACTIVE:    return "Walking...";
+                case COMPLETED: return "Completed";
+                case NO_SHOW:   return "No Show";
+                case PENDING:   return "Waiting...";
+                default:        return "";
             }
         }
 
@@ -302,26 +319,29 @@ public class SessionHistoryAdapter
         }
 
         private static String formatDuration(int minutes) {
-            if (minutes < 60)
-                return minutes + " min";
+            if (minutes < 60) return minutes + " min";
             return (minutes / 60) + "h " + (minutes % 60) + "m";
         }
     }
 
     // ── DiffUtil ──────────────────────────────────────────────────────────────
 
-    private static final DiffUtil.ItemCallback<SessionSummary> DIFF_CALLBACK = new DiffUtil.ItemCallback<SessionSummary>() {
+    private static final DiffUtil.ItemCallback<SessionSummary> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<SessionSummary>() {
         @Override
-        public boolean areItemsTheSame(@NonNull SessionSummary a,
-                @NonNull SessionSummary b) {
+        public boolean areItemsTheSame(@NonNull SessionSummary a, @NonNull SessionSummary b) {
             return a.getSessionId().equals(b.getSessionId());
         }
 
         @Override
-        public boolean areContentsTheSame(@NonNull SessionSummary a,
-                @NonNull SessionSummary b) {
+        public boolean areContentsTheSame(@NonNull SessionSummary a, @NonNull SessionSummary b) {
             return a.getSessionId().equals(b.getSessionId())
-                    && a.getStatus() == b.getStatus();
+                    && a.getStatus() == b.getStatus()
+                    && a.isCanPost() == b.isCanPost()
+                    && a.isHasPosted() == b.isHasPosted()
+                    && a.isCanReview() == b.isCanReview()
+                    && a.isReviewed() == b.isReviewed()
+                    && a.isCanReport() == b.isCanReport();
         }
     };
 }

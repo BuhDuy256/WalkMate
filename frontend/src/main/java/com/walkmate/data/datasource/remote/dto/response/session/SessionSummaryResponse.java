@@ -49,6 +49,27 @@ public class SessionSummaryResponse {
     @SerializedName("report_snapshot")
     private ReportSnapshot reportSnapshot;
 
+    @SerializedName("current_user_personal_status")
+    private String currentUserPersonalStatus;
+
+    @SerializedName("partner_personal_status")
+    private String partnerPersonalStatus;
+
+    @SerializedName("current_user_has_posted")
+    private boolean currentUserHasPosted;
+
+    @SerializedName("current_user_post_id")
+    private String currentUserPostId;
+
+    @SerializedName("can_post")
+    private boolean canPost;
+
+    @SerializedName("can_review")
+    private boolean canReview;
+
+    @SerializedName("can_report")
+    private boolean canReport;
+
     public String getSessionId()                         { return sessionId; }
     public String getStatus()                            { return status; }
     public String getScheduledStart()                    { return scheduledStart; }
@@ -62,6 +83,13 @@ public class SessionSummaryResponse {
     public String getCallerAvatarUrl()                   { return callerAvatarUrl; }
     public ReviewSnapshot getReviewSnapshot()            { return reviewSnapshot; }
     public ReportSnapshot getReportSnapshot()            { return reportSnapshot; }
+    public String getCurrentUserPersonalStatus()         { return currentUserPersonalStatus; }
+    public String getPartnerPersonalStatus()             { return partnerPersonalStatus; }
+    public boolean isCurrentUserHasPosted()              { return currentUserHasPosted; }
+    public String getCurrentUserPostId()                 { return currentUserPostId; }
+    public boolean isCanPost()                           { return canPost; }
+    public boolean isCanReview()                         { return canReview; }
+    public boolean isCanReport()                         { return canReport; }
 
     public static class ReviewSnapshot {
         @SerializedName("rating_stars") private int ratingStars;

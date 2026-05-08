@@ -225,6 +225,20 @@ public class ProfileViewModel extends ViewModel {
         navigateToFriendsEvent.postValue(true);
     }
 
+    private final MutableLiveData<Boolean> navigateToWalkActivityEvent = new MutableLiveData<>();
+
+    public LiveData<Boolean> getNavigateToWalkActivityEvent() {
+        return navigateToWalkActivityEvent;
+    }
+
+    public void consumeNavigateToWalkActivity() {
+        navigateToWalkActivityEvent.setValue(false);
+    }
+
+    public void onWalkActivityClicked() {
+        navigateToWalkActivityEvent.postValue(true);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**

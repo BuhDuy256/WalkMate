@@ -17,12 +17,19 @@ public class SessionSummary {
     private final double meetingPointLng;
     private final String hotspotName;
     private final List<ParticipantSummary> participants;
+    private final boolean hasPosted;
+    private final String postId;
+    private final boolean canPost;
+    private final boolean canReview;
+    private final boolean canReport;
 
     public SessionSummary(String sessionId, WalkSession.Status status,
                           String scheduledStart, boolean isReviewed, boolean isReported,
                           ReviewSnapshot reviewSnapshot, ReportSnapshot reportSnapshot,
                           long terminalAtMs, double meetingPointLat, double meetingPointLng,
-                          String hotspotName, List<ParticipantSummary> participants) {
+                          String hotspotName, List<ParticipantSummary> participants,
+                          boolean hasPosted, String postId,
+                          boolean canPost, boolean canReview, boolean canReport) {
         this.sessionId        = sessionId;
         this.status           = status;
         this.scheduledStart   = scheduledStart;
@@ -35,6 +42,11 @@ public class SessionSummary {
         this.meetingPointLng  = meetingPointLng;
         this.hotspotName      = hotspotName;
         this.participants     = participants != null ? participants : Collections.emptyList();
+        this.hasPosted        = hasPosted;
+        this.postId           = postId;
+        this.canPost          = canPost;
+        this.canReview        = canReview;
+        this.canReport        = canReport;
     }
 
     public String getSessionId()                       { return sessionId; }
@@ -49,6 +61,11 @@ public class SessionSummary {
     public double getMeetingPointLng()                 { return meetingPointLng; }
     public String getHotspotName()                     { return hotspotName; }
     public List<ParticipantSummary> getParticipants()  { return participants; }
+    public boolean isHasPosted()                       { return hasPosted; }
+    public String getPostId()                          { return postId; }
+    public boolean isCanPost()                         { return canPost; }
+    public boolean isCanReview()                       { return canReview; }
+    public boolean isCanReport()                       { return canReport; }
 
     public ParticipantSummary getCallerParticipant(String currentUserId) {
         for (ParticipantSummary p : participants) {

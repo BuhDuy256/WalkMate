@@ -76,6 +76,11 @@ public class PublicProfileFragment extends Fragment {
     private ChipGroup chipGroupBadges;
     private TextView txtNoBadges;
 
+    private View layoutRecentWalks;
+    private RecyclerView rvRecentWalks;
+    private TextView txtNoRecentWalks;
+    private com.walkmate.ui.walkpost.WalkPostAdapter walkPostAdapter;
+
     private RecyclerView rvReviews;
     private TextView txtNoReviews;
     private ReviewAdapter reviewAdapter;
@@ -163,7 +168,11 @@ public class PublicProfileFragment extends Fragment {
         chipGroupBadges = root.findViewById(R.id.chipGroupPublicBadges);
         txtNoBadges = root.findViewById(R.id.txtNoBadges);
 
-        rvReviews = root.findViewById(R.id.rvPublicProfileReviews);
+        layoutRecentWalks  = root.findViewById(R.id.layoutRecentWalks);
+        rvRecentWalks      = root.findViewById(R.id.rvRecentWalks);
+        txtNoRecentWalks   = root.findViewById(R.id.txtNoRecentWalks);
+
+        rvReviews    = root.findViewById(R.id.rvPublicProfileReviews);
         txtNoReviews = root.findViewById(R.id.txtNoReviews);
 
         layoutLastActiveAt = root.findViewById(R.id.layoutLastActiveAt);
@@ -182,6 +191,12 @@ public class PublicProfileFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
+        walkPostAdapter = new com.walkmate.ui.walkpost.WalkPostAdapter();
+        walkPostAdapter.setVariant(com.walkmate.core.designsystem.view.WalkResultPostCard.Variant.VIEWER);
+        rvRecentWalks.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvRecentWalks.setAdapter(walkPostAdapter);
+        rvRecentWalks.setNestedScrollingEnabled(false);
+
         reviewAdapter = new ReviewAdapter();
         rvReviews.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvReviews.setAdapter(reviewAdapter);
@@ -194,6 +209,7 @@ public class PublicProfileFragment extends Fragment {
                 app.getSocialRepository(),
                 app.getGamificationRepository(),
                 app.getReviewRepository(),
+                app.getWalkPostRepository(),
                 app.getSessionManager().getUserId());
         viewModel = new ViewModelProvider(this, factory).get(PublicProfileViewModel.class);
     }
@@ -265,6 +281,7 @@ public class PublicProfileFragment extends Fragment {
         renderFriendExtras(state.getProfile(), state.isFriend());
         renderStats(state.getStats(), state.getProfile());
         renderBadges(state.getBadges());
+        renderRecentWalks(state.getPosts());
         renderReviews(state.getReviews());
         renderFriendshipActions(state.getProfile(), state.getFriendshipStatus(), state.isSelf());
 
@@ -336,6 +353,17 @@ public class PublicProfileFragment extends Fragment {
             chip.setClickable(false);
             chipGroupBadges.addView(chip);
         }
+    }
+
+    private void renderRecentWalks(java.util.List<com.walkmate.domain.walkpost.WalkPost> posts) {
+        if (posts == null || posts.isEmpty()) {
+            layoutRecentWalks.setVisibility(View.GONE);
+            return;
+        }
+        layoutRecentWalks.setVisibility(View.VISIBLE);
+        walkPostAdapter.submitList(posts);
+        txtNoRecentWalks.setVisibility(View.GONE);
+        rvRecentWalks.setVisibility(View.VISIBLE);
     }
 
     private void renderReviews(List<WalkReview> reviews) {

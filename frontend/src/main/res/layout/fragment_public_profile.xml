@@ -242,6 +242,43 @@
 
             </LinearLayout>
 
+            <!-- Recent Walks ────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/layoutRecentWalks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recent Walks"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:layout_marginBottom="4dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvRecentWalks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never" />
+
+                <TextView
+                    android:id="@+id/txtNoRecentWalks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No public walks yet."
+                    android:textSize="13sp"
+                    android:textColor="@color/text_muted"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
             <!-- Reviews ─────────────────────────────────────────────────────── -->
             <LinearLayout
                 android:layout_width="match_parent"

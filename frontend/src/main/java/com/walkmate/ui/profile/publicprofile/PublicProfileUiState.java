@@ -3,17 +3,12 @@ package com.walkmate.ui.profile.publicprofile;
 import com.walkmate.domain.gamification.UserStats;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.social.UserSummary;
+import com.walkmate.domain.walkpost.WalkPost;
 import com.walkmate.ui.profile.ProfileUiState.Badge;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Immutable snapshot of the Public Profile screen state.
- *
- * All fields are populated in parallel by PublicProfileViewModel.loadProfile().
- * The Fragment tolerates nulls gracefully (shows placeholders / empty states).
- */
 public class PublicProfileUiState {
 
     private final boolean isLoading;
@@ -22,13 +17,13 @@ public class PublicProfileUiState {
     private final List<Badge> badges;
     private final UserStats stats;
     private final List<WalkReview> reviews;
-    /** "NONE" | "PENDING_SENT" | "PENDING_RECEIVED" | "FRIENDS" */
+    private final List<WalkPost> posts;
     private final String friendshipStatus;
-    /** true when the local user is viewing their own profile — hides all friendship actions. */
     private final boolean isSelf;
 
     public PublicProfileUiState(boolean isLoading, String error, UserSummary profile,
                                 List<Badge> badges, UserStats stats, List<WalkReview> reviews,
+                                List<WalkPost> posts,
                                 String friendshipStatus, boolean isSelf) {
         this.isLoading        = isLoading;
         this.error            = error;
@@ -36,6 +31,7 @@ public class PublicProfileUiState {
         this.badges           = badges;
         this.stats            = stats;
         this.reviews          = reviews;
+        this.posts            = posts != null ? posts : Collections.emptyList();
         this.friendshipStatus = friendshipStatus;
         this.isSelf           = isSelf;
     }
@@ -44,6 +40,7 @@ public class PublicProfileUiState {
         return new PublicProfileUiState(
                 true, null, null,
                 Collections.emptyList(), null, Collections.emptyList(),
+                Collections.emptyList(),
                 "NONE", false);
     }
 
@@ -51,6 +48,7 @@ public class PublicProfileUiState {
         return new PublicProfileUiState(
                 false, message, null,
                 Collections.emptyList(), null, Collections.emptyList(),
+                Collections.emptyList(),
                 "NONE", false);
     }
 
@@ -60,6 +58,7 @@ public class PublicProfileUiState {
     public List<Badge> getBadges()         { return badges; }
     public UserStats getStats()            { return stats; }
     public List<WalkReview> getReviews()   { return reviews; }
+    public List<WalkPost> getPosts()       { return posts; }
     public String getFriendshipStatus()    { return friendshipStatus; }
     public boolean isSelf()               { return isSelf; }
     public boolean isFriend()             { return "FRIENDS".equals(friendshipStatus); }

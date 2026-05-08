@@ -18,7 +18,7 @@ WalkMate · Android Native (Java) + Spring Boot
 | H | `PostVisibility.from()` behavior was conflated across layers | **Backend** (domain): throws `WALK_POST_INVALID_VISIBILITY` for invalid/null input — invalid request is rejected. **Frontend** (domain): maps unknown/null response visibility to `PRIVATE` and logs a warning — unknown response must not widen access. |
 | I | Duplicate post error assumed HTTP 409 | `GlobalExceptionHandler` maps all `DomainException` → 400; frontend reloads History on `WALK_POST_DUPLICATED` |
 | J | Hard delete caveat (repost allowed) not stated | After deletion, UNIQUE constraint no longer applies; user may repost the same session |
-| K | Route preview treated as a real asset URL | `routePreviewUrl` column kept nullable; MVP renders static local placeholder drawable only |
+| K | Route preview treated as a real asset URL | `routePreviewUrl` nullable, not populated in MVP; `WalkPost` domain retains the field for future use. Real route rendered via `RoutePreviewView` (Canvas). Endpoint `GET /api/v1/sessions/{sessionId}/route/me` returns **current participant's route only** (`WHERE user_id = :currentUserId`). Public Profile non-participants see placeholder. Route points are UI-level state, not stored in `WalkPost`. |
 | L | Blocked visibility rule ambiguous | Either party blocking the other → return empty list |
 | M | `CreateWalkPostFragment` args missing stats primitives | Pass `distanceKm`, `durationSeconds`, `hotspotName` as Bundle primitives to avoid re-fetch |
 | N | ACTIVE + caller COMPLETED: no loading state needed | Frontend hides "Post My Walk" until `canPost=true`. No waiting/loading state. Backend-enforced finalization gates `canPost`. |
@@ -29,6 +29,92 @@ WalkMate · Android Native (Java) + Spring Boot
 | S | `GET /profiles/{userId}/posts` null viewerId not handled | If viewerId is null (unauthenticated), return PUBLIC posts only. Skip friendship/block checks entirely with null viewerId. |
 | T | "View Post" deep-link/highlight not clarified | "View Post" opens `WalkActivityFragment` at the top in MVP. Scrolling to / highlighting the specific post is deferred. |
 | U | Caption normalization order not specified | Trim caption first, then check length (max 150). If blank after trim, store null or empty per existing project convention. |
+
+---
+
+## Route Preview Decision Update
+
+**Original plan** (superseded): static `ic_route_map_placeholder` drawable. No real route data.
+
+**Revised plan**: Route preview is rendered on-device from real GPS data via `RoutePreviewView` (Canvas). No image generation pipeline. Google Static Maps API not used.
+
+### Architecture
+
+```
+Backend
+  GET /api/v1/sessions/{sessionId}/route/me
+    ↓ WHERE session_id = :sid AND user_id = :currentUserId ORDER BY chunk_index ASC
+    ↓ decodes polyline chunks → downsampled List<RoutePoint> (≤ 200)
+    ↓ restricted to participants; 403 for non-participants; empty array if no chunks
+
+Frontend
+  WalkPostRepository.getSessionRoute(sessionId, DomainCallback<List<RoutePoint>>)
+    → RouteApiService calls GET /api/v1/sessions/{sessionId}/route/me
+    → maps SessionRouteResponse to List<RoutePoint>
+  Fragment caches: Map<String, List<RoutePoint>> routePointsBySessionId
+  WalkResultPostCard.setRoutePoints(List<RoutePoint>)
+    → RoutePreviewView.setPoints(points) or showPlaceholder()
+```
+
+### Clarifications vs. previous draft
+
+| Topic | Previous (wrong) | Corrected |
+|---|---|---|
+| Endpoint path | `/sessions/{sessionId}/route` | `/sessions/{sessionId}/route/me` — suffix makes ownership explicit |
+| Whose route | All chunks by session_id | `WHERE user_id = :currentUserId` — current participant only |
+| WalkPost domain field | "replace `routePreviewUrl` with `List<RoutePoint> routePoints`" | **Keep `routePreviewUrl String`** in `WalkPost` (field already exists in codebase). Route points are **not** stored in `WalkPost`. |
+| Route points storage | Embedded in `WalkPost` | Fragment-level `Map<String, List<RoutePoint>>` cache, keyed by `sessionId` |
+| Public Profile route | Fetch route for viewer | **Never fetch route** for non-participant viewer. Pass null to `WalkResultPostCard`; shows placeholder. |
+| `WalkResultPostCard.bind()` | Calls `getRoutePoints()` on post | Receives points via `setRoutePoints()` called by Fragment — card does not trigger network calls |
+
+### New classes
+
+| Class | Package | Responsibility |
+|---|---|---|
+| `RoutePreviewView` | `core.designsystem.view` | Canvas renderer; `setPoints()`, `showPlaceholder()`, `onDraw()` |
+| `RoutePoint` | `domain.walkpost` | Immutable: `double lat`, `double lng` |
+| `RouteBounds` | `domain.walkpost` | Min/max lat+lng from point list; pixel projection math |
+| `RoutePolylineDecoder` | `data.util` | Decodes Google-encoded polyline strings from `session_point_chunks.polyline` |
+| `SessionRouteResponse` | `data.datasource.remote.dto.response.session` | DTO for route endpoint |
+| `RouteApiService` | `data.datasource.remote.api` | `@GET("api/v1/sessions/{sessionId}/route/me")` |
+
+### `RoutePreviewView` drawing algorithm
+
+1. If `points == null || points.isEmpty()` → draw placeholder and return. Show "No route recorded" text optional.
+2. Compute `RouteBounds` (minLat, maxLat, minLng, maxLng). Guard zero-span with `Math.max(span, 0.0001)`.
+3. Add 10 % padding to bounds on each side.
+4. Project: `x = (lng - minLng) / lngSpan * width`, `y = (1 - (lat - minLat) / latSpan) * height`.
+5. Draw polyline via `canvas.drawLines()` — orange `#F97316`, stroke 4dp, `ROUND` cap+join.
+6. Draw start dot (green 8dp) and end dot (orange 8dp).
+7. Background `#F3F2F0`. No labels, no tiles, no grid.
+8. Create all `Paint` objects in constructor, **not** in `onDraw()`.
+
+### Zero-distance / no-route UX rules
+
+```
+Zero distanceKm is valid — do NOT hide stats row or show an error.
+Empty route points is not an error — show placeholder in route area only.
+If showRouteMap=true and route points empty:
+    RoutePreviewView shows ic_route_map_placeholder (or "No route recorded" label)
+    caption, hotspot, stats, companion still render normally
+If showStats=true:
+    show stats even when distanceKm=0 or durationSeconds is small
+Post card must never appear blank or broken because route data is absent.
+```
+
+### Performance constraints
+
+- Backend downsamples to ≤ 200 points before returning.
+- `onDraw()` runs on main thread — with ≤ 200 points, `drawLines()` on a thumbnail completes < 2 ms.
+- Route fetch triggered after post list renders — not inside `onBindViewHolder()`.
+- Check `isAdded()` before calling `setPoints()` from async callback.
+
+### Privacy summary
+
+- `/route/me` requires `Bearer` token. 403 for non-participants.
+- `session_point_chunks` queried with `user_id = :currentUserId` — never exposes other participant's GPS.
+- GPS coordinates never embedded in `WalkPostResponse` or any public endpoint.
+- `PublicProfileFragment` must never call `getSessionRoute()` — viewer is non-participant.
 
 ---
 
@@ -113,7 +199,7 @@ If the team later wants an audit trail, add a `status character varying NOT NULL
 
 ### 2.3 Changes to existing tables
 
-No existing table requires schema changes. The `walk_session` table already has all per-user stats needed to snapshot into `walk_post`.
+No existing table requires schema changes. The `walk_session` table already has all per-user stats needed to snapshot into `walk_post`. Route data is read from `session_point_chunks` on-demand and never written into `walk_post`.
 
 ### 2.4 `points_earned` handling
 
@@ -161,7 +247,7 @@ public enum PostVisibility {
 
 **`WalkPost.java`** (Rich Domain Entity):
 - Fields: `postId`, `sessionId`, `authorId`, `caption`, `visibility`, `showCompanion`, `showRouteMap`, `showStats`, `distanceKm`, `durationSeconds`, `pointsEarned`, `routePreviewUrl`, `createdAt`, `updatedAt`
-- Factory: `WalkPost.create(String sessionId, String authorId, String caption, PostVisibility visibility, boolean showCompanion, boolean showRouteMap, boolean showStats, double distanceKm, long durationSeconds)` — trims caption first, then rejects if trimmed length > 150 (throws `WALK_POST_CAPTION_TOO_LONG`). If blank after trim, store as `null` or `""` following the existing project convention for optional text fields (check other domain entities for precedent). Sets defaults for remaining fields.
+- Factory: `WalkPost.create(...)` — trims caption first, rejects if trimmed length > 150 (throws `WALK_POST_CAPTION_TOO_LONG`). Blank after trim → store `null` (already implemented: `(trimmed == null || trimmed.isEmpty()) ? null : trimmed`). Sets `routePreviewUrl = null`, `pointsEarned = 0`.
 - Domain behavior: `changeVisibility(PostVisibility newVisibility, String requesterId)` — throws `WALK_POST_FORBIDDEN` if `requesterId != authorId`.
 
 **Session postability** lives in `WalkSession` (a `canUserPost(String userId)` method) or a dedicated `WalkPostPolicy`. The application service calls this before creating a post — not `WalkPost` itself.
@@ -175,9 +261,14 @@ public interface WalkPostRepository {
     Optional<String> findPostIdBySessionAndAuthor(String sessionId, String authorId);
     List<WalkPost> findByAuthor(String authorId);
     List<WalkPost> findVisibleByAuthor(String authorId, boolean isFriend);
-    Map<String, Boolean> findExistenceMapBySessionIdsAndAuthor(Set<String> sessionIds, String authorId);
+    Map<String, String> findPostIdMapBySessionIdsAndAuthor(Set<String> sessionIds, String authorId);
     void deleteById(String postId);
 }
+```
+
+`findPostIdMapBySessionIdsAndAuthor()` returns `Map<String, String>` keyed by `sessionId` where value is `postId`. An absent key means no post exists for that session. `hasPosted = map.containsKey(sessionId)`, `postId = map.get(sessionId)`. This replaces the previous `Map<String, Boolean>` and avoids a second per-session query for `postId`.
+
+```java
 ```
 
 **`WalkPostErrorCode.java`**:
@@ -211,7 +302,7 @@ public enum WalkPostErrorCode implements ErrorCode {
 - `findVisibleByAuthor(authorId, isFriend)`:
   - If `isFriend`: `WHERE author_id=:aid AND visibility IN ('PUBLIC','FRIENDS') ORDER BY created_at DESC`
   - If not: `WHERE author_id=:aid AND visibility='PUBLIC' ORDER BY created_at DESC`
-- `findExistenceMapBySessionIdsAndAuthor()`: `SELECT session_id FROM walk_post WHERE session_id IN (:sids) AND author_id=:aid` — return as `Map<String, Boolean>` keyed by sessionId (present = true).
+- `findPostIdMapBySessionIdsAndAuthor()`: `SELECT session_id, post_id FROM walk_post WHERE session_id = ANY(:sids) AND author_id = :aid` — return as `Map<String, String>` (sessionId → postId). Absent key = no post. Callers derive `hasPosted = map.containsKey(sessionId)` and `postId = map.get(sessionId)` in one pass.
 - `deleteById()`: `DELETE FROM walk_post WHERE post_id=:postId`
 
 ### Phase 5 — Command Service
@@ -334,6 +425,51 @@ public record UpdateWalkPostVisibilityRequest(
 ) {}
 ```
 
+### Phase 7b — Session Route Endpoint
+
+**New query service method** in `SessionHistoryQueryService` or a new `SessionRouteQueryService`:
+
+```java
+List<RoutePoint> getSessionRoute(String sessionId, String requesterId);
+```
+
+1. Load `WalkSession`. Throw `SESSION_NOT_FOUND` if missing.
+2. Verify `requesterId == session.userIdA || requesterId == session.userIdB`. Throw `FORBIDDEN` otherwise.
+3. Fetch **only the requester's chunks**: `SELECT polyline, chunk_index FROM session_point_chunks WHERE session_id = :sessionId AND user_id = :requesterId ORDER BY chunk_index ASC`.
+   - `session_point_chunks` has both `session_id` and `user_id` columns (confirmed schema). Always filter by both.
+   - Do **not** query by `session_id` alone — that would return both participants' tracks.
+4. Decode each `polyline` (Google encoded polyline format) into a `List<RoutePoint>`. If no chunks exist, return empty list (not error).
+5. Downsample to ≤ 200 points before returning.
+6. Return `List<RoutePoint>`.
+
+**New controller method** in `SessionHistoryController` (or a dedicated `SessionRouteController`):
+
+```java
+// GET /api/v1/sessions/{sessionId}/route/me
+@GetMapping("/sessions/{sessionId}/route/me")
+public ResponseEntity<ApiResponse<SessionRouteResponse>> getSessionRoute(
+    @AuthenticationPrincipal UserPrincipal principal,
+    @PathVariable String sessionId)
+```
+
+**`RoutePoint.java`** (domain record, backend):
+```java
+public record RoutePoint(double lat, double lng) {}
+```
+
+**`SessionRouteResponse.java`** (backend DTO):
+```java
+public record SessionRouteResponse(
+    @JsonProperty("session_id") String sessionId,
+    @JsonProperty("points")     List<RoutePointDto> points
+) {}
+
+public record RoutePointDto(
+    @JsonProperty("lat") double lat,
+    @JsonProperty("lng") double lng
+) {}
+```
+
 ### Phase 8 — Update History API
 
 **`SessionHistoryQueryService`**: extend `toSummary()` method.
@@ -370,7 +506,7 @@ In `toSummary()`:
 - Compute `canReview = !isReviewed && callerPersonalStatus != NO_SHOW && partnerPersonalStatus == COMPLETED`.
 - Compute `canReport = !isReported && callerPersonalStatus != NO_SHOW`.
 
-**Performance**: Add `walkPostRepository.findExistenceMapBySessionIdsAndAuthor(Set<String> sessionIds, String authorId)` to batch `hasPosted` across the full history list and avoid N+1. Follow the same pattern used for existing profile snapshot batching.
+**Performance**: Use `walkPostRepository.findPostIdMapBySessionIdsAndAuthor(Set<String> sessionIds, String authorId)` (returns `Map<String, String>` sessionId → postId) to batch-resolve both `hasPosted` and `postId` for the full history list in one query. `hasPosted = map.containsKey(sessionId)`, `postId = map.get(sessionId)`. Avoids N+1 and a second per-session query for `postId`.
 
 ---
 
@@ -460,7 +596,33 @@ In `toSummary()`:
 
 **Post-delete**: User may create a new post for the same session (hard delete removes the UNIQUE constraint row).
 
-### 4.6 GET /api/v1/sessions/history (updated)
+### 4.6 GET /api/v1/sessions/{sessionId}/route/me (new)
+
+**Auth**: Bearer token required.
+
+**Authorization**: Caller must be a participant (`userIdA` or `userIdB`). Returns `403 FORBIDDEN` otherwise.
+
+**Behavior**: Returns **the current authenticated user's GPS route** for this session. Query: `WHERE session_id = :sessionId AND user_id = :currentUserId ORDER BY chunk_index ASC`. Returns the caller's route only — never the partner's route.
+
+**Response 200**:
+```json
+{
+  "success": true,
+  "data": {
+    "session_id": "uuid",
+    "points": [
+      { "lat": 10.7769, "lng": 106.7009 },
+      { "lat": 10.7773, "lng": 106.7015 }
+    ]
+  }
+}
+```
+
+`points` is always an array (never null). Empty array when no GPS data was recorded (e.g. zero-distance session). Downsampled to ≤ 200 points.
+
+**Error cases**: `SESSION_NOT_FOUND` (400), `FORBIDDEN` (403).
+
+### 4.7 GET /api/v1/sessions/history (updated)
 
 Adds to each item: `current_user_personal_status`, `partner_personal_status`, `current_user_has_posted`, `current_user_post_id` (nullable), `can_post`, `can_review`, `can_report`.
 
@@ -530,28 +692,51 @@ Update `SessionSummaryResponse.java` (frontend DTO) to add:
 // current_user_review_id is NOT added in MVP — use existing review_snapshot field
 ```
 
-### Phase 5B — API Interface
+### Phase 5B — API Interfaces
 
 **`WalkPostApiService.java`** — `data/datasource/remote/api/`:
 ```java
-@POST("sessions/{sessionId}/posts")
+@POST("api/v1/sessions/{sessionId}/posts")
 Call<ApiResponse<WalkPostResponse>> createPost(
     @Path("sessionId") String sessionId,
     @Body CreateWalkPostRequest body);
 
-@GET("profiles/me/posts")
+@GET("api/v1/profiles/me/posts")
 Call<ApiResponse<List<WalkPostResponse>>> getMyPosts();
 
-@GET("profiles/{userId}/posts")
+@GET("api/v1/profiles/{userId}/posts")
 Call<ApiResponse<List<WalkPostResponse>>> getUserPosts(@Path("userId") String userId);
 
-@PATCH("walk-posts/{postId}/visibility")
+@PATCH("api/v1/walk-posts/{postId}/visibility")
 Call<ApiResponse<WalkPostResponse>> updateVisibility(
     @Path("postId") String postId,
     @Body UpdateWalkPostVisibilityRequest body);
 
-@DELETE("walk-posts/{postId}")
+@DELETE("api/v1/walk-posts/{postId}")
 Call<ApiResponse<Void>> deletePost(@Path("postId") String postId);
+```
+
+Note: Base URL is the server root (e.g. `https://api.walkmate.app/`). The `api/v1/` prefix is included in each path.
+
+**`RouteApiService.java`** — `data/datasource/remote/api/`:
+```java
+@GET("api/v1/sessions/{sessionId}/route/me")
+Call<ApiResponse<SessionRouteResponse>> getSessionRoute(@Path("sessionId") String sessionId);
+```
+
+**`SessionRouteResponse.java`** — `data/datasource/remote/dto/response/session/`:
+```java
+public class SessionRouteResponse {
+    @SerializedName("session_id") private String sessionId;
+    @SerializedName("points")     private List<RoutePointDto> points;
+    // getters
+}
+
+public class RoutePointDto {
+    @SerializedName("lat") private double lat;
+    @SerializedName("lng") private double lng;
+    // getters
+}
 ```
 
 ### Phase 5C — Mapper
@@ -588,10 +773,15 @@ public interface WalkPostRepository {
                     DomainCallback<WalkPost> callback);
     void getMyPosts(DomainCallback<List<WalkPost>> callback);
     void getUserPosts(String userId, DomainCallback<List<WalkPost>> callback);
-    void updateVisibility(String postId, String visibility, DomainCallback<WalkPost> callback);
+    void updateVisibility(String postId, PostVisibility visibility, DomainCallback<WalkPost> callback);
     void deletePost(String postId, DomainCallback<Void> callback);
+    void getSessionRoute(String sessionId, DomainCallback<List<RoutePoint>> callback);
 }
 ```
+
+`updateVisibility()` takes `PostVisibility visibility` (domain type), not `String`. `WalkPostRepositoryImpl` converts via `visibility.name()` when constructing `UpdateWalkPostVisibilityRequest`.
+
+`getSessionRoute()` calls `GET /api/v1/sessions/{sessionId}/route/me`. Maps `RoutePointDto` → `RoutePoint`. Delivers empty list (not error) when server returns empty `points` array. Only call this for the current authenticated user's own posts — not for posts in Public Profile.
 
 **`WalkPostRepositoryImpl.java`** — `data/repository/`:
 - Implements `WalkPostRepository`.
@@ -626,12 +816,83 @@ Fallback is `PRIVATE` (not `PUBLIC`) for null or unknown strings — applies to 
 
 Note: the **backend** `PostVisibility.from()` has the opposite behavior — it throws `WALK_POST_INVALID_VISIBILITY` for invalid/null input, because invalid request visibility should be rejected, not silently corrected.
 
+**`RoutePoint.java`** (immutable) — `domain/walkpost/`:
+```java
+public final class RoutePoint {
+    public final double lat;
+    public final double lng;
+    public RoutePoint(double lat, double lng) { this.lat = lat; this.lng = lng; }
+}
+```
+
 **`WalkPost.java`** (lightweight model, pure getters) — `domain/walkpost/`:
 - All fields from `WalkPostResponse` mapped to Java types. No business logic.
+- Keeps `String routePreviewUrl` (nullable). This field already exists in the backend domain model; the frontend mirrors it for DTO mapping completeness even though MVP does not populate it.
+- Does **not** carry `List<RoutePoint>`. Route points are UI-level state managed by the Fragment in a `Map<String, List<RoutePoint>> routePointsBySessionId` cache. The card receives points via `setRoutePoints()` called by the Fragment after an async fetch — the card never triggers network calls itself.
 
 Update `SessionSummary.java` — add fields: `currentUserPersonalStatus`, `partnerPersonalStatus`, `hasPosted`, `postId` (nullable), `canPost`, `canReview`, `canReport`.
 
 `reviewId` is **not added in MVP**. The existing `ReviewSnapshot` field on `SessionSummary` already carries the review data needed for "View Review" rendering.
+
+### Phase 5F — RoutePreviewView Custom View
+
+**`RoutePreviewView.java`** — `core/designsystem/view/`:
+
+```java
+public class RoutePreviewView extends View {
+    private List<RoutePoint> points;
+    private boolean showingPlaceholder = true;
+    private final Paint linePaint;
+    private final Paint dotPaint;
+    private final Drawable placeholder;
+
+    // public API
+    public void setPoints(List<RoutePoint> pts);
+    public void showPlaceholder();
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (showingPlaceholder || points == null || points.isEmpty()) {
+            drawPlaceholder(canvas);
+            return;
+        }
+        RouteBounds bounds = RouteBounds.from(points);
+        // project each point to pixel; draw polyline
+        // draw start (green) and end (orange) dots
+    }
+}
+```
+
+Key implementation notes:
+- `setPoints()` and `showPlaceholder()` call `invalidate()` to trigger redraw.
+- All `Paint` objects are created in the constructor, not in `onDraw()`.
+- `RouteBounds` adds 10 % padding to prevent clipping near edges.
+- Minimum viable render: `drawLines(float[] pts, Paint paint)` is faster than repeated `drawLine()` calls.
+- Background color: `#F3F2F0` (light warm grey). Route line: orange `#F97316`, stroke width 4dp. Dots: 8dp radius.
+
+**`RouteBounds.java`** — `domain/walkpost/`:
+```java
+public final class RouteBounds {
+    public final double minLat, maxLat, minLng, maxLng;
+
+    public static RouteBounds from(List<RoutePoint> points) { ... }
+
+    public float projectX(double lng, float viewWidth) {
+        double span = Math.max(maxLng - minLng, 0.0001); // guard zero span
+        return (float) ((lng - minLng) / span * viewWidth);
+    }
+
+    public float projectY(double lat, float viewHeight) {
+        double span = Math.max(maxLat - minLat, 0.0001);
+        return (float) ((1.0 - (lat - minLat) / span) * viewHeight);
+    }
+}
+```
+
+**`RoutePolylineDecoder.java`** — `data/util/`:
+- Decodes Google Encoded Polyline format (used by `session_point_chunks`) into `List<RoutePoint>`.
+- Standard algorithm: precision 1e-5.
+- If `session_point_chunks` uses a different format, adapt this class to match the actual stored format. Verify the chunk schema before implementing.
 
 ### Phase 6 — CreateWalkPost UI
 
@@ -665,7 +926,9 @@ public class CreateWalkPostUiState {
 - `VisibilitySelectorView` (custom view)
 - Three toggle rows: Show companion, Show route map, Show walk stats (`MaterialSwitch`)
 - Preview card (`WalkResultPostCard` in "preview" mode)
-  - When `showRouteMap = true`, display a **static local placeholder drawable** (e.g. `R.drawable.ic_route_map_placeholder`). Do not load any URL. Real route image generation is deferred.
+  - When `showRouteMap = true`, the `RoutePreviewView` inside the card shows the real route polyline fetched via `WalkPostRepository.getSessionRoute(sessionId, ...)`. While loading, show `ic_route_map_placeholder`. If the fetch fails or returns empty, stay on placeholder.
+  - Route is fetched once when the Fragment is created (not on every toggle). The result is stored in a `List<RoutePoint>` field on the Fragment and passed to `cardPreview` via `refreshPreview()`.
+  - The `buildStaticMapUrl()` helper (Google Static Maps) is **not used** for the live preview. Canvas rendering replaces it entirely.
 - Primary button: "Post to Profile" (`WalkMateButton` FILLED style)
 
 **Arguments received from History** (all passed as Bundle primitives to avoid extra network calls):
@@ -675,6 +938,7 @@ public class CreateWalkPostUiState {
 - `distanceKm` (double)
 - `durationSeconds` (long)
 - `hotspotName` (String)
+- `lat` and `lng` (double) — kept for reference but route rendering uses `getSessionRoute()`, not a static center point
 
 **`CreateWalkPostViewModelFactory.java`**: takes `WalkPostRepository` from `WalkMateApplication`.
 
@@ -815,13 +1079,15 @@ public WalkPostRepository getWalkPostRepository() {
 **Changes to `PublicProfileFragment`**:
 - Add `LinearLayout layoutRecentWalks` below the reviews section in `fragment_public_profile.xml`
 - Add `TextView txtNoRecentWalks`
-- Inflate at most 5 `item_walk_post_preview.xml` views (no RecyclerView — avoids nested scroll issues)
+- Inflate at most 5 `WalkResultPostCard` views in `Variant.VIEWER` mode (no RecyclerView — avoids nested scroll issues)
 - Load via `PublicProfileViewModel.loadUserPosts(userId)`
+- **Do NOT call `getSessionRoute()` for any post.** The viewer is not a session participant. Pass `null` route points to each `WalkResultPostCard`; `RoutePreviewView` shows placeholder automatically.
 
 **Changes to `PublicProfileViewModel`**:
 - Takes `WalkPostRepository` in constructor (via `PublicProfileViewModelFactory`)
 - `loadProfile(userId)`: load profile data + load posts in parallel via separate `ExecutorService` tasks
 - Posts filtered by backend — no client-side visibility re-filtering needed
+- No route loading — route is participant-only and viewer does not have access
 
 ---
 
@@ -971,6 +1237,11 @@ Global status = `ACTIVE`. Caller personal status = `COMPLETED`. Caller `endedAt`
 
 | Scenario | Endpoint |
 |---|---|
+| GET /route/me as participant → 200 + only that user's points (not partner's) | `GET /api/v1/sessions/{id}/route/me` |
+| GET /route/me as non-participant → 403 FORBIDDEN | `GET /api/v1/sessions/{id}/route/me` |
+| GET /route/me for unknown session → 400 SESSION_NOT_FOUND | `GET /api/v1/sessions/{id}/route/me` |
+| GET /route/me returns empty array when no chunks for this user | `GET /api/v1/sessions/{id}/route/me` |
+| GET /route/me returns ≤ 200 points even when raw chunk count exceeds that | `GET /api/v1/sessions/{id}/route/me` |
 | POST with valid completed session → 200 + WalkPostResponse | `POST /api/v1/sessions/{id}/posts` |
 | POST with CANCELLED session → 400 WALK_POST_SESSION_NOT_POSTABLE | `POST /api/v1/sessions/{id}/posts` |
 | POST with FAILED session (if enum exists) → 400 WALK_POST_SESSION_NOT_POSTABLE | `POST /api/v1/sessions/{id}/posts` |
@@ -1001,6 +1272,17 @@ Global status = `ACTIVE`. Caller personal status = `COMPLETED`. Caller `endedAt`
 | `PostVisibility.from()` returns PRIVATE for null | `PostVisibility` (frontend) |
 | `PostVisibility.from()` returns PRIVATE for unknown string | `PostVisibility` (frontend) |
 
+### Android unit tests — route rendering
+
+| Test | Class |
+|---|---|
+| `RouteBounds.from()` computes correct min/max lat+lng | `RouteBounds` |
+| `RouteBounds.projectX()` maps minLng → 0, maxLng → viewWidth | `RouteBounds` |
+| `RouteBounds.projectY()` maps maxLat → 0, minLat → viewHeight (inverted) | `RouteBounds` |
+| `RouteBounds.from()` handles single-point list without division by zero | `RouteBounds` |
+| `RoutePolylineDecoder.decode()` decodes known encoded polyline string to expected points | `RoutePolylineDecoder` |
+| `RoutePolylineDecoder.decode()` returns empty list for null or empty input | `RoutePolylineDecoder` |
+
 ### Manual QA checklist
 
 ```
@@ -1018,7 +1300,11 @@ Global status = `ACTIVE`. Caller personal status = `COMPLETED`. Caller `endedAt`
 [ ] Caption input respects 150 char limit
 [ ] Visibility selector cycles Public / Friends / Only me
 [ ] Show companion toggle hides/shows companion chip in preview
-[ ] Show route map toggle shows local placeholder drawable (not a URL-loaded image)
+[ ] Show route map toggle: Walk Activity (owner) — fetches /route/me, renders polyline via RoutePreviewView
+[ ] Show route map toggle: CreateWalkPost preview — fetches /route/me, renders live Canvas preview
+[ ] Route preview shows placeholder when /route/me returns empty array (no GPS data recorded)
+[ ] Public Profile Recent Walks: route area shows placeholder (no /route/me call made)
+[ ] Zero-distance post: stats row still visible even with distanceKm=0; no error shown
 [ ] "Post to Profile" button triggers loading state
 [ ] Successful post navigates back; History card shows "View Post" + POSTED chip
 [ ] "View Post" opens Walk Activity screen at the top (no scroll-to-post in MVP)
@@ -1064,7 +1350,7 @@ Global status = `ACTIVE`. Caller personal status = `COMPLETED`. Caller `endedAt`
 | **1** | DB migration: create `walk_post` table with constraints and composite indexes | Low |
 | **2** | Backend domain: `WalkPost`, `PostVisibility`, `WalkPostErrorCode`, `WalkPostRepository` interface | Low |
 | **3** | Backend domain: add `canUserPost(String userId)` to `WalkSession` or create `WalkPostPolicy` | Medium |
-| **4** | Backend infra: `WalkPostJdbcRepository` — save, findById, exists, findByAuthor, findVisible, findExistenceMap, delete | Medium |
+| **4** | Backend infra: `WalkPostJdbcRepository` — save, findById, exists, findByAuthor, findVisible, `findPostIdMapBySessionIdsAndAuthor` (returns `Map<String,String>`), delete | Medium |
 | **5** | Backend app: `WalkPostCommandService` — createPost, updateVisibility, deletePost (services return domain objects) | Medium |
 | **6** | Backend app: `WalkPostQueryService` — getMyPosts, getUserPosts with blocked-either-direction rule | Medium |
 | **7** | Backend presentation: `WalkPostController`, `ProfilePostController`, DTOs, mapper (controller maps domain → DTO) | Low |
@@ -1074,9 +1360,11 @@ Global status = `ACTIVE`. Caller personal status = `COMPLETED`. Caller `endedAt`
 | **11** | Frontend data layer: `WalkPostResponse`, request DTOs, `WalkPostApiService`, `WalkPostMapper`, `WalkPostRepositoryImpl` | Low |
 | **12** | Frontend domain: `WalkPost`, `WalkPostRepository` interface, `PostVisibility` (PRIVATE fallback) | Low |
 | **13** | Frontend `WalkMateApplication`: register `WalkPostRepository` singleton | Low |
-| **14** | Custom views: `WalkResultPostCard` (owner + viewer variants), `VisibilityChipView`, `VisibilitySelectorView` | Medium |
-| **15** | New layout files: `view_walk_result_post_card.xml`, `view_visibility_chip.xml`, `view_visibility_selector.xml` | Low |
-| **16** | `CreateWalkPostFragment` + VM + UiState + Factory + layout (with static placeholder for route map) | Medium |
+| **14** | Custom views: `WalkResultPostCard` (owner + viewer variants), `VisibilityChipView`, `VisibilitySelectorView`, `RoutePreviewView` | Medium |
+| **14b** | Route data classes: `RoutePoint`, `RouteBounds`, `RoutePolylineDecoder` | Low |
+| **14c** | Backend route endpoint: `RouteApiService` (frontend Retrofit), `SessionRouteResponse` DTO, `WalkPostRepository.getSessionRoute()`, `WalkPostRepositoryImpl` wiring | Low |
+| **15** | New layout files: `view_walk_result_post_card.xml` (uses `RoutePreviewView`, not `ImageView`), `view_visibility_chip.xml`, `view_visibility_selector.xml` | Low |
+| **16** | `CreateWalkPostFragment` + VM + UiState + Factory + layout (fetches route via `getSessionRoute()`; live Canvas preview) | Medium |
 | **17** | Update `item_session_history.xml`: add btnPost, btnViewPost, btnViewReview, txtPostedChip | Medium |
 | **18** | Update `SessionHistoryAdapter`: new listeners (with stats args), revised `onBindViewHolder` for all state variants | High |
 | **19** | Update `SessionHistoryFragment`: wire new listeners, add nav actions with all Bundle args | Low |
@@ -1102,7 +1390,9 @@ Global status = `ACTIVE`. Caller personal status = `COMPLETED`. Caller `endedAt`
 - Report system for posts (reporting a post to admins)
 - Edit caption after posting
 - Notification when someone else views a post
-- Route map preview image generation (static placeholder only; real generation deferred)
+- Google Static Maps URL-based route thumbnails (Canvas-based `RoutePreviewView` is used instead)
+- Pre-generated route image storage in `route_preview_url` column (column stays nullable; Canvas renders live from `session_point_chunks`)
+- MapView or SupportMapFragment embedded inside RecyclerView items (unsafe due to lifecycle and resource issues)
 - Points-per-session tracking (default `points_earned = 0`, column kept for future)
 - Chat button on History cards (deferred until canChat model is defined)
 - "View Details" on CANCELLED cards (deferred until `RouteReplayActivity` safety for sessions with no GPS data is confirmed)

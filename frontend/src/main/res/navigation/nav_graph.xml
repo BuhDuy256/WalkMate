@@ -163,6 +163,14 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_profile_to_walkActivityFragment"
+            app:destination="@id/walkActivityFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -194,6 +202,22 @@
         <action
             android:id="@+id/action_sessionHistory_to_submitReviewFragment"
             app:destination="@id/submitReviewFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_sessionHistory_to_createWalkPostFragment"
+            app:destination="@id/createWalkPostFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/action_sessionHistory_to_walkActivityFragment"
+            app:destination="@id/walkActivityFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
@@ -328,5 +352,16 @@
             app:argType="string"
             android:defaultValue="" />
     </fragment>
+
+
+    <fragment
+        android:id="@+id/createWalkPostFragment"
+        android:name="com.walkmate.ui.walkpost.CreateWalkPostFragment"
+        android:label="Share Walk" />
+
+    <fragment
+        android:id="@+id/walkActivityFragment"
+        android:name="com.walkmate.ui.walkpost.WalkActivityFragment"
+        android:label="Walk Activity" />
 
 </navigation>

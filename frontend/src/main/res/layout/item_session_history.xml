@@ -311,34 +311,100 @@
             android:background="#F3F2F0"
             android:visibility="gone" />
 
-        <!-- Action row: Review or Report — mutually exclusive -->
+        <!-- Post action: Share Walk (canPost=true) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPost"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="4dp"
+            android:text="Share Walk"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/orange_primary"
+            android:visibility="gone" />
+
+        <!-- Posted state: chip + view button (hasPosted=true) -->
+        <LinearLayout
+            android:id="@+id/layoutPostedState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/txtPostedChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Posted"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#166534"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:background="@drawable/bg_chip_posted" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewPost"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="View Post"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/orange_primary" />
+        </LinearLayout>
+
+        <!-- Review action: Leave a Review (canReview=true) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnReview"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:paddingBottom="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:text="Leave a Review"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/orange_primary"
-            android:visibility="gone"
-            tools:visibility="visible" />
+            android:visibility="gone" />
 
+        <!-- View Review action (isReviewed=true, canReview=false) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewReview"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="View Review"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_muted"
+            android:visibility="gone" />
+
+        <!-- Report action -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnReport"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="10dp"
+            android:paddingTop="4dp"
             android:paddingBottom="12dp"
             android:text="Report"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/text_muted"
-            android:visibility="gone"
-            tools:visibility="visible" />
+            android:visibility="gone" />
 
     </LinearLayout>
 

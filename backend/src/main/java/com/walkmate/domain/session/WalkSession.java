@@ -332,6 +332,24 @@ public class WalkSession {
         }
     }
 
+    // ── Post eligibility ─────────────────────────────────────────────────────
+
+    /**
+     * Returns true if the given user is eligible to create a walk post for this session.
+     * Conditions: caller must be a participant, their personal status must be COMPLETED,
+     * their ended-at must be non-null (metrics finalized), and the session must not be CANCELLED.
+     */
+    public boolean canUserPost(String userId) {
+        if (this.status == SessionStatus.CANCELLED) return false;
+
+        if (userId.equals(userIdA)) {
+            return userAStatus == SessionStatus.COMPLETED && userAEndedAt != null;
+        } else if (userId.equals(userIdB)) {
+            return userBStatus == SessionStatus.COMPLETED && userBEndedAt != null;
+        }
+        return false;
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**

@@ -65,6 +65,7 @@ public class ProfileFragment extends Fragment {
 
     // Menu rows
     private View menuWalkHistory;
+    private View menuWalkActivity;
     private View menuMyBadges;
     private View menuFriends;
     private View menuSecurity;
@@ -137,6 +138,13 @@ public class ProfileFragment extends Fragment {
                     .navigate(R.id.action_profile_to_badgeFragment);
         });
 
+        viewModel.getNavigateToWalkActivityEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
+            if (!Boolean.TRUE.equals(shouldNavigate)) return;
+            viewModel.consumeNavigateToWalkActivity();
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.action_profile_to_walkActivityFragment);
+        });
+
         viewModel.getNavigateToAdminPanelEvent().observe(getViewLifecycleOwner(), shouldNavigate -> {
             if (!Boolean.TRUE.equals(shouldNavigate)) return;
             viewModel.consumeNavigateToAdminPanel();
@@ -186,8 +194,9 @@ public class ProfileFragment extends Fragment {
 
         btnEditProfile = root.findViewById(R.id.btnEditProfile);
 
-        menuWalkHistory = root.findViewById(R.id.menuWalkHistory);
-        menuMyBadges = root.findViewById(R.id.menuMyBadges);
+        menuWalkHistory  = root.findViewById(R.id.menuWalkHistory);
+        menuWalkActivity = root.findViewById(R.id.menuWalkActivity);
+        menuMyBadges     = root.findViewById(R.id.menuMyBadges);
 
         menuFriends = root.findViewById(R.id.menuFriends);
         menuSecurity = root.findViewById(R.id.menuSecurity);
@@ -214,6 +223,7 @@ public class ProfileFragment extends Fragment {
             btnEditProfile.setOnClickListener(v -> viewModel.onEditProfileClicked());
         }
         menuWalkHistory.setOnClickListener(v -> viewModel.onWalkHistoryClicked());
+        menuWalkActivity.setOnClickListener(v -> viewModel.onWalkActivityClicked());
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
 
         menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());

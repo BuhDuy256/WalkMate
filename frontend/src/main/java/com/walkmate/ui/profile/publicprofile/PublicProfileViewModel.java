@@ -13,6 +13,8 @@ import com.walkmate.domain.review.ReviewRepository;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.social.SocialRepository;
 import com.walkmate.domain.social.UserSummary;
+import com.walkmate.domain.walkpost.WalkPost;
+import com.walkmate.domain.walkpost.WalkPostRepository;
 import com.walkmate.ui.profile.ProfileUiState.Badge;
 
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class PublicProfileViewModel extends ViewModel {
     private final SocialRepository       socialRepo;
     private final GamificationRepository gamificationRepo;
     private final ReviewRepository       reviewRepo;
+    private final WalkPostRepository     walkPostRepo;
     private final String                 localUserId;
 
     // Last-loaded userId for refresh after mutations.
@@ -51,10 +54,12 @@ public class PublicProfileViewModel extends ViewModel {
     public PublicProfileViewModel(SocialRepository socialRepo,
                                   GamificationRepository gamificationRepo,
                                   ReviewRepository reviewRepo,
+                                  WalkPostRepository walkPostRepo,
                                   String localUserId) {
         this.socialRepo       = socialRepo;
         this.gamificationRepo = gamificationRepo;
         this.reviewRepo       = reviewRepo;
+        this.walkPostRepo     = walkPostRepo;
         this.localUserId      = localUserId;
     }
 
@@ -81,11 +86,12 @@ public class PublicProfileViewModel extends ViewModel {
         final AtomicReference<List<Badge>>      badgesHolder  = new AtomicReference<>(Collections.emptyList());
         final AtomicReference<UserStats>        statsHolder   = new AtomicReference<>(null);
         final AtomicReference<List<WalkReview>> reviewsHolder = new AtomicReference<>(Collections.emptyList());
+        final AtomicReference<List<WalkPost>>   postsHolder   = new AtomicReference<>(Collections.emptyList());
 
         final AtomicInteger doneCount = new AtomicInteger(0);
 
         Runnable publish = () -> {
-            if (doneCount.incrementAndGet() == 4) {
+            if (doneCount.incrementAndGet() == 5) {
                 UserSummary   prof   = profileHolder.get();
                 String        status = prof != null ? prof.getFriendshipStatus() : "NONE";
                 uiState.postValue(new PublicProfileUiState(
@@ -94,6 +100,7 @@ public class PublicProfileViewModel extends ViewModel {
                         badgesHolder.get(),
                         statsHolder.get(),
                         reviewsHolder.get(),
+                        postsHolder.get(),
                         status != null ? status : "NONE",
                         isSelf));
             }
@@ -111,7 +118,7 @@ public class PublicProfileViewModel extends ViewModel {
                 // Profile failure is fatal — show error state immediately.
                 uiState.postValue(PublicProfileUiState.error(friendlyError(e)));
                 // Absorb remaining callbacks by inflating doneCount past the threshold.
-                doneCount.addAndGet(4);
+                doneCount.addAndGet(5);
             }
         });
 
@@ -153,6 +160,20 @@ public class PublicProfileViewModel extends ViewModel {
             @Override
             public void onError(Exception e) {
                 // Non-fatal — reviews feed shows empty.
+                publish.run();
+            }
+        });
+
+        // ── Walk Posts ────────────────────────────────────────────────────────
+        walkPostRepo.getUserPosts(userId, new DomainCallback<List<WalkPost>>() {
+            @Override
+            public void onSuccess(List<WalkPost> posts) {
+                postsHolder.set(posts != null ? posts : Collections.emptyList());
+                publish.run();
+            }
+            @Override
+            public void onError(Exception e) {
+                // Non-fatal — walk posts section stays hidden.
                 publish.run();
             }
         });

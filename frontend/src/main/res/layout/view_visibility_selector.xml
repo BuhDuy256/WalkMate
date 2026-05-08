@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:weightSum="3"
+    android:divider="@null">
+
+    <LinearLayout
+        android:id="@+id/option_public"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/bg_visibility_option_unselected"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:id="@+id/label_public"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🌍"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Public"
+            android:textSize="12sp"
+            android:textColor="#374151" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Everyone"
+            android:textSize="10sp"
+            android:textColor="#9CA3AF" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/option_friends"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_marginHorizontal="4dp"
+        android:background="@drawable/bg_visibility_option_unselected"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:id="@+id/label_friends"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👥"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Friends"
+            android:textSize="12sp"
+            android:textColor="#374151" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Friends only"
+            android:textSize="10sp"
+            android:textColor="#9CA3AF" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/option_private"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_marginStart="4dp"
+        android:background="@drawable/bg_visibility_option_unselected"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:id="@+id/label_private"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔒"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Only me"
+            android:textSize="12sp"
+            android:textColor="#374151" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Private"
+            android:textSize="10sp"
+            android:textColor="#9CA3AF" />
+    </LinearLayout>
+</LinearLayout>

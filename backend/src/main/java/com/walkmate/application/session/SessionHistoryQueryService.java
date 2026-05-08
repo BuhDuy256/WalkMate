@@ -6,11 +6,13 @@ import com.walkmate.domain.review.ReviewTagRepository;
 import com.walkmate.domain.review.WalkReview;
 import com.walkmate.domain.review.WalkReviewRepository;
 import com.walkmate.domain.session.SessionErrorCode;
+import com.walkmate.domain.session.SessionStatus;
 import com.walkmate.domain.session.WalkSession;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserProfileSnapshot;
+import com.walkmate.domain.walkpost.WalkPostRepository;
 import com.walkmate.presentation.dto.response.session.ParticipantSummaryResponse;
 import com.walkmate.presentation.dto.response.session.SessionSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class SessionHistoryQueryService {
     private final ReviewTagRepository     tagRepository;
     private final SessionReportRepository reportRepository;
     private final UserProfileRepository   profileRepository;
+    private final WalkPostRepository      walkPostRepository;
 
     /**
      * Returns the summary for a single session (review + report snapshot included).
@@ -64,19 +67,28 @@ public class SessionHistoryQueryService {
         if (sessions.isEmpty()) return Collections.emptyList();
 
         Set<UUID> allParticipantIds = new HashSet<>();
+        Set<String> sessionIds = new HashSet<>();
         for (WalkSession s : sessions) {
             allParticipantIds.add(UUID.fromString(s.getUserIdA()));
             allParticipantIds.add(UUID.fromString(s.getUserIdB()));
+            sessionIds.add(s.getSessionId());
         }
         Map<UUID, UserProfileSnapshot> snapshots = profileRepository.findSnapshotsByUserIds(allParticipantIds);
+        Map<String, Boolean> postedSessionIds = walkPostRepository.findExistenceMapBySessionIdsAndAuthor(sessionIds, callerId);
 
         return sessions.stream()
-                .map(s -> toSummary(s, callerId, snapshots))
+                .map(s -> toSummary(s, callerId, snapshots, postedSessionIds))
                 .collect(Collectors.toList());
     }
 
     private SessionSummaryResponse toSummary(WalkSession s, String callerId,
                                               Map<UUID, UserProfileSnapshot> snapshots) {
+        return toSummary(s, callerId, snapshots, Collections.emptyMap());
+    }
+
+    private SessionSummaryResponse toSummary(WalkSession s, String callerId,
+                                              Map<UUID, UserProfileSnapshot> snapshots,
+                                              Map<String, Boolean> postedSessionIds) {
         boolean isReviewed  = reviewRepository.existsBySessionAndReviewer(s.getSessionId(), callerId);
         boolean isReported  = reportRepository.existsBySessionAndReporter(s.getSessionId(), callerId);
 
@@ -129,6 +141,31 @@ public class SessionHistoryQueryService {
         UserProfileSnapshot callerSnap = callerId.equals(s.getUserIdA()) ? snapA : snapB;
         String callerAvatarUrl = callerSnap.avatarUrl();
 
+        boolean callerIsA = callerId.equals(s.getUserIdA());
+        SessionStatus callerStatus  = callerIsA ? s.getUserAStatus() : s.getUserBStatus();
+        SessionStatus partnerStatus = callerIsA ? s.getUserBStatus() : s.getUserAStatus();
+
+        boolean hasPosted = Boolean.TRUE.equals(postedSessionIds.get(s.getSessionId()));
+        String postId = hasPosted
+                ? walkPostRepository.findPostIdBySessionAndAuthor(s.getSessionId(), callerId).orElse(null)
+                : null;
+
+        boolean callerMetricsFinalized = callerIsA
+                ? s.getUserAEndedAt() != null
+                : s.getUserBEndedAt() != null;
+
+        boolean canPost = callerStatus == SessionStatus.COMPLETED
+                && !hasPosted
+                && callerMetricsFinalized
+                && s.getStatus() != SessionStatus.CANCELLED;
+
+        boolean canReview = !isReviewed
+                && callerStatus != SessionStatus.NO_SHOW
+                && partnerStatus == SessionStatus.COMPLETED;
+
+        boolean canReport = !isReported
+                && callerStatus != SessionStatus.NO_SHOW;
+
         return new SessionSummaryResponse(
                 s.getSessionId(),
                 s.getStatus().name(),
@@ -142,7 +179,14 @@ public class SessionHistoryQueryService {
                 s.getMeetingPointLng(),
                 List.of(participantA, participantB),
                 callerAvatarUrl,
-                s.getHotspotName()
+                s.getHotspotName(),
+                callerStatus.name(),
+                partnerStatus.name(),
+                hasPosted,
+                postId,
+                canPost,
+                canReview,
+                canReport
         );
     }
 }

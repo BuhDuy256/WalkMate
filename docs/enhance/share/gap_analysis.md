@@ -14,7 +14,7 @@ Final decisions applied in this document:
 | Endpoint naming | `POST /api/v1/sessions/{sessionId}/posts` (matches existing session API prefix) |
 | Delete policy | Hard delete. After deletion, user may post the same session again. |
 | Points | `points_earned` column stays in `walk_post` with default 0. Not displayed in MVP UI. |
-| Route preview | `route_preview_url` nullable. Show local/static placeholder when `showRouteMap=true`. Real image generation is deferred. |
+| Route preview | `route_preview_url` nullable (not populated in MVP). Real route drawn on-demand via `RoutePreviewView` (Canvas + GPS points from `session_point_chunks`). Endpoint `GET /api/v1/sessions/{sessionId}/route/me` — returns **current participant's route only**; restricted to participants. Public Profile non-participant viewers see placeholder. See Route Preview Decision Update section. |
 | Chat / `canChat` | Deferred from MVP entirely. Existing chat behavior unchanged. |
 | Review ID | `currentUserReviewId` is **not added in MVP**. Use existing `ReviewSnapshot` to render "View Review". If `ReviewSnapshot` is insufficient, show "Reviewed" state only and defer detailed view. |
 | Cancelled card actions | For MVP, CANCELLED cards show **Report only**. "View Details" is deferred until `RouteReplayActivity` is proven safe for sessions with no GPS data. |
@@ -26,7 +26,7 @@ Final decisions applied in this document:
 | Frontend domain repo boundary | `domain/walkpost/WalkPostRepository` (frontend) must not accept `CreateWalkPostRequest` DTO. `createPost()` takes domain-typed params. `WalkPostRepositoryImpl` constructs the DTO internally. |
 | Unauthenticated viewer on `GET /profiles/{userId}/posts` | If viewerId is null, return PUBLIC only. Skip friendship and block checks entirely. |
 | "View Post" navigation | Opens `WalkActivityFragment` at the top. Scroll-to / highlight specific post is deferred. |
-| Caption normalization | Trim first, then check length (max 150). Blank after trim → store null or empty per existing project convention. |
+| Caption normalization | Trim first, then check length (max 150). Blank after trim → store **`null`** (confirmed by `WalkPost.create()` implementation: `(trimmed == null \|\| trimmed.isEmpty()) ? null : trimmed`). |
 | Hard delete | Confirmed. After deletion, user may post the same session again. |
 | Visibility enforcement | Backend enforces visibility filtering. Frontend does not re-filter. |
 | `canPost` final rule | `callerPersonalStatus == COMPLETED && !hasPosted && caller is participant && caller metrics are finalized (per-user ended-at/finalized field non-null — verify actual field name) && sessionStatus != CANCELLED [&& != FAILED if that enum value exists]` |
@@ -35,6 +35,62 @@ Final decisions applied in this document:
 | Duplicate error code | `WALK_POST_DUPLICATED` maps to 400 via `GlobalExceptionHandler`. Frontend reloads History on this error. |
 | Application layer | Command/query services return domain objects. Controller maps to response DTO. |
 | Session postability | Validated by `WalkSession` domain method or `WalkPostPolicy`, not by `WalkPost` itself. |
+
+---
+
+## Route Preview Decision Update
+
+**Original decision** (superseded): `showRouteMap=true` displays a local static drawable. No real route data.
+
+**Revised decision**: Real route rendering is included in scope using on-demand Canvas rendering. Google Static Maps API is not used. No image generation pipeline is needed.
+
+### Chosen approach — Client-side Canvas rendering
+
+| Dimension | Decision |
+|---|---|
+| Rendering engine | Android `Canvas` inside a custom `RoutePreviewView` (extends `View`) |
+| Route data source | `session_point_chunks` (has `session_id` **and** `user_id` columns — per-user chunks) fetched via `GET /api/v1/sessions/{sessionId}/route/me` |
+| Route ownership | Endpoint returns **current authenticated participant's route only** (`WHERE session_id = :sid AND user_id = :currentUserId`). Never returns both participants' chunks combined. |
+| Where rendered | Inside `WalkResultPostCard` and in `CreateWalkPostFragment` live preview |
+| MapView in RecyclerView | **Not used.** No `MapView` or `SupportMapFragment` inside a RecyclerView item — lifecycle and resource issues. |
+| `route_preview_url` column | Kept nullable in `walk_post` (not populated in MVP). `WalkPost` domain model retains `routePreviewUrl String` field for future use. Route points are **not** stored inside `WalkPost`. |
+| Route points in domain model | Route points are UI-level state only. Fragment loads them separately via `WalkPostRepository.getSessionRoute()` and caches in `Map<String, List<RoutePoint>> routePointsBySessionId`. Never embedded in `WalkPost`. |
+| Public Profile non-participant | If viewer is **not** a session participant, the route endpoint returns 403. `WalkResultPostCard` must not attempt to call the route endpoint. Non-participant viewers see `ic_route_map_placeholder` regardless of `showRouteMap=true`. |
+| Fallback (all cases) | Empty points list, fetch failure, or non-participant viewer → show `ic_route_map_placeholder`. Post caption/stats/companion still render normally. |
+| Zero-distance posts | Valid. No route data is not an error. Empty route → placeholder only. Stats row still shows even if `distanceKm = 0`. |
+
+### New classes required
+
+| Class | Location | Purpose |
+|---|---|---|
+| `RoutePreviewView` | `core/designsystem/view/RoutePreviewView.java` | Canvas renderer; `setPoints(List<RoutePoint>)`, `showPlaceholder()`, fallback if empty |
+| `RoutePoint` | `domain/walkpost/RoutePoint.java` | Immutable: `double lat`, `double lng` |
+| `RouteBounds` | `domain/walkpost/RouteBounds.java` | Min/max lat+lng from point list; pixel projection math |
+| `RoutePolylineDecoder` | `data/util/RoutePolylineDecoder.java` | Decodes Google-encoded polyline strings from `session_point_chunks.polyline` → `List<RoutePoint>` |
+| `SessionRouteResponse` | `data/datasource/remote/dto/response/session/SessionRouteResponse.java` | DTO for route endpoint response |
+
+### New backend endpoint
+
+`GET /api/v1/sessions/{sessionId}/route/me` — auth required; participant only.
+
+Backend query: `SELECT polyline, chunk_index FROM session_point_chunks WHERE session_id = :sessionId AND user_id = :currentUserId ORDER BY chunk_index ASC`. Decodes chunks, downsamples to ≤ 200 points, returns flat `RoutePoint` list. Returns empty array (not error) when no chunks exist.
+
+### Impact on `WalkResultPostCard`
+
+`imgRouteMap` (`ImageView`) is replaced by `routePreviewView` (`RoutePreviewView`). Route points are passed in by the parent Fragment after a separate async fetch — not loaded inside the card view itself. When `showRouteMap=true` and points are available, `routePreviewView.setPoints(points)` renders. When not available (no data, fetch failed, or viewer is non-participant), `routePreviewView.showPlaceholder()` draws `ic_route_map_placeholder`. Caption, stats, and companion still render normally regardless of route availability.
+
+### Zero-distance / no-route UX rules
+
+```
+zero_distance_km is valid — do NOT hide stats row or show an error
+empty_route_points is not an error — show placeholder only in the route area
+if showRouteMap=true and route points are empty:
+    show "No route recorded" label inside RoutePreviewView (or ic_route_map_placeholder)
+    do NOT hide caption, hotspot, stats, companion sections
+if showStats=true:
+    show stats even when distanceKm=0 or durationSeconds is small
+post card must never appear blank or broken due to missing route data
+```
 
 ---
 
@@ -231,7 +287,7 @@ The `walk_post` table does not exist. This is the primary DB gap. Full DDL is in
 | `duration_seconds` per caller | `walk_session.user_a_duration_seconds` / `user_b_duration_seconds` | Available |
 | `hotspot_name` | `hotspot.name` via `walk_session.hotspot_id` | Available via JOIN |
 | Companion name | `user_profile.full_name` of the other participant | Available via JOIN |
-| `route_preview_url` | Not pre-generated — no image generation pipeline | **Gap — default NULL, placeholder in UI** |
+| `route_preview_url` | Not pre-generated — no image generation pipeline | **Stays null in MVP. `WalkPost` domain keeps the field for future use. Route rendered on-demand via `RoutePreviewView` + `GET /api/v1/sessions/{sessionId}/route/me` (participant only).** |
 | `points_earned` per session | Not stored per-session; `user_account.total_points` is cumulative | **Gap — default 0, not displayed in MVP UI** |
 
 ### 5.2.1 Caption normalization
@@ -240,7 +296,7 @@ The `caption` field in `walk_post` is optional text (max 150 chars). The domain 
 
 1. **Trim first**: remove leading/trailing whitespace before any validation.
 2. **Check length**: reject if trimmed length > 150 (throw `WALK_POST_CAPTION_TOO_LONG`).
-3. **Blank after trim**: store as `null` or `""` following the existing project convention for optional text fields. Check other domain entities in the codebase for precedent and use the same pattern.
+3. **Blank after trim**: store as `null`. Confirmed by `WalkPost.create()` implementation: `this.caption = (trimmed == null || trimmed.isEmpty()) ? null : trimmed`. Same pattern as `WalkReview.comment` (nullable, no empty-string convention).
 
 Frontend `CreateWalkPostViewModel.submit()` applies the same trim-then-length-check before calling the repository.
 
@@ -431,6 +487,15 @@ Note: Base URL already includes `/api/v1/`. These relative paths append to that 
 - Load from `WalkPostRepository.getUserPosts(userId)` in `PublicProfileViewModel`
 - Frontend renders only what backend returns (backend enforces visibility)
 
+**Route preview in Public Profile (non-participant viewer)**:
+
+Public Profile uses `WalkResultPostCard` in `Variant.VIEWER` mode. The viewer is typically not a participant of the post's session. Therefore:
+
+- `PublicProfileFragment` **must not** call `WalkPostRepository.getSessionRoute()` for any post — the viewer would get a 403 from the route endpoint.
+- When rendering a `WalkResultPostCard` for a non-owned post, pass `null` or empty list as route points.
+- `RoutePreviewView` will fall back to `ic_route_map_placeholder` automatically.
+- Route preview in Public Profile is placeholder-only for MVP regardless of `showRouteMap=true`.
+
 ### 6.7 Missing Custom Views
 
 Per section 8 of `Frontend_VI.md`:
@@ -440,8 +505,9 @@ Per section 8 of `Frontend_VI.md`:
 | `WalkResultPostCard` | `core/designsystem/view/WalkResultPostCard.java` | Full post card for Walk Activity and Public Profile; supports `owner` and `viewer` variants |
 | `VisibilityChipView` | `core/designsystem/view/VisibilityChipView.java` | Single-chip display: Public / Friends / Only me |
 | `VisibilitySelectorView` | `core/designsystem/view/VisibilitySelectorView.java` | Three-option radio-style selector for Create Post screen |
+| `RoutePreviewView` | `core/designsystem/view/RoutePreviewView.java` | Canvas-based route polyline renderer; takes `List<RoutePoint>`, draws scaled polyline; falls back to `ic_route_map_placeholder` when points are null or empty |
 
-`RoutePreviewView` is deferred. For MVP, use a static placeholder drawable when `showRouteMap=true`.
+`RoutePreviewView` is included in the MVP scope. Route data is loaded on-demand via `GET /api/v1/sessions/{sessionId}/route`. The `WalkResultPostCard` hosts a `RoutePreviewView` instead of an `ImageView`.
 
 ### 6.8 Missing WalkMateApplication wiring
 
@@ -560,11 +626,21 @@ Chat is deferred. Its model (session-scoped vs. user-pair-scoped) must be inspec
 
 **Resolution (final)**: Keep `points_earned` column with `DEFAULT 0`. Set to 0 on post creation. Do not display points in the MVP post card UI. Do not invent a formula. Future migration can add `earned_points_a` / `earned_points_b` to `walk_session` and populate via `GamificationCommandService`, after which the Create Post endpoint can snapshot the value.
 
-### Risk 2 — `route_preview_url` is not pre-generated
+### Risk 2 — Route preview: privacy, data ownership, and performance
 
-**Problem**: No image generation pipeline exists. `session_point_chunks` has polylines but no pre-rendered map image.
+**Problem (original)**: No image generation pipeline. `session_point_chunks` has polylines but no pre-rendered image.
 
-**Resolution (final)**: `route_preview_url` column stays, defaults to `null`. When `showRouteMap=true` and `routePreviewUrl` is null, the Android post card shows a local static placeholder drawable. No external map image pipeline is required for MVP.
+**Resolution**: Canvas-based `RoutePreviewView` renders GPS points on-device. No image generation needed. `route_preview_url` stays nullable and is not populated in MVP.
+
+**Privacy risk — participant-only access**: The route endpoint (`GET /api/v1/sessions/{sessionId}/route/me`) exposes GPS coordinates. Backend enforces: caller must be `session.userIdA` or `session.userIdB`; returns 403 otherwise. `session_point_chunks` is queried with `WHERE session_id = :sid AND user_id = :currentUserId` — never returns both participants' data combined.
+
+**Data ownership risk — whose route**: `session_point_chunks` stores chunks per-user (confirmed schema: table has both `session_id` and `user_id` columns). The `/route/me` suffix makes clear the endpoint returns the **current user's route only**. Do not query all chunks by `session_id` alone — this would mix both participants' GPS tracks.
+
+**Public Profile non-participant**: A viewer who did not participate in the session cannot call the route endpoint. `PublicProfileFragment` must not call `getSessionRoute()` for any post in Recent Walks. Pass null/empty points to `WalkResultPostCard`; `RoutePreviewView` shows placeholder automatically. Route preview in Public Profile is placeholder-only in MVP.
+
+**Performance risk**: `RoutePreviewView.onDraw()` runs on the main thread. Backend downsamples to ≤ 200 points. Fragment triggers route loads after the post list settles — not inside `onBindViewHolder()`. Check `isAdded()` before calling `setPoints()` from an async callback.
+
+**Zero-distance / no-data**: Valid use case. Empty route points is not an error. Post card must still render caption, hotspot, stats, and companion normally when route data is absent.
 
 ### Risk 3 — History Adapter refactor regression
 

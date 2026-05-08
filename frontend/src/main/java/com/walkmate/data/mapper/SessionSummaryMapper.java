@@ -63,7 +63,12 @@ public class SessionSummaryMapper {
                 response.getMeetingPointLat(),
                 response.getMeetingPointLng(),
                 response.getHotspotName(),
-                participants
+                participants,
+                response.isCurrentUserHasPosted(),
+                response.getCurrentUserPostId(),
+                response.isCanPost(),
+                response.isCanReview(),
+                response.isCanReport()
         );
     }
 

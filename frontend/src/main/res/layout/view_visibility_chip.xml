@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/txt_visibility_chip"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="10dp"
+    android:paddingVertical="3dp"
+    android:textSize="10sp"
+    android:textStyle="bold"
+    android:background="@drawable/bg_visibility_chip_public"
+    android:text="Public" />

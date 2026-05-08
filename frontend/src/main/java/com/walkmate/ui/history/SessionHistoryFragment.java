@@ -23,6 +23,7 @@ import com.walkmate.ui.history.routereplay.RouteReplayActivity;
 import com.walkmate.ui.profile.publicprofile.PublicProfileFragment;
 import com.walkmate.ui.report.ReportIncidentFragment;
 import com.walkmate.ui.review.SubmitReviewFragment;
+import com.walkmate.ui.walkpost.CreateWalkPostFragment;
 
 /**
  * Session History screen.
@@ -84,7 +85,36 @@ public class SessionHistoryFragment extends Fragment {
                     .navigate(R.id.action_sessionHistory_to_publicProfileFragment, args);
         });
 
+        adapter.setOnPostClickListener((sessionId, partnerName, myWalkOnly,
+                                        distanceKm, durationSeconds, hotspotName, lat, lng) -> {
+            Bundle args = new Bundle();
+            args.putString(CreateWalkPostFragment.ARG_SESSION_ID, sessionId);
+            if (partnerName != null) args.putString(CreateWalkPostFragment.ARG_PARTNER_NAME, partnerName);
+            args.putBoolean(CreateWalkPostFragment.ARG_MY_WALK_ONLY, myWalkOnly);
+            args.putDouble(CreateWalkPostFragment.ARG_DISTANCE_KM, distanceKm);
+            args.putLong(CreateWalkPostFragment.ARG_DURATION_SECONDS, durationSeconds);
+            if (hotspotName != null) args.putString(CreateWalkPostFragment.ARG_HOTSPOT_NAME, hotspotName);
+            args.putDouble(CreateWalkPostFragment.ARG_LAT, lat);
+            args.putDouble(CreateWalkPostFragment.ARG_LNG, lng);
+            NavHostFragment.findNavController(SessionHistoryFragment.this)
+                    .navigate(R.id.action_sessionHistory_to_createWalkPostFragment, args);
+        });
+
+        adapter.setOnViewPostClickListener(postId -> {
+            Bundle args = new Bundle();
+            args.putString("POST_ID", postId);
+            NavHostFragment.findNavController(SessionHistoryFragment.this)
+                    .navigate(R.id.action_sessionHistory_to_walkActivityFragment, args);
+        });
+
         adapter.setOnReviewClickListener(sessionId -> {
+            Bundle args = new Bundle();
+            args.putString(SubmitReviewFragment.ARG_SESSION_ID, sessionId);
+            NavHostFragment.findNavController(SessionHistoryFragment.this)
+                    .navigate(R.id.action_sessionHistory_to_submitReviewFragment, args);
+        });
+
+        adapter.setOnViewReviewClickListener(sessionId -> {
             Bundle args = new Bundle();
             args.putString(SubmitReviewFragment.ARG_SESSION_ID, sessionId);
             NavHostFragment.findNavController(SessionHistoryFragment.this)

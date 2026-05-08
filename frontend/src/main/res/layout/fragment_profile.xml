@@ -623,6 +623,60 @@
                         android:layout_height="1dp"
                         android:background="@color/card_border" />
 
+                    <!-- Row: Walk Activity -->
+                    <LinearLayout
+                        android:id="@+id/menuWalkActivity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="52dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:paddingTop="15dp"
+                        android:paddingBottom="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:background="@drawable/bg_menu_icon_container"
+                            android:layout_marginEnd="12dp">
+
+                            <ImageView
+                                android:layout_width="17dp"
+                                android:layout_height="17dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_session"
+                                android:contentDescription="Walk Activity" />
+
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Walk Activity"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_dark" />
+
+                        <ImageView
+                            android:layout_width="17dp"
+                            android:layout_height="17dp"
+                            android:src="@drawable/ic_chevron_right"
+                            android:contentDescription="@string/profile_menu_navigate_cd" />
+
+                    </LinearLayout>
+
+                    <!-- Row divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
+
                     <!-- Row 2: My Badges -->
                     <LinearLayout
                         android:id="@+id/menuMyBadges"

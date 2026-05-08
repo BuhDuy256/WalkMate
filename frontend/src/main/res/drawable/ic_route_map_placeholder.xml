@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="140dp"
+    android:viewportWidth="200"
+    android:viewportHeight="140">
+
+    <!-- Background -->
+    <path
+        android:fillColor="#F3F4F6"
+        android:pathData="M0,0 L200,0 L200,140 L0,140 Z" />
+
+    <!-- Grid lines horizontal -->
+    <path
+        android:strokeColor="#E5E7EB"
+        android:strokeWidth="1"
+        android:pathData="M0,35 L200,35 M0,70 L200,70 M0,105 L200,105" />
+
+    <!-- Grid lines vertical -->
+    <path
+        android:strokeColor="#E5E7EB"
+        android:strokeWidth="1"
+        android:pathData="M50,0 L50,140 M100,0 L100,140 M150,0 L150,140" />
+
+    <!-- Route path -->
+    <path
+        android:strokeColor="#F97316"
+        android:strokeWidth="3"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M30,110 C50,90 60,80 80,70 S110,55 130,45 S160,35 170,30" />
+
+    <!-- Start dot -->
+    <path
+        android:fillColor="#F97316"
+        android:pathData="M30,110 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+
+    <!-- End dot -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M170,30 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+
+    <!-- Map icon background -->
+    <path
+        android:fillColor="#D1D5DB"
+        android:pathData="M88,62 L112,62 L112,82 L88,82 Z"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="1" />
+
+    <!-- Map icon label placeholder -->
+    <path
+        android:fillColor="#9CA3AF"
+        android:pathData="M92,70 L108,70"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="2" />
+
+</vector>
