@@ -31,7 +31,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
     private static final String TAG = "ReviewRepo";
 
     private final ReviewApiService apiService;
-    private final ExecutorService  executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public ReviewRepositoryImpl(Context context) {
         SessionManager sessionManager = new SessionManager(context);
@@ -43,12 +43,11 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     @Override
     public void submitReview(String sessionId, int ratingStars, String comment,
-                             List<String> tagIds, DomainCallback<WalkReview> callback) {
+            List<String> tagIds, DomainCallback<WalkReview> callback) {
         executor.execute(() -> {
             try {
                 SubmitReviewRequest body = new SubmitReviewRequest(ratingStars, comment, tagIds);
-                Response<ApiResponse<ReviewResponse>> resp =
-                        apiService.submitReview(sessionId, body).execute();
+                Response<ApiResponse<ReviewResponse>> resp = apiService.submitReview(sessionId, body).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     callback.onSuccess(toDomain(resp.body().getData()));
@@ -71,8 +70,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
     public void getReviewsForUser(String userId, DomainCallback<List<WalkReview>> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<List<ReviewResponse>>> resp =
-                        apiService.getReviewsForUser(userId).execute();
+                Response<ApiResponse<List<ReviewResponse>>> resp = apiService.getReviewsForUser(userId).execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     List<ReviewResponse> data = resp.body().getData();
@@ -96,8 +94,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
     public void getReviewTags(DomainCallback<List<ReviewTag>> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<List<ReviewTagResponse>>> resp =
-                        apiService.getReviewTags().execute();
+                Response<ApiResponse<List<ReviewTagResponse>>> resp = apiService.getReviewTags().execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     List<ReviewTagResponse> data = resp.body().getData();
@@ -129,13 +126,13 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                 r.getRevieweeId(),
                 r.getRatingStars(),
                 r.getComment(),
-                r.getCreatedAt()
-        );
+                r.getCreatedAt());
     }
 
     private static List<WalkReview> toDomainList(List<ReviewResponse> responses) {
         List<WalkReview> result = new ArrayList<>(responses.size());
-        for (ReviewResponse r : responses) result.add(toDomain(r));
+        for (ReviewResponse r : responses)
+            result.add(toDomain(r));
         return result;
     }
 
