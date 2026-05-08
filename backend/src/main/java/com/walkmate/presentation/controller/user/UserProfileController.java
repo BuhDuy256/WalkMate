@@ -1,6 +1,8 @@
 package com.walkmate.presentation.controller.user;
 
 import com.walkmate.application.social.SocialQueryService;
+import com.walkmate.application.user.AccountSecurityInfo;
+import com.walkmate.application.user.SetOrChangePasswordCommand;
 import com.walkmate.application.user.SetVisibilityCommand;
 import com.walkmate.application.user.UpdateFcmTokenCommand;
 import com.walkmate.application.user.UpdateProfileCommand;
@@ -14,10 +16,12 @@ import com.walkmate.domain.user.VisibilityMode;
 import com.walkmate.application.user.UserPrincipal;
 import com.walkmate.infrastructure.storage.AvatarStorageService;
 import java.time.Instant;
+import com.walkmate.presentation.dto.request.user.SetOrChangePasswordRequest;
 import com.walkmate.presentation.dto.request.user.SetVisibilityRequest;
 import com.walkmate.presentation.dto.request.user.UpdateFcmTokenRequest;
 import com.walkmate.presentation.dto.request.user.UpdateProfileRequest;
 import com.walkmate.presentation.dto.response.ApiResponse;
+import com.walkmate.presentation.dto.response.user.AccountSecurityInfoResponse;
 import com.walkmate.presentation.dto.response.user.AvatarUploadResponse;
 import com.walkmate.presentation.dto.response.user.ProfileTagResponse;
 import com.walkmate.presentation.dto.response.user.SetVisibilityResponse;
@@ -180,6 +184,31 @@ public class UserProfileController {
         userCommandService.updateFcmToken(
                 new UpdateFcmTokenCommand(UUID.fromString(principal.userId()), request.fcmToken()));
 
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // ── GET /api/v1/users/me/security ────────────────────────────────────────
+
+    @GetMapping("/api/v1/users/me/security")
+    public ResponseEntity<ApiResponse<AccountSecurityInfoResponse>> getSecurityInfo(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        UUID userId = UUID.fromString(principal.userId());
+        AccountSecurityInfo info = queryService.getAccountSecurityInfo(userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                new AccountSecurityInfoResponse(info.hasPassword(), info.hasGoogle())));
+    }
+
+    // ── POST /api/v1/users/me/password ────────────────────────────────────────
+
+    @PostMapping("/api/v1/users/me/password")
+    public ResponseEntity<ApiResponse<Void>> setOrChangePassword(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody SetOrChangePasswordRequest request) {
+
+        UUID userId = UUID.fromString(principal.userId());
+        userCommandService.setOrChangePassword(
+                new SetOrChangePasswordCommand(userId, request.currentPassword(), request.newPassword()));
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

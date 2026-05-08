@@ -77,6 +77,16 @@ public class UserQueryService {
         return profileRepository.findLastActiveAtById(userId);
     }
 
+    /** Returns hasPassword / hasGoogle flags for the Profile → Security screen. */
+    @Transactional(readOnly = true)
+    public AccountSecurityInfo getAccountSecurityInfo(UUID userId) {
+        User user = userRepository.findById(userId.toString())
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+        return new AccountSecurityInfo(
+                user.getPasswordHash() != null,
+                user.getProviderSubject() != null);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void ensureUserExists(UUID userId) {

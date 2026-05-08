@@ -46,6 +46,13 @@ public interface UserRepository {
 
     void confirmPasswordReset(String resetToken, String newPassword, DomainCallback<Void> callback);
 
+    // ── Account security ──────────────────────────────────────────────────────
+
+    void getAccountSecurityInfo(DomainCallback<AccountSecurityInfo> callback);
+
+    /** currentPassword may be null when the account has no existing password (Google-only, first-time set). */
+    void setOrChangePassword(String currentPassword, String newPassword, DomainCallback<Void> callback);
+
     // ── FCM ───────────────────────────────────────────────────────────────────
 
     /** Registers or refreshes the FCM device token on the backend. No-ops if not authenticated. */

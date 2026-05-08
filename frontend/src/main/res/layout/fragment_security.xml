@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarSecurity"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:elevation="4dp">
+
+        <ImageView
+            android:id="@+id/btnBackSecurity"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start|center_vertical"
+            android:padding="8dp"
+            android:src="@drawable/ic_back"
+            android:contentDescription="@string/cd_back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/security_screen_title"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- Login Methods section header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/security_section_login_methods"
+                android:textSize="12sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Password status row -->
+            <TextView
+                android:id="@+id/txtPasswordStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:layout_marginBottom="4dp"
+                android:text="Password: Not Set" />
+
+            <!-- Google status row -->
+            <TextView
+                android:id="@+id/txtGoogleStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:layout_marginBottom="24dp"
+                android:text="Google: Not Connected" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Current Password (hidden when Google-only / no existing password) -->
+            <LinearLayout
+                android:id="@+id/rowCurrentPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.walkmate.core.designsystem.view.WalkMateInputField
+                    android:id="@+id/fieldCurrentPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:wm_label="@string/security_field_current_password"
+                    app:wm_hint="@string/security_field_current_password"
+                    app:wm_inputType="textPassword"
+                    app:wm_passwordToggle="true" />
+
+            </LinearLayout>
+
+            <!-- New Password -->
+            <com.walkmate.core.designsystem.view.WalkMateInputField
+                android:id="@+id/fieldNewPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:wm_label="@string/security_field_new_password"
+                app:wm_hint="@string/security_field_new_password"
+                app:wm_inputType="textPassword"
+                app:wm_passwordToggle="true" />
+
+            <!-- Confirm New Password -->
+            <com.walkmate.core.designsystem.view.WalkMateInputField
+                android:id="@+id/fieldConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:wm_label="@string/security_field_confirm_password"
+                app:wm_hint="@string/security_field_confirm_password"
+                app:wm_inputType="textPassword"
+                app:wm_passwordToggle="true" />
+
+            <!-- Save button -->
+            <com.walkmate.core.designsystem.view.WalkMateButton
+                android:id="@+id/btnSavePassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:wm_text="@string/security_btn_set_password"
+                app:wm_buttonStyle="filled" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

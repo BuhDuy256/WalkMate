@@ -23,9 +23,9 @@ public enum UserErrorCode implements ErrorCode {
     USER_OTP_INVALID("OTP code is incorrect"),
     USER_OTP_ATTEMPTS_EXCEEDED("Too many incorrect OTP attempts"),
     USER_OTP_RATE_LIMITED("Please wait before requesting a new OTP"),
-    USER_PASSWORD_RESET_NOT_ALLOWED("Password reset is not available for this account"),
     USER_PASSWORD_TOO_WEAK("Password must be at least 8 characters with at least one uppercase letter and one number"),
-    USER_RESET_TOKEN_INVALID("Reset token is invalid or expired");
+    USER_RESET_TOKEN_INVALID("Reset token is invalid or expired"),
+    USER_EMAIL_GOOGLE_ONLY("This email is registered via Google. Sign in with Google, or use Forgot Password to set a password.");
 
     private final String message;
 

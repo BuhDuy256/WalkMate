@@ -17,9 +17,12 @@ import com.walkmate.data.datasource.remote.dto.request.user.GoogleLoginRequestDt
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LogoutRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
+import com.walkmate.data.datasource.remote.dto.request.user.SetOrChangePasswordRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.SetVisibilityRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.UpdateFcmTokenRequestDto;
+import com.walkmate.data.datasource.remote.dto.response.user.AccountSecurityInfoResponseDto;
 import com.walkmate.data.datasource.remote.dto.response.user.SetVisibilityResponseDto;
+import com.walkmate.domain.user.AccountSecurityInfo;
 import com.walkmate.core.util.ErrorParser;
 import com.walkmate.data.datasource.remote.dto.response.ApiError;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
@@ -323,6 +326,51 @@ public class UserRepositoryImpl implements UserRepository {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "FCM token update network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    // ── Account security ──────────────────────────────────────────────────────
+
+    @Override
+    public void getAccountSecurityInfo(DomainCallback<AccountSecurityInfo> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<AccountSecurityInfoResponseDto>> resp =
+                        userApiService.getAccountSecurityInfo().execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    AccountSecurityInfoResponseDto dto = resp.body().getData();
+                    callback.onSuccess(new AccountSecurityInfo(dto.isHasPassword(), dto.isHasGoogle()));
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SECURITY_INFO_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "getAccountSecurityInfo network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void setOrChangePassword(String currentPassword, String newPassword,
+                                    DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = userApiService
+                        .setOrChangePassword(new SetOrChangePasswordRequestDto(currentPassword, newPassword))
+                        .execute();
+
+                if (resp.isSuccessful()) {
+                    callback.onSuccess(null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "SET_PASSWORD_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "setOrChangePassword network error", e);
                 callback.onError(e);
             }
         });

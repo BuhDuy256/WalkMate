@@ -171,11 +171,12 @@ public class User {
         this.fcmToken = token;
     }
 
-    /** Replaces the password hash after a verified OTP reset flow. Google-only accounts are rejected. */
-    public void resetPassword(String newPasswordHash) {
-        if (this.provider == AuthProvider.GOOGLE && this.passwordHash == null) {
-            throw new DomainException(UserErrorCode.USER_PASSWORD_RESET_NOT_ALLOWED);
-        }
+    /**
+     * Sets or changes the password hash on this account.
+     * Works for all account types including Google-only (first-time set).
+     * The caller is responsible for verifying currentPassword when passwordHash is already set.
+     */
+    public void setOrChangePassword(String newPasswordHash) {
         this.passwordHash = requireText(newPasswordHash, "Password hash is required");
     }
 

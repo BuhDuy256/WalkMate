@@ -103,10 +103,12 @@ public class UserCommandService {
     public LoginResult registerUser(RegisterUserCommand command) {
         String normalizedEmail = User.normalizeEmail(command.email());
 
-        userRepository.findByEmail(normalizedEmail)
-                .ifPresent(existing -> {
-                    throw new DomainException(UserErrorCode.USER_EMAIL_ALREADY_EXISTS);
-                });
+        userRepository.findByEmail(normalizedEmail).ifPresent(existing -> {
+            if (existing.getPasswordHash() == null && existing.getProviderSubject() != null) {
+                throw new DomainException(UserErrorCode.USER_EMAIL_GOOGLE_ONLY);
+            }
+            throw new DomainException(UserErrorCode.USER_EMAIL_ALREADY_EXISTS);
+        });
 
         User user  = User.register(normalizedEmail, passwordEncoder.encode(command.password()));
         User saved = userRepository.save(user);
@@ -209,10 +211,7 @@ public class UserCommandService {
             return;
         }
         User user = userOpt.get();
-        if (user.getPasswordHash() == null) {
-            log.debug("[PasswordReset] User {} is Google-only (no password hash) — silent drop", email);
-            return;
-        }
+        // Google-only accounts are allowed — Forgot Password is used to set a first password.
 
         // Cooldown: if the most recent OTP was created within the last 60 s, silent drop
         Optional<PasswordResetOtp> latest = passwordResetOtpRepository.findActiveLatestByEmail(email);
@@ -288,11 +287,31 @@ public class UserCommandService {
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_RESET_TOKEN_INVALID));
 
         User.validatePasswordStrength(command.newPassword());
-        user.resetPassword(passwordEncoder.encode(command.newPassword()));
+        user.setOrChangePassword(passwordEncoder.encode(command.newPassword()));
         otp.consume(now);
 
         userRepository.save(user);
         passwordResetOtpRepository.save(otp);
+    }
+
+    // ── Set / Change Password (authenticated) ─────────────────────────────────
+
+    @Transactional
+    public void setOrChangePassword(SetOrChangePasswordCommand command) {
+        User user = userRepository.findById(command.userId().toString())
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+
+        User.validatePasswordStrength(command.newPassword());
+
+        if (user.getPasswordHash() != null) {
+            if (command.currentPassword() == null || command.currentPassword().isBlank()) {
+                throw new DomainException(UserErrorCode.INVALID_USER_DATA, "Current password is required");
+            }
+            user.validateCredentials(command.currentPassword(), passwordEncoder::matches);
+        }
+
+        user.setOrChangePassword(passwordEncoder.encode(command.newPassword()));
+        userRepository.save(user);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

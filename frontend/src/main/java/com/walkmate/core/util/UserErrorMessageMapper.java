@@ -54,6 +54,8 @@ public class UserErrorMessageMapper {
                 return new ErrorResult(R.string.error_user_invalid_credentials, ActionType.FIELD_ERROR);
             case "USER_EMAIL_ALREADY_EXISTS":
                 return new ErrorResult(R.string.error_user_email_already_exists, ActionType.FIELD_ERROR);
+            case "USER_EMAIL_GOOGLE_ONLY":
+                return new ErrorResult(R.string.error_email_google_only, ActionType.TOAST);
             case "USER_INVALID_EMAIL_FORMAT":
                 return new ErrorResult(R.string.error_user_invalid_email_format, ActionType.FIELD_ERROR);
 

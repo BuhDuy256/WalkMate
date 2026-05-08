@@ -66,8 +66,8 @@ public class ProfileFragment extends Fragment {
     // Menu rows
     private View menuWalkHistory;
     private View menuMyBadges;
-
     private View menuFriends;
+    private View menuSecurity;
 
     // Content root (receives dynamic bottom padding from window insets)
     private View profileContentRoot;
@@ -190,6 +190,7 @@ public class ProfileFragment extends Fragment {
         menuMyBadges = root.findViewById(R.id.menuMyBadges);
 
         menuFriends = root.findViewById(R.id.menuFriends);
+        menuSecurity = root.findViewById(R.id.menuSecurity);
         btnLogoutAll = root.findViewById(R.id.btnLogoutAll);
 
         cardAdminDashboard   = root.findViewById(R.id.cardAdminDashboard);
@@ -216,6 +217,10 @@ public class ProfileFragment extends Fragment {
         menuMyBadges.setOnClickListener(v -> viewModel.onMyBadgesClicked());
 
         menuFriends.setOnClickListener(v -> viewModel.onFriendsClicked());
+
+        menuSecurity.setOnClickListener(v ->
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.action_profile_to_securityFragment));
 
         btnLogoutAll.setOnClickListener(v -> showLogoutAllConfirmation());
 
