@@ -27,6 +27,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+	implementation 'com.cloudinary:cloudinary-http44:1.39.0'
 	
 	// Flyway
 	implementation 'org.flywaydb:flyway-core'

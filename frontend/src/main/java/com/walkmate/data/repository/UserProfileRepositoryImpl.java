@@ -60,7 +60,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     @Override
     public void getMyProfile(DomainCallback<UserProfile> callback) {
         executor.execute(() -> {
-            final boolean[] cacheDelivered = {false};
+            final boolean[] cacheDelivered = { false };
 
             String userId = sessionManager.getUserId();
             if (userId != null) {
@@ -131,8 +131,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     public void getMasterTags(DomainCallback<List<ProfileTagMaster>> callback) {
         executor.execute(() -> {
             try {
-                Response<ApiResponse<List<ProfileTagResponse>>> resp =
-                        apiService.getMasterTags().execute();
+                Response<ApiResponse<List<ProfileTagResponse>>> resp = apiService.getMasterTags().execute();
 
                 if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
                     List<ProfileTagResponse> raw = resp.body().getData();

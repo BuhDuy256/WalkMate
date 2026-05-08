@@ -13,6 +13,7 @@ import com.walkmate.domain.user.ProfileTagMaster;
 import com.walkmate.domain.user.UserProfile;
 import com.walkmate.domain.user.UserProfileRepository;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -163,7 +164,13 @@ public class EditProfileViewModel extends ViewModel {
     private static byte[] readBytes(ContentResolver resolver, Uri uri) throws IOException {
         try (InputStream is = resolver.openInputStream(uri)) {
             if (is == null) throw new IOException("Cannot open URI");
-            return is.readAllBytes();
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            int read;
+            while ((read = is.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            return buffer.toByteArray();
         }
     }
 
