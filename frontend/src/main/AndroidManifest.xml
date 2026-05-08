@@ -42,6 +42,12 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name="com.walkmate.ui.auth.forgotpassword.ForgotPasswordActivity"
+            android:theme="@style/Theme.WalkMate"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name="com.walkmate.ui.main.MainActivity"
             android:exported="false"
             android:theme="@style/Theme.WalkMate"

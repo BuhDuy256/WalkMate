@@ -113,6 +113,20 @@ CREATE TABLE public.otp_record (
   created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT otp_record_pkey PRIMARY KEY (otp_id)
 );
+CREATE TABLE public.password_reset_otp (
+  otp_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  email character varying NOT NULL,
+  code_hash text NOT NULL,
+  otp_expires_at timestamp with time zone NOT NULL,
+  attempt_count integer NOT NULL DEFAULT 0,
+  verified_at timestamp with time zone,
+  reset_token_hash text,
+  reset_token_expires_at timestamp with time zone,
+  consumed_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT password_reset_otp_pkey PRIMARY KEY (otp_id)
+);
 CREATE TABLE public.profile_tag_master (
   tag_id uuid NOT NULL DEFAULT gen_random_uuid(),
   tag_name character varying NOT NULL UNIQUE,

@@ -30,6 +30,7 @@ import com.walkmate.core.event.AuthEventBus;
 import com.walkmate.ui.auth.login.LoginViewModel;
 import com.walkmate.ui.auth.login.LoginViewModelFactory;
 import com.walkmate.ui.auth.login.LoginViewModelFactory;
+import com.walkmate.ui.auth.forgotpassword.ForgotPasswordActivity;
 import com.walkmate.ui.auth.register.RegisterActivity;
 import com.walkmate.ui.main.MainActivity;
 
@@ -98,9 +99,8 @@ public class AuthActivity extends AppCompatActivity {
         });
 
         TextView tvForgotPassword = findViewById(R.id.tv_forgot_password);
-        tvForgotPassword.setOnClickListener(v -> {
-            // TODO: navigate to forgot-password screen
-        });
+        tvForgotPassword.setOnClickListener(v ->
+                startActivity(new Intent(this, ForgotPasswordActivity.class)));
 
         TextView tvCreateAccount = findViewById(R.id.tv_create_account);
         tvCreateAccount.setOnClickListener(v ->

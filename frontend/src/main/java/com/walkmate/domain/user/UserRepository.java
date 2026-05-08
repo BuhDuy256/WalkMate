@@ -38,6 +38,14 @@ public interface UserRepository {
     /** Returns the persistent device ID, generating one if it does not yet exist. */
     String getOrGenerateDeviceId();
 
+    // ── Password reset ────────────────────────────────────────────────────────
+
+    void requestPasswordReset(String email, DomainCallback<Void> callback);
+
+    void verifyPasswordReset(String email, String otp, DomainCallback<String> callback);
+
+    void confirmPasswordReset(String resetToken, String newPassword, DomainCallback<Void> callback);
+
     // ── FCM ───────────────────────────────────────────────────────────────────
 
     /** Registers or refreshes the FCM device token on the backend. No-ops if not authenticated. */

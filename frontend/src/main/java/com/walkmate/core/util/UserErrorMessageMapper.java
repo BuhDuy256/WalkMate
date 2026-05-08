@@ -67,6 +67,22 @@ public class UserErrorMessageMapper {
             case "USER_PROVIDER_CONFLICT":
                 return new ErrorResult(R.string.error_user_provider_conflict, ActionType.TOAST);
 
+            // ── Password reset / OTP errors ───────────────────────────────────
+            case "USER_OTP_EXPIRED":
+                return new ErrorResult(R.string.error_otp_expired, ActionType.TOAST);
+            case "USER_OTP_INVALID":
+                return new ErrorResult(R.string.error_otp_invalid, ActionType.TOAST);
+            case "USER_OTP_ALREADY_USED":
+                return new ErrorResult(R.string.error_otp_already_used, ActionType.TOAST);
+            case "USER_OTP_ATTEMPTS_EXCEEDED":
+                return new ErrorResult(R.string.error_otp_attempts_exceeded, ActionType.TOAST);
+            case "USER_PASSWORD_TOO_WEAK":
+                return new ErrorResult(R.string.error_password_too_weak, ActionType.FIELD_ERROR);
+            case "USER_RESET_TOKEN_INVALID":
+                return new ErrorResult(R.string.error_reset_token_invalid, ActionType.TOAST);
+            case "USER_PASSWORD_RESET_NOT_ALLOWED":
+                return new ErrorResult(R.string.error_password_reset_not_allowed, ActionType.TOAST);
+
             default:
                 return new ErrorResult(R.string.error_generic, ActionType.TOAST);
         }

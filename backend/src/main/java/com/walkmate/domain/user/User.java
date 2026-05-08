@@ -171,6 +171,30 @@ public class User {
         this.fcmToken = token;
     }
 
+    /** Replaces the password hash after a verified OTP reset flow. Google-only accounts are rejected. */
+    public void resetPassword(String newPasswordHash) {
+        if (this.provider == AuthProvider.GOOGLE && this.passwordHash == null) {
+            throw new DomainException(UserErrorCode.USER_PASSWORD_RESET_NOT_ALLOWED);
+        }
+        this.passwordHash = requireText(newPasswordHash, "Password hash is required");
+    }
+
+    /** Validates raw password strength before hashing. Call before encoding. */
+    public static void validatePasswordStrength(String rawPassword) {
+        if (rawPassword == null || rawPassword.length() < 8) {
+            throw new DomainException(UserErrorCode.USER_PASSWORD_TOO_WEAK);
+        }
+        boolean hasUpper = false;
+        boolean hasDigit = false;
+        for (char c : rawPassword.toCharArray()) {
+            if (Character.isUpperCase(c)) hasUpper = true;
+            if (Character.isDigit(c)) hasDigit = true;
+        }
+        if (!hasUpper || !hasDigit) {
+            throw new DomainException(UserErrorCode.USER_PASSWORD_TOO_WEAK);
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static String requireText(String value, String message) {

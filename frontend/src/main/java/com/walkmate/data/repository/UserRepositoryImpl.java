@@ -328,6 +328,71 @@ public class UserRepositoryImpl implements UserRepository {
         });
     }
 
+    // ── Password reset ────────────────────────────────────────────────────────
+
+    @Override
+    public void requestPasswordReset(String email, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = authApiService
+                        .requestPasswordReset(new com.walkmate.data.datasource.remote.dto.request.user.RequestPasswordResetDto(email))
+                        .execute();
+
+                if (resp.isSuccessful()) {
+                    callback.onSuccess(null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "REQUEST_RESET_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "requestPasswordReset network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void verifyPasswordReset(String email, String otp, DomainCallback<String> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<com.walkmate.data.datasource.remote.dto.response.user.PasswordResetTokenDto>> resp = authApiService
+                        .verifyPasswordReset(new com.walkmate.data.datasource.remote.dto.request.user.VerifyPasswordResetDto(email, otp))
+                        .execute();
+
+                if (resp.isSuccessful() && resp.body() != null && resp.body().isSuccess()) {
+                    callback.onSuccess(resp.body().getData().getResetToken());
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "VERIFY_OTP_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "verifyPasswordReset network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public void confirmPasswordReset(String resetToken, String newPassword, DomainCallback<Void> callback) {
+        executor.execute(() -> {
+            try {
+                Response<ApiResponse<Void>> resp = authApiService
+                        .confirmPasswordReset(new com.walkmate.data.datasource.remote.dto.request.user.ConfirmPasswordResetDto(resetToken, newPassword))
+                        .execute();
+
+                if (resp.isSuccessful()) {
+                    callback.onSuccess(null);
+                } else {
+                    ApiError apiError = ErrorParser.extractApiError(resp, "CONFIRM_RESET_FAILED");
+                    callback.onError(new Exception(apiError.getCode()));
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "confirmPasswordReset network error", e);
+                callback.onError(e);
+            }
+        });
+    }
+
     /**
      * Exposes SessionManager for other repositories that may need it
      * (e.g., to build an authenticated Retrofit instance).

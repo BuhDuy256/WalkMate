@@ -142,15 +142,13 @@ public static void validatePasswordStrength(String rawPassword) {
 }
 ```
 
-**`UserErrorCode.java`** — thêm:
+**`UserErrorCode.java`** — thêm **3 entries còn thiếu** (4 OTP codes + `USER_OTP_RATE_LIMITED` đã tồn tại sẵn, không thêm lại):
 ```java
 USER_PASSWORD_RESET_NOT_ALLOWED("Password reset is not available for this account"),
 USER_PASSWORD_TOO_WEAK("Password must be at least 8 characters with uppercase and number"),
-USER_RESET_TOKEN_INVALID("Reset token is invalid or expired"),
-USER_OTP_ALREADY_USED("OTP has already been used"),
-USER_OTP_EXPIRED("OTP has expired"),
-USER_OTP_ATTEMPTS_EXCEEDED("Too many incorrect OTP attempts"),
-USER_OTP_INVALID("OTP code is incorrect")
+USER_RESET_TOKEN_INVALID("Reset token is invalid or expired")
+// ⚠️ Đã có: USER_OTP_ALREADY_USED, USER_OTP_EXPIRED,
+//            USER_OTP_ATTEMPTS_EXCEEDED, USER_OTP_INVALID, USER_OTP_RATE_LIMITED
 ```
 
 ### 3.6 Domain Entity mới: `PasswordResetOtp` (`domain/user/`)
@@ -249,11 +247,11 @@ Thêm các endpoint password-reset vào whitelist (không yêu cầu JWT):
 ### 4.1. Database Migration Execution
 - **Công cụ:** Project đang dùng công cụ migration (ví dụ Flyway).
 - **Vị trí file:** Đặt file ở `backend/src/main/resources/db/migration/`.
-- **Naming convention:** Tiền tố `V{next_version}__` dựa theo latest migration (không hardcode 120 nếu đã có version lớn hơn).
+- **Naming convention:** Tiền tố `V124__` dựa theo latest migration (không hardcode 120 nếu đã có version lớn hơn).
 - **Thực thi:** Khởi động backend service để auto apply (hoặc chạy manual tùy config).
 - **Verify:** Kiểm tra local database có bảng mới với đầy đủ columns và indexes.
 
-### 4.2. Migration: `V{next_version}__add_password_reset_otp.sql`
+### 4.2. Migration: `V124__add_password_reset_otp.sql`
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.password_reset_otp (
@@ -296,7 +294,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_password_reset_otp_token_hash
 ```
 ui/auth/forgotpassword/
 ├── ForgotPasswordActivity.java          // Container, quản lý fragment navigation
-├── ForgotPasswordFlowViewModel.java     // Container-level shared ViewModel (chứa email, resetToken)
+├── ForgotPasswordFlowViewModel.java     // Container-level shared ViewModel (chứa email, resetToken). Không cần Factory — chỉ giữ state thuần, không có injected dependency.
 ├── email/
 │   ├── EmailInputFragment.java
 │   ├── EmailInputViewModel.java
@@ -345,11 +343,13 @@ Call<ApiResponse<Void>> confirmPasswordReset(@Body ConfirmPasswordResetDto body)
 
 **`UserErrorMessageMapper.java`** — thêm case cho OTP errors:
 ```java
-case "USER_OTP_EXPIRED": return new ErrorResult(R.string.error_otp_expired, ActionType.TOAST);
-case "USER_OTP_INVALID": return new ErrorResult(R.string.error_otp_invalid, ActionType.TOAST);
-case "USER_OTP_ATTEMPTS_EXCEEDED": return new ErrorResult(R.string.error_otp_attempts, ActionType.TOAST);
-case "USER_PASSWORD_TOO_WEAK": return new ErrorResult(R.string.error_password_weak, ActionType.FIELD_ERROR);
-case "USER_RESET_TOKEN_INVALID": return new ErrorResult(R.string.error_reset_token, ActionType.TOAST);
+case "USER_OTP_EXPIRED":               return new ErrorResult(R.string.error_otp_expired, ActionType.TOAST);
+case "USER_OTP_INVALID":               return new ErrorResult(R.string.error_otp_invalid, ActionType.TOAST);
+case "USER_OTP_ALREADY_USED":          return new ErrorResult(R.string.error_otp_already_used, ActionType.TOAST);
+case "USER_OTP_ATTEMPTS_EXCEEDED":     return new ErrorResult(R.string.error_otp_attempts, ActionType.TOAST);
+case "USER_PASSWORD_TOO_WEAK":         return new ErrorResult(R.string.error_password_weak, ActionType.FIELD_ERROR);
+case "USER_RESET_TOKEN_INVALID":       return new ErrorResult(R.string.error_reset_token, ActionType.TOAST);
+case "USER_PASSWORD_RESET_NOT_ALLOWED": return new ErrorResult(R.string.error_password_reset_not_allowed, ActionType.TOAST);
 ```
 
 ### 5.3 DTOs mới (`data/datasource/remote/dto/`)
@@ -416,10 +416,12 @@ NewPasswordFragment → isSuccess=true
 ```
 
 ### 5.7 Resend OTP & Countdown
-- `OtpVerifyViewModel` dùng `Handler` + `Runnable` đếm ngược 60s
-- **Lưu ý memory leak:** gọi `handler.removeCallbacksAndMessages(null)` trong `onCleared()`. Hoặc dùng `ScheduledExecutorService`.
-- Disable nút "Resend" trong 60s, hiện countdown
-- Gọi lại `requestPasswordReset` khi resend
+- **Reuse `CountdownTimerView`** (đã có sẵn tại `core/designsystem/view/`) thay vì dùng `Handler` + `Runnable` trong ViewModel.
+- Trong `fragment_otp_verify.xml`: khai báo `<com.walkmate.core.designsystem.view.CountdownTimerView>`.
+- Khi gửi/resend OTP thành công: gọi `countdownView.startCountdown(System.currentTimeMillis() + 60_000L)`.
+- Disable nút "Resend" khi bắt đầu đếm, dùng `countdownView.setOnExpiredListener(() -> btnResend.setEnabled(true))` để re-enable.
+- `CountdownTimerView` tự cancel timer trong `onDetachedFromWindow()` — **không có memory leak, không cần cleanup trong ViewModel**.
+- Gọi lại `viewModel.requestPasswordReset(email)` khi resend.
 
 ---
 
@@ -580,7 +582,7 @@ NewPasswordFragment → isSuccess=true
 ## 10. Implementation Order
 
 ### Phase 1: Backend Core (2-3 ngày)
-1. Migration `V{next_version}__add_password_reset_otp.sql`
+1. Migration `V124__add_password_reset_otp.sql`
 2. Domain: `PasswordResetOtp` entity + `PasswordResetOtpRepository` interface
 3. Domain: Thêm `UserErrorCode` mới + `User.resetPassword()`
 4. Application: `EmailProvider` interface + 3 Commands
@@ -596,15 +598,16 @@ NewPasswordFragment → isSuccess=true
 12. Integration tests cho 3 endpoints
 
 ### Phase 3: Frontend (2-3 ngày)
-13. DTOs: 3 request + 1 response
-14. `AuthApiService`: 3 Retrofit methods
-15. `UserRepository` interface: 3 methods
-16. `UserRepositoryImpl`: implement 3 methods
-17. `UserErrorMessageMapper`: thêm OTP error cases
-18. `ForgotPasswordActivity` + 3 Fragments + ViewModels + UiStates
-19. Layout XML files (4 files)
-20. String resources (error messages)
-21. `AuthActivity`: wire up "Forgot password?" click
+13. **[Prerequisite]** Tạo `OtpInputView` tại `core/designsystem/view/` (6-digit OTP input: auto-focus-advance + backspace-to-prev, API: `getOtp()`, `clear()`, `setEnabled()`). *`OtpInputView` không tồn tại trong codebase — phải tạo trước khi build `OtpVerifyFragment`.*
+14. DTOs: 3 request + 1 response
+15. `AuthApiService`: 3 Retrofit methods
+16. `UserRepository` interface: 3 methods
+17. `UserRepositoryImpl`: implement 3 methods
+18. `UserErrorMessageMapper`: thêm OTP error cases (7 cases bao gồm `USER_OTP_ALREADY_USED` và `USER_PASSWORD_RESET_NOT_ALLOWED`)
+19. `ForgotPasswordActivity` + 3 Fragments + ViewModels + UiStates
+20. Layout XML files (4 files)
+21. String resources (error messages)
+22. `AuthActivity`: wire up "Forgot password?" click
 
 ### Phase 4: Polish (1 ngày)
 22. Countdown timer UI
@@ -619,7 +622,7 @@ NewPasswordFragment → isSuccess=true
 
 | File | Layer | Trách nhiệm |
 |------|-------|-------------|
-| `V{next_version}__add_password_reset_otp.sql` | DB | Bảng password_reset_otp |
+| `V124__add_password_reset_otp.sql` | DB | Bảng password_reset_otp |
 | `domain/user/PasswordResetOtp.java` | Domain | Rich entity: verify, validate |
 | `domain/user/PasswordResetOtpRepository.java` | Domain | Interface |
 | `application/user/RequestPasswordResetCommand.java` | Application | Command record |
@@ -648,6 +651,7 @@ NewPasswordFragment → isSuccess=true
 
 | File | Layer | Trách nhiệm |
 |------|-------|-------------|
+| `core/designsystem/view/OtpInputView.java` | Core | 6-digit OTP input; auto-focus-advance + backspace-to-prev. API: `getOtp()`, `clear()`, `setEnabled()`. **Prerequisite cho OtpVerifyFragment.** |
 | `ui/auth/forgotpassword/ForgotPasswordActivity.java` | UI | Container activity |
 | `ui/auth/forgotpassword/email/EmailInputFragment.java` | UI | Nhập email |
 | `ui/auth/forgotpassword/email/EmailInputViewModel.java` | UI | Xử lý gửi OTP |

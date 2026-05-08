@@ -3,6 +3,8 @@ package com.walkmate.application.user;
 import com.walkmate.domain.shared.exception.DomainException;
 import com.walkmate.domain.user.AccountStatus;
 import com.walkmate.domain.user.AccountStatus;
+import com.walkmate.domain.user.PasswordResetOtp;
+import com.walkmate.domain.user.PasswordResetOtpRepository;
 import com.walkmate.domain.user.RefreshToken;
 import com.walkmate.domain.user.RefreshTokenRepository;
 import com.walkmate.domain.user.User;
@@ -12,24 +14,34 @@ import com.walkmate.domain.user.UserProfileRepository;
 import com.walkmate.domain.user.UserRepository;
 import com.walkmate.domain.user.VisibilityMode;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserCommandService {
 
-    private final UserRepository         userRepository;
-    private final UserProfileRepository  profileRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder        passwordEncoder;
-    private final TokenProvider          tokenProvider;
-    private final GoogleTokenVerifier    googleTokenVerifier;
+    private final UserRepository              userRepository;
+    private final UserProfileRepository       profileRepository;
+    private final RefreshTokenRepository      refreshTokenRepository;
+    private final PasswordResetOtpRepository  passwordResetOtpRepository;
+    private final PasswordEncoder             passwordEncoder;
+    private final TokenProvider               tokenProvider;
+    private final GoogleTokenVerifier         googleTokenVerifier;
+    private final EmailProvider               emailProvider;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -180,7 +192,122 @@ public class UserCommandService {
         userRepository.updateFcmToken(command.userId(), command.token());
     }
 
+    // ── Password reset ────────────────────────────────────────────────────────
+
+    /**
+     * Step 1: Request an OTP to the registered email.
+     * Always returns silently — never reveals whether an email is registered (anti-enumeration).
+     */
+    @Transactional
+    public void requestPasswordReset(RequestPasswordResetCommand command) {
+        String email = User.normalizeEmail(command.email());
+        log.debug("[PasswordReset] Request received for email={}", email);
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.debug("[PasswordReset] No user found for email={} — silent drop", email);
+            return;
+        }
+        User user = userOpt.get();
+        if (user.getPasswordHash() == null) {
+            log.debug("[PasswordReset] User {} is Google-only (no password hash) — silent drop", email);
+            return;
+        }
+
+        // Cooldown: if the most recent OTP was created within the last 60 s, silent drop
+        Optional<PasswordResetOtp> latest = passwordResetOtpRepository.findActiveLatestByEmail(email);
+        if (latest.isPresent()) {
+            Instant cooldownEnd = latest.get().getCreatedAt().plusSeconds(60);
+            if (Instant.now().isBefore(cooldownEnd)) {
+                log.debug("[PasswordReset] Cooldown active for email={}, resend allowed after {}", email, cooldownEnd);
+                return;
+            }
+        }
+
+        String rawOtp   = String.format("%06d", secureRandom.nextInt(1_000_000));
+        String codeHash = passwordEncoder.encode(rawOtp);
+        Instant expires = Instant.now().plusSeconds(300); // 5 min
+
+        passwordResetOtpRepository.invalidateActiveByEmail(email);
+        passwordResetOtpRepository.save(
+                PasswordResetOtp.create(email, user.getUserId(), codeHash, expires));
+        log.debug("[PasswordReset] OTP saved for email={}, expires={}", email, expires);
+
+        // Send email only after DB transaction commits successfully
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() {
+                log.info("[PasswordReset] Transaction committed — dispatching OTP email to {}", email);
+                emailProvider.sendOtp(email, rawOtp);
+            }
+        });
+    }
+
+    /**
+     * Step 2: Verify the OTP code. Returns a single-use reset token on success.
+     */
+    @Transactional
+    public String verifyPasswordReset(VerifyPasswordResetCommand command) {
+        String email = User.normalizeEmail(command.email());
+        Instant now  = Instant.now();
+
+        PasswordResetOtp otp = passwordResetOtpRepository.findActiveLatestByEmail(email)
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_OTP_EXPIRED));
+
+        String rawToken      = UUID.randomUUID().toString();
+        String tokenHash     = sha256Hex(rawToken);
+        Instant tokenExpires = now.plusSeconds(600); // 10 min
+
+        try {
+            otp.verifyOtp(command.otp(), passwordEncoder::matches, tokenHash, tokenExpires, now);
+        } catch (DomainException e) {
+            // Persist incremented attempt_count before re-throwing on wrong code
+            if (UserErrorCode.USER_OTP_INVALID.equals(e.getErrorCode())) {
+                passwordResetOtpRepository.save(otp);
+            }
+            throw e;
+        }
+
+        passwordResetOtpRepository.save(otp);
+        return rawToken;
+    }
+
+    /**
+     * Step 3: Set a new password using the reset token obtained after OTP verification.
+     */
+    @Transactional
+    public void confirmPasswordReset(ConfirmPasswordResetCommand command) {
+        String  tokenHash = sha256Hex(command.resetToken());
+        Instant now       = Instant.now();
+
+        PasswordResetOtp otp = passwordResetOtpRepository.findByResetTokenHash(tokenHash)
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_RESET_TOKEN_INVALID));
+
+        otp.validateResetToken(now);
+
+        User user = userRepository.findById(otp.getUserId().toString())
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_RESET_TOKEN_INVALID));
+
+        User.validatePasswordStrength(command.newPassword());
+        user.resetPassword(passwordEncoder.encode(command.newPassword()));
+        otp.consume(now);
+
+        userRepository.save(user);
+        passwordResetOtpRepository.save(otp);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private String sha256Hex(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
 
     /**
      * Called when no user owns the Google sub claim yet.

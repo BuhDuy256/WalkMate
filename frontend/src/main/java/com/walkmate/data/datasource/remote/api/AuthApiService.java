@@ -1,12 +1,16 @@
 package com.walkmate.data.datasource.remote.api;
 
+import com.walkmate.data.datasource.remote.dto.request.user.ConfirmPasswordResetDto;
 import com.walkmate.data.datasource.remote.dto.request.user.GoogleLoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LoginRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.LogoutRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RefreshTokenRequestDto;
 import com.walkmate.data.datasource.remote.dto.request.user.RegisterRequestDto;
+import com.walkmate.data.datasource.remote.dto.request.user.RequestPasswordResetDto;
+import com.walkmate.data.datasource.remote.dto.request.user.VerifyPasswordResetDto;
 import com.walkmate.data.datasource.remote.dto.response.ApiResponse;
 import com.walkmate.data.datasource.remote.dto.response.user.LoginResponseDto;
+import com.walkmate.data.datasource.remote.dto.response.user.PasswordResetTokenDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -31,4 +35,13 @@ public interface AuthApiService {
 
     @POST("api/v1/auth/logout-all")
     Call<ApiResponse<Void>> logoutAll();
+
+    @POST("api/v1/auth/password-reset/request")
+    Call<ApiResponse<Void>> requestPasswordReset(@Body RequestPasswordResetDto body);
+
+    @POST("api/v1/auth/password-reset/verify")
+    Call<ApiResponse<PasswordResetTokenDto>> verifyPasswordReset(@Body VerifyPasswordResetDto body);
+
+    @POST("api/v1/auth/password-reset/confirm")
+    Call<ApiResponse<Void>> confirmPasswordReset(@Body ConfirmPasswordResetDto body);
 }

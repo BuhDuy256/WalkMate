@@ -223,6 +223,29 @@
     <string name="error_user_already_public">Your profile is already set to Public.</string>
     <string name="error_user_invalid_email_format">Please enter a valid email address.</string>
     <string name="error_user_account_suspended">Your account has been suspended. You have been signed out.</string>
+    <string name="error_otp_expired">This code has expired. Please request a new one.</string>
+    <string name="error_otp_invalid">Incorrect code. Please try again.</string>
+    <string name="error_otp_already_used">This code has already been used.</string>
+    <string name="error_otp_attempts_exceeded">Too many incorrect attempts. Please request a new code.</string>
+    <string name="error_password_too_weak">Password must be at least 8 characters with one uppercase letter and one number.</string>
+    <string name="error_reset_token_invalid">This reset link is invalid or has expired. Please start over.</string>
+    <string name="error_password_reset_not_allowed">Password reset is not available for Google Sign-In accounts.</string>
+
+    <!-- Forgot password flow -->
+    <string name="forgot_password_title">Forgot Password</string>
+    <string name="forgot_password_email_subtitle">Enter your email address and we\'ll send you a 6-digit code to reset your password.</string>
+    <string name="forgot_password_google_hint">If you signed up with Google, use Google Sign-In instead.</string>
+    <string name="forgot_password_send_otp">Send Code</string>
+    <string name="forgot_password_otp_title">Enter Code</string>
+    <string name="forgot_password_otp_subtitle">We sent a 6-digit code to %s</string>
+    <string name="forgot_password_resend">Resend code</string>
+    <string name="forgot_password_new_password_title">New Password</string>
+    <string name="forgot_password_new_password_subtitle">Choose a strong password for your account.</string>
+    <string name="forgot_password_new_password_hint">New password</string>
+    <string name="forgot_password_confirm_password_hint">Confirm new password</string>
+    <string name="forgot_password_reset_btn">Reset Password</string>
+    <string name="forgot_password_success">Password reset successfully. Please sign in.</string>
+    <string name="forgot_password_passwords_mismatch">Passwords do not match.</string>
 
     <!-- Hotspots -->
     <string name="hotspot_1">Công viên Tao Đàn</string>
