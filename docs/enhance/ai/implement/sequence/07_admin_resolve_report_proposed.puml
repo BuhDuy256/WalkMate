@@ -1,0 +1,114 @@
+@startuml 07_admin_resolve_report_proposed
+title Admin Resolves Report — Proposed Behavior (After Task 2.2 Fix)
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+}
+
+actor "Admin" as Admin
+participant "AdminReportController\nPATCH /admin/reports/{id}/resolve" as Controller
+participant "AdminReportCommandService\n.resolveReport()" as AdminSvc
+participant "SessionReportRepository" as ReportRepo
+participant "UserRepository\n(trust score)" as UserRepo
+participant "AiTrainingService\n[PROPOSED: injected here]" as AiSvc
+participant "MatchingPreferenceRepository" as PrefRepo
+
+note over Admin
+  Admin reviews the report on the admin dashboard.
+  Chooses APPROVED or REJECTED with an optional resolution note.
+end note
+
+Admin -> Controller : PATCH /api/v1/admin/reports/{reportId}/resolve\n{resolution: "APPROVED" | "REJECTED", resolutionNote}
+
+Controller -> AdminSvc : resolveReport(reportId, adminUserId, resolution, note)
+AdminSvc -> ReportRepo : findById(reportId)
+ReportRepo --> AdminSvc : SessionReport{status=OPEN, reporterId, reportedUserId,\n  reason, appliedTrustDelta}
+
+AdminSvc -> AdminSvc : validate: resolution must be APPROVED or REJECTED
+AdminSvc -> AdminSvc : validate: report must not already be resolved
+
+alt resolution = APPROVED
+    note over AdminSvc #E8F5E9
+        Admin confirms the report is valid.
+        Current behavior: just marks report as APPROVED.
+        Proposed fix: NOW fire AI training on reporter.
+    end note
+
+    AdminSvc -> ReportRepo : report.approve(adminUserId, note)\n→ status=APPROVED, resolved_by, resolved_at
+    AdminSvc -> ReportRepo : update(report)
+
+    AdminSvc -> AiSvc : trainWeightsFromReport(reporterId, reason)\n[PROPOSED — fires only on APPROVED, not on submit]
+
+    note over AiSvc #E8F5E9
+        ✅ PROPOSED FIX:
+        Reporter's weightBehavior is updated ONLY
+        after admin confirms the report is genuine:
+        • weightBehavior += 0.10 (base)
+        • weightBehavior += 0.05 (SAFETY_CONCERN / PARTNER_MISCONDUCT)
+        normalize() enforces MAX_WEIGHT_CAP=0.70
+    end note
+
+    AiSvc -> PrefRepo : findByUserId(reporterId)
+    PrefRepo --> AiSvc : MatchingPreference
+    AiSvc -> AiSvc : weightBehavior += 0.10 (base)\nweightBehavior += 0.05 (if high severity)
+    AiSvc -> AiSvc : normalize() [+ MIN_TIME_WEIGHT floor after Task 1.4]
+    AiSvc -> PrefRepo : save(updatedPreference)
+
+    note over Admin
+        Reported user's trust score was already
+        reduced when the report was submitted.
+        On APPROVED, no further trust change is needed
+        (current behavior, unchanged).
+    end note
+
+    AdminSvc --> Controller : resolvedReport{status=APPROVED}
+    Controller --> Admin : 200 OK
+
+else resolution = REJECTED
+    note over AdminSvc #FFE0E0
+        Admin rejects the report as invalid / false.
+        Current behavior: trust delta on reported user is reversed.
+        Proposed fix: reporter's AI weights NOT changed (no training).
+    end note
+
+    AdminSvc -> ReportRepo : report.reject(adminUserId, note)\n→ status=REJECTED, resolved_by, resolved_at
+    AdminSvc -> ReportRepo : update(report)
+
+    AdminSvc -> AdminSvc : if appliedTrustDelta < 0:\n  reversalDelta = -appliedTrustDelta
+
+    AdminSvc -> UserRepo : findById(reportedUserId)
+    UserRepo --> AdminSvc : reportedUser{trustScore}
+    AdminSvc -> AdminSvc : newScore = TrustScorePolicy.apply(trustScore, reversalDelta)
+    AdminSvc -> UserRepo : save(reportedUser{trustScore=newScore})
+
+    note over AiSvc #E8F5E9
+        ✅ PROPOSED FIX:
+        Reporter's AI weights are NOT changed on REJECTED.
+        Since trainWeightsFromReport() was removed from
+        submitReport(), there is nothing to roll back.
+        The reporter's matching model stays clean.
+    end note
+
+    AdminSvc --> Controller : resolvedReport{status=REJECTED}
+    Controller --> Admin : 200 OK
+end
+
+note over Admin, PrefRepo
+    Summary of the proposed fix symmetry:
+
+    | Event           | Trust (Reported) | AI Weight (Reporter) |
+    |-----------------|------------------|----------------------|
+    | Submit report   | -delta applied   | no change (PROPOSED) |
+    | Admin APPROVED  | no change        | +0.10/+0.15 applied  |
+    | Admin REJECTED  | +delta reversed  | no change            |
+
+    Compare to current (buggy) behavior:
+    | Submit report   | -delta applied   | +0.10/+0.15 applied  |
+    | Admin APPROVED  | no change        | (already applied)    |
+    | Admin REJECTED  | +delta reversed  | ✗ NEVER reversed     |
+end note
+
+@enduml

@@ -38,15 +38,18 @@ public class AiTrainingService {
             MatchingPreference pref = matchingPreferenceRepository.findByUserId(reviewerId)
                     .orElseGet(() -> MatchingPreference.defaultFor(reviewerId));
 
+            // Task 2.1: one signal per category per review regardless of how many tags
+            // were selected, preventing click-through bias from inflating weights.
+            boolean hasInterestSignal = false;
+            boolean hasBehaviorSignal = false;
             for (ReviewTag tag : selectedTags) {
                 String type = tag.tagType();
                 if (type == null) continue;
-                if (type.contains("INTEREST")) {
-                    pref.adjustWeightInterest(0.05);
-                } else if (type.contains("BEHAVIOR")) {
-                    pref.adjustWeightBehavior(0.05);
-                }
+                if (type.contains("INTEREST"))      hasInterestSignal = true;
+                else if (type.contains("BEHAVIOR")) hasBehaviorSignal = true;
             }
+            if (hasInterestSignal) pref.adjustWeightInterest(0.05);
+            if (hasBehaviorSignal) pref.adjustWeightBehavior(0.05);
 
             pref.normalize();
             pref.updateLastTrainedAt(Instant.now());

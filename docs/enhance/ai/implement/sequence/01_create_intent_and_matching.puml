@@ -1,0 +1,135 @@
+@startuml 01_create_intent_and_matching
+title Create Walk Intent & AI Matching Flow
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam sequenceParticipantBorderColor #444
+skinparam sequenceBoxBorderColor #999
+
+actor "User (Android)" as User
+participant "CreateIntentViewModel" as VM
+participant "WalkIntentRepositoryImpl\n(Frontend)" as FERepo
+participant "WalkIntentController\nPOST /api/v1/intents" as Controller
+participant "WalkIntentCommandService" as IntentSvc
+participant "MatchingCommandService\n.findOrCreateProposal()" as MatchSvc
+participant "AiWeightedMatchingStrategy" as AI
+participant "WalkIntentJdbcRepository\n.findOpenCandidates()" as IntentRepo
+participant "MatchingPreferenceRepository" as PrefRepo
+participant "UserProfileRepository\n(tags)" as ProfileRepo
+participant "UserRepository\n(trust score)" as UserRepo
+participant "MatchProposalRepository" as ProposalRepo
+participant "NotificationPublisher" as Notif
+
+== User creates a Walk Intent ==
+
+User -> VM : submit(hotspotId, date, timeStart, timeEnd,\nageMin, ageMax, preferredGender, tags,\nisPrivate, invitedFriendId)
+VM -> FERepo : createIntent(...)
+FERepo -> Controller : POST /api/v1/intents\n{hotspotId, date, timeStart, timeEnd, ...}
+
+Controller -> Controller : Resolve userId from JWT
+Controller -> Controller : Load UserProfile + Tags\n(onboarding gate: gender != null, tags not empty)
+
+alt Profile incomplete
+    Controller --> FERepo : 403 PROFILE_INCOMPLETE_FOR_MATCHING
+    FERepo --> VM : onError
+    VM -> VM : post(withOnboardingRequired(true))
+    VM --> User : Navigate to Onboarding
+else Profile complete
+    Controller -> IntentSvc : createIntent(CreateWalkIntentCommand)
+    IntentSvc -> IntentRepo : save(WalkIntent{status=OPEN})
+
+    note right of IntentSvc
+        If intent is PRIVATE:
+        status starts at MATCHING,
+        invited_friend_id is set.
+        Skips public matching engine.
+    end note
+
+    alt Public Intent
+        IntentSvc -> MatchSvc : findOrCreateProposal(intentId, callerId)
+
+        == Stage 1: DB-Level Hard Filter ==
+
+        MatchSvc -> IntentRepo : findOpenCandidates(\n  hotspotId, timeStart, timeEnd,\n  ageMin, ageMax, excludeUserId,\n  minDuration, preferredGender)
+
+        note over IntentRepo
+            SQL WHERE clause:
+            • status = 'OPEN'
+            • is_private = false (or invited_friend = callerId)
+            • user_id != callerId
+            • :callerId != ALL(excluded_user_ids)   [re-match guard]
+            • age constraints overlap
+            • time window overlaps by >= MIN_WALK_DURATION
+            • gender filter (if preferredGender != ANY)
+        end note
+
+        IntentRepo --> MatchSvc : List<WalkIntent> rawCandidates
+
+        MatchSvc -> MatchSvc : filter out blocked/blocker users\n(SocialRepository.getBlockedAndBlockerIds)
+
+        note right of MatchSvc
+            candidates = rawCandidates filtered by block list
+        end note
+
+        == Stage 2: AI-Weighted In-Memory Scoring ==
+
+        MatchSvc -> AI : match(intent, candidates)
+        AI -> PrefRepo : findByUserId(callerId)
+
+        alt Preference exists
+            PrefRepo --> AI : MatchingPreference\n{W_time, W_interest, W_behavior}
+        else New user (no preference)
+            AI -> AI : MatchingPreference.defaultFor(callerId)\n{W_time=0.333, W_interest=0.333, W_behavior=0.333}
+        end
+
+        AI -> ProfileRepo : findTagsByUserId(callerId)
+        ProfileRepo --> AI : callerTags
+
+        loop for each candidate
+            AI -> ProfileRepo : findTagsByUserId(candidateId)
+            ProfileRepo --> AI : candidateTags
+
+            AI -> UserRepo : findById(candidateId) → trustScore
+            UserRepo --> AI : trustScore
+
+            AI -> AI : S_time  = min(overlapMin / 60.0 × 100, 100.0)\n[BUG: fixed 60-min cap — see Task 1.2]
+            AI -> AI : S_tags  = Jaccard(callerTags, candidateTags) × 100\n         = 50.0 if both empty [BUG — see Task 1.3]
+            AI -> AI : S_trust = trustScore / 10.0\n         [BUG: no upper clamp — see Task 1.1]
+            AI -> AI : TotalScore = W_time×S_time + W_interest×S_tags + W_behavior×S_trust
+        end
+
+        AI -> AI : select candidate with max(TotalScore)
+        AI --> MatchSvc : Optional<MatchResult>{matched, overlapStart, overlapEnd, score}
+
+        alt No candidate found
+            MatchSvc --> IntentSvc : Optional.empty()
+            IntentSvc --> Controller : proposal = null
+            Controller --> FERepo : 204 No Content
+            FERepo --> VM : onSuccess(intent, proposal=null)
+            VM --> User : "Searching for a partner..."
+        else Candidate found
+            == Create Proposal under Pessimistic Lock ==
+
+            MatchSvc -> ProposalRepo : save(MatchProposal{status=PENDING,\n  expires_at=now+5min})
+            ProposalRepo --> MatchSvc : savedProposal
+
+            MatchSvc -> IntentRepo : findByIdForUpdate(intentId_A)\nfindByIdForUpdate(intentId_B)\n[sorted lexicographically to prevent deadlock]
+            IntentRepo --> MatchSvc : lockedIntentA, lockedIntentB
+
+            MatchSvc -> MatchSvc : re-verify both still OPEN
+            MatchSvc -> IntentRepo : save(intentA{status=MATCHING})
+            MatchSvc -> IntentRepo : save(intentB{status=MATCHING})
+
+            MatchSvc -> Notif : publish(PROPOSAL_RECEIVED → matched user)\n{proposalId, intentId, senderUserId}
+            Notif --> MatchSvc : async FCM push + DB notification
+
+            MatchSvc --> IntentSvc : Optional<MatchProposal>
+            IntentSvc --> Controller : CreateIntentResult{intent, proposal}
+            Controller --> FERepo : 201 Created\n{intentResponse, proposalResponse}
+            FERepo --> VM : onSuccess(intent, proposal)
+            VM --> User : Navigate to Proposal screen
+        end
+    end
+end
+
+@enduml

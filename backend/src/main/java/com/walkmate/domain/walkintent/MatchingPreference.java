@@ -22,7 +22,14 @@ public class MatchingPreference {
      * No single weight may exceed 70 % of the total score, ensuring the
      * other two factors always retain at least 30 % combined influence.
      */
-    public static final double MAX_WEIGHT_CAP = 0.70;
+    public static final double MAX_WEIGHT_CAP  = 0.70;
+
+    /**
+     * Minimum floor for weightTimeOverlap.
+     * Time scheduling is fundamental to WalkMate; this prevents the weight
+     * from decaying to zero when only interest/behavior signals are trained.
+     */
+    public static final double MIN_TIME_WEIGHT = 0.25;
 
     private final UUID    userId;
     private double        weightTimeOverlap;
@@ -110,6 +117,23 @@ public class MatchingPreference {
             weightTimeOverlap = weights[0];
             weightInterest    = weights[1];
             weightBehavior    = weights[2];
+        }
+
+        // Pass 3 — enforce minimum floor for time overlap weight.
+        // weightTimeOverlap is never directly incremented by AiTrainingService,
+        // so it decays toward zero after repeated review/report training cycles.
+        // This floor ensures time scheduling always contributes meaningfully.
+        if (weightTimeOverlap < MIN_TIME_WEIGHT) {
+            double deficit = MIN_TIME_WEIGHT - weightTimeOverlap;
+            weightTimeOverlap = MIN_TIME_WEIGHT;
+            double subSum = weightInterest + weightBehavior;
+            if (subSum > 0) {
+                weightInterest -= deficit * (weightInterest / subSum);
+                weightBehavior -= deficit * (weightBehavior / subSum);
+            } else {
+                weightInterest = (1.0 - MIN_TIME_WEIGHT) / 2.0;
+                weightBehavior = (1.0 - MIN_TIME_WEIGHT) / 2.0;
+            }
         }
     }
 

@@ -1,0 +1,84 @@
+@startuml 03_reject_proposal
+title Reject (Pass) Proposal → Intent Unlocked with Re-match Exclusion
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+
+actor "User (Rejector)" as User
+participant "ProposalController\nPATCH /proposals/{id}/pass" as Controller
+participant "MatchingCommandService\n.passProposal()" as MatchSvc
+participant "MatchProposalRepository" as ProposalRepo
+participant "WalkIntentRepository" as IntentRepo
+
+note over User
+  User sees proposal card and taps "Pass" / "Skip".
+  This explicitly rejects the current match suggestion.
+end note
+
+User -> Controller : PATCH /api/v1/proposals/{proposalId}/pass
+Controller -> MatchSvc : passProposal(proposalId, callerId)
+MatchSvc -> ProposalRepo : findById(proposalId)
+ProposalRepo --> MatchSvc : proposal{status=PENDING}
+MatchSvc -> MatchSvc : resolveIntentIdForUser(callerId)\n→ verify caller is a participant
+MatchSvc -> MatchSvc : proposal.reject() → status=REJECTED
+MatchSvc -> ProposalRepo : save(proposal)
+
+MatchSvc -> IntentRepo : findById(intentIdA)
+IntentRepo --> MatchSvc : intentA
+MatchSvc -> IntentRepo : findById(intentIdB)
+IntentRepo --> MatchSvc : intentB
+
+MatchSvc -> MatchSvc : resolveProposalFlowType(intentA, intentB)
+
+alt PRIVATE proposal
+    note over MatchSvc
+      Private invite is closed definitively.
+      Both intents → CANCELLED.
+      Neither re-enters the public pool.
+    end note
+    MatchSvc -> IntentRepo : intentA.cancel() → status=CANCELLED
+    MatchSvc -> IntentRepo : intentB.cancel() → status=CANCELLED
+    MatchSvc -> IntentRepo : save(intentA), save(intentB)
+    MatchSvc --> Controller : void
+    Controller --> User : 200 OK
+
+else PUBLIC proposal
+    note over MatchSvc
+      PUBLIC flow: both intents return to OPEN.
+      The rejector's intent excludes the partner from
+      future matching (excluded_user_ids[] array updated).
+    end note
+    MatchSvc -> IntentRepo : intentA.unlock() → status=OPEN
+    MatchSvc -> IntentRepo : intentB.unlock() → status=OPEN
+
+    MatchSvc -> MatchSvc : callerIntent.excludeUser(partnerUserId)\n→ excluded_user_ids = [..., partnerUserId]
+
+    note right of MatchSvc
+        Effect on AI Matching:
+        findOpenCandidates() SQL contains:
+          AND :callerId != ALL(excluded_user_ids)
+        So the rejected partner will NEVER appear
+        again in the caller's candidate list for this intent.
+
+        This is the "re-match prevention" already in place.
+        No separate match_exclusion table is needed.
+    end note
+
+    MatchSvc -> IntentRepo : save(intentA), save(intentB)
+    MatchSvc --> Controller : void
+    Controller --> User : 200 OK
+
+    note over User
+        User is back to OPEN state.
+        Tapping "Find Partner" again triggers a new
+        findOrCreateProposal() call, which will run
+        the AI scoring again — but the rejected partner
+        is now permanently excluded from this intent's
+        candidate list.
+
+        AI matching weights are NOT changed by a rejection.
+        Only reviews and reports affect weights.
+    end note
+end
+
+@enduml

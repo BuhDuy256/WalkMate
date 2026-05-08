@@ -1,0 +1,95 @@
+@startuml 02_accept_proposal
+title Accept Proposal → Walk Session Created
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+
+actor "User A" as UserA
+actor "User B" as UserB
+participant "ProposalController\nPATCH /proposals/{id}/accept" as Controller
+participant "MatchingCommandService\n.acceptProposal()" as MatchSvc
+participant "MatchProposalRepository" as ProposalRepo
+participant "WalkIntentRepository" as IntentRepo
+participant "WalkSessionRepository" as SessionRepo
+participant "ChatRoomRepository\n(MongoDB)" as ChatRepo
+participant "NotificationPublisher" as Notif
+
+note over UserA, UserB
+  Both users receive PROPOSAL_RECEIVED push notification.
+  Each must accept within 5 minutes (expires_at) or the proposal expires.
+end note
+
+== User A Accepts ==
+
+UserA -> Controller : PATCH /api/v1/proposals/{proposalId}/accept
+Controller -> MatchSvc : acceptProposal(proposalId, userIdA)
+MatchSvc -> ProposalRepo : findById(proposalId)
+ProposalRepo --> MatchSvc : proposal{status=PENDING}
+MatchSvc -> MatchSvc : resolveIntentIdForUser(userIdA) → intentIdA
+MatchSvc -> MatchSvc : proposal.recordAcceptance(intentIdA)\n→ acceptedByA=true, bothAccepted=false
+MatchSvc -> ProposalRepo : save(proposal)
+MatchSvc --> Controller : proposal (only A accepted)
+Controller --> UserA : 200 OK {proposal, acceptedByA=true, acceptedByB=false}
+
+== User B Accepts ==
+
+UserB -> Controller : PATCH /api/v1/proposals/{proposalId}/accept
+Controller -> MatchSvc : acceptProposal(proposalId, userIdB)
+MatchSvc -> ProposalRepo : findById(proposalId)
+ProposalRepo --> MatchSvc : proposal{acceptedByA=true}
+MatchSvc -> MatchSvc : resolveIntentIdForUser(userIdB) → intentIdB
+MatchSvc -> MatchSvc : proposal.recordAcceptance(intentIdB)\n→ acceptedByB=true, bothAccepted=true
+
+MatchSvc -> ProposalRepo : save(proposal)
+
+note over MatchSvc
+  ── CRITICAL SECTION: Both Accepted ──
+  Lock both intents in lexicographic order
+  to prevent deadlock on concurrent accepts.
+end note
+
+MatchSvc -> IntentRepo : findByIdForUpdate(first_id)\nfindByIdForUpdate(second_id)
+IntentRepo --> MatchSvc : lockedIntentA, lockedIntentB
+
+MatchSvc -> MatchSvc : re-verify both status = MATCHING
+
+alt Either intent no longer MATCHING (race condition)
+    MatchSvc --> Controller : throw PROPOSAL_INTENT_NO_LONGER_OPEN
+    Controller --> UserB : 400 Error
+else Both still MATCHING
+    MatchSvc -> IntentRepo : intentA.consume() → status=COMPLETED
+    MatchSvc -> IntentRepo : intentB.consume() → status=COMPLETED
+    MatchSvc -> IntentRepo : save(intentA), save(intentB)
+
+    MatchSvc -> MatchSvc : proposal.confirm(now)\n→ status=CONFIRMED, confirmed_at=now
+    MatchSvc -> ProposalRepo : save(proposal)
+
+    MatchSvc -> SessionRepo : WalkSession.create(\n  proposalId, userIdA, userIdB, hotspotId,\n  proposedStart, proposedEnd)\n  → status=PENDING
+    SessionRepo --> MatchSvc : walkSession{sessionId}
+
+    note over ChatRepo
+        afterCommit() hook:
+        MongoDB chat room init fires only
+        AFTER PostgreSQL transaction commits.
+        Failure here does NOT rollback the session.
+    end note
+
+    MatchSvc -> ChatRepo : initRoom(sessionId) [afterCommit]
+
+    MatchSvc -> Notif : publish(SESSION_CONFIRMED → userA)\n{sessionId, partnerUserId=userB}
+    MatchSvc -> Notif : publish(SESSION_CONFIRMED → userB)\n{sessionId, partnerUserId=userA}
+
+    MatchSvc --> Controller : confirmedProposal
+    Controller --> UserB : 200 OK {proposal, status=CONFIRMED}
+
+    Notif --> UserA : FCM Push: SESSION_CONFIRMED
+    Notif --> UserB : FCM Push: SESSION_CONFIRMED
+end
+
+note over UserA, UserB
+  Both users navigate to the Walk Session screen.
+  QR code verification required to activate the session.
+  AI matching weights are NOT affected by accepting a proposal.
+end note
+
+@enduml

@@ -1,0 +1,148 @@
+@startuml 08_ai_scoring_formula_comparison
+title AI Scoring Formula — Current Bugs vs. Proposed Fixes
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+
+participant "AiWeightedMatchingStrategy\n[CURRENT]" as Current
+participant "AiWeightedMatchingStrategy\n[PROPOSED]" as Proposed
+participant "MatchingPreference\n[CURRENT normalize()]" as PrefCurrent
+participant "MatchingPreference\n[PROPOSED normalize()]" as PrefProposed
+
+note over Current, PrefProposed
+    This diagram compares the scoring formula and weight normalization
+    for the CURRENT implementation vs. PROPOSED fixes.
+    All changes are in Phase 1 (no DB migration required).
+end note
+
+== S_trust: Trust Score Clamping (Task 1.1) ==
+
+note over Current #FFE0E0
+    CURRENT — scoreTrust():
+    S_trust = candidateTrustScore / 10.0
+
+    trustScore=500  → S_trust=50.0  ✓
+    trustScore=1000 → S_trust=100.0 ✓
+    trustScore=1200 → S_trust=120.0 ✗ EXCEEDS [0,100]
+
+    Result: S_trust > 100 breaks MAX_WEIGHT_CAP=0.70
+    A trust-heavy user can exceed their capped weight mathematically.
+end note
+
+note over Proposed #E8F5E9
+    PROPOSED — scoreTrust():
+    S_trust = Math.min(candidateTrustScore / 10.0, 100.0)
+
+    trustScore=500  → S_trust=50.0  ✓
+    trustScore=1000 → S_trust=100.0 ✓
+    trustScore=1200 → S_trust=100.0 ✓ clamped
+
+    All score components guaranteed in [0, 100].
+    MAX_WEIGHT_CAP=0.70 is now mathematically sound.
+end note
+
+== S_time: Time Overlap Scoring (Task 1.2) ==
+
+note over Current #FFE0E0
+    CURRENT — scoreTime():
+    S_time = min(overlapMinutes / 60.0 × 100, 100.0)
+
+    Example: User wants 3h walk (180 min intent duration)
+    Candidate A overlaps 60 min  → S_time = 100.0
+    Candidate B overlaps 180 min → S_time = 100.0
+
+    Result: A 1-hour overlap and a perfect 3-hour overlap
+    score identically. Long-walk users get incorrect matching.
+end note
+
+note over Proposed #E8F5E9
+    PROPOSED — scoreTime(WalkIntent a, WalkIntent b, ...):
+    desiredDuration = min(a.duration, b.duration)
+    S_time = min(overlapMinutes / desiredDuration × 100, 100.0)
+
+    Example: User wants 3h walk (180 min intent duration)
+    Candidate A (1h intent): desiredDuration=60 min, overlap=60 → S_time=100.0
+    Candidate B (3h intent): desiredDuration=180 min, overlap=60 → S_time=33.3
+    Candidate C (3h intent): desiredDuration=180 min, overlap=180 → S_time=100.0
+
+    Result: Candidate A (short walk) scores 100 against a 1h-intent user.
+    Candidate C (perfect 3h match) scores 100 against a 3h-intent user.
+    Differentiation is now accurate.
+end note
+
+== S_tags: Empty Profile Score (Task 1.3) ==
+
+note over Current #FFE0E0
+    CURRENT — scoreTags():
+    if (both tags empty) return 50.0   ← ARTIFICIAL BONUS
+
+    Two new users with no tags get S_tags=50.0
+    vs. two users with different tags getting S_tags=0–30.
+    Empty profiles are rewarded over real (low-overlap) profiles.
+end note
+
+note over Proposed #E8F5E9
+    PROPOSED — scoreTags():
+    if (both tags empty) return 20.0   ← reduced, not zero (new user tolerance)
+    if (one side empty)  return 10.0   ← minimal base signal
+    else: Jaccard(tagsA, tagsB) × 100
+
+    New users can still match, but incomplete profiles
+    are no longer advantaged over tagged users.
+    Encourages profile completion.
+end note
+
+== MatchingPreference: Weight Normalization (Task 1.4) ==
+
+note over PrefCurrent #FFE0E0
+    CURRENT — normalize():
+    Pass 1: divide each weight by sum → sum=1.0
+    Pass 2: cap any weight at MAX_WEIGHT_CAP=0.70
+
+    Problem: weightTimeOverlap is NEVER incremented.
+    Only weightInterest and weightBehavior are ever bumped.
+    After 20+ reviews with INTEREST tags:
+
+    weightInterest   → 0.70 (capped)
+    weightBehavior   → 0.18
+    weightTimeOverlap → 0.12 → ...→ near 0
+
+    Result: The matching engine forgets that time
+    scheduling is important for a walking appointment app.
+end note
+
+note over PrefProposed #E8F5E9
+    PROPOSED — normalize() with Pass 3:
+    Pass 1: divide each weight by sum → sum=1.0
+    Pass 2: cap any weight at MAX_WEIGHT_CAP=0.70
+    Pass 3: if weightTimeOverlap < MIN_TIME_WEIGHT=0.25:
+              floor to 0.25, redistribute deficit
+              proportionally from interest+behavior
+
+    After 20+ reviews with INTEREST tags:
+    weightInterest    → 0.56 (reduced to give time its floor)
+    weightBehavior    → 0.19
+    weightTimeOverlap → 0.25 (guaranteed minimum)
+
+    Time scheduling always contributes ≥25% to match scoring.
+end note
+
+== Combined Effect on TotalScore ==
+
+note over Current, PrefProposed
+    TotalScore = W_time × S_time + W_interest × S_tags + W_behavior × S_trust
+
+    CURRENT example (active user, many INTEREST reviews, high-trust candidate):
+    W_time=0.05  × S_time=100 = 5.0
+    W_interest=0.65 × S_tags=40  = 26.0
+    W_behavior=0.30 × S_trust=120 = 36.0  ← EXCEEDS 100 cap
+    TotalScore = 67.0  [distorted — trust dominates, time ignored]
+
+    PROPOSED example (same scenario, all fixes applied):
+    W_time=0.25  × S_time=33.3 = 8.3   ← ratio-based
+    W_interest=0.55 × S_tags=40  = 22.0
+    W_behavior=0.20 × S_trust=100 = 20.0 ← clamped
+    TotalScore = 50.3  [accurate — time overlap now differentiates candidates]
+end note
+
+@enduml
