@@ -36,10 +36,12 @@ import java.util.Locale;
  */
 public class PostSessionSummaryFragment extends Fragment {
 
-    public static final String TAG              = "PostSessionSummary";
-    public static final String ARG_SESSION_ID   = "SESSION_ID";
-    public static final String ARG_PARTNER_NAME = "PARTNER_NAME";
-    public static final String ARG_PARTNER_ID   = "PARTNER_ID";
+    public static final String TAG                       = "PostSessionSummary";
+    public static final String ARG_SESSION_ID            = "SESSION_ID";
+    public static final String ARG_PARTNER_NAME          = "PARTNER_NAME";
+    public static final String ARG_PARTNER_ID            = "PARTNER_ID";
+    public static final String ARG_LOCAL_DISTANCE_KM     = "LOCAL_DISTANCE_KM";
+    public static final String ARG_LOCAL_ELAPSED_SECONDS = "LOCAL_ELAPSED_SECONDS";
 
     public static PostSessionSummaryFragment newInstance(String sessionId,
                                                           String partnerName) {
@@ -53,12 +55,16 @@ public class PostSessionSummaryFragment extends Fragment {
 
     public static PostSessionSummaryFragment newInstance(String sessionId,
                                                           String partnerName,
-                                                          String partnerId) {
+                                                          String partnerId,
+                                                          double localDistanceKm,
+                                                          long   localElapsedSeconds) {
         PostSessionSummaryFragment f = new PostSessionSummaryFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_SESSION_ID,   sessionId);
-        args.putString(ARG_PARTNER_NAME, partnerName);
-        args.putString(ARG_PARTNER_ID,   partnerId);
+        args.putString(ARG_SESSION_ID,             sessionId);
+        args.putString(ARG_PARTNER_NAME,           partnerName);
+        args.putString(ARG_PARTNER_ID,             partnerId);
+        args.putDouble(ARG_LOCAL_DISTANCE_KM,      localDistanceKm);
+        args.putLong(ARG_LOCAL_ELAPSED_SECONDS,    localElapsedSeconds);
         f.setArguments(args);
         return f;
     }
@@ -79,6 +85,10 @@ public class PostSessionSummaryFragment extends Fragment {
     private PostSessionSummaryViewModel viewModel;
     private String currentUserId;
     private String partnerName;
+
+    // Local stats captured at session end — shown immediately before backend responds.
+    private double localDistanceKm    = 0.0;
+    private long   localElapsedSeconds = 0L;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -103,10 +113,12 @@ public class PostSessionSummaryFragment extends Fragment {
         avatarSummaryPartner  = view.findViewById(R.id.avatarSummaryPartner);
         btnDone               = view.findViewById(R.id.btnDoneSummary);
 
-        Bundle args      = getArguments();
-        String sessionId   = args != null ? args.getString(ARG_SESSION_ID)   : null;
-        partnerName        = args != null ? args.getString(ARG_PARTNER_NAME)  : null;
-        String partnerId   = args != null ? args.getString(ARG_PARTNER_ID)    : null;
+        Bundle args         = getArguments();
+        String sessionId    = args != null ? args.getString(ARG_SESSION_ID)            : null;
+        partnerName         = args != null ? args.getString(ARG_PARTNER_NAME)           : null;
+        String partnerId    = args != null ? args.getString(ARG_PARTNER_ID)             : null;
+        localDistanceKm     = args != null ? args.getDouble(ARG_LOCAL_DISTANCE_KM, 0.0) : 0.0;
+        localElapsedSeconds = args != null ? args.getLong(ARG_LOCAL_ELAPSED_SECONDS, 0L) : 0L;
 
         // Back press finishes the host Activity (returns to the caller, e.g. Matches).
         requireActivity().getOnBackPressedDispatcher().addCallback(
@@ -150,6 +162,9 @@ public class PostSessionSummaryFragment extends Fragment {
 
         btnDone.setOnClickListener(v -> requireActivity().finish());
 
+        // Show local values immediately — no network latency, no incomplete-sync zeros.
+        renderLocalStats(localDistanceKm, localElapsedSeconds);
+
         if (sessionId != null) {
             viewModel.loadSummary(sessionId);
         }
@@ -163,23 +178,34 @@ public class PostSessionSummaryFragment extends Fragment {
         ParticipantSummary caller = summary.getCallerParticipant(currentUserId);
         if (caller == null) return;
 
-        double distanceKm    = caller.getDistanceKm();
-        int    durationMins  = caller.getDurationMinutes();
+        double backendDistanceKm  = caller.getDistanceKm();
+        int    backendDurationMins = caller.getDurationMinutes();
+
+        // Prefer backend values when non-zero; fall back to local to avoid blanking
+        // out values that the backend hasn't synced yet (e.g. 0.00 km on short walks).
+        double effectiveDistanceKm  = backendDistanceKm  > 0 ? backendDistanceKm
+                                                              : localDistanceKm;
+        int    effectiveDurationMins = backendDurationMins > 0 ? backendDurationMins
+                                                               : (int)(localElapsedSeconds / 60);
 
         txtSummaryDistance.setText(
-                String.format(Locale.getDefault(), "%.2f km", distanceKm));
-
-        txtSummaryDuration.setText(durationMins + " min");
-
-        txtSummaryPace.setText(formatPace(distanceKm, durationMins));
+                String.format(Locale.getDefault(), "%.2f km", effectiveDistanceKm));
+        txtSummaryDuration.setText(effectiveDurationMins + " min");
+        txtSummaryPace.setText(formatPace(effectiveDistanceKm, effectiveDurationMins));
 
         // Re-bind partner avatar with the real photo URL from the API response.
-        // The initial bind in onViewCreated used null (shows initials as placeholder);
-        // this replaces it with the actual avatar once the session summary loads.
         ParticipantSummary partner = summary.getPartnerParticipant(currentUserId);
         if (partner != null) {
             avatarSummaryPartner.bind(partner.getFullName(), partner.getAvatarUrl());
         }
+    }
+
+    private void renderLocalStats(double distanceKm, long elapsedSeconds) {
+        txtSummaryDistance.setText(
+                String.format(Locale.getDefault(), "%.2f km", distanceKm));
+        int durationMins = (int)(elapsedSeconds / 60);
+        txtSummaryDuration.setText(durationMins + " min");
+        txtSummaryPace.setText(formatPace(distanceKm, durationMins));
     }
 
     private void renderBadges(List<com.walkmate.domain.gamification.UserBadge> badges) {

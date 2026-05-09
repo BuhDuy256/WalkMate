@@ -274,6 +274,12 @@ public class WalkIntentJdbcRepository implements WalkIntentRepository {
                   AND wi.time_window_start   < :boundaryEnd
                   AND wi.time_window_end     > :boundaryStart
                   AND (:preferredGender = 'ANY' OR up.gender::text = :preferredGender)
+                   AND (
+                        (wi.matching_constraints->>'preferred_gender') = 'ANY'
+                        OR (wi.matching_constraints->>'preferred_gender') = (
+                            SELECT gender::text FROM user_profile WHERE user_id = :callerId
+                        )
+                    )
                 ORDER BY wi.created_at ASC
                 """;
 

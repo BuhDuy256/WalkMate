@@ -675,7 +675,9 @@ public class TrackingScreenActivity extends AppCompatActivity implements OnMapRe
      */
     private void showPostSessionSummary(TrackingUiState state) {
         PostSessionSummaryFragment fragment =
-                PostSessionSummaryFragment.newInstance(sessionId, partnerName, partnerId);
+                PostSessionSummaryFragment.newInstance(
+                        sessionId, partnerName, partnerId,
+                        state.getDistanceKm(), state.getElapsedSeconds());
 
         getSupportFragmentManager()
                 .beginTransaction()
