@@ -1,11 +1,13 @@
 package com.walkmate.presentation.mapper.walkpost;
 
+import com.walkmate.domain.walkpost.RoutePreviewStatus;
 import com.walkmate.domain.walkpost.WalkPost;
 import com.walkmate.presentation.dto.response.walkpost.WalkPostResponse;
 
 public class WalkPostMapper {
 
     public static WalkPostResponse toResponse(WalkPost post) {
+        RoutePreviewStatus status = post.getRoutePreviewStatus();
         return new WalkPostResponse(
                 post.getPostId(),
                 post.getSessionId(),
@@ -23,6 +25,7 @@ public class WalkPostMapper {
                 post.isShowStats(),
                 post.getCompanionName(),
                 post.getRoutePreviewUrl(),
+                status != null ? status.name() : RoutePreviewStatus.PENDING.name(),
                 post.getCreatedAt() != null ? post.getCreatedAt().toString() : null
         );
     }

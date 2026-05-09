@@ -27,6 +27,7 @@ public class WalkPostMapper {
                 dto.isShowStats(),
                 dto.getCompanionName(),
                 dto.getRoutePreviewUrl(),
+                dto.getRoutePreviewStatus(),
                 dto.getCreatedAt()
         );
     }

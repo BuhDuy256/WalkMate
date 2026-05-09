@@ -70,7 +70,7 @@
                 android:visibility="gone" />
         </LinearLayout>
 
-        <!-- Route map placeholder — hidden when showRouteMap=false -->
+        <!-- Route map image — shown when showRouteMap=true AND routePreviewUrl is set -->
         <ImageView
             android:id="@+id/img_route_map"
             android:layout_width="match_parent"
@@ -78,6 +78,18 @@
             android:layout_marginTop="12dp"
             android:scaleType="centerCrop"
             android:contentDescription="Route map"
+            android:visibility="gone" />
+
+        <!-- Route map fallback label — shown when showRouteMap=true but no URL available -->
+        <TextView
+            android:id="@+id/txt_route_no_data"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textSize="13sp"
+            android:textColor="#9CA3AF"
+            android:background="#F3F2F0"
             android:visibility="gone" />
 
         <!-- Hotspot row -->

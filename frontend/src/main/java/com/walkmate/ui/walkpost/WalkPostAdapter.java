@@ -73,6 +73,11 @@ public class WalkPostAdapter extends ListAdapter<WalkPost, WalkPostAdapter.ViewH
         public boolean areContentsTheSame(@NonNull WalkPost a, @NonNull WalkPost b) {
             if (a.getPostId() == null || !a.getPostId().equals(b.getPostId())) return false;
             if (a.getVisibility() != b.getVisibility()) return false;
+            // Include preview fields so the card redraws if the route preview URL/status changes.
+            String urlA = a.getRoutePreviewUrl(), urlB = b.getRoutePreviewUrl();
+            if (!(urlA == null ? urlB == null : urlA.equals(urlB))) return false;
+            String stA = a.getRoutePreviewStatus(), stB = b.getRoutePreviewStatus();
+            if (!(stA == null ? stB == null : stA.equals(stB))) return false;
             String capA = a.getCaption(), capB = b.getCaption();
             return capA == null ? capB == null : capA.equals(capB);
         }

@@ -1,6 +1,7 @@
 package com.walkmate.infrastructure.repository.walkpost;
 
 import com.walkmate.domain.walkpost.PostVisibility;
+import com.walkmate.domain.walkpost.RoutePreviewStatus;
 import com.walkmate.domain.walkpost.WalkPost;
 import com.walkmate.domain.walkpost.WalkPostRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,35 +33,57 @@ public class WalkPostJdbcRepository implements WalkPostRepository {
                     caption, visibility,
                     show_companion, show_route_map, show_stats,
                     distance_km, duration_seconds, points_earned,
-                    route_preview_url, created_at, updated_at
+                    route_preview_url, route_preview_path, route_preview_status,
+                    created_at, updated_at
                 )
                 VALUES (
                     :postId, :sessionId, :authorId,
                     :caption, :visibility,
                     :showCompanion, :showRouteMap, :showStats,
                     :distanceKm, :durationSeconds, :pointsEarned,
-                    :routePreviewUrl, :createdAt, :updatedAt
+                    :routePreviewUrl, :routePreviewPath, :routePreviewStatus,
+                    :createdAt, :updatedAt
                 )
                 ON CONFLICT (post_id) DO UPDATE SET
-                    visibility = EXCLUDED.visibility,
-                    updated_at = EXCLUDED.updated_at
+                    visibility          = EXCLUDED.visibility,
+                    updated_at          = EXCLUDED.updated_at
                 """)
-                .param("postId",          UUID.fromString(post.getPostId()))
-                .param("sessionId",       UUID.fromString(post.getSessionId()))
-                .param("authorId",        UUID.fromString(post.getAuthorId()))
-                .param("caption",         post.getCaption())
-                .param("visibility",      post.getVisibility().name())
-                .param("showCompanion",   post.isShowCompanion())
-                .param("showRouteMap",    post.isShowRouteMap())
-                .param("showStats",       post.isShowStats())
-                .param("distanceKm",      post.getDistanceKm())
-                .param("durationSeconds", post.getDurationSeconds())
-                .param("pointsEarned",    post.getPointsEarned())
-                .param("routePreviewUrl", post.getRoutePreviewUrl())
-                .param("createdAt",       Timestamp.from(post.getCreatedAt()))
-                .param("updatedAt",       Timestamp.from(post.getUpdatedAt()))
+                .param("postId",             UUID.fromString(post.getPostId()))
+                .param("sessionId",          UUID.fromString(post.getSessionId()))
+                .param("authorId",           UUID.fromString(post.getAuthorId()))
+                .param("caption",            post.getCaption())
+                .param("visibility",         post.getVisibility().name())
+                .param("showCompanion",      post.isShowCompanion())
+                .param("showRouteMap",       post.isShowRouteMap())
+                .param("showStats",          post.isShowStats())
+                .param("distanceKm",         post.getDistanceKm())
+                .param("durationSeconds",    post.getDurationSeconds())
+                .param("pointsEarned",       post.getPointsEarned())
+                .param("routePreviewUrl",    post.getRoutePreviewUrl())
+                .param("routePreviewPath",   post.getRoutePreviewPath())
+                .param("routePreviewStatus", post.getRoutePreviewStatus().name())
+                .param("createdAt",          Timestamp.from(post.getCreatedAt()))
+                .param("updatedAt",          Timestamp.from(post.getUpdatedAt()))
                 .update();
         return findById(post.getPostId()).orElse(post);
+    }
+
+    @Override
+    public void updateRoutePreview(String postId, String routePreviewUrl,
+                                   String routePreviewPath, String routePreviewStatus) {
+        jdbcClient.sql("""
+                UPDATE walk_post
+                SET route_preview_url    = :routePreviewUrl,
+                    route_preview_path   = :routePreviewPath,
+                    route_preview_status = :routePreviewStatus,
+                    updated_at           = NOW()
+                WHERE post_id = :postId
+                """)
+                .param("postId",             UUID.fromString(postId))
+                .param("routePreviewUrl",    routePreviewUrl)
+                .param("routePreviewPath",   routePreviewPath)
+                .param("routePreviewStatus", routePreviewStatus)
+                .update();
     }
 
     @Override
@@ -109,7 +132,8 @@ public class WalkPostJdbcRepository implements WalkPostRepository {
         String visibilityFilter = isFriend
                 ? "AND wp.visibility IN ('PUBLIC', 'FRIENDS')"
                 : "AND wp.visibility = 'PUBLIC'";
-        return jdbcClient.sql(selectAllWithJoins() + "WHERE wp.author_id = :authorId " + visibilityFilter + " ORDER BY wp.created_at DESC")
+        return jdbcClient.sql(selectAllWithJoins()
+                + "WHERE wp.author_id = :authorId " + visibilityFilter + " ORDER BY wp.created_at DESC")
                 .param("authorId", UUID.fromString(authorId))
                 .query((rs, rowNum) -> mapRow(rs))
                 .list();
@@ -149,7 +173,8 @@ public class WalkPostJdbcRepository implements WalkPostRepository {
                        wp.caption, wp.visibility,
                        wp.show_companion, wp.show_route_map, wp.show_stats,
                        wp.distance_km, wp.duration_seconds, wp.points_earned,
-                       wp.route_preview_url, wp.created_at, wp.updated_at,
+                       wp.route_preview_url, wp.route_preview_path, wp.route_preview_status,
+                       wp.created_at, wp.updated_at,
                        up_author.full_name AS author_name,
                        up_author.avatar_url AS author_avatar_url,
                        h.name AS hotspot_name,
@@ -168,6 +193,15 @@ public class WalkPostJdbcRepository implements WalkPostRepository {
 
     private WalkPost mapRow(ResultSet rs) throws SQLException {
         Timestamp updatedAt = rs.getTimestamp("updated_at");
+
+        String statusRaw = rs.getString("route_preview_status");
+        RoutePreviewStatus status;
+        try {
+            status = statusRaw != null ? RoutePreviewStatus.valueOf(statusRaw) : RoutePreviewStatus.PENDING;
+        } catch (IllegalArgumentException e) {
+            status = RoutePreviewStatus.PENDING;
+        }
+
         return new WalkPost(
                 rs.getString("post_id"),
                 rs.getString("session_id"),
@@ -181,6 +215,8 @@ public class WalkPostJdbcRepository implements WalkPostRepository {
                 rs.getLong("duration_seconds"),
                 rs.getInt("points_earned"),
                 rs.getString("route_preview_url"),
+                rs.getString("route_preview_path"),
+                status,
                 rs.getTimestamp("created_at").toInstant(),
                 updatedAt != null ? updatedAt.toInstant() : null,
                 rs.getString("author_name"),

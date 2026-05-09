@@ -32,11 +32,39 @@ WalkMate · Android Native (Java) + Spring Boot
 
 ---
 
-## Route Preview Decision Update
+## Route Preview Decision Update — FINAL (2026-05-09)
 
 **Original plan** (superseded): static `ic_route_map_placeholder` drawable. No real route data.
 
-**Revised plan**: Route preview is rendered on-device from real GPS data via `RoutePreviewView` (Canvas). No image generation pipeline. Google Static Maps API not used.
+**Interim plan** (also superseded): Client-side Canvas `RoutePreviewView`. No image pipeline.
+
+**FINAL plan (implemented)**: Server-side static map image generation → Supabase Storage.
+
+Architecture:
+```
+completed walk GPS polylines (session_point_chunks)
+  → StaticMapImageClient: decode + downsample + re-encode + Google Static Maps download
+  → SupabaseRoutePreviewStorage: upload PNG → returns public URL
+  → walk_post.route_preview_url, route_preview_path, route_preview_status updated
+  → WalkResultPostCard loads routePreviewUrl via Glide
+  → non-participant / Public Profile viewers load same URL (no raw GPS exposed)
+```
+
+Status values: PENDING → READY | NO_ROUTE | FAILED
+
+Key files added/changed:
+- `V126__add_route_preview_fields_to_walk_post.sql`
+- `domain/walkpost/RoutePreviewStatus.java`
+- `domain/walkpost/WalkPost.java` (new fields + domain methods)
+- `infrastructure/walkpost/RoutePreviewStorage.java` (interface)
+- `infrastructure/walkpost/SupabaseRoutePreviewStorage.java`
+- `infrastructure/walkpost/StaticMapImageClient.java`
+- `application/walkpost/WalkPostRoutePreviewService.java`
+- `presentation/controller/walkpost/WalkPostController.java`
+- `presentation/dto/response/walkpost/WalkPostResponse.java` (added route_preview_status)
+- Frontend DTO, domain, mapper, WalkResultPostCard updated accordingly
+
+Required env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ROUTE_PREVIEW_BUCKET`, `MAP_PROVIDER_API_KEY`
 
 ### Architecture
 

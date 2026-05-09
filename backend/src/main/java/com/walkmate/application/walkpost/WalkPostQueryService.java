@@ -49,4 +49,11 @@ public class WalkPostQueryService {
         return walkPostRepository.findById(postId)
                 .orElseThrow(() -> new DomainException(WalkPostErrorCode.WALK_POST_NOT_FOUND));
     }
+
+    /** Returns the Supabase Storage path of the route preview image, or null if none. */
+    public String getRoutePreviewPath(String postId) {
+        return walkPostRepository.findById(postId)
+                .map(WalkPost::getRoutePreviewPath)
+                .orElse(null);
+    }
 }

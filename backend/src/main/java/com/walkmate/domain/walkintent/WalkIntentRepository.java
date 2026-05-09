@@ -30,7 +30,9 @@ public interface WalkIntentRepository {
      * Stage 1 of matching: DB-level hard filter.
      * Returns OPEN intents at the same hotspot whose time window overlaps
      * the given window by at least minDuration, whose age-preference range
-     * intersects [ageMin, ageMax], and whose profile gender matches preferredGender.
+     * intersects [ageMin, ageMax], and whose gender preferences are mutually
+     * compatible: caller's preferredGender accepts the candidate's gender AND
+     * the candidate's preferredGender accepts the caller's gender.
      * Excludes the requesting user.
      *
      * @param preferredGender caller's gender preference: "ANY", "MALE", or "FEMALE"

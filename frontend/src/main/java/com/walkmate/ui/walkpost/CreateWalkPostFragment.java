@@ -190,6 +190,13 @@ public class CreateWalkPostFragment extends Fragment {
         boolean showCompanion = !myWalkOnly && partnerName != null && switchCompanion.isChecked();
         PostVisibility visibility = visibilitySelector.getSelectedVisibility();
 
+        // For the live preview, show the meeting-point location as a visual hint.
+        // The actual route line is generated server-side after the user taps "Post to Profile".
+        // We pass this URL as routePreviewUrl so the card renders the map image (or placeholder)
+        // rather than a confusing status-text like "Generating route preview…".
+        // This URL is NEVER sent to the backend — it is only for client-side preview display.
+        String previewMapUrl = buildMeetingPointMapUrl(lat, lng);
+
         WalkPost preview = new WalkPost(
                 null, sessionId, null,
                 "You", null,
@@ -198,13 +205,20 @@ public class CreateWalkPostFragment extends Fragment {
                 hotspotName != null ? hotspotName : "",
                 distanceKm, durationSeconds, 0,
                 showCompanion, showRouteMap, showStats,
-                partnerName, buildStaticMapUrl(lat, lng),
+                partnerName,
+                previewMapUrl, // routePreviewUrl — meeting-point map for preview only
+                null,          // routePreviewStatus — null so card uses Glide/placeholder, no text fallback
                 "Today");
 
         cardPreview.bind(preview, WalkResultPostCard.Variant.OWNER);
     }
 
-    private static String buildStaticMapUrl(double lat, double lng) {
+    /**
+     * Builds a Google Static Maps URL showing the meeting point location.
+     * Used ONLY for the client-side create-post preview card — never stored to the backend.
+     * Returns null when coordinates are unavailable or the API key is not configured.
+     */
+    private static String buildMeetingPointMapUrl(double lat, double lng) {
         String key = BuildConfig.MAPS_API_KEY;
         if (key == null || key.isEmpty() || (lat == 0.0 && lng == 0.0)) return null;
         return "https://maps.googleapis.com/maps/api/staticmap"
