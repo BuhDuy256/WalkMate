@@ -78,9 +78,9 @@ CREATE TABLE public.match_proposal (
   version bigint NOT NULL DEFAULT 0 CHECK (version >= 0),
   hotspot_id uuid NOT NULL,
   CONSTRAINT match_proposal_pkey PRIMARY KEY (proposal_id),
-  CONSTRAINT match_proposal_hotspot_id_fkey FOREIGN KEY (hotspot_id) REFERENCES public.hotspot(id),
   CONSTRAINT match_proposal_intent_id_a_fkey FOREIGN KEY (intent_id_a) REFERENCES public.walk_intent(intent_id),
-  CONSTRAINT match_proposal_intent_id_b_fkey FOREIGN KEY (intent_id_b) REFERENCES public.walk_intent(intent_id)
+  CONSTRAINT match_proposal_intent_id_b_fkey FOREIGN KEY (intent_id_b) REFERENCES public.walk_intent(intent_id),
+  CONSTRAINT match_proposal_hotspot_id_fkey FOREIGN KEY (hotspot_id) REFERENCES public.hotspot(id)
 );
 CREATE TABLE public.matching_preference_model (
   user_id uuid NOT NULL,
@@ -179,9 +179,9 @@ CREATE TABLE public.session_report (
   resolved_at timestamp without time zone,
   resolution_note text,
   CONSTRAINT session_report_pkey PRIMARY KEY (report_id),
-  CONSTRAINT session_report_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.user_account(user_id),
   CONSTRAINT session_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.user_account(user_id),
   CONSTRAINT session_report_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT session_report_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.user_account(user_id),
   CONSTRAINT session_report_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.walk_session(session_id)
 );
 CREATE TABLE public.session_state_change_log (
@@ -221,8 +221,8 @@ CREATE TABLE public.user_badge (
   badge_name character varying NOT NULL,
   awarded_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT user_badge_pkey PRIMARY KEY (user_id, badge_name),
-  CONSTRAINT user_badge_badge_name_fkey FOREIGN KEY (badge_name) REFERENCES public.badge(name),
-  CONSTRAINT user_badge_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id)
+  CONSTRAINT user_badge_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_account(user_id),
+  CONSTRAINT user_badge_badge_name_fkey FOREIGN KEY (badge_name) REFERENCES public.badge(name)
 );
 CREATE TABLE public.user_embedding (
   user_id uuid NOT NULL,
@@ -322,11 +322,11 @@ CREATE TABLE public.walk_session (
   user_a_qr_verified_at timestamp without time zone,
   user_b_qr_verified_at timestamp without time zone,
   CONSTRAINT walk_session_pkey PRIMARY KEY (session_id),
-  CONSTRAINT walk_session_hotspot_id_fkey FOREIGN KEY (hotspot_id) REFERENCES public.hotspot(id),
   CONSTRAINT walk_session_proposal_id_fkey FOREIGN KEY (proposal_id) REFERENCES public.match_proposal(proposal_id),
   CONSTRAINT walk_session_user_id_a_fkey FOREIGN KEY (user_id_a) REFERENCES public.user_account(user_id),
   CONSTRAINT walk_session_user_id_b_fkey FOREIGN KEY (user_id_b) REFERENCES public.user_account(user_id),
   CONSTRAINT walk_session_cancelled_by_fkey FOREIGN KEY (cancelled_by) REFERENCES public.user_account(user_id),
   CONSTRAINT walk_session_source_a_fkey FOREIGN KEY (source_intent_id_a) REFERENCES public.walk_intent(intent_id),
-  CONSTRAINT walk_session_source_b_fkey FOREIGN KEY (source_intent_id_b) REFERENCES public.walk_intent(intent_id)
+  CONSTRAINT walk_session_source_b_fkey FOREIGN KEY (source_intent_id_b) REFERENCES public.walk_intent(intent_id),
+  CONSTRAINT walk_session_hotspot_id_fkey FOREIGN KEY (hotspot_id) REFERENCES public.hotspot(id)
 );
