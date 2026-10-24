@@ -101,6 +101,14 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
     }
 
     @Override
+    public Optional<MatchProposal> findByIdForUpdate(String id) {
+        return jdbcClient.sql(selectWithJoin() + "WHERE mp.proposal_id = :proposalId FOR UPDATE OF mp")
+                .param("proposalId", UUID.fromString(id))
+                .query((rs, rowNum) -> mapRow(rs))
+                .optional();
+    }
+
+    @Override
     public Optional<MatchProposal> findPendingByIntentId(String intentId) {
         final String sql = selectWithJoin() + """
                 WHERE (mp.intent_id_a = :intentId OR mp.intent_id_b = :intentId)
@@ -140,6 +148,21 @@ public class MatchProposalJdbcRepository implements MatchProposalRepository {
 
         return jdbcClient.sql(sql)
                 .query((rs, rowNum) -> mapRow(rs))
+                .list();
+    }
+
+    @Override
+    public List<String> findExpiredPendingIds() {
+        final String sql = """
+                SELECT mp.proposal_id::text
+                FROM match_proposal mp
+                WHERE mp.status = 'PENDING'
+                  AND mp.expires_at < NOW()
+                ORDER BY mp.expires_at ASC
+                """;
+
+        return jdbcClient.sql(sql)
+                .query((rs, rowNum) -> rs.getString("proposal_id"))
                 .list();
     }
 

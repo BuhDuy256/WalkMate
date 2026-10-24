@@ -9,6 +9,13 @@ public interface MatchProposalRepository {
 
     Optional<MatchProposal> findById(String id);
 
+    /**
+     * Loads the proposal with a pessimistic write lock on the {@code match_proposal} row
+     * only ({@code FOR UPDATE OF mp}). MUST be called inside an active transaction.
+     * Joined rows (intents, hotspot) are read without being locked.
+     */
+    Optional<MatchProposal> findByIdForUpdate(String id);
+
     /** Returns an existing PENDING proposal that involves the given intent (either side). */
     Optional<MatchProposal> findPendingByIntentId(String intentId);
 
@@ -17,4 +24,10 @@ public interface MatchProposalRepository {
 
     /** Returns all PENDING proposals whose expires_at is in the past. */
     List<MatchProposal> findExpiredPending();
+
+    /**
+     * Returns only the ids of PENDING proposals whose expires_at is in the past.
+     * Used by the scheduler for cheap discovery before per-item locked processing.
+     */
+    List<String> findExpiredPendingIds();
 }
