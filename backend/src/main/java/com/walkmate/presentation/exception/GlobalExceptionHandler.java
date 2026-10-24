@@ -1,6 +1,9 @@
 package com.walkmate.presentation.exception;
 
 import com.walkmate.domain.shared.exception.DomainException;
+import com.walkmate.domain.tracking.TrackingContractException;
+import com.walkmate.domain.tracking.TrackingErrorCode;
+import com.walkmate.domain.tracking.TrackingStreamConflictException;
 import com.walkmate.domain.walkintent.WalkIntentErrorCode;
 import com.walkmate.presentation.dto.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +24,37 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * v2 GPS sync contract violations: the HTTP status is driven by each
+     * {@link TrackingErrorCode#defaultStatus()} (409 conflict/flipped
+     * stream, 410 expired, 413 batch too large, 422 point invalid) so
+     * Android's queue can apply the correct retry policy.
+     */
+    @ExceptionHandler(TrackingContractException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTrackingContractException(
+            TrackingContractException ex, HttpServletRequest request) {
+        TrackingErrorCode code = ex.getErrorCode() instanceof TrackingErrorCode te ? te : null;
+        HttpStatus status = code != null ? code.defaultStatus() : HttpStatus.CONFLICT;
+        log.warn("TrackingContractException [{}] at {} {}: {}",
+                code, request.getMethod(), request.getRequestURI(), ex.getMessage());
+        ApiResponse<Void> body = ApiResponse.error(code != null ? code.getCode() : "TRACKING_CONTRACT_ERROR", ex.getMessage());
+        return ResponseEntity.status(status).body(body);
+    }
+
+    /**
+     * A different stream for the same (session, user) was already allocated.
+     * The client must treat this as a lost-device / stream-reset situation.
+     */
+    @ExceptionHandler(TrackingStreamConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTrackingStreamConflictException(
+            TrackingStreamConflictException ex, HttpServletRequest request) {
+        log.warn("TrackingStreamConflictException at {} {}: {}",
+                request.getMethod(), request.getRequestURI(), ex.getMessage());
+        ApiResponse<Void> body = ApiResponse.error(
+                TrackingErrorCode.TRACKING_STREAM_CONFLICT.getCode(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiResponse<Void>> handleDomainException(DomainException ex, HttpServletRequest request) {

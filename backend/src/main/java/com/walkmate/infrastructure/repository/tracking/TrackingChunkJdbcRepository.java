@@ -107,4 +107,127 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
                 .param("syncRequestId", UUID.fromString(syncRequestId))
                 .update();
     }
+
+    // ── v2 (GPS stream) ───────────────────────────────────────────────────────
+
+    @Override
+    public List<String> findV2PolylinesBySessionAndUser(String sessionId, String userId) {
+        return jdbcClient.sql("""
+                        SELECT polyline FROM session_point_chunks
+                        WHERE session_id = :sessionId
+                          AND user_id    = :userId
+                          AND stream_id IS NOT NULL
+                        ORDER BY seq_start ASC, chunk_index ASC
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId",    UUID.fromString(userId))
+                .query(String.class)
+                .list();
+    }
+
+    @Override
+    public List<ChunkRowV2> findV2ChunksAfterIndex(String sessionId, String userId,
+                                                   int afterChunkIndex) {
+        return jdbcClient.sql("""
+                        SELECT chunk_index,
+                               polyline,
+                               seq_start,
+                               seq_end,
+                               (EXTRACT(EPOCH FROM received_at) * 1000)::bigint AS created_at_ms
+                        FROM session_point_chunks
+                        WHERE session_id = :sessionId
+                          AND user_id    = :userId
+                          AND stream_id IS NOT NULL
+                          AND chunk_index > :afterChunkIndex
+                        ORDER BY chunk_index ASC
+                        """)
+                .param("sessionId",      UUID.fromString(sessionId))
+                .param("userId",         UUID.fromString(userId))
+                .param("afterChunkIndex", afterChunkIndex)
+                .query((rs, rowNum) -> new ChunkRowV2(
+                        rs.getInt("chunk_index"),
+                        rs.getString("polyline"),
+                        rs.getLong("seq_start"),
+                        rs.getLong("seq_end"),
+                        rs.getLong("created_at_ms")))
+                .list();
+    }
+
+    @Override
+    public boolean existsV2BatchBySyncRequestId(String syncRequestId) {
+        Boolean present = jdbcClient.sql("""
+                        SELECT 1
+                        FROM session_point_chunks
+                        WHERE sync_request_id = :syncRequestId
+                        """)
+                .param("syncRequestId", UUID.fromString(syncRequestId))
+                .query(Boolean.class)
+                .optional()
+                .isPresent();
+        return present;
+    }
+
+    @Override
+    public java.util.Optional<CommittedBatchRow> findCommittedBatch(String syncRequestId) {
+        return jdbcClient.sql("""
+                        SELECT stream_id,
+                               session_id,
+                               user_id,
+                               seq_start,
+                               seq_end,
+                               payload_hash,
+                               point_count
+                        FROM session_point_chunks
+                        WHERE sync_request_id = :syncRequestId
+                        """)
+                .param("syncRequestId", UUID.fromString(syncRequestId))
+                .query((rs, rowNum) -> new CommittedBatchRow(
+                        UUID.fromString(rs.getString("stream_id")).toString(),
+                        UUID.fromString(rs.getString("session_id")).toString(),
+                        UUID.fromString(rs.getString("user_id")).toString(),
+                        rs.getLong("seq_start"),
+                        rs.getLong("seq_end"),
+                        rs.getString("payload_hash"),
+                        rs.getInt("point_count")))
+                .optional();
+    }
+
+    @Override
+    public boolean trySaveV2Chunk(String sessionId, String userId, String streamId,
+                                  int chunkIndex, String polyline, byte[] timestamps,
+                                  int pointCount, long seqStart, long seqEnd,
+                                  String payloadHashHex, String syncRequestId) {
+        // ON CONFLICT (sync_request_id) DO NOTHING RETURNING chunk_id:
+        //   - first attempt inserts and returns chunk_id (inserted = true)
+        //   - replay of the same batch_id is a no-op (inserted = false)
+        // Any other constraint violation propagates and rolls the entire
+        // caller transaction back — never ACKs an uncommitted row.
+        Boolean inserted = jdbcClient.sql("""
+                        INSERT INTO session_point_chunks
+                            (session_id, user_id, chunk_index, polyline, timestamps,
+                             point_count, sync_request_id, stream_id, seq_start, seq_end,
+                             payload_hash)
+                        VALUES
+                            (:sessionId, :userId, :chunkIndex, :polyline, :timestamps,
+                             :pointCount, :syncRequestId, :streamId, :seqStart, :seqEnd,
+                             :payloadHash)
+                        ON CONFLICT (sync_request_id) DO NOTHING
+                        RETURNING chunk_id IS NOT NULL
+                        """)
+                .param("sessionId",     UUID.fromString(sessionId))
+                .param("userId",        UUID.fromString(userId))
+                .param("chunkIndex",    chunkIndex)
+                .param("polyline",      polyline)
+                .param("timestamps",    timestamps)
+                .param("pointCount",    pointCount)
+                .param("syncRequestId", UUID.fromString(syncRequestId))
+                .param("streamId",      UUID.fromString(streamId))
+                .param("seqStart",      seqStart)
+                .param("seqEnd",        seqEnd)
+                .param("payloadHash",   payloadHashHex)
+                .query(Boolean.class)
+                .optional()
+                .orElse(false);
+        return inserted;
+    }
 }
