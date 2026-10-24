@@ -74,7 +74,9 @@ public class TrackingQueryService {
         long lastChunkMs = rows.isEmpty() ? 0L : rows.get(rows.size() - 1).createdAtMs();
 
         List<PartnerPathResponse.PartnerChunk> chunks = rows.stream()
-                .map(r -> new PartnerPathResponse.PartnerChunk(r.chunkIndex(), r.polyline()))
+                .map(r -> new PartnerPathResponse.PartnerChunk(
+                        r.chunkIndex(), r.polyline(),
+                        r.streamId(), r.seqStart(), r.seqEnd()))
                 .toList();
 
         return new PartnerPathResponse(chunks, lastChunkMs, partnerStatus.name());
@@ -98,8 +100,8 @@ public class TrackingQueryService {
             throw new DomainException(SessionErrorCode.SESSION_NOT_FINISHED);
         }
 
-        List<String> pathA = chunkRepository.findPolylinesBySessionAndUser(sessionId, session.getUserIdA());
-        List<String> pathB = chunkRepository.findPolylinesBySessionAndUser(sessionId, session.getUserIdB());
+        List<String> pathA = sessionRouteChunks(sessionId, session.getUserIdA());
+        List<String> pathB = sessionRouteChunks(sessionId, session.getUserIdB());
 
         // Show the caller's own metrics in the route summary.
         boolean isCallerUserA = callerId.equals(session.getUserIdA());
@@ -113,5 +115,25 @@ public class TrackingQueryService {
                 distanceKm,
                 (int) (durationSec / 60)
         );
+    }
+
+    /**
+     * Returns one participant's route in the best order the data can support.
+     *
+     * <p>Under v2 the polyline must be assembled by {@code seq_start} (the source
+     * order the device assigned), not by {@code chunk_index} (arrival order) —
+     * otherwise a batch that arrived late draws the route backwards.</p>
+     *
+     * <p>Legacy rows have no sequence identity, and there is no honest way to
+     * interleave them with v2 rows: inventing a position would claim a route
+     * segment the data does not place. So a session that still contains legacy
+     * chunks deliberately keeps the pre-v2 arrival ordering, and only a fully
+     * migrated session is ordered by sequence.</p>
+     */
+    private List<String> sessionRouteChunks(String sessionId, String userId) {
+        if (chunkRepository.hasLegacyChunks(sessionId, userId)) {
+            return chunkRepository.findPolylinesBySessionAndUser(sessionId, userId);
+        }
+        return chunkRepository.findV2PolylinesBySessionAndUser(sessionId, userId);
     }
 }

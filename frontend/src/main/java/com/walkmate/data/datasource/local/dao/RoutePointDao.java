@@ -52,15 +52,32 @@ public interface RoutePointDao {
      * Points that have not been sealed into any batch yet, in source order.
      * This is the input to batch sealing; once a point has a {@code batchId} it
      * never appears here again.
+     *
+     * <p>{@code sequence IS NOT NULL} is a deliberate quarantine: rows written
+     * before the v1→v2 upgrade have no sequence identity, and assigning them one
+     * now would claim the v2 dedupe guarantee for data that may already have been
+     * half-uploaded under the old contract. They are left untouched and counted
+     * separately by {@link #countUnsequencedLegacy}.</p>
      */
     @Query("SELECT * FROM route_points "
-            + "WHERE sessionId = :sessionId AND userId = :userId AND batchId IS NULL "
+            + "WHERE sessionId = :sessionId AND userId = :userId "
+            + "  AND batchId IS NULL AND sequence IS NOT NULL "
             + "ORDER BY sequence ASC, id ASC LIMIT :limit")
     List<RoutePointEntity> getUnbatchedPoints(String sessionId, String userId, int limit);
 
     @Query("SELECT COUNT(*) FROM route_points "
-            + "WHERE sessionId = :sessionId AND userId = :userId AND batchId IS NULL")
+            + "WHERE sessionId = :sessionId AND userId = :userId "
+            + "  AND batchId IS NULL AND sequence IS NOT NULL")
     int countUnbatched(String sessionId, String userId);
+
+    /**
+     * Pre-upgrade rows that carry no sequence. They are intentionally never
+     * sealed into a v2 batch; surfacing the count lets the UI/diagnostics report
+     * "this session still holds legacy points" instead of silently ignoring them.
+     */
+    @Query("SELECT COUNT(*) FROM route_points "
+            + "WHERE sessionId = :sessionId AND userId = :userId AND sequence IS NULL")
+    int countUnsequencedLegacy(String sessionId, String userId);
 
     /** Frozen payload of a sealed batch — membership cannot change after sealing. */
     @Query("SELECT * FROM route_points WHERE batchId = :batchId ORDER BY sequence ASC")

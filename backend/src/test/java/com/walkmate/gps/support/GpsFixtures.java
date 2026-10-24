@@ -167,8 +167,7 @@ public final class GpsFixtures {
                 .update();
     }
 
-    /** Force-sets the stream's uploaded final sequence (simulates a missed seal). */
-    public static void setExpectedFinalSequence(JdbcClient jdbc, String streamId, long value) {
+    /** Force-sets the stream's uploaded final sequence (simulates a missed seal). */    public static void setExpectedFinalSequence(JdbcClient jdbc, String streamId, long value) {
         jdbc.sql("""
                         UPDATE tracking_streams
                            SET expected_final_sequence = :expected
@@ -302,5 +301,62 @@ public final class GpsFixtures {
                 .query(Long.class)
                 .single();
         return count != null ? count : 0L;
+    }
+
+    /** Moves the whole session to a terminal business status (route read path). */
+    public static void setSessionStatus(JdbcClient jdbc, String sessionId, String status) {
+        jdbc.sql("""
+                        UPDATE walk_session
+                           SET status        = CAST(:status AS walk_session_status),
+                               user_a_status = CAST(:status AS walk_session_status),
+                               user_b_status = CAST(:status AS walk_session_status)
+                         WHERE session_id = :sessionId
+                        """)
+                .param("status", status)
+                .param("sessionId", UUID.fromString(sessionId))
+                .update();
+    }
+
+    /** Polylines for one participant in ARRIVAL order ({@code chunk_index}). */
+    public static List<String> polylinesByArrival(JdbcClient jdbc, String sessionId, String userId) {
+        return jdbc.sql("""
+                        SELECT polyline FROM session_point_chunks
+                         WHERE session_id = :sessionId AND user_id = :userId
+                         ORDER BY chunk_index ASC
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId", UUID.fromString(userId))
+                .query(String.class)
+                .list();
+    }
+
+    /** Polylines for one participant in ROUTE order ({@code seq_start}). */
+    public static List<String> polylinesBySequence(JdbcClient jdbc, String sessionId, String userId) {
+        return jdbc.sql("""
+                        SELECT polyline FROM session_point_chunks
+                         WHERE session_id = :sessionId AND user_id = :userId
+                         ORDER BY seq_start ASC
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId", UUID.fromString(userId))
+                .query(String.class)
+                .list();
+    }
+
+    /** Inserts a legacy-era chunk row (no stream, no sequence) at a given arrival index. */
+    public static void seedLegacyChunkAt(JdbcClient jdbc, String sessionId, String userId,
+                                         int chunkIndex, String polyline, int pointCount) {
+        jdbc.sql("""
+                        INSERT INTO session_point_chunks
+                            (session_id, user_id, chunk_index, polyline, point_count)
+                        VALUES
+                            (:sessionId, :userId, :chunkIndex, :polyline, :pointCount)
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId", UUID.fromString(userId))
+                .param("chunkIndex", chunkIndex)
+                .param("polyline", polyline)
+                .param("pointCount", pointCount)
+                .update();
     }
 }

@@ -1,6 +1,7 @@
 package com.walkmate.gps.support;
 
 import com.walkmate.application.tracking.TrackingCommandServiceV2;
+import com.walkmate.application.tracking.TrackingQueryService;
 import com.walkmate.application.tracking.TrackingSealService;
 import com.walkmate.domain.session.WalkSessionRepository;
 import com.walkmate.domain.tracking.TrackingChunkRepository;
@@ -96,4 +97,10 @@ public class GpsTestConfiguration {
     public TrackingSealService trackingSealService(TrackingStreamRepository streamRepository) {
         return new TrackingSealService(streamRepository);
     }
-}
+
+    @Bean
+    public TrackingQueryService trackingQueryService(
+            WalkSessionRepository sessionRepository,
+            TrackingChunkRepository chunkRepository) {
+        return new TrackingQueryService(sessionRepository, chunkRepository);
+    }}

@@ -1,6 +1,7 @@
 package com.walkmate.gps.support;
 
 import com.walkmate.application.tracking.TrackingCommandServiceV2;
+import com.walkmate.application.tracking.TrackingQueryService;
 import com.walkmate.application.tracking.TrackingSealService;
 import com.walkmate.domain.tracking.TrackingChunkRepository;
 import com.walkmate.domain.tracking.TrackingStreamRepository;
@@ -39,6 +40,10 @@ public class GpsTestInstance implements AutoCloseable {
 
     public TrackingCommandServiceV2 commandService() {
         return context.getBean(TrackingCommandServiceV2.class);
+    }
+
+    public TrackingQueryService queryService() {
+        return context.getBean(TrackingQueryService.class);
     }
 
     public TrackingSealService sealService() {

@@ -161,11 +161,18 @@ public class GpsQueueStore {
 
             // Sequence gaps would produce a range the server rejects; sealing only
             // ever takes a contiguous run starting at the first candidate.
+            if (candidates.get(0).sequence == null) {
+                // Defensive: the DAO already filters these out. A null here would
+                // mean a legacy row leaked into the v2 queue, which must not be
+                // silently assigned a sequence.
+                Log.w(TAG, "Legacy unsequenced point reached the v2 sealer — skipping");
+                return null;
+            }
             long seqStart = candidates.get(0).sequence;
             List<RoutePointEntity> run = new ArrayList<>(candidates.size());
             for (int i = 0; i < candidates.size(); i++) {
                 RoutePointEntity e = candidates.get(i);
-                if (e.sequence != seqStart + i) {
+                if (e.sequence == null || e.sequence != seqStart + i) {
                     break;
                 }
                 run.add(e);
@@ -233,6 +240,18 @@ public class GpsQueueStore {
 
     public int countUnbatched(String sessionId, String userId) {
         return pointDao.countUnbatched(sessionId, userId);
+    }
+
+    /**
+     * Pre-upgrade points that were never assigned a sequence.
+     *
+     * <p>They cannot be sealed into a v2 batch — the plan requires legacy rows to
+     * be quarantined rather than re-sequenced, because re-sequencing would assert
+     * a dedupe guarantee for data the old contract may have already pushed. This
+     * count exists so the situation is visible instead of silently dropped.</p>
+     */
+    public int countUnsequencedLegacy(String sessionId, String userId) {
+        return pointDao.countUnsequencedLegacy(sessionId, userId);
     }
 
     public int countOutstanding(String sessionId, String userId) {

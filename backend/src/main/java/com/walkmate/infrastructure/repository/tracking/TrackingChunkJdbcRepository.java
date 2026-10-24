@@ -70,7 +70,11 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
         return jdbcClient.sql("""
                         SELECT chunk_index,
                                polyline,
-                               (EXTRACT(EPOCH FROM created_at) * 1000)::bigint AS created_at_ms
+                               stream_id,
+                               seq_start,
+                               seq_end,
+                               (EXTRACT(EPOCH FROM COALESCE(received_at, created_at)) * 1000)::bigint
+                                   AS created_at_ms
                         FROM session_point_chunks
                         WHERE session_id = :sessionId
                           AND user_id    = :userId
@@ -80,11 +84,36 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
                 .param("sessionId",      UUID.fromString(sessionId))
                 .param("userId",         UUID.fromString(userId))
                 .param("afterChunkIndex", afterChunkIndex)
-                .query((rs, rowNum) -> new ChunkRow(
-                        rs.getInt("chunk_index"),
-                        rs.getString("polyline"),
-                        rs.getLong("created_at_ms")))
+                .query((rs, rowNum) -> {
+                    String streamId = rs.getString("stream_id");
+                    Long seqStart = rs.getObject("seq_start") != null ? rs.getLong("seq_start") : null;
+                    Long seqEnd   = rs.getObject("seq_end")   != null ? rs.getLong("seq_end")   : null;
+                    return new ChunkRow(
+                            rs.getInt("chunk_index"),
+                            rs.getString("polyline"),
+                            streamId,
+                            seqStart,
+                            seqEnd,
+                            rs.getLong("created_at_ms"));
+                })
                 .list();
+    }
+
+    @Override
+    public boolean hasLegacyChunks(String sessionId, String userId) {
+        Boolean present = jdbcClient.sql("""
+                        SELECT EXISTS (
+                            SELECT 1 FROM session_point_chunks
+                             WHERE session_id = :sessionId
+                               AND user_id    = :userId
+                               AND stream_id IS NULL
+                        )
+                        """)
+                .param("sessionId", UUID.fromString(sessionId))
+                .param("userId",    UUID.fromString(userId))
+                .query(Boolean.class)
+                .single();
+        return Boolean.TRUE.equals(present);
     }
 
     @Override
@@ -122,34 +151,6 @@ public class TrackingChunkJdbcRepository implements TrackingChunkRepository {
                 .param("sessionId", UUID.fromString(sessionId))
                 .param("userId",    UUID.fromString(userId))
                 .query(String.class)
-                .list();
-    }
-
-    @Override
-    public List<ChunkRowV2> findV2ChunksAfterIndex(String sessionId, String userId,
-                                                   int afterChunkIndex) {
-        return jdbcClient.sql("""
-                        SELECT chunk_index,
-                               polyline,
-                               seq_start,
-                               seq_end,
-                               (EXTRACT(EPOCH FROM received_at) * 1000)::bigint AS created_at_ms
-                        FROM session_point_chunks
-                        WHERE session_id = :sessionId
-                          AND user_id    = :userId
-                          AND stream_id IS NOT NULL
-                          AND chunk_index > :afterChunkIndex
-                        ORDER BY chunk_index ASC
-                        """)
-                .param("sessionId",      UUID.fromString(sessionId))
-                .param("userId",         UUID.fromString(userId))
-                .param("afterChunkIndex", afterChunkIndex)
-                .query((rs, rowNum) -> new ChunkRowV2(
-                        rs.getInt("chunk_index"),
-                        rs.getString("polyline"),
-                        rs.getLong("seq_start"),
-                        rs.getLong("seq_end"),
-                        rs.getLong("created_at_ms")))
                 .list();
     }
 

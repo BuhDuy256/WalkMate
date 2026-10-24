@@ -117,6 +117,7 @@ dependencies {
     // WorkManager — persistent GPS upload queue drain (survives process death)
     implementation(libs.workRuntime)
     testImplementation(libs.workTesting)
+    testImplementation(libs.roomTesting)
 
     // Image loading
     implementation(libs.glide)

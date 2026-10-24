@@ -5,15 +5,24 @@ import java.util.Optional;
 
 public interface TrackingChunkRepository {
 
-    /** Lightweight projection returned by {@link #findChunksAfterIndex}. */
-    record ChunkRow(int chunkIndex, String polyline, long createdAtMs) {}
-
     /**
-     * v2 projection with the route-sequence range, used by the out-of-order
-     * read paths (history ordered by {@code seq_start}, live partner overlay
-     * carrying per-chunk range information).
+     * Projection returned by {@link #findChunksAfterIndex}.
+     *
+     * <p>The sequence range is <em>nullable</em> on purpose: during the v1→v2
+     * rollout one participant may have legacy rows ({@code stream_id IS NULL})
+     * as well as v2 rows. Rather than maintaining two queries that could
+     * disagree, a single arrival-ordered query reports both and lets the client
+     * reorder the rows that actually carry a sequence.</p>
      */
-    record ChunkRowV2(int chunkIndex, String polyline, long seqStart, long seqEnd, long createdAtMs) {}
+    record ChunkRow(int chunkIndex, String polyline,
+                    String streamId, Long seqStart, Long seqEnd,
+                    long createdAtMs) {
+
+        /** True when this row carries a usable v2 route range. */
+        public boolean hasSequenceRange() {
+            return streamId != null && seqStart != null && seqEnd != null;
+        }
+    }
 
     /**
      * Returns the next available chunk index for a specific user within a session.
@@ -55,17 +64,25 @@ public interface TrackingChunkRepository {
 
     /**
      * Returns chunks for a single participant with {@code chunk_index > afterChunkIndex},
-     * ordered ascending. Pass {@code -1} to fetch all chunks.
+     * ordered by arrival. Pass {@code -1} to fetch all chunks.
      * Used by the live partner-path overlay during an active session.
+     *
+     * <p>Rows carry {@code streamId}/{@code seqStart}/{@code seqEnd} when they are
+     * v2 rows, and nulls for legacy ones — the cursor stays arrival-based (that is
+     * what makes pagination stable), while route ordering is left to the client.</p>
      */
     List<ChunkRow> findChunksAfterIndex(String sessionId, String userId, int afterChunkIndex);
 
     /**
-     * v2 live poll: chunks with arrival {@code chunk_index > afterChunkIndex}
-     * for a single participant, each carrying its route-sequence range so the
-     * client can reorder out-of-order batches at render time.
+     * True when this participant still has legacy chunks (no sequence identity)
+     * for the session.
+     *
+     * <p>Used by the history read path to decide ordering: legacy rows cannot be
+     * interleaved with v2 rows, so a mixed session deliberately keeps the old
+     * arrival order instead of inventing a route position the data does not
+     * support.</p>
      */
-    List<ChunkRowV2> findV2ChunksAfterIndex(String sessionId, String userId, int afterChunkIndex);
+    boolean hasLegacyChunks(String sessionId, String userId);
 
     /**
      * Persists a single compressed chunk of GPS route data, tagged to the uploading user.
