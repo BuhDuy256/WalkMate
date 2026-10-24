@@ -46,11 +46,15 @@ public interface TrackingRepository {
 
     /**
      * Marks the given point IDs as synced in the local DB after a successful push.
-     * Must be called off the main thread.
+     *
+     * @deprecated v2 marks points synced only through a verified batch ACK, which
+     *     the queue drainer performs. Marking an arbitrary id list would defeat the
+     *     lost-ACK guarantee. Implementations must treat this as a no-op.
      */
+    @Deprecated
     void markPointsSynced(List<Long> ids, DomainCallback<Void> callback);
 
-    /** Triggered by the 30-second periodic scheduler. Syncs all unsynced points. */
+    /** Triggered by the 30-second periodic scheduler. Seals the tail and drains. */
     void triggerPeriodicSync(String sessionId);
 
     /**
@@ -90,4 +94,24 @@ public interface TrackingRepository {
      * than leaving the user stranded on the FINISHING screen.
      */
     void flushUnsyncedBeforeComplete(String sessionId, DomainCallback<Void> callback);
+
+    /**
+     * Declares the client's final sequence to the server
+     * ({@code POST /api/v2/tracking/streams/{id}/seal}) and reports the resulting
+     * sync state: {@code SEALED}, {@code COMPLETE} or {@code EXPIRED}.
+     *
+     * <p>Must be called after {@link #flushUnsyncedBeforeComplete}, because the
+     * final sequence is only known once the local write queue has drained.</p>
+     *
+     * <p>Retries are safe and idempotent: re-sealing with the same or a higher
+     * final sequence is accepted, a lower one is refused by the server.</p>
+     */
+    void sealStream(String sessionId, DomainCallback<String> callback);
+
+    /**
+     * Reads the locally recorded sync state for this session
+     * ({@link com.walkmate.domain.tracking.GpsSyncState}). Null until the first
+     * point is accepted.
+     */
+    void getSyncState(String sessionId, DomainCallback<String> callback);
 }

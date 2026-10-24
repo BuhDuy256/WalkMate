@@ -87,14 +87,22 @@ public class SessionTrackingService {
      * @param lat      WGS-84 latitude
      * @param lng      WGS-84 longitude
      * @param accuracy horizontal accuracy radius in metres
+     * @param fixTimeMs {@code Location.getTime()} — the moment the fix was taken.
+     *                  This is what the server validates and hashes, so it must not
+     *                  be replaced by the (later) callback time.
      */
-    public void onLocationReceived(double lat, double lng, float accuracy) {
+    public void onLocationReceived(double lat, double lng, float accuracy, long fixTimeMs) {
         final String sessionId = currentSessionId;
         if (sessionId == null) {
             return; // Service not started or already stopped
         }
 
-        executor.execute(() -> processPoint(sessionId, lat, lng, accuracy));
+        executor.execute(() -> processPoint(sessionId, lat, lng, accuracy, fixTimeMs));
+    }
+
+    /** Convenience overload for callers that only have "now". */
+    public void onLocationReceived(double lat, double lng, float accuracy) {
+        onLocationReceived(lat, lng, accuracy, System.currentTimeMillis());
     }
 
     // ── PHASE 2 FIX ──────────────────────────────────────────────────────────
@@ -120,27 +128,32 @@ public class SessionTrackingService {
 
     // ── Internal processing ───────────────────────────────────────────────────
 
-    private void processPoint(String sessionId, double lat, double lng, float accuracy) {
+    private void processPoint(String sessionId, double lat, double lng,
+                              float accuracy, long fixTimeMs) {
         if (!filterPolicy.shouldAccept(lat, lng, accuracy)) {
             Log.v(TAG, "Point filtered out — accuracy=" + accuracy + "m, lat=" + lat + " lng=" + lng);
             return;
         }
 
+        // Sequence and stream are assigned inside the Room transaction by the
+        // repository; this object carries only the measured values.
         RoutePoint point = new RoutePoint(
                 0L,                         // id = 0; Room assigns the real ID on insert
                 sessionId,
                 lat,
                 lng,
-                System.currentTimeMillis(),
+                fixTimeMs,                  // fix time, not callback time
                 accuracy,
-                false                       // isSynced = false; repository handles sync
+                false                       // isSynced = false; only a verified ACK flips it
         );
 
         repository.saveRoutePoint(point, new DomainCallback<Long>() {
             @Override
-            public void onSuccess(Long assignedId) {
+            public void onSuccess(Long assignedSequence) {
+                // The filter only advances once the point is durably stored, so a
+                // failed write does not silently drop the next candidate fix.
                 filterPolicy.accept(lat, lng);
-                Log.v(TAG, "Point saved — id=" + assignedId
+                Log.v(TAG, "Point saved — seq=" + assignedSequence
                         + ", lat=" + lat + ", lng=" + lng);
             }
 

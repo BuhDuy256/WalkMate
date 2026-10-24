@@ -36,6 +36,14 @@ android {
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         buildConfigField("String", "BASE_URL", "\"http://${getLocalIP()}:8080/\"")
         // buildConfigField("String", "BASE_URL", "\"http://192.168.1.4:8080/\"")
+
+        // Export the Room schema so a hand-written migration can be diffed against
+        // the DDL Room expects, instead of being verified by memory.
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/schemas"
+            }
+        }
     }
 
     buildFeatures {
@@ -105,6 +113,10 @@ dependencies {
     // Room (local GPS point storage)
     implementation(libs.roomRuntime)
     annotationProcessor(libs.roomCompiler)
+
+    // WorkManager — persistent GPS upload queue drain (survives process death)
+    implementation(libs.workRuntime)
+    testImplementation(libs.workTesting)
 
     // Image loading
     implementation(libs.glide)

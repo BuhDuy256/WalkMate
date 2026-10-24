@@ -9,17 +9,16 @@ import retrofit2.http.Body;
 import retrofit2.http.POST;
 
 /**
- * Retrofit interface for the GPS batch-sync endpoint.
+ * Retrofit interface for the legacy GPS batch-sync endpoint.
+ *
+ * <p><b>Retired for new clients.</b> This app now uses
+ * {@link TrackingApiServiceV2}; the v1 contract is kept only so an older
+ * installed build keeps working during rollout. It is not referenced by any
+ * code path in this module.</p>
  *
  * Contract: POST /api/v1/tracking/sync
  *   Body  → {@link PushRoutePointsRequest}
  *   200   → {@link ApiResponse}<{@link PushRoutePointsResponse}>
- *
- * Currently consumed by the MOCK implementation in TrackingRepositoryImpl.
- * When the backend is ready, replace the mock executor call with:
- *   Retrofit retrofit = ApiClient.buildAuthenticatedRetrofit(sessionManager, ApiClient.getAuthApiService());
- *   RoutePointSyncApiService api = retrofit.create(RoutePointSyncApiService.class);
- *   api.pushRoutePoints(request).enqueue(...);
  */
 public interface RoutePointSyncApiService {
 

@@ -112,7 +112,17 @@ public class TrackingViewModel extends AndroidViewModel {
     private final MutableLiveData<PartnerPathResult> partnerResultLiveData =
             new MutableLiveData<>();
 
-    /** In-memory accumulation of all decoded partner LatLng points. Main-thread only. */
+    /**
+     * In-memory accumulation of the partner's route.
+     *
+     * <p>Keyed by the chunk's sequence range instead of plain append order: a v2
+     * batch can arrive out of order (the partner may upload 101–150 before 1–50),
+     * and appending would draw a line that jumps to the end and back. Keeping the
+     * chunks and sorting by {@code seqStart} at render time makes arrival order
+     * irrelevant.</p>
+     */
+    private final List<PartnerPathResult.Chunk> partnerChunks = new ArrayList<>();
+    /** Legacy (v1) partner chunks that carry no sequence identity. Main-thread only. */
     private final List<LatLng> partnerAccumulatedPoints = new ArrayList<>();
     private int    lastFetchedPartnerChunkIndex = -1;
     private long   partnerLastChunkMs           = 0L;
@@ -181,7 +191,15 @@ public class TrackingViewModel extends AndroidViewModel {
                     stopPartnerPolling();
                 }
                 if (!result.getNewPoints().isEmpty()) {
-                    partnerAccumulatedPoints.addAll(result.getNewPoints());
+                    // v2: keep each chunk's range so a late batch can be slotted at
+                    // its real position. Chunks are de-duplicated by (stream, start)
+                    // because a poll may overlap a previous one.
+                    for (PartnerPathResult.Chunk chunk : result.getChunks()) {
+                        if (!containsChunk(chunk)) {
+                            partnerChunks.add(chunk);
+                        }
+                    }
+                    partnerAccumulatedPoints.addAll(result.getLegacyPoints());
                     lastFetchedPartnerChunkIndex = result.getLastChunkIndex();
                     partnerLastChunkMs           = result.getLastChunkCreatedAtMs();
                 }
@@ -354,20 +372,48 @@ public class TrackingViewModel extends AndroidViewModel {
         stopGpsService();
         walkStateLiveData.setValue(WalkState.FINISHING);
 
-        // R1: flush all remaining unsynced Room points before completing on the backend.
+        // R1 / v2: seal the local write queue, persist the final sequence, and try
+        // one drain. The stream seal is a separate, idempotent server call that
+        // converges the GPS sync state; the walk itself must not wait for GPS.
         repository.flushUnsyncedBeforeComplete(sessionId, new DomainCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                completeOnBackend(currentState);
+                sealThenComplete(currentState);
             }
 
             @Override
             public void onError(Exception e) {
-                // Flush failed (e.g. network down) — still complete the session so the
-                // user is not stranded indefinitely on the FINISHING screen.
+                // Queue left unfinished (offline, backlog, or a blocked batch) —
+                // still complete the session: the queue is on disk and WorkManager
+                // drains it later, within the server's late-upload window.
                 Log.w("TrackingViewModel",
-                        "Pre-complete flush failed, proceeding anyway: " + e.getMessage());
-                completeOnBackend(currentState);
+                        "Pre-complete flush incomplete, proceeding anyway: " + e.getMessage());
+                sealThenComplete(currentState);
+            }
+        });
+    }
+
+    /**
+     * Declares the final sequence to the server, then completes the session.
+     *
+     * <p>The seal is best-effort here: a network failure must not strand the user
+     * on FINISHING, and the backend accepts a later re-seal (idempotent, never
+     * lowering the final sequence). The GPS sync state is tracked separately from
+     * the walk status, so the UI can still show "route syncing" after FINISHED.</p>
+     */
+    private void sealThenComplete(WalkState previousState) {
+        repository.sealStream(sessionId, new DomainCallback<String>() {
+            @Override
+            public void onSuccess(String syncState) {
+                Log.d("TrackingViewModel", "Stream sealed, sync state = " + syncState);
+                completeOnBackend(previousState);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.w("TrackingViewModel",
+                        "Stream seal failed, completing anyway: " + e.getMessage());
+                completeOnBackend(previousState);
             }
         });
     }
@@ -595,6 +641,51 @@ public class TrackingViewModel extends AndroidViewModel {
         return intent;
     }
 
+    // ── Partner route ordering ────────────────────────────────────────────────
+
+    /**
+     * Rebuilds the partner polyline in <em>route</em> order.
+     *
+     * <p>v2 chunks carry their sequence range, so a batch that arrived late is
+     * sorted into place rather than appended. Chunks are ordered by
+     * {@code (streamId, seqStart)}; legacy chunks (no range) are appended last in
+     * arrival order, which is the only thing that can be said about them.</p>
+     *
+     * <p>Gaps are preserved, not bridged: if 51–100 is still missing the skeleton
+     * jumps from 50 straight to 101. Drawing a smooth line across a gap would
+     * claim a route segment the partner never uploaded.</p>
+     */
+    private List<LatLng> buildPartnerRouteSnapshot() {
+        List<PartnerPathResult.Chunk> ordered = new ArrayList<>(partnerChunks);
+        Collections.sort(ordered, (a, b) -> {
+            String sa = a.getStreamId() != null ? a.getStreamId() : "";
+            String sb = b.getStreamId() != null ? b.getStreamId() : "";
+            int byStream = sa.compareTo(sb);
+            if (byStream != 0) return byStream;
+            return Long.compare(a.getSeqStart(), b.getSeqStart());
+        });
+
+        List<LatLng> route = new ArrayList<>();
+        for (PartnerPathResult.Chunk chunk : ordered) {
+            route.addAll(chunk.getPoints());
+        }
+        route.addAll(partnerAccumulatedPoints);
+        return route;
+    }
+
+    /** De-duplicates overlapping polls: the same (stream, seqStart) is one chunk. */
+    private boolean containsChunk(PartnerPathResult.Chunk candidate) {
+        for (PartnerPathResult.Chunk existing : partnerChunks) {
+            if (existing.getSeqStart() != candidate.getSeqStart()) continue;
+            String a = existing.getStreamId();
+            String b = candidate.getStreamId();
+            if (a == null ? b == null : a.equals(b)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ── MediatorLiveData recalculation ────────────────────────────────────────
 
     /**
@@ -624,8 +715,8 @@ public class TrackingViewModel extends AndroidViewModel {
 
         boolean isSaving = (state == WalkState.FINISHING);
 
-        // Partner overlay — snapshot the accumulated list to avoid external mutation.
-        List<LatLng> partnerSnapshot    = new ArrayList<>(partnerAccumulatedPoints);
+        // Partner overlay — rebuilt in route order, not arrival order.
+        List<LatLng> partnerSnapshot    = buildPartnerRouteSnapshot();
         PartnerOverlayState overlayState = computePartnerOverlayState(state);
         long partnerLastUpdatedSecs     = (partnerLastChunkMs > 0)
                 ? (System.currentTimeMillis() - partnerLastChunkMs) / 1000L : 0L;

@@ -214,7 +214,8 @@ public class WalkTrackerService extends Service {
                     sessionTrackingService.onLocationReceived(
                             loc.getLatitude(),
                             loc.getLongitude(),
-                            loc.getAccuracy());
+                            loc.getAccuracy(),
+                            loc.getTime());   // fix time, not callback time
                 }
             }
         };

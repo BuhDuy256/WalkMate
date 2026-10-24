@@ -15,8 +15,11 @@ import com.walkmate.data.repository.HotspotRepositoryImpl;
 import com.walkmate.data.repository.NotificationRepositoryImpl;
 import com.walkmate.data.repository.ReviewRepositoryImpl;
 import com.walkmate.data.repository.SocialRepositoryImpl;
+import com.walkmate.data.datasource.local.GpsQueueStore;
+import com.walkmate.data.repository.GpsQueueDrainer;
 import com.walkmate.data.repository.TrackingRepositoryImpl;
 import com.walkmate.data.repository.TrackingStateRepositoryImpl;
+import com.walkmate.data.worker.GpsSyncScheduler;
 import com.walkmate.data.repository.UserProfileRepositoryImpl;
 import com.walkmate.data.repository.UserRepositoryImpl;
 import com.walkmate.data.repository.WalkIntentRepositoryImpl;
@@ -61,6 +64,9 @@ public class WalkMateApplication extends Application {
     private HotspotRepository hotspotRepository;
     private TrackingRepository trackingRepository;
     private TrackingStateRepository trackingStateRepository;
+    private GpsQueueStore gpsQueueStore;
+    private GpsQueueDrainer gpsQueueDrainer;
+    private GpsSyncScheduler gpsSyncScheduler;
     private WalkIntentRepository walkIntentRepository;
     private WalkProposalRepository walkProposalRepository;
     private WalkSessionRepository walkSessionRepository;
@@ -89,6 +95,10 @@ public class WalkMateApplication extends Application {
         // Eagerly initialize AuthEventBus so the singleton exists before any
         // background OkHttp thread could invoke TokenRefreshAuthenticator.
         AuthEventBus.getInstance();
+
+        // Re-arm uploads for routes left unsent by a previous process (outage,
+        // force-stop, reboot). Safe to call before login: it no-ops without a user.
+        resumePendingGpsUploads();
     }
 
     // ── Singletons ────────────────────────────────────────────────────────────
@@ -147,9 +157,62 @@ public class WalkMateApplication extends Application {
 
     public TrackingRepository getTrackingRepository() {
         if (trackingRepository == null) {
-            trackingRepository = new TrackingRepositoryImpl(database.routePointDao(), sessionManager);
+            trackingRepository = new TrackingRepositoryImpl(
+                    getDatabase(), getGpsQueueStore(), getGpsQueueDrainer(),
+                    getGpsSyncScheduler(), sessionManager);
         }
         return trackingRepository;
+    }
+
+    /** Transactional local store for the persistent GPS upload queue. */
+    public GpsQueueStore getGpsQueueStore() {
+        if (gpsQueueStore == null) {
+            gpsQueueStore = new GpsQueueStore(database);
+        }
+        return gpsQueueStore;
+    }
+
+    /** Drains the GPS queue against the v2 endpoints. */
+    public GpsQueueDrainer getGpsQueueDrainer() {
+        if (gpsQueueDrainer == null) {
+            gpsQueueDrainer = new GpsQueueDrainer(getGpsQueueStore(), sessionManager);
+        }
+        return gpsQueueDrainer;
+    }
+
+    /** Enqueues upload work that survives process death. */
+    public GpsSyncScheduler getGpsSyncScheduler() {
+        if (gpsSyncScheduler == null) {
+            gpsSyncScheduler = new GpsSyncScheduler(this);
+        }
+        return gpsSyncScheduler;
+    }
+
+    /**
+     * Re-arms the uploader for any route that was left unsent by a previous
+     * process. Without this, a walk that ended while the device was offline would
+     * sit in Room until the user opened that exact session again.
+     *
+     * <p>Also called on login, so a queue that survived a logout/login cycle is
+     * drained under the correct account.</p>
+     */
+    public void resumePendingGpsUploads() {
+        final String userId = sessionManager.getUserId();
+        if (userId == null || userId.isEmpty()) {
+            return;
+        }
+        final GpsQueueStore store = getGpsQueueStore();
+        final GpsSyncScheduler scheduler = getGpsSyncScheduler();
+        // Room forbids main-thread reads; the lookup is cheap but must be off-UI.
+        new Thread(() -> {
+            try {
+                for (String sessionId : store.sessionsWithOutstanding(userId)) {
+                    scheduler.requestDrain(userId, sessionId, false);
+                }
+            } catch (Exception e) {
+                Log.w("WalkMateApp", "resumePendingGpsUploads failed: " + e.getMessage());
+            }
+        }, "gps-resume").start();
     }
 
     public TrackingStateRepository getTrackingStateRepository() {
@@ -166,6 +229,12 @@ public class WalkMateApplication extends Application {
      */
     public void clearTrackingCacheForUser(String userId) {
         if (userId == null || userId.isEmpty()) return;
+
+        // Stop queued uploads first: work enqueued with this user's credentials
+        // must not run after the token is cleared, and this user's route must
+        // never be uploaded under the next account.
+        getGpsSyncScheduler().cancelForUser(userId);
+
         getTrackingRepository().clearForUser(userId, new com.walkmate.domain.shared.DomainCallback<Void>() {
             @Override public void onSuccess(Void r) {}
             @Override public void onError(Exception e) {

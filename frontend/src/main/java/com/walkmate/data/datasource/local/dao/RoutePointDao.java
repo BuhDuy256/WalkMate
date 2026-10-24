@@ -37,14 +37,48 @@ public interface RoutePointDao {
     LiveData<List<RoutePointEntity>> getPointsBySessionAndUser(String sessionId, String userId);
 
     /**
-     * Synchronous read used by the batch-sync logic (called on executor thread).
+     * Synchronous read used by the v1 batch-sync logic (called on executor thread).
+     *
+     * @deprecated v2 seals immutable batches instead of pushing whatever happens to
+     *     be unsynced; use {@link #getUnbatchedPoints(String, String, int)} so a
+     *     retry cannot silently change the payload of a batch id the server already
+     *     saw.
      */
+    @Deprecated
     @Query("SELECT * FROM route_points WHERE sessionId = :sessionId AND userId = :userId AND isSynced = 0 ORDER BY timestamp ASC")
     List<RoutePointEntity> getUnsyncedPoints(String sessionId, String userId);
 
     /**
-     * Returns the count of unsynced points for a session and user.
+     * Points that have not been sealed into any batch yet, in source order.
+     * This is the input to batch sealing; once a point has a {@code batchId} it
+     * never appears here again.
      */
+    @Query("SELECT * FROM route_points "
+            + "WHERE sessionId = :sessionId AND userId = :userId AND batchId IS NULL "
+            + "ORDER BY sequence ASC, id ASC LIMIT :limit")
+    List<RoutePointEntity> getUnbatchedPoints(String sessionId, String userId, int limit);
+
+    @Query("SELECT COUNT(*) FROM route_points "
+            + "WHERE sessionId = :sessionId AND userId = :userId AND batchId IS NULL")
+    int countUnbatched(String sessionId, String userId);
+
+    /** Frozen payload of a sealed batch — membership cannot change after sealing. */
+    @Query("SELECT * FROM route_points WHERE batchId = :batchId ORDER BY sequence ASC")
+    List<RoutePointEntity> getPointsOfBatch(String batchId);
+
+    /** Stamps the frozen membership onto the sealed points (membership immutability). */
+    @Query("UPDATE route_points SET batchId = :batchId WHERE id IN (:ids)")
+    void assignBatch(List<Long> ids, String batchId);
+
+    /** Marks only the points that the server ACKed — never an unverified id list. */
+    @Query("UPDATE route_points SET isSynced = 1 WHERE batchId = :batchId")
+    void markBatchSynced(String batchId);
+
+    /** Optional cleanup once a batch is ACKed and retention has elapsed. */
+    @Query("DELETE FROM route_points WHERE batchId IN "
+            + "(SELECT batchId FROM gps_batches WHERE state = 'ACKED')")
+    void deleteRowsOfAckedBatches();
+
     @Query("SELECT COUNT(id) FROM route_points WHERE sessionId = :sessionId AND userId = :userId AND isSynced = 0")
     int getUnsyncedCount(String sessionId, String userId);
 
