@@ -62,8 +62,9 @@ public class GpsUploadWorker extends Worker {
         // The queue worker must never upload one account's route under another
         // account's credentials (e.g. logout then login as someone else).
         String currentUserId = application.getSessionManager().getUserId();
-        if (currentUserId == null || !currentUserId.equals(userId)) {
-            Log.w(TAG, "Signed-in user does not match the queued batch owner — stopping");
+        if (!mayUpload(currentUserId, userId)) {
+            Log.w(TAG, "Signed-in user " + currentUserId
+                    + " does not own the queued batch (" + userId + ") — stopping");
             return Result.success();
         }
 
@@ -102,5 +103,21 @@ public class GpsUploadWorker extends Worker {
         }
 
         return anyTransientFailure ? Result.retry() : Result.success();
+    }
+
+    /**
+     * Whether the queue owned by {@code queuedUserId} may be uploaded by the
+     * currently signed-in user.
+     *
+     * <p>Extracted so the rule is explicit and testable: a route recorded by one
+     * account must never be uploaded with another account's credentials, which is
+     * what would happen if a logout left work queued and a different user then
+     * signed in on the same device. An unknown signed-in user is treated as
+     * "not allowed" — there is no safe default here.</p>
+     */
+    static boolean mayUpload(String signedInUserId, String queuedUserId) {
+        return signedInUserId != null
+                && !signedInUserId.isEmpty()
+                && signedInUserId.equals(queuedUserId);
     }
 }

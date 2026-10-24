@@ -21,7 +21,6 @@ import com.walkmate.domain.tracking.TrackingErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
 import retrofit2.Response;
 
 /**
@@ -46,6 +45,52 @@ public class GpsQueueDrainer {
 
     private static final String TAG = "GpsQueueDrainer";
 
+    /**
+     * The minimal transport the drainer needs.
+     *
+     * <p>Extracted so the retry policy — which is the part that decides whether a
+     * walk is preserved or silently lost — can be tested against a real Room
+     * queue without standing up an HTTP server. The production implementation is
+     * {@link RetrofitTrackingTransport}.</p>
+     */
+    public interface Transport {
+        Response<ApiResponse<TrackingBatchResponseDto>> pushBatch(TrackingBatchRequestDto request)
+                throws java.io.IOException;
+
+        Response<ApiResponse<SealStreamResponseDto>> sealStream(
+                String streamId, SealStreamRequestDto request) throws java.io.IOException;
+
+        Response<ApiResponse<SealStreamResponseDto>> expireStream(String streamId)
+                throws java.io.IOException;
+    }
+
+    /** Default transport: the authenticated Retrofit client. */
+    public static class RetrofitTrackingTransport implements Transport {
+        private final TrackingApiServiceV2 api;
+
+        public RetrofitTrackingTransport(TrackingApiServiceV2 api) {
+            this.api = api;
+        }
+
+        @Override
+        public Response<ApiResponse<TrackingBatchResponseDto>> pushBatch(
+                TrackingBatchRequestDto request) throws java.io.IOException {
+            return api.pushBatch(request).execute();
+        }
+
+        @Override
+        public Response<ApiResponse<SealStreamResponseDto>> sealStream(
+                String streamId, SealStreamRequestDto request) throws java.io.IOException {
+            return api.sealStream(streamId, request).execute();
+        }
+
+        @Override
+        public Response<ApiResponse<SealStreamResponseDto>> expireStream(String streamId)
+                throws java.io.IOException {
+            return api.expireStream(streamId).execute();
+        }
+    }
+
     /** Result of one drain pass. */
     public static final class DrainResult {
         public final int uploaded;
@@ -67,16 +112,53 @@ public class GpsQueueDrainer {
 
     private final GpsQueueStore store;
     private final SessionManager sessionManager;
+    private final Transport transport;
 
     public GpsQueueDrainer(GpsQueueStore store, SessionManager sessionManager) {
-        this.store = store;
-        this.sessionManager = sessionManager;
+        this(store, sessionManager, null);
     }
 
-    private TrackingApiServiceV2 api() {
-        return ApiClient.buildAuthenticatedRetrofit(
-                        sessionManager, ApiClient.getAuthApiService())
-                .create(TrackingApiServiceV2.class);
+    /**
+     * @param transport when null, an authenticated Retrofit client is built
+     *                  lazily on first use (the production path)
+     */
+    public GpsQueueDrainer(GpsQueueStore store, SessionManager sessionManager, Transport transport) {
+        this.store = store;
+        this.sessionManager = sessionManager;
+        this.transport = transport != null ? transport : lazyRetrofitTransport();
+    }
+
+    private Transport lazyRetrofitTransport() {
+        return new Transport() {
+            private TrackingApiServiceV2 service;
+
+            private TrackingApiServiceV2 service() {
+                if (service == null) {
+                    service = ApiClient.buildAuthenticatedRetrofit(
+                                    sessionManager, ApiClient.getAuthApiService())
+                            .create(TrackingApiServiceV2.class);
+                }
+                return service;
+            }
+
+            @Override
+            public Response<ApiResponse<TrackingBatchResponseDto>> pushBatch(
+                    TrackingBatchRequestDto request) throws java.io.IOException {
+                return service().pushBatch(request).execute();
+            }
+
+            @Override
+            public Response<ApiResponse<SealStreamResponseDto>> sealStream(
+                    String streamId, SealStreamRequestDto request) throws java.io.IOException {
+                return service().sealStream(streamId, request).execute();
+            }
+
+            @Override
+            public Response<ApiResponse<SealStreamResponseDto>> expireStream(String streamId)
+                    throws java.io.IOException {
+                return service().expireStream(streamId).execute();
+            }
+        };
     }
 
     /**
@@ -149,7 +231,7 @@ public class GpsQueueDrainer {
         TrackingBatchRequestDto request = toRequest(batch);
         try {
             Response<ApiResponse<TrackingBatchResponseDto>> response =
-                    api().pushBatch(request).execute();
+                    transport.pushBatch(request);
 
             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                 TrackingBatchResponseDto ack = response.body().getData();
@@ -218,7 +300,7 @@ public class GpsQueueDrainer {
 
         try {
             Response<ApiResponse<SealStreamResponseDto>> response =
-                    api().sealStream(streamId, new SealStreamRequestDto(finalSeq, null)).execute();
+                    transport.sealStream(streamId, new SealStreamRequestDto(finalSeq, null));
 
             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                 SealStreamResponseDto data = response.body().getData();
@@ -243,8 +325,8 @@ public class GpsQueueDrainer {
     public String expire(String sessionId, String userId) {
         String streamId = store.ensureStream(sessionId, userId);
         try {
-            Call<ApiResponse<SealStreamResponseDto>> call = api().expireStream(streamId);
-            Response<ApiResponse<SealStreamResponseDto>> response = call.execute();
+            Response<ApiResponse<SealStreamResponseDto>> response =
+                    transport.expireStream(streamId);
             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                 String state = response.body().getData().getSyncState();
                 store.setSyncState(sessionId, userId, state);

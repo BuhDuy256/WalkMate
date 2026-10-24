@@ -84,6 +84,16 @@ public class GpsQueueStoreTest {
         }
     }
 
+    /**
+     * Simulates the backoff window elapsing. {@code release()} deliberately defers
+     * the retry, so a test that wants to observe the retry must be "later".
+     */
+    private void makeRetryDue(String batchId) {
+        GpsBatchEntity row = batchDao.find(batchId);
+        row.nextAttemptAt = System.currentTimeMillis() - 1;
+        batchDao.insert(row);
+    }
+
     // ── T01: sequences are assigned, contiguous and durable ───────────────────
 
     @Test
@@ -162,6 +172,10 @@ public class GpsQueueStoreTest {
         // Simulate an upload whose ACK never arrived: the batch is released back
         // to the queue for a retry.
         store.release(sealed);
+        assertTrue("a released batch waits out its backoff window",
+                store.findDrainable(SESSION, USER).isEmpty());
+
+        makeRetryDue(sealed.getBatchId());
 
         List<GpsBatch> drainable = store.findDrainable(SESSION, USER);
         assertEquals("the released batch must be re-readable", 1, drainable.size());
@@ -188,6 +202,7 @@ public class GpsQueueStoreTest {
         // New fixes keep arriving while the batch is awaiting retry.
         accept(10, BASE_TS + 100_000);
 
+        makeRetryDue(sealed.getBatchId());
         GpsBatch retry = store.findDrainable(SESSION, USER).get(0);
         assertEquals(originalHash, retry.getPayloadHash());
         assertEquals(50, retry.getPointCount());

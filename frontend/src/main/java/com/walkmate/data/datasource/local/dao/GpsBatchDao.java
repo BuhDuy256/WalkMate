@@ -26,13 +26,23 @@ public interface GpsBatchDao {
     GpsBatchEntity find(String batchId);
 
     /**
-     * Batches eligible for an upload attempt right now: either waiting for their
-     * backoff window, or leased by a worker that never reported back.
+     * Batches eligible for an upload attempt right now.
+     *
+     * <p>Three conditions, all necessary:</p>
+     * <ul>
+     *   <li>{@code state = 'PENDING'} <b>and</b> the backoff window has elapsed —
+     *       without the {@code nextAttemptAt} check a released batch is retried on
+     *       the very next pass, so the exponential backoff would be computed,
+     *       stored, and then ignored (hammering a failing server every trigger);</li>
+     *   <li>{@code state = 'IN_FLIGHT'} whose lease expired — the worker that owned
+     *       it died mid-upload;</li>
+     *   <li>nothing BLOCKED or ACKED ever re-enters the queue.</li>
+     * </ul>
      */
     @Query("SELECT * FROM gps_batches "
             + "WHERE sessionId = :sessionId AND userId = :userId "
-            + "  AND (state = 'PENDING' "
-            + "       OR (state = 'IN_FLIGHT' AND leaseUntil < :now)) "
+            + "  AND ( (state = 'PENDING'   AND nextAttemptAt <= :now) "
+            + "     OR (state = 'IN_FLIGHT' AND leaseUntil    <= :now) ) "
             + "ORDER BY seqStart ASC")
     List<GpsBatchEntity> findDrainable(String sessionId, String userId, long now);
 
@@ -50,7 +60,8 @@ public interface GpsBatchDao {
     /** Takes the lease. Returns 0 when another worker already holds it. */
     @Query("UPDATE gps_batches SET state = 'IN_FLIGHT', leaseUntil = :leaseUntil "
             + "WHERE batchId = :batchId "
-            + "  AND (state = 'PENDING' OR (state = 'IN_FLIGHT' AND leaseUntil < :now))")
+            + "  AND ( (state = 'PENDING'   AND nextAttemptAt <= :now) "
+            + "     OR (state = 'IN_FLIGHT' AND leaseUntil    <= :now) )")
     int claim(String batchId, long now, long leaseUntil);
 
     /**
