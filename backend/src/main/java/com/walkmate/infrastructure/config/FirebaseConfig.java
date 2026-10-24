@@ -8,6 +8,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -23,7 +24,10 @@ import java.nio.charset.StandardCharsets;
  *   <li><b>Env var {@code FIREBASE_CREDENTIALS}</b> — expected in staging / production.
  *       Set this to the full JSON content of the service-account file (single line or
  *       multi-line are both accepted). This is the only safe option for containerised
- *       deployments because the JSON file must never exist on the production filesystem.</li>
+ *       deployments because the JSON file must never exist on the production filesystem.
+ *       Resolved through the Spring {@link Environment}: an OS-level environment variable
+ *       of the same name takes precedence over the value in the local {@code .env} file
+ *       (spring-dotenv is added as a lower-priority property source).</li>
  *   <li><b>Classpath resource {@code firebase-service-account.json}</b> — present only in
  *       the developer's local checkout (the file is gitignored). Used automatically when
  *       the env var is absent.</li>
@@ -46,14 +50,14 @@ public class FirebaseConfig {
     private static final String LOCAL_CREDENTIALS_RESOURCE = "firebase-service-account.json";
 
     @Bean
-    public FirebaseApp firebaseApp() throws IOException {
+    public FirebaseApp firebaseApp(Environment environment) throws IOException {
         if (!FirebaseApp.getApps().isEmpty()) {
             log.debug("FirebaseApp already initialised — reusing existing instance");
             return FirebaseApp.getInstance();
         }
 
         FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(resolveCredentials())
+                .setCredentials(resolveCredentials(environment))
                 .build();
 
         FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -79,8 +83,14 @@ public class FirebaseConfig {
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    private GoogleCredentials resolveCredentials() throws IOException {
-        String envJson = System.getenv(CREDENTIALS_ENV_VAR);
+    /**
+     * Resolves the service-account JSON from the {@code FIREBASE_CREDENTIALS}
+     * environment variable (OS env or {@code .env} via spring-dotenv, exposed
+     * through the Spring {@link Environment}), falling back to the classpath
+     * resource for local development.
+     */
+    private GoogleCredentials resolveCredentials(Environment environment) throws IOException {
+        String envJson = environment.getProperty(CREDENTIALS_ENV_VAR);
 
         if (envJson != null && !envJson.isBlank()) {
             log.info("Firebase credentials loaded from environment variable '{}'", CREDENTIALS_ENV_VAR);
